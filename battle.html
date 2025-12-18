@@ -76,6 +76,18 @@
         @keyframes flash { 0%,100% {filter:none;} 50% {filter:sepia(1) hue-rotate(-50deg) saturate(5);} }
         
         #game-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f; color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999; font-size: 14px; font-weight: bold; transition: top 0.5s ease-in-out; pointer-events: none; }
+        /*  修改：怪物圖片樣式 */
+        .boss-sprite { 
+            width: 120px; height: 120px; 
+            object-fit: contain; 
+            margin-bottom: 10px; 
+            transition: transform 0.1s;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5));
+            
+            /*  加入這兩行，讓像素圖放大後保持銳利，不會糊掉 */
+            image-rendering: pixelated;       /* Chrome/Edge */
+            image-rendering: -moz-crisp-edges; /* Firefox */
+        }
     </style>
 </head>
 <body>
