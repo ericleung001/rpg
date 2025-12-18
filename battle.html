@@ -301,11 +301,7 @@
             document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column: span 2;" disabled>下一場...</button><button class="btn" style="grid-column: span 2;" onclick="leaveRoom()">離開</button>`;
         });
 
-        socket.on('battleReset', () => {
-            log("--- 房間重置 ---"); document.getElementById('lobby-overlay').style.display = 'flex';
-            const img = document.getElementById('monster-img'); img.style.opacity = 1; img.style.display = 'none';
-            resetButtons(); isMyTurn = false;
-        });
+
 
         socket.on('playerDead', () => { log("你被打倒了..."); showMsg("👻 你已經死亡..."); document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column:span 2; background:red; color:white" onclick="window.location.href='rest.html'"> 去復活</button>`; });
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
