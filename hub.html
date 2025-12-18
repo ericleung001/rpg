@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者大廳</title>
+    <title>冒險者大廳v2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -64,7 +64,7 @@
         }
         .btn:active { transform: translateY(2px); filter: brightness(0.8); }
         .btn-center { text-align: center; display: flex; align-items: center; justify-content: center; height: 100%; box-sizing: border-box; }
-        .locked { background: #555; color: #888; border-color: #555; }
+        .locked { background: #555; color: #888; border-color: #555; pointer-events: none; }
         
         .info-tag { float: right; font-size: 10px; color: #f1c40f; margin-top: 2px; }
         .room-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; float: right; margin-left: 5px; }
@@ -88,7 +88,7 @@
         }
         #chat-header:hover { background: #2c3e50; }
 
-        .chat-open { height: 30vh !important; }
+        .chat-open { height: 40vh !important; }
         #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
         .chat-open #chat-body { display: flex; } 
 
@@ -160,11 +160,8 @@
 
     <script src="socket.io.js"></script>
     <script>
-        // 這是加密後的網址 (一般人看不懂這是什麼)
         const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
-
-        // atob() 函數會把亂碼解開成原本的網址
-        const BACKEND_URL = atob(_0x5a1b); 
+        const BACKEND_URL = atob(_0x5a1b);
         
         const socket = io(BACKEND_URL, {
             transports: ['websocket', 'polling']
@@ -173,6 +170,7 @@
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) { window.location.href = 'index.html'; }
 
+        // 地圖設定 (對應 Server 的 MONSTER_CONFIG)
         const WORLD_MAP = [
             { 
                 id: 'city_1', name: '曙光平原', reqLv: 1, desc: '冒險的起點 (Lv.1-20)', 
@@ -270,13 +268,13 @@
             refreshUI();
         });
 
+        // 🟢 監聽 Server 廣播的房間資料
         socket.on('hubDataUpdate', (data) => {
             cityData = data.cityCounts;
             activeRooms = data.roomsList;
-            refreshUI();
+            refreshUI(); // 有資料就即時刷新介面
         });
 
-        // 監聽市集交易或NPC販賣結果
         socket.on('marketResult', (res) => { if (res.success) { showToast(res.msg); } });
         socket.on('bagResult', (res) => { if (res.success) { showToast(res.msg); } });
 
@@ -287,7 +285,12 @@
             setTimeout(() => { toast.style.top = "-60px"; }, 3000);
         }
 
-        socket.on('roomJoined', (data) => { window.location.href = `battle.html?room=${data.roomId}`; });
+        // 🟢 加入房間後跳轉 (兼容 Object 與 String)
+        socket.on('roomJoined', (data) => { 
+            const roomId = data.roomId || data; 
+            window.location.href = `battle.html?room=${roomId}`; 
+        });
+        
         socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
 
         // --- 聊天邏輯 ---
@@ -305,17 +308,13 @@
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
             
-            // 1. 建立名字的 span (保持顏色)
             const nameSpan = document.createElement('span');
             nameSpan.style.color = '#f1c40f';
             nameSpan.style.fontWeight = 'bold';
-            nameSpan.textContent = `[${name}]: `; // 使用 textContent (安全)
+            nameSpan.textContent = `[${name}]: `;
 
-            // 2. 建立訊息的文字節點 (這一步保證了絕對安全)
-            // 任何 HTML 代碼在這裡都會被當作純文字顯示，不會被執行
             const msgNode = document.createTextNode(msg);
 
-            // 3. 組合起來
             div.appendChild(nameSpan);
             div.appendChild(msgNode);
             
@@ -372,22 +371,30 @@
         function refreshUI() {
             const container = document.getElementById('map-list');
             let html = '';
+            
             if (currentView === 'cities') {
                 document.getElementById('list-title').innerText = "選擇區域";
                 WORLD_MAP.forEach(city => {
                     const isLowLevel = myLevel < city.reqLv;
                     const count = cityData[city.id] || 0;
                     const warnText = isLowLevel ? `<span style="color:#e74c3c">(LV${city.reqLv})</span>` : '';
-                    html += `<div class="btn" style="border-color:#3498db" onclick="triggerEnterCity('${city.id}')">
+                    
+                    // 等級不夠變灰且不能點擊
+                    const lockClass = isLowLevel ? 'locked' : '';
+                    const action = isLowLevel ? '' : `onclick="triggerEnterCity('${city.id}')"`;
+
+                    html += `<div class="btn ${lockClass}" style="border-color:#3498db" ${action}>
                         <div style="display:flex; justify-content:space-between;"><span style="font-size:14px; font-weight:bold;">${city.name} ${warnText}</span><span class="info-tag">${count}</span></div>
                         <div style="font-size:10px; color:#bdc3c7; margin-top:5px;">${city.desc}</div></div>`;
                 });
             } else if (currentView === 'monsters') {
                 document.getElementById('list-title').innerText = `${selectedCity.name} - 怪物`;
                 selectedCity.monsters.forEach(mob => {
+                    // 計算目前該怪物的房間數
                     const rooms = activeRooms.filter(r => r.monsterKey === mob.id);
                     const fighting = rooms.filter(r => r.status === 'fighting').length;
                     const waiting = rooms.filter(r => r.status === 'waiting').length;
+                    
                     html += `<div class="btn" style="border-color:#c0392b" onclick="triggerSelectMonster('${mob.id}')">
                         <span style="font-size:14px; font-weight:bold;">${mob.name} (LV.${mob.lv})</span>
                         <div style="margin-top:5px;"><span class="info-tag" style="color:#2ecc71">等:${waiting}</span><span class="info-tag" style="color:#e74c3c; margin-right:10px;">戰:${fighting}</span></div></div>`;
@@ -396,14 +403,22 @@
             } else if (currentView === 'rooms') {
                 document.getElementById('list-title').innerText = `${selectedMonster.name} - 房間`;
                 html += `<div class="btn" style="background:#27ae60; text-align:center; font-weight:bold; font-size:14px;" onclick="triggerCreateRoom('${selectedMonster.id}')">➕ 開新房間</div>`;
+                
+                // 篩選出目前選中怪物的房間
                 const myRooms = activeRooms.filter(r => r.monsterKey === selectedMonster.id);
+                
                 if (myRooms.length === 0) html += `<div style="font-size:12px; color:#aaa; margin:10px;">目前沒有房間...</div>`;
+                
                 myRooms.forEach(room => {
                     const isFighting = room.status === 'fighting';
                     const clickAction = isFighting ? '' : `onclick="triggerJoinRoom('${room.id}')"`;
                     const statusTag = isFighting ? '<span class="room-tag status-fighting">戰鬥</span>' : '<span class="room-tag status-waiting">等待</span>';
                     const lockClass = isFighting ? 'locked' : '';
-                    html += `<div class="btn ${lockClass}" ${clickAction}><div style="font-size:12px;">Room ${room.id.substr(5)}</div><div style="margin-top:5px;">${statusTag}<span class="info-tag" style="margin-right:5px;">${room.playerCount}/5</span></div></div>`;
+                    
+                    html += `<div class="btn ${lockClass}" ${clickAction}>
+                        <div style="font-size:12px;">Room ${room.id.substr(5)}</div>
+                        <div style="margin-top:5px;">${statusTag}<span class="info-tag" style="margin-right:5px;">${room.playerCount}/5</span></div>
+                    </div>`;
                 });
                 html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('monsters')">◀ 返回列表</div>`;
             }
