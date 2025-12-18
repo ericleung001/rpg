@@ -407,29 +407,51 @@
             const btnArea = document.getElementById('btns');
             btnArea.innerHTML = '';
             
-            // 這裡可以根據你想要顯示的物品做調整
-            const itemsToShow = ['potion_hp', 'potion_mid', 'potion_high'];
+            // 🟢 定義要在戰鬥中顯示的道具列表
+            const itemsToShow = [
+                'potion_hp', 'potion_mid', 'potion_high', 'potion_max',
+                'potion_mp', 'potion_mp_mid', 'potion_mp_high'
+            ];
             
+            let hasItem = false;
+
             itemsToShow.forEach(itemId => {
                 const count = (myPlayer.inventory && myPlayer.inventory[itemId]) || 0;
                 if(count > 0) {
+                    hasItem = true;
                     const potBtn = document.createElement('button');
                     potBtn.className = 'btn battle-action';
-                    // 簡單的名稱對照，你也可以用 ITEM_NAMES 表
-                    let name = '藥水';
-                    if(itemId==='potion_hp') name='小水';
-                    if(itemId==='potion_mid') name='中水';
-                    if(itemId==='potion_high') name='大水';
                     
+                    // 簡化名稱顯示
+                    let name = '藥水';
+                    if(itemId.includes('hp')) name = '紅水';
+                    if(itemId.includes('mid') && itemId.includes('hp')) name = '中紅';
+                    if(itemId.includes('high') && itemId.includes('hp')) name = '大紅';
+                    if(itemId.includes('mp')) name = '藍水';
+                    if(itemId.includes('mid') && itemId.includes('mp')) name = '中藍';
+                    if(itemId.includes('high') && itemId.includes('mp')) name = '大藍';
+
+                    // 如果名字太長，CSS 可能會跑版，所以簡單顯示
                     potBtn.innerText = `${name}(${count})`;
+                    potBtn.style.fontSize = "12px"; // 字體改小一點
                     potBtn.onclick = () => { useItem(itemId); };
                     btnArea.appendChild(potBtn);
                 }
             });
 
+            if (!hasItem) {
+                const noItemMsg = document.createElement('div');
+                noItemMsg.innerText = "背包沒有藥水";
+                noItemMsg.style.gridColumn = "span 2";
+                noItemMsg.style.fontSize = "12px";
+                noItemMsg.style.padding = "10px";
+                btnArea.appendChild(noItemMsg);
+            }
+
             const backBtn = document.createElement('button');
             backBtn.className = 'btn';
             backBtn.innerText = '返回';
+            backBtn.style.gridColumn = "span 2"; // 讓返回按鈕佔滿一行
             backBtn.onclick = resetButtons;
             btnArea.appendChild(backBtn);
         }
