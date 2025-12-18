@@ -87,17 +87,46 @@
         if (!myToken) window.location.href = 'index.html';
 
         const ITEM_MAP = {
-            'wood_sword': { name: "木劍", type: 'weapon', desc: "ATK+5" },
-            'iron_sword': { name: "鐵劍", type: 'weapon', desc: "ATK+15" },
-            'hero_sword': { name: "勇者之劍", type: 'weapon', desc: "ATK+50" },
-            'steel_blade': { name: "精鋼劍", type: 'weapon', desc: "ATK+25" },
-            'cloth_armor': { name: "布衣", type: 'armor', desc: "DEF+2" },
-            'leather_armor':{ name: "皮甲", type: 'armor', desc: "DEF+5" },
-            'plate_mail':   { name: "板金甲", type: 'armor', desc: "DEF+15" },
-            'dragon_mail': { name: "龍鱗甲", type: 'armor', desc: "DEF+30" },
-            'ring_str': { name: "力量戒指", type: 'acc', desc: "ATK+5" },
-            'ring_life': { name: "生命護符", type: 'acc', desc: "HP+100" },
-            'ring_magic': { name: "魔力耳環", type: 'acc', desc: "MP+50" }
+            // === 武器 ===
+            'wood_sword':   { name: "木劍", cost: 100, desc: "ATK+10" },
+            'copper_dagger':{ name: "銅匕首", cost: 200, desc: "ATK+15" },
+            'iron_sword':   { name: "鐵劍", cost: 500, desc: "ATK+30" },
+            'spike_club':   { name: "狼牙棒", cost: 0, desc: "ATK+55" },
+            'poison_dag':   { name: "劇毒匕首", cost: 0, desc: "ATK+60" },
+            'silver_blade': { name: "銀刃", cost: 2000, desc: "ATK+150" },
+            'flame_staff':  { name: "火焰法杖", cost: 0, desc: "ATK+200" },
+            'gold_axe':     { name: "黃金巨斧", cost: 10000, desc: "ATK+500" },
+            'frost_bow':    { name: "寒冰弓", cost: 0, desc: "ATK+650" },
+            'mithril_saber':{ name: "秘銀軍刀", cost: 50000, desc: "ATK+2000" },
+            'void_reaper':  { name: "虛空收割者", cost: 0, desc: "ATK+3500" },
+            'god_slayer':   { name: "弒神劍", cost: 0, desc: "ATK+20000" },
+            'chaos_staff':  { name: "混沌法杖", cost: 0, desc: "ATK+25000" },
+            'hero_sword':   { name: "勇者之劍", cost: 2000, desc: "ATK+50" },
+            'steel_blade':  { name: "精鋼劍", cost: 0, desc: "ATK+25" },
+            'assassin_dag': { name: "刺客短刀", cost: 2000, desc: "ATK+120" },
+
+            // === 防具 ===
+            'cloth_armor':  { name: "布衣", cost: 100, desc: "DEF+5" },
+            'hunt_vest':    { name: "獵人背心", cost: 0, desc: "DEF+8" },
+            'leather_armor':{ name: "皮甲", cost: 400, desc: "DEF+15" },
+            'chain_mail':   { name: "鎖子甲", cost: 1500, desc: "DEF+40" },
+            'magma_plate':  { name: "熔岩胸甲", cost: 0, desc: "DEF+100" },
+            'ice_robe':     { name: "冰霜法袍", cost: 0, desc: "DEF+200" },
+            'yeti_cloak':   { name: "雪怪斗篷", cost: 0, desc: "DEF+250" },
+            'demon_armor':  { name: "惡魔戰甲", cost: 0, desc: "DEF+1000" },
+            'angel_armor':  { name: "熾天使鎧甲", cost: 0, desc: "DEF+5000" },
+            'plate_mail':   { name: "板金甲", cost: 1500, desc: "DEF+15" },
+            'dragon_mail':  { name: "龍鱗甲", cost: 0, desc: "DEF+30" },
+
+            // === 飾品 ===
+            'bone_ring':    { name: "骨戒", cost: 0, desc: "ATK+2" },
+            'ring_str':     { name: "力量戒指", cost: 300, desc: "ATK+10" },
+            'snake_boots':  { name: "蛇皮長靴", cost: 0, desc: "DEF+10" },
+            'amulet_soul':  { name: "靈魂護符", cost: 0, desc: "MP+300" },
+            'ring_lord':    { name: "領主指環", cost: 0, desc: "全能力+500" },
+            'crown_chaos':  { name: "混沌之冠", cost: 0, desc: "全能力+2000" },
+            'ring_life':    { name: "生命護符", cost: 600, desc: "HP+100" },
+            'ring_magic':   { name: "魔力耳環", cost: 500, desc: "MP+50" }
         };
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
