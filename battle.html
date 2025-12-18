@@ -20,30 +20,46 @@
             position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.5); border-radius: 8px;
         }
         #turn-bar { background: #333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; border-bottom: 4px solid #000; letter-spacing: 1px;}
+        
         .boss-area { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
         .boss-sprite { width: 120px; height: 120px; object-fit: contain; margin-bottom: 10px; transition: transform 0.1s; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5)); image-rendering: pixelated; }
         .boss-info { width: 80%; text-align: center; }
+        
         .player-area { display: flex; flex-direction: column; justify-content: center; padding: 0 15px; width: 100%; box-sizing: border-box; gap: 5px; }
         .my-status { width: 100%; box-sizing: border-box; } 
         .teammates { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px;} 
+        
         .gba-box { background: #f0f0d8; border: 4px solid #706870; border-radius: 8px; padding: 8px; color: #383838; font-size: 12px; box-shadow: 4px 4px 0 rgba(0,0,0,0.3); }
         .mini-box { background: #ecf0f1; border: 2px solid #95a5a6; padding: 4px; font-size: 10px; color: #333; overflow: hidden; border-radius: 4px; }
+        
+        /* 🟢 血量條 (HP) */
         .hp-bar { width: 100%; height: 12px; background: #555; border: 2px solid #333; margin-top: 5px; border-radius: 2px; }
         .hp-fill { height: 100%; background: #48c058; transition: width 0.3s; }
-        .mp-bar { width: 100%; height: 8px; background: #555; border: 2px solid #333; margin-top: 3px; border-radius: 2px; }
+        
+        /* 🟢 魔力條 (MP) - 藍色 */
+        .mp-bar { width: 100%; height: 8px; background: #555; border: 2px solid #333; margin-top: 2px; border-radius: 2px; }
         .mp-fill { height: 100%; background: #3498db; transition: width 0.3s; }
+
+        /* 🟢 隊友的小血條/魔力條 */
         .mini-hp-bar { width: 100%; height: 6px; background: #555; margin-top: 2px; }
         .mini-hp-fill { height: 100%; background: #e74c3c; width: 100%; }
+        .mini-mp-bar { width: 100%; height: 4px; background: #555; margin-top: 1px; }
+        .mini-mp-fill { height: 100%; background: #3498db; width: 100%; }
+
         .stat-text { font-size: 10px; margin-top: 4px; font-weight: bold; }
+        
         .hud { background: #305080; border-top: 6px solid #c8c8f8; display: flex; height: 100%; overflow: hidden; }
         .log { width: 50%; padding: 10px; color: white; font-size: 10px; line-height: 1.6; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-start; }
         .menu { width: 50%; display: grid; grid-template-columns: 1fr 1fr; background: #fff; border-left: 6px solid #c8c8f8; padding: 5px; gap: 5px; box-sizing: border-box;}
+        
         .btn { background: #f8f8f8; border: 2px solid #888; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: bold; text-align: center; display:flex; align-items:center; justify-content:center; border-radius: 6px;}
         .btn:active { background: #f8d030; color: #000; transform: translateY(2px); }
         .btn:disabled { background: #999; color: #555; cursor: not-allowed; }
+        
         #lobby-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
         .player-list { border: 4px solid #fff; padding: 20px; width: 80%; min-height: 100px; text-align: left; margin-bottom: 30px; font-size: 14px; line-height: 2; }
         .start-btn { display: none; padding: 15px 30px; font-size: 16px; background: #e74c3c; color: white; border: 4px solid #c0392b; cursor: pointer; font-family: inherit; }
+        
         #chat-container { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7; display: flex; flex-direction: column; font-size: 12px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); transition: height 0.3s ease-in-out; height: 35px; }
         #chat-header { height: 35px; background: #34495e; color: #fff; line-height: 35px; cursor: pointer; font-weight: bold; border-bottom: 1px solid #555; display: flex; justify-content: center; align-items: center; }
         .chat-open { height: 20vh !important; }
@@ -53,10 +69,12 @@
         #chat-input-area { display: flex; border-top: 1px solid #555; height: 45px; }
         #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 15px; font-family: inherit; font-size: 14px; outline: none; }
         #chat-send { background: #2980b9; color: white; border: none; padding: 0 20px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: bold; }
+        
         .shake { animation: shake 0.5s; } .flash { animation: flash 0.3s; }
         .damaged { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; filter: sepia(1) hue-rotate(-50deg) saturate(3) drop-shadow(0 0 10px red) !important; }
         @keyframes shake { 0%,100% {transform:translateX(0);} 25% {transform:translateX(-5px);} 75% {transform:translateX(5px);} }
         @keyframes flash { 0%,100% {filter:none;} 50% {filter:sepia(1) hue-rotate(-50deg) saturate(5);} }
+        
         #game-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f; color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999; font-size: 14px; font-weight: bold; transition: top 0.5s ease-in-out; pointer-events: none; }
     </style>
 </head>
@@ -70,7 +88,9 @@
             <div id="waiting-txt" style="margin-top:15px; font-size:12px; color:#aaa; display:none;">(等待房主...)</div>
             <button onclick="leaveRoom()" style="margin-top:30px; background:transparent; border:2px solid #aaa; color:#aaa; cursor:pointer; font-size:12px; padding:10px;">離開房間</button>
         </div>
+        
         <div id="turn-bar">等待...</div>
+        
         <div class="boss-area">
             <img id="monster-img" class="boss-sprite" src="" onerror="this.style.display='none'" alt="Monster">
             <div class="gba-box boss-info">
@@ -79,6 +99,7 @@
                 <div id="mhp-txt" class="stat-text" style="text-align:right;">...</div>
             </div>
         </div>
+        
         <div class="player-area">
             <div class="gba-box my-status">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
@@ -89,17 +110,21 @@
                 <div class="mp-bar"><div id="pmp" class="mp-fill" style="width:100%"></div></div>
                 <div style="font-size: 10px; margin-top: 5px; text-align:right;" id="hp-txt">...</div>
             </div>
+            
             <div class="teammates" id="teammates-box"></div>
         </div>
+        
         <div class="hud">
             <div class="log" id="log"><div>準備戰鬥...</div></div>
             <div class="menu" id="btns">
                 <button class="btn battle-action" onclick="act('attack')">攻擊</button>
-                <button class="btn battle-action" onclick="openSkill()">魔法</button> <button class="btn battle-action" onclick="openBag()">物品</button>
+                <button class="btn battle-action" onclick="openSkill()">魔法</button>
+                <button class="btn battle-action" onclick="openBag()">物品</button>
                 <button class="btn" onclick="leaveRoom()">逃跑</button>
             </div>
         </div>
     </div>
+    
     <div id="chat-container">
         <div id="chat-header" onclick="toggleChat()"> 聊天室 (點擊展開)</div>
         <div id="chat-body">
@@ -110,6 +135,7 @@
             </div>
         </div>
     </div>
+    
     <script src="socket.io.js"></script>
     <script>
         const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
@@ -119,10 +145,9 @@
         let isMyTurn = false; 
         const params = new URLSearchParams(window.location.search);
         const roomId = params.get('room');
-        let myPlayer = { mp: 0, hp: 0, maxMp: 100, maxHp: 100, skills: ['fireball'] }; // 預設
+        let myPlayer = { mp: 0, hp: 0, maxMp: 100, maxHp: 100, skills: ['fireball'] };
         let lastMonsterHp = -1;
 
-        // 🟢 技能詳細資料 (用於顯示)
         const SKILL_INFO = {
             'fireball':   { name: "火球術", mp: 5, desc: "1.5倍傷害" },
             'heal_light': { name: "小回復", mp: 10, desc: "恢復50HP" },
@@ -193,6 +218,7 @@
                 if (!img.src.includes(newSrc)) { img.src = newSrc; img.style.display = 'block'; }
             }
 
+            // 🟢 更新隊友列表 (含 MP)
             const teammatesBox = document.getElementById('teammates-box');
             teammatesBox.innerHTML = '';
             info.players.forEach(p => {
@@ -200,7 +226,14 @@
                     const div = document.createElement('div');
                     div.className = 'mini-box';
                     const hpPct = (p.hp / p.maxHp) * 100;
-                    div.innerHTML = `<div style="white-space:nowrap; overflow:hidden; font-weight:bold;">${p.name}</div><div class="mini-hp-bar"><div class="mini-hp-fill" style="width:${hpPct}%; background:${hpPct<30?'red':'#2ecc71'}"></div></div><div style="font-size:8px; text-align:right;">${p.hp}/${p.maxHp}</div>`;
+                    const mpPct = (p.mp / p.maxMp) * 100;
+                    
+                    div.innerHTML = `
+                        <div style="white-space:nowrap; overflow:hidden; font-weight:bold;">${p.name}</div>
+                        <div class="mini-hp-bar" title="HP: ${p.hp}"><div class="mini-hp-fill" style="width:${hpPct}%; background:${hpPct<30?'red':'#2ecc71'}"></div></div>
+                        <div class="mini-mp-bar" title="MP: ${p.mp}"><div class="mini-mp-fill" style="width:${mpPct}%;"></div></div>
+                        <div style="font-size:8px; text-align:right;">HP:${p.hp} MP:${p.mp}</div>
+                    `;
                     teammatesBox.appendChild(div);
                 }
             });
@@ -223,12 +256,21 @@
             lastMonsterHp = m.hp;
         });
 
+        // 🟢 玩家數值更新 (含 MP)
         socket.on('playerStatsUpdate', (p) => {
             myPlayer = p;
+            
+            // HP
             document.getElementById('php').style.width = (p.hp / p.maxHp * 100) + '%';
-            let mpPct = (p.mp / p.maxMp * 100); if(mpPct < 0) mpPct = 0;
+            
+            // MP (防止負數)
+            let mpPct = (p.mp / p.maxMp * 100); 
+            if(mpPct < 0) mpPct = 0;
             document.getElementById('pmp').style.width = mpPct + '%';
-            document.getElementById('hp-txt').innerText = `${p.hp}/${p.maxHp}`;
+            
+            // 文字數值
+            document.getElementById('hp-txt').innerText = `HP:${p.hp}/${p.maxHp}  MP:${p.mp}/${p.maxMp}`;
+            
             if(document.getElementById('atk-val')) document.getElementById('atk-val').innerText = p.atk;
             if(document.getElementById('def-val')) document.getElementById('def-val').innerText = p.def;
         });
@@ -265,12 +307,10 @@
             socket.emit('combatAction', { roomId, type });
         }
 
-        // 🟢 魔法選單
         function openSkill() {
             const btnArea = document.getElementById('btns');
             btnArea.innerHTML = '';
             
-            // 讀取玩家學到的技能 (預設至少有火球)
             const mySkills = myPlayer.skills || ['fireball'];
 
             mySkills.forEach(skillId => {
@@ -289,7 +329,6 @@
                 btnArea.appendChild(btn);
             });
 
-            // 如果沒技能顯示提示 (理論上不會發生)
             if(mySkills.length === 0) btnArea.innerHTML += '<div style="grid-column:span 2; font-size:10px;">尚未學會魔法</div>';
 
             const backBtn = document.createElement('button');
@@ -304,7 +343,6 @@
             if(!isMyTurn) return; 
             toggle(true);
             socket.emit('combatAction', { roomId, type: 'skill', skillId: skillId });
-            // 特效
             const img = document.getElementById('monster-img');
             img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
         }
@@ -313,7 +351,6 @@
             const btnArea = document.getElementById('btns');
             btnArea.innerHTML = '';
             
-            // 戰鬥中顯示的物品
             const itemsToShow = ['potion_hp', 'potion_mid', 'potion_high', 'potion_max', 'elixir', 'potion_mp', 'potion_mp_mid', 'potion_mp_high'];
             
             let hasItem = false;
