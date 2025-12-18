@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>鍛鍊所</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body { 
+            background-color: #2c3e50; color: #fff; 
+            font-family: 'Press Start 2P', monospace; 
+            text-align: center; 
+            padding: 15px; 
+            display:flex; flex-direction:column; align-items:center; 
+            height: 100dvh; margin:0; box-sizing:border-box;
+            overscroll-behavior: none;
+        }
+        
+        .header { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .gold-display { color: #f1c40f; font-size: 14px; font-weight: bold; }
+        h1 { font-size: 20px; margin: 0; }
+
+        .container { 
+            display: flex; flex: 1; 
+            width: 100%; max-width: 600px; 
+            gap: 15px; overflow: hidden; 
+            margin-bottom: 15px; 
+        }
+        
+        /* 左：配方列表放大 */
+        .recipe-list { flex: 1.3; background: #34495e; border: 3px solid #bdc3c7; overflow-y: auto; padding: 10px; border-radius: 8px; }
+        
+        /* 右：詳情放大 */
+        .detail-panel { flex: 1; background: #222; border: 3px solid #e67e22; padding: 15px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; border-radius: 8px; }
+
+        /* 列表按鈕放大 */
+        .recipe-item { 
+            background: #ecf0f1; color: #2c3e50; padding: 15px 10px; 
+            margin-bottom: 8px; cursor: pointer; text-align: left; 
+            border-bottom: 4px solid #bdc3c7; border-radius: 4px;
+        }
+        .recipe-item:hover, .selected { background: #f1c40f; color: #000; border-color: #e67e22; transform: translateX(3px); }
+        
+        .item-name { font-size: 12px; font-weight: bold; margin-bottom: 5px; }
+        .item-stats-preview { font-size: 10px; color: #27ae60; font-family: monospace; }
+        .selected .item-stats-preview { color: #c0392b; }
+
+        /* 材料列表 */
+        .mat-row { font-size: 12px; margin: 8px 0; display: flex; justify-content: space-between; width: 100%; border-bottom: 1px dashed #444; padding-bottom: 2px;}
+        .ok { color: #2ecc71; }
+        .no { color: #e74c3c; }
+
+        /* 按鈕放大 */
+        .btn { 
+            padding: 15px; font-family: inherit; font-size: 14px; font-weight: bold;
+            cursor: pointer; border: 2px solid #fff; color: white; margin-top: auto; width: 100%; 
+            background: #c0392b; border-radius: 6px;
+        }
+        .btn:disabled { background: #555; cursor: not-allowed; border-color: #777; }
+        .btn:active { filter: brightness(0.8); transform: translateY(2px); }
+
+        .back-btn { 
+            background: #7f8c8d; color: white; padding: 15px; 
+            text-decoration: none; font-size: 14px; 
+            border: 3px solid #fff; display: block; 
+            width: 100%; max-width: 600px; box-sizing: border-box; border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1> 鍛鍊所</h1>
+        <div class="gold-display"> <span id="my-gold">0</span> G</div>
+    </div>
+
+    <div class="container">
+        <div class="recipe-list" id="recipe-list">讀取中...</div>
+
+        <div class="detail-panel" id="detail-panel">
+            <div style="font-size:12px; color:#aaa; margin-top:50px;">請選擇裝備</div>
+        </div>
+    </div>
+
+    <a href="hub.html" class="back-btn">◀ 返回大廳</a>
+
+    <script src="socket.io.js"></script>
+    <script>
+        // 這是加密後的網址 (一般人看不懂這是什麼)
+        const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
+
+        // atob() 函數會把亂碼解開成原本的網址
+        const BACKEND_URL = atob(_0x5a1b); 
+        
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling']
+        });
+        let myToken = localStorage.getItem('rpg_token');
+        if (!myToken) window.location.href = 'index.html';
+
+        let myData = { gold: 0, inventory: {} };
+        let currentRecipes = [];
+        let selectedRecipeId = null;
+
+        socket.on('connect', () => {
+            socket.emit('joinGame', myToken);
+            socket.emit('getRecipes');
+        });
+
+        socket.on('playerStatsUpdate', (p) => {
+            myData = p;
+            document.getElementById('my-gold').innerText = p.gold;
+            if(selectedRecipeId) showDetail(selectedRecipeId);
+        });
+
+        socket.on('recipeList', (recipes) => {
+            currentRecipes = recipes;
+            const list = document.getElementById('recipe-list');
+            list.innerHTML = '';
+            recipes.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'recipe-item';
+                div.innerHTML = `
+                    <div class="item-name">${r.itemName}</div>
+                    <div class="item-stats-preview">${r.itemStats || '無屬性'}</div>
+                `;
+                div.onclick = () => {
+                    document.querySelectorAll('.recipe-item').forEach(el => el.classList.remove('selected'));
+                    div.classList.add('selected');
+                    selectedRecipeId = r.itemId;
+                    showDetail(r.itemId);
+                };
+                list.appendChild(div);
+            });
+        });
+
+        socket.on('craftResult', (res) => { alert(res.msg); });
+
+        function showDetail(id) {
+            const recipe = currentRecipes.find(r => r.itemId === id);
+            if (!recipe) return;
+
+            const panel = document.getElementById('detail-panel');
+            let canCraft = true;
+            let matHtml = '';
+
+            recipe.materials.forEach(m => {
+                const has = myData.inventory[m.id] || 0;
+                const enough = has >= m.count;
+                if (!enough) canCraft = false;
+                matHtml += `
+                    <div class="mat-row">
+                        <span>${m.name}</span>
+                        <span class="${enough ? 'ok' : 'no'}">${has}/${m.count}</span>
+                    </div>
+                `;
+            });
+
+            const goldEnough = myData.gold >= recipe.goldCost;
+            if(!goldEnough) canCraft = false;
+
+            panel.innerHTML = `
+                <h3 style="color:#f1c40f; font-size:16px; margin-bottom:10px;">${recipe.itemName}</h3>
+                <div style="font-size:10px; color:#2ecc71; margin-bottom:10px;">${recipe.itemStats}</div>
+                <div style="font-size:10px; color:#aaa; margin-bottom:20px; line-height:1.5;">${recipe.itemDesc}</div>
+                
+                <div style="width:100%; border-top:2px dashed #555; padding-top:10px; margin-bottom:10px; font-size:10px; color:#bdc3c7;">所需材料:</div>
+                ${matHtml}
+                
+                <div class="mat-row" style="margin-top:15px; border-top:2px solid #555; padding-top:10px;">
+                    <span>費用</span>
+                    <span class="${goldEnough ? 'ok' : 'no'}">${recipe.goldCost} G</span>
+                </div>
+
+                <button class="btn" ${canCraft ? '' : 'disabled'} onclick="doCraft('${id}')">開始鍛造</button>
+            `;
+        }
+
+        function doCraft(id) { socket.emit('craftItem', id); }
+    </script>
+</body>
+</html>

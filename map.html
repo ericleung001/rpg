@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>RPG 地圖 (修復移動版)</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body { margin: 0; background: #1a1a1a; display:flex; justify-content:center; align-items:center; height:100vh; color: white; font-family: 'Press Start 2P', monospace; flex-direction: column; image-rendering: pixelated; }
+        
+        #debug-ui {
+            position: absolute; top: 10px; left: 10px; z-index: 100;
+            background: rgba(0,0,0,0.7); padding: 10px; border: 2px solid lime;
+            font-size: 12px; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="debug-ui">
+    狀態: <span id="conn-status" style="color:yellow">連線中...</span><br>
+    按鍵: <span id="key-status" style="color:white">無</span><br>
+    <small>如果動不了，請點擊畫面中間</small>
+</div>
+
+<script>
+    // 【設定】請確保這裡的數字配合你的圖片
+    // 你的圖片如果是 16x16 一格，就填 16
+    const FRAME_WIDTH = 16; 
+    const FRAME_HEIGHT = 16; 
+    const SCALE_FACTOR = 3; 
+
+    const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        backgroundColor: '#366f27',
+        pixelArt: true,
+        physics: {
+            default: 'arcade',
+            arcade: { gravity: { y: 0 } }
+        },
+        scene: { preload: preload, create: create, update: update }
+    };
+
+    const game = new Phaser.Game(config);
+    
+    let socket, player, otherPlayers, cursors;
+    let isConnected = false;
+    let isInBattle = false;
+
+    function preload() {
+        // 載入圖片
+        this.load.spritesheet('sprite_player', 'assets/player.png', { frameWidth: FRAME_WIDTH, frameHeight: FRAME_HEIGHT });
+        this.load.spritesheet('sprite_other', 'assets/player.png', { frameWidth: FRAME_WIDTH, frameHeight: FRAME_HEIGHT });
+    }
+
+    function create() {
+        let self = this;
+        otherPlayers = this.physics.add.group();
+
+        // 強制獲取焦點
+        this.input.mouse.capture = true;
+        this.input.on('pointerdown', () => {
+            document.getElementById('key-status').innerText = "已點擊 (Focus)";
+        });
+
+        // 建立動畫 (用 try-catch 包住防止報錯卡死)
+        try {
+            this.anims.create({ key: 'down', frames: this.anims.generateFrameNumbers('sprite_player', { start: 0, end: 2 }), frameRate: 10, repeat: -1 });
+            this.anims.create({ key: 'up', frames: this.anims.generateFrameNumbers('sprite_player', { start: 9, end: 11 }), frameRate: 10, repeat: -1 }); // 注意：你的圖可能是第4排(9-11)
+            this.anims.create({ key: 'right', frames: this.anims.generateFrameNumbers('sprite_player', { start: 6, end: 8 }), frameRate: 10, repeat: -1 });
+            // 左邊直接用右邊翻轉
+        } catch (e) {
+            console.error("動畫建立失敗，可能圖片尺寸不對:", e);
+        }
+
+        // Socket 連線
+        socket = io();
+        socket.on('connect', () => { 
+            document.getElementById('conn-status').innerText = "已連線";
+            document.getElementById('conn-status').style.color = "lightgreen";
+            socket.emit('joinGame'); 
+        });
+
+        socket.on('currentPlayers', (players) => {
+            Object.keys(players).forEach((id) => {
+                if (players[id].playerId === socket.id) addPlayer(self, players[id]);
+                else addOtherPlayers(self, players[id]);
+            });
+        });
+
+        socket.on('newPlayer', (info) => addOtherPlayers(self, info));
+        socket.on('playerDisconnected', (id) => {
+            otherPlayers.getChildren().forEach((p) => { if (p.playerId === id) p.destroy(); });
+        });
+        socket.on('playerMoved', (info) => {
+            otherPlayers.getChildren().forEach((p) => { 
+                if (p.playerId === info.playerId) p.setPosition(info.x, info.y); 
+            });
+        });
+
+        // 鍵盤監聽
+        cursors = this.input.keyboard.createCursorKeys();
+        
+        // Debug: 監聽任何按鍵
+        this.input.keyboard.on('keydown', (event) => {
+            document.getElementById('key-status').innerText = event.key;
+        });
+    }
+
+    function addPlayer(self, info) {
+        if (player) return;
+        player = self.physics.add.sprite(info.x, info.y, 'sprite_player');
+        player.setCollideWorldBounds(true);
+        player.setScale(SCALE_FACTOR);
+        player.setBodySize(10, 10); // 縮小碰撞箱避免卡牆
+    }
+
+    function addOtherPlayers(self, info) {
+        let p = self.physics.add.sprite(info.x, info.y, 'sprite_other');
+        p.playerId = info.playerId;
+        otherPlayers.add(p);
+        p.setScale(SCALE_FACTOR);
+    }
+
+    function update() {
+        if (isInBattle || !player || !player.body) return;
+
+        player.body.setVelocity(0);
+        let speed = 150;
+        let moved = false;
+        let animKey = '';
+
+        // 移動邏輯
+        if (cursors.left.isDown) {
+            player.body.setVelocityX(-speed);
+            player.setFlipX(true);
+            animKey = 'right'; // 向左時，播放向右動畫並翻轉
+            moved = true;
+        } else if (cursors.right.isDown) {
+            player.body.setVelocityX(speed);
+            player.setFlipX(false);
+            animKey = 'right';
+            moved = true;
+        } else if (cursors.up.isDown) {
+            player.body.setVelocityY(-speed);
+            animKey = 'up';
+            moved = true;
+        } else if (cursors.down.isDown) {
+            player.body.setVelocityY(speed);
+            animKey = 'down';
+            moved = true;
+        }
+
+        // 播放動畫 (加了保護機制)
+        if (moved) {
+            if (player.anims && player.anims.exists(animKey)) {
+                player.anims.play(animKey, true);
+            }
+            socket.emit('playerMovement', { x: player.x, y: player.y });
+            
+            // 隨機遇怪
+            if (Phaser.Math.Distance.Between(player.x, player.y, 400, 300) > 80) {
+                if (Math.random() < 0.005) {
+                    isInBattle = true;
+                    window.location.href = 'battle.html';
+                }
+            }
+        } else {
+            if (player.anims) player.anims.stop();
+        }
+    }
+</script>
+</body>
+</html>

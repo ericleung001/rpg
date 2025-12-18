@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>冒險者大廳</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body { 
+            background-color: #2c3e50; color: #ecf0f1; 
+            font-family: 'Press Start 2P', monospace; 
+            text-align: center; 
+            display: flex; flex-direction: column; align-items: center; 
+            height: 100dvh; 
+            margin: 0; padding: 15px; box-sizing: border-box; 
+            overflow: hidden; 
+            overscroll-behavior: none;
+        }
+        
+        /* 頂部列 */
+        .top-bar { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 40px;}
+        .logout-btn { font-size: 12px; color: #e74c3c; cursor: pointer; text-decoration: underline; white-space: nowrap; padding: 10px; }
+        h1 { font-size: 20px; margin: 0; white-space: nowrap; }
+        #conn-status { font-size: 12px; padding: 8px 12px; background: #333; border: 1px solid #fff; border-radius: 6px; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+
+        /* 狀態欄 */
+        .status-bar { 
+            background: #34495e; border: 4px solid #fff; padding: 15px; 
+            width: 100%; max-width: 600px; margin-bottom: 15px; border-radius: 12px; 
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: left; 
+            font-size: 12px; box-sizing: border-box;
+        }
+        .stat-row { color: #f1c40f; margin-bottom: 4px; }
+        .val { color: white; float: right; font-weight: bold; }
+        .exp-bar { width: 100%; height: 10px; background: #555; margin-top: 5px; border: 2px solid #fff; border-radius: 4px; }
+        .exp-fill { height: 100%; background: #3498db; width: 0%; transition: width 0.3s; }
+        
+        .main-content {
+            width: 100%; max-width: 600px;
+            flex: 1; 
+            display: flex; flex-direction: column;
+            overflow: hidden; 
+            margin-bottom: 50px; /* 留位給收起的聊天室 */
+        }
+
+        /* 設施按鈕網格 (3列 x 2行) */
+        .facility-grid { 
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; 
+            margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px dashed #7f8c8d; 
+        }
+        
+        .map-container {
+            flex: 1; overflow-y: auto; padding-right: 5px;
+            -webkit-overflow-scrolling: touch; 
+        }
+
+        /* 通用按鈕樣式 */
+        .btn { 
+            padding: 15px 5px; font-family: inherit; font-size: 12px; cursor: pointer; 
+            border: 3px solid #bdc3c7; color: white; text-decoration: none; 
+            display: block; text-shadow: 1px 1px 0 #000; background: #34495e; 
+            position: relative; text-align: left; margin-bottom: 10px; border-radius: 6px;
+        }
+        .btn:active { transform: translateY(2px); filter: brightness(0.8); }
+        .btn-center { text-align: center; display: flex; align-items: center; justify-content: center; height: 100%; box-sizing: border-box; }
+        .locked { background: #555; color: #888; border-color: #555; }
+        
+        .info-tag { float: right; font-size: 10px; color: #f1c40f; margin-top: 2px; }
+        .room-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; float: right; margin-left: 5px; }
+        .status-waiting { background: #27ae60; color: white; }
+        .status-fighting { background: #c0392b; color: white; }
+        
+        /* 聊天室 (伸縮式) */
+        #chat-container {
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: rgba(0, 0, 0, 0.95); border-top: 6px solid #bdc3c7;
+            display: flex; flex-direction: column; font-size: 12px; z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom);
+            transition: height 0.3s ease-in-out;
+            height: 35px; /* 預設收起高度 */
+        }
+        
+        #chat-header {
+            height: 35px; background: #34495e; color: #fff; line-height: 35px; 
+            cursor: pointer; font-weight: bold; border-bottom: 1px solid #555;
+            display: flex; justify-content: center; align-items: center;
+        }
+        #chat-header:hover { background: #2c3e50; }
+
+        .chat-open { height: 30vh !important; }
+        #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+        .chat-open #chat-body { display: flex; } 
+
+        #chat-history { flex: 1; overflow-y: auto; padding: 10px; text-align: left; color: white; }
+        #chat-input-area { display: flex; border-top: 1px solid #555; height: 45px; }
+        #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 15px; font-family: inherit; font-size: 14px; outline: none; }
+        #chat-send { background: #2980b9; color: white; border: none; padding: 0 20px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: bold; }
+
+        /* 通知彈窗 */
+        #toast-notification {
+            position: fixed; top: -60px; left: 50%; transform: translateX(-50%);
+            background: #f1c40f; color: #000; border: 3px solid #fff;
+            padding: 15px 30px; border-radius: 30px; font-size: 14px; font-weight: bold;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.6); z-index: 1000;
+            transition: top 0.5s ease-in-out; white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="toast-notification"> 訊息提示</div>
+
+    <div class="top-bar">
+        <div class="logout-btn" onclick="logout()">登出</div>
+        <h1> 公會大廳</h1>
+        <div id="conn-status" style="color:#e74c3c"> 未連線</div>
+    </div>
+    
+    <div class="status-bar">
+        <div class="stat-row">ID <span id="pid" class="val">...</span></div>
+        <div class="stat-row">LV <span id="lvl" class="val">1</span></div>
+        <div class="stat-row">金 <span id="gold" class="val">0</span></div>
+        <div class="stat-row">HP <span id="hp" class="val">...</span></div>
+        <div class="stat-row">MP <span id="mp" class="val" style="color:#3498db">...</span></div>
+        <div class="stat-row"></div>
+        <div style="grid-column: span 3;">
+            EXP <span id="exp-txt" style="font-size:10px; float:right">0/100</span>
+            <div class="exp-bar"><div id="exp-fill" class="exp-fill"></div></div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="section-title" style="text-align:left; font-size:12px; color:#aaa; margin-bottom:10px;">城鎮設施</div>
+        
+        <div class="facility-grid">
+            <a href="bag.html" class="btn btn-center" style="background:#16a085; border-color:#1abc9c;"> 背包</a>
+            <a href="market.html" class="btn btn-center" style="background:#f39c12; border-color:#d35400;">道具屋</a>
+            <a href="auction.html" class="btn btn-center" style="background:#2980b9; border-color:#3498db;">市集</a>
+            <a href="smithy.html" class="btn btn-center" style="background:#c0392b; border-color:#e74c3c;">鍛鍊所</a>
+            <a href="equip.html" class="btn btn-center" style="background:#8e44ad; border-color:#9b59b6;">裝備</a>
+            <a href="rest.html" class="btn btn-center" style="background:#27ae60; border-color:#2ecc71;">旅館</a>
+        </div>
+
+        <div id="list-title" style="text-align:left; font-size:12px; color:#aaa; margin-bottom:10px;">世界地圖</div>
+        <div class="map-container" id="map-list">
+            <div class="btn locked">讀取中...</div>
+        </div>
+    </div>
+
+    <div id="chat-container">
+        <div id="chat-header" onclick="toggleChat()"> 公頻聊天室 (點擊展開)</div>
+        <div id="chat-body">
+            <div id="chat-history"></div>
+            <div id="chat-input-area">
+                <input type="text" id="chat-input" placeholder="輸入訊息..." maxlength="50">
+                <button id="chat-send">發送</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="socket.io.js"></script>
+    <script>
+        // 這是加密後的網址 (一般人看不懂這是什麼)
+        const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
+
+        // atob() 函數會把亂碼解開成原本的網址
+        const BACKEND_URL = atob(_0x5a1b); 
+        
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling']
+        });
+        let myLevel = 1;
+        let myToken = localStorage.getItem('rpg_token');
+        if (!myToken) { window.location.href = 'index.html'; }
+
+        const WORLD_MAP = [
+            { 
+                id: 'city_1', name: '曙光平原', reqLv: 1, desc: '冒險的起點 (Lv.1-20)', 
+                monsters: [
+                    { id: 'slime', name: '史萊姆', lv: 1 }, 
+                    { id: 'rat', name: '大老鼠', lv: 3 },
+                    { id: 'bee', name: '殺人蜂', lv: 5 },
+                    { id: 'boar', name: '野豬', lv: 8 },
+                    { id: 'thief', name: '盜賊', lv: 12 },
+                    { id: 'wolf_king', name: ' 狼王 (BOSS)', lv: 15 }
+                ] 
+            },
+            { 
+                id: 'city_2', name: '迷霧沼澤', reqLv: 20, desc: '充滿毒氣與亡靈 (Lv.20-40)', 
+                monsters: [
+                    { id: 'snake', name: '毒蛇', lv: 22 }, 
+                    { id: 'zombie', name: '腐屍', lv: 25 },
+                    { id: 'skeleton', name: '骷髏兵', lv: 28 },
+                    { id: 'ghoul', name: '食屍鬼', lv: 32 },
+                    { id: 'witch', name: '沼澤女巫', lv: 35 },
+                    { id: 'hydra', name: ' 九頭蛇 (BOSS)', lv: 40 }
+                ] 
+            },
+            { 
+                id: 'city_3', name: '灼熱峽谷', reqLv: 40, desc: '烈火與熔岩 (Lv.40-60)', 
+                monsters: [
+                    { id: 'fire_imp', name: '火焰小鬼', lv: 42 }, 
+                    { id: 'lava_golem', name: '熔岩戈侖', lv: 45 },
+                    { id: 'salamander', name: '火蜥蜴', lv: 48 },
+                    { id: 'fire_mage', name: '烈焰法師', lv: 52 },
+                    { id: 'dragon_hatchling', name: '幼龍', lv: 55 },
+                    { id: 'balrog', name: ' 炎魔 (BOSS)', lv: 60 }
+                ] 
+            },
+            { 
+                id: 'city_4', name: '極寒凍土', reqLv: 60, desc: '永冬之地 (Lv.60-80)', 
+                monsters: [
+                    { id: 'snow_wolf', name: '雪原狼', lv: 62 }, 
+                    { id: 'yeti', name: '雪人', lv: 65 },
+                    { id: 'ice_spirit', name: '冰精靈', lv: 68 },
+                    { id: 'frost_knight', name: '寒霜騎士', lv: 72 },
+                    { id: 'ice_dragon', name: '冰霜龍', lv: 75 },
+                    { id: 'lich_king', name: ' 巫妖王 (BOSS)', lv: 80 }
+                ] 
+            },
+            { 
+                id: 'city_5', name: '虛空要塞', reqLv: 80, desc: '接近魔界的地方 (Lv.80-100)', 
+                monsters: [
+                    { id: 'void_eye', name: '虛空之眼', lv: 82 }, 
+                    { id: 'shadow_assassin', name: '暗影刺客', lv: 85 },
+                    { id: 'dark_paladin', name: '墮落聖騎', lv: 88 },
+                    { id: 'demon_guard', name: '惡魔守衛', lv: 92 },
+                    { id: 'succubus', name: '魅魔', lv: 95 },
+                    { id: 'void_lord', name: '️ 虛空領主 (BOSS)', lv: 99 }
+                ] 
+            },
+            { 
+                id: 'city_6', name: '魔界王座', reqLv: 100, desc: '☠️ 最終決戰 (Lv.100+)', 
+                monsters: [
+                    { id: 'chaos_beast', name: '混沌巨獸', lv: 105 },
+                    { id: 'fallen_angel', name: '墮天使', lv: 110 },
+                    { id: 'demon_king', name: ' 魔王撒旦 (FINAL)', lv: 150 }
+                ] 
+            }
+        ];
+
+        let currentView = 'cities'; 
+        let selectedCity = null;
+        let selectedMonster = null;
+        let cityData = {}; 
+        let activeRooms = []; 
+
+        socket.on('connect', () => {
+            const status = document.getElementById('conn-status');
+            status.innerHTML = " 已連線";
+            status.style.color = "#2ecc71";
+            socket.emit('joinGame', myToken);
+        });
+
+        socket.on('disconnect', () => {
+            const status = document.getElementById('conn-status');
+            status.innerHTML = " 斷線...";
+            status.style.color = "#e74c3c";
+        });
+
+        socket.on('playerStatsUpdate', (p) => {
+            myLevel = p.level;
+            document.getElementById('pid').innerText = p.id.substring(0, 4);
+            document.getElementById('lvl').innerText = p.level;
+            document.getElementById('gold').innerText = p.gold;
+            document.getElementById('hp').innerText = `${p.hp}/${p.maxHp}`;
+            document.getElementById('mp').innerText = `${p.mp}/${p.maxMp}`;
+            document.getElementById('exp-txt').innerText = `${p.exp}/${p.maxExp}`;
+            document.getElementById('exp-fill').style.width = (p.exp / p.maxExp * 100) + '%';
+            refreshUI();
+        });
+
+        socket.on('hubDataUpdate', (data) => {
+            cityData = data.cityCounts;
+            activeRooms = data.roomsList;
+            refreshUI();
+        });
+
+        // 監聽市集交易或NPC販賣結果
+        socket.on('marketResult', (res) => { if (res.success) { showToast(res.msg); } });
+        socket.on('bagResult', (res) => { if (res.success) { showToast(res.msg); } });
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-notification');
+            toast.innerText = msg;
+            toast.style.top = "30px"; 
+            setTimeout(() => { toast.style.top = "-60px"; }, 3000);
+        }
+
+        socket.on('roomJoined', (data) => { window.location.href = `battle.html?room=${data.roomId}`; });
+        socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
+
+        // --- 聊天邏輯 ---
+        socket.on('chatHistory', (history) => {
+            const box = document.getElementById('chat-history');
+            box.innerHTML = ''; 
+            history.forEach(data => appendChat(data.name, data.msg));
+        });
+
+        socket.on('chatMessage', (data) => {
+            appendChat(data.name, data.msg);
+        });
+
+        function appendChat(name, msg) {
+            const history = document.getElementById('chat-history');
+            const div = document.createElement('div');
+            
+            // 1. 建立名字的 span (保持顏色)
+            const nameSpan = document.createElement('span');
+            nameSpan.style.color = '#f1c40f';
+            nameSpan.style.fontWeight = 'bold';
+            nameSpan.textContent = `[${name}]: `; // 使用 textContent (安全)
+
+            // 2. 建立訊息的文字節點 (這一步保證了絕對安全)
+            // 任何 HTML 代碼在這裡都會被當作純文字顯示，不會被執行
+            const msgNode = document.createTextNode(msg);
+
+            // 3. 組合起來
+            div.appendChild(nameSpan);
+            div.appendChild(msgNode);
+            
+            history.appendChild(div);
+            history.scrollTop = history.scrollHeight;
+        }
+
+        document.getElementById('chat-send').onclick = sendChat;
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChat();
+        });
+
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (msg) { socket.emit('sendChat', msg); input.value = ''; }
+        }
+
+        function toggleChat() {
+            const chat = document.getElementById('chat-container');
+            chat.classList.toggle('chat-open');
+            const header = document.getElementById('chat-header');
+            if(chat.classList.contains('chat-open')) {
+                header.innerText = " 點擊收起";
+            } else {
+                header.innerText = " 公頻聊天室 (點擊展開)";
+            }
+        }
+
+        window.logout = function() {
+            if(confirm("確定要登出嗎？")) {
+                localStorage.removeItem('rpg_token');
+                window.location.href = 'index.html';
+            }
+        };
+
+        window.triggerCreateRoom = function(mobId) {
+            if (!socket.connected) { alert("錯誤：未連線到伺服器！"); return; }
+            socket.emit('createRoom', mobId);
+            document.getElementById('list-title').innerText = "正在建立房間...";
+        };
+        window.triggerJoinRoom = function(roomId) { socket.emit('joinRoom', roomId); };
+        window.triggerEnterCity = function(cityId) {
+            let city = WORLD_MAP.find(c => c.id === cityId);
+            if (city) { selectedCity = city; currentView = 'monsters'; socket.emit('enterCity', cityId); refreshUI(); }
+        };
+        window.triggerSelectMonster = function(mobId) {
+            let city = selectedCity;
+            let mob = city.monsters.find(m => m.id === mobId);
+            if (mob) { selectedMonster = mob; currentView = 'rooms'; refreshUI(); }
+        };
+        window.goBack = function(view) { currentView = view; refreshUI(); };
+
+        function refreshUI() {
+            const container = document.getElementById('map-list');
+            let html = '';
+            if (currentView === 'cities') {
+                document.getElementById('list-title').innerText = "選擇區域";
+                WORLD_MAP.forEach(city => {
+                    const isLowLevel = myLevel < city.reqLv;
+                    const count = cityData[city.id] || 0;
+                    const warnText = isLowLevel ? `<span style="color:#e74c3c">(LV${city.reqLv})</span>` : '';
+                    html += `<div class="btn" style="border-color:#3498db" onclick="triggerEnterCity('${city.id}')">
+                        <div style="display:flex; justify-content:space-between;"><span style="font-size:14px; font-weight:bold;">${city.name} ${warnText}</span><span class="info-tag">${count}</span></div>
+                        <div style="font-size:10px; color:#bdc3c7; margin-top:5px;">${city.desc}</div></div>`;
+                });
+            } else if (currentView === 'monsters') {
+                document.getElementById('list-title').innerText = `${selectedCity.name} - 怪物`;
+                selectedCity.monsters.forEach(mob => {
+                    const rooms = activeRooms.filter(r => r.monsterKey === mob.id);
+                    const fighting = rooms.filter(r => r.status === 'fighting').length;
+                    const waiting = rooms.filter(r => r.status === 'waiting').length;
+                    html += `<div class="btn" style="border-color:#c0392b" onclick="triggerSelectMonster('${mob.id}')">
+                        <span style="font-size:14px; font-weight:bold;">${mob.name} (LV.${mob.lv})</span>
+                        <div style="margin-top:5px;"><span class="info-tag" style="color:#2ecc71">等:${waiting}</span><span class="info-tag" style="color:#e74c3c; margin-right:10px;">戰:${fighting}</span></div></div>`;
+                });
+                html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('cities')">◀ 返回地圖</div>`;
+            } else if (currentView === 'rooms') {
+                document.getElementById('list-title').innerText = `${selectedMonster.name} - 房間`;
+                html += `<div class="btn" style="background:#27ae60; text-align:center; font-weight:bold; font-size:14px;" onclick="triggerCreateRoom('${selectedMonster.id}')">➕ 開新房間</div>`;
+                const myRooms = activeRooms.filter(r => r.monsterKey === selectedMonster.id);
+                if (myRooms.length === 0) html += `<div style="font-size:12px; color:#aaa; margin:10px;">目前沒有房間...</div>`;
+                myRooms.forEach(room => {
+                    const isFighting = room.status === 'fighting';
+                    const clickAction = isFighting ? '' : `onclick="triggerJoinRoom('${room.id}')"`;
+                    const statusTag = isFighting ? '<span class="room-tag status-fighting">戰鬥</span>' : '<span class="room-tag status-waiting">等待</span>';
+                    const lockClass = isFighting ? 'locked' : '';
+                    html += `<div class="btn ${lockClass}" ${clickAction}><div style="font-size:12px;">Room ${room.id.substr(5)}</div><div style="margin-top:5px;">${statusTag}<span class="info-tag" style="margin-right:5px;">${room.playerCount}/5</span></div></div>`;
+                });
+                html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('monsters')">◀ 返回列表</div>`;
+            }
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>我的背包</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body { 
+            background-color: #2c3e50; color: #fff; 
+            font-family: 'Press Start 2P', monospace; 
+            text-align: center; padding: 15px; 
+            display:flex; flex-direction:column; align-items:center; 
+            height: 100dvh; margin:0; box-sizing:border-box;
+            overscroll-behavior: none;
+        }
+        
+        .header { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .gold-display { color: #f1c40f; font-size: 14px; font-weight: bold; }
+        h1 { font-size: 20px; margin: 0; }
+
+        .container { 
+            display: flex; flex: 1; width: 100%; max-width: 600px; 
+            flex-direction: column; overflow: hidden; margin-bottom: 15px; 
+        }
+        
+        .bag-list { 
+            flex: 1; background: #34495e; border: 3px solid #bdc3c7; 
+            overflow-y: auto; padding: 10px; border-radius: 8px; 
+        }
+
+        .item-card { 
+            background: #ecf0f1; color: #2c3e50; 
+            padding: 15px; margin-bottom: 10px; 
+            border-radius: 8px; text-align: left; 
+            border-bottom: 4px solid #95a5a6;
+        }
+        
+        .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .item-name { font-size: 14px; font-weight: bold; color: #2980b9; }
+        .item-count { font-size: 14px; background: #2c3e50; color: #fff; padding: 2px 6px; border-radius: 4px; }
+        .item-desc { font-size: 10px; color: #7f8c8d; margin-bottom: 10px; }
+
+        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        .btn { 
+            padding: 12px; font-family: inherit; font-size: 12px; cursor: pointer; 
+            border: 2px solid rgba(0,0,0,0.2); color: white; border-radius: 6px; font-weight: bold;
+        }
+        .btn:active { transform: translateY(2px); filter: brightness(0.9); }
+        .btn-npc { background: #e74c3c; } 
+        .btn-market { background: #3498db; }
+
+        .back-btn { 
+            background: #7f8c8d; color: white; padding: 15px; 
+            text-decoration: none; font-size: 14px; 
+            border: 3px solid #fff; display: block; 
+            width: 100%; max-width: 600px; box-sizing: border-box; border-radius: 8px;
+        }
+
+        /* === 彈窗樣式 === */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.85); display: none; 
+            flex-direction: column; justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-box { 
+            background: #fff; color: #000; 
+            padding: 25px; border: 6px solid #f1c40f; 
+            width: 80%; max-width: 300px; border-radius: 12px; text-align: center;
+        }
+        input { 
+            width: 100%; padding: 15px; margin: 15px 0; 
+            font-family: inherit; font-size: 16px; 
+            box-sizing: border-box; border: 2px solid #ccc; text-align: center;
+        }
+
+        /* === Toast 通知 === */
+        #game-toast {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f;
+            color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999;
+            font-size: 14px; font-weight: bold; transition: top 0.5s ease-in-out;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-toast"></div>
+
+    <div class="header">
+        <h1> 背包</h1>
+        <div class="gold-display"> <span id="my-gold">0</span> G</div>
+    </div>
+
+    <div class="container">
+        <div class="bag-list" id="bag-list">
+            <div style="font-size:12px; color:#aaa; margin-top:20px;">載入中...</div>
+        </div>
+    </div>
+
+    <a href="hub.html" class="back-btn">◀ 返回大廳</a>
+
+    <div id="market-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 id="market-title" style="font-size:16px; margin-bottom:10px;">上架物品</h3>
+            <div style="font-size:10px; color:#555; margin-bottom:10px;">請輸入市集販賣價格</div>
+            <input type="number" id="sell-price" placeholder="價格 (G)">
+            <button class="btn btn-market" style="width:100%; margin-bottom:10px;" onclick="confirmMarketSell()">確認上架</button>
+            <button class="btn" style="background:#555; width:100%;" onclick="closeAllModals()">取消</button>
+        </div>
+    </div>
+
+    <div id="npc-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 style="font-size:16px; margin-bottom:10px; color:#e74c3c;">賣給商人</h3>
+            <div id="npc-msg" style="font-size:12px; color:#555; margin-bottom:20px; line-height:1.6;">...</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <button class="btn" style="background:#e74c3c;" onclick="confirmNPCSell()">確定</button>
+                <button class="btn" style="background:#7f8c8d;" onclick="closeAllModals()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="socket.io.js"></script>
+    <script>
+        // 這是加密後的網址 (一般人看不懂這是什麼)
+        const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
+
+        // atob() 函數會把亂碼解開成原本的網址
+        const BACKEND_URL = atob(_0x5a1b); 
+        
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling']
+        });
+        let myToken = localStorage.getItem('rpg_token');
+        if (!myToken) window.location.href = 'index.html';
+
+        //  完整物品資料庫 (必須包含所有新物品，否則會顯示代碼)
+        const ITEM_DB = {
+            // === 消耗品 ===
+            'potion_hp':    { name: "小紅藥水", cost: 50, desc: "恢復 50 HP" },
+            'potion_mid':   { name: "中紅藥水", cost: 200, desc: "恢復 500 HP" },
+            'potion_high':  { name: "大紅藥水", cost: 1000, desc: "恢復 2000 HP" },
+            'potion_max':   { name: "特級秘藥", cost: 5000, desc: "恢復 10000 HP" },
+            'elixir':       { name: "神之甘露", cost: 20000, desc: "恢復 50000 HP" },
+
+            // === 武器 ===
+            'wood_sword':   { name: "木劍", cost: 100, desc: "ATK+10" },
+            'copper_dagger':{ name: "銅匕首", cost: 200, desc: "ATK+15" },
+            'iron_sword':   { name: "鐵劍", cost: 500, desc: "ATK+30" },
+            'spike_club':   { name: "狼牙棒", cost: 0, desc: "ATK+55" },
+            'poison_dag':   { name: "劇毒匕首", cost: 0, desc: "ATK+60" },
+            'silver_blade': { name: "銀刃", cost: 2000, desc: "ATK+150" },
+            'flame_staff':  { name: "火焰法杖", cost: 0, desc: "ATK+200" },
+            'gold_axe':     { name: "黃金巨斧", cost: 10000, desc: "ATK+500" },
+            'frost_bow':    { name: "寒冰弓", cost: 0, desc: "ATK+650" },
+            'mithril_saber':{ name: "秘銀軍刀", cost: 50000, desc: "ATK+2000" },
+            'void_reaper':  { name: "虛空收割者", cost: 0, desc: "ATK+3500" },
+            'god_slayer':   { name: "弒神劍", cost: 0, desc: "ATK+20000" },
+            'chaos_staff':  { name: "混沌法杖", cost: 0, desc: "ATK+25000" },
+            'hero_sword':   { name: "勇者之劍", cost: 2000, desc: "ATK+50" },
+            'steel_blade':  { name: "精鋼劍", cost: 0, desc: "ATK+25" },
+            'assassin_dag': { name: "刺客短刀", cost: 2000, desc: "ATK+120" },
+
+            // === 防具 ===
+            'cloth_armor':  { name: "布衣", cost: 100, desc: "DEF+5" },
+            'hunt_vest':    { name: "獵人背心", cost: 0, desc: "DEF+8" },
+            'leather_armor':{ name: "皮甲", cost: 400, desc: "DEF+15" },
+            'chain_mail':   { name: "鎖子甲", cost: 1500, desc: "DEF+40" },
+            'magma_plate':  { name: "熔岩胸甲", cost: 0, desc: "DEF+100" },
+            'ice_robe':     { name: "冰霜法袍", cost: 0, desc: "DEF+200" },
+            'yeti_cloak':   { name: "雪怪斗篷", cost: 0, desc: "DEF+250" },
+            'demon_armor':  { name: "惡魔戰甲", cost: 0, desc: "DEF+1000" },
+            'angel_armor':  { name: "熾天使鎧甲", cost: 0, desc: "DEF+5000" },
+            'plate_mail':   { name: "板金甲", cost: 1500, desc: "DEF+15" },
+            'dragon_mail':  { name: "龍鱗甲", cost: 0, desc: "DEF+30" },
+
+            // === 飾品 ===
+            'bone_ring':    { name: "骨戒", cost: 0, desc: "ATK+2" },
+            'ring_str':     { name: "力量戒指", cost: 300, desc: "ATK+10" },
+            'snake_boots':  { name: "蛇皮長靴", cost: 0, desc: "DEF+10" },
+            'amulet_soul':  { name: "靈魂護符", cost: 0, desc: "MP+300" },
+            'ring_lord':    { name: "領主指環", cost: 0, desc: "全能力+500" },
+            'crown_chaos':  { name: "混沌之冠", cost: 0, desc: "全能力+2000" },
+            'ring_life':    { name: "生命護符", cost: 600, desc: "HP+100" },
+            'ring_magic':   { name: "魔力耳環", cost: 500, desc: "MP+50" },
+
+            // === 材料 (確保可以賣錢) ===
+            'copper_ore':   { name: "銅礦石", cost: 10, desc: "材料" },
+            'soft_fur':     { name: "柔軟皮毛", cost: 10, desc: "材料" },
+            'beast_fang':   { name: "野獸尖牙", cost: 15, desc: "材料" },
+            'slime_gel':    { name: "黏液", cost: 5, desc: "材料" },
+            'iron_ore':     { name: "鐵礦石", cost: 20, desc: "材料" },
+            'tough_hide':   { name: "硬皮革", cost: 25, desc: "材料" },
+            'poison_sac':   { name: "毒囊", cost: 30, desc: "材料" },
+            'bone_shard':   { name: "碎骨片", cost: 20, desc: "材料" },
+            'silver_ore':   { name: "銀礦石", cost: 50, desc: "材料" },
+            'fire_core':    { name: "火焰核心", cost: 80, desc: "材料" },
+            'lava_rock':    { name: "熔岩石", cost: 60, desc: "材料" },
+            'gold_ore':     { name: "金礦石", cost: 200, desc: "材料" },
+            'ice_crystal':  { name: "永恆冰晶", cost: 150, desc: "材料" },
+            'yeti_fur':     { name: "雪怪毛皮", cost: 180, desc: "材料" },
+            'spirit_dust':  { name: "靈魂粉末", cost: 120, desc: "材料" },
+            'mithril':      { name: "秘銀", cost: 500, desc: "材料" },
+            'void_dust':    { name: "虛空之塵", cost: 400, desc: "材料" },
+            'demon_horn':   { name: "惡魔之角", cost: 600, desc: "材料" },
+            'dark_essence': { name: "暗之精華", cost: 800, desc: "材料" },
+            'adamantite':   { name: "精金", cost: 2000, desc: "材料" },
+            'god_blood':    { name: "神之血", cost: 3000, desc: "材料" },
+            'chaos_orb':    { name: "混沌寶珠", cost: 5000, desc: "材料" },
+            'angel_feather':{ name: "天使之羽", cost: 4000, desc: "材料" },
+            'dragon_scale': { name: "龍鱗", cost: 300, desc: "材料" },
+            'leather':      { name: "皮革", cost: 15, desc: "材料" },
+            'magic_dust':   { name: "魔粉", cost: 30, desc: "材料" }
+        };
+
+        let currentItemId = null;
+
+        socket.on('connect', () => {
+            socket.emit('joinGame', myToken);
+        });
+
+        socket.on('playerStatsUpdate', (p) => {
+            document.getElementById('my-gold').innerText = p.gold;
+            renderBag(p.inventory);
+        });
+
+        // Toast 整合
+        socket.on('bagResult', (res) => { 
+            if(res.success) showMsg(res.msg); 
+            else showMsg("❌ " + res.msg);
+            closeAllModals();
+        });
+        
+        socket.on('marketResult', (res) => { 
+            if(res.success) showMsg(res.msg); 
+            else showMsg("❌ " + res.msg);
+            closeAllModals();
+        });
+
+        function showMsg(text) {
+            const t = document.getElementById('game-toast');
+            t.innerText = text;
+            t.style.top = "30px";
+            setTimeout(() => { t.style.top = "-100px"; }, 3000);
+        }
+
+        function renderBag(inv) {
+            const list = document.getElementById('bag-list');
+            list.innerHTML = '';
+            
+            let keys = Object.keys(inv);
+            if (keys.length === 0) {
+                list.innerHTML = '<div style="margin-top:20px; font-size:12px; color:#aaa;">背包是空的</div>';
+                return;
+            }
+
+            keys.forEach(key => {
+                if (inv[key] > 0) {
+                    const item = ITEM_DB[key] || { name: key, cost: 10, desc: "未知物品" };
+                    // 計算 NPC 回收價 (20%)
+                    let npcPrice = Math.floor((item.cost || 10) * 0.2);
+                    if(npcPrice < 1) npcPrice = 1;
+
+                    const div = document.createElement('div');
+                    div.className = 'item-card';
+                    div.innerHTML = `
+                        <div class="item-header">
+                            <span class="item-name">${item.name}</span>
+                            <span class="item-count">x${inv[key]}</span>
+                        </div>
+                        <div class="item-desc">${item.desc}</div>
+                        
+                        <div class="action-btns">
+                            <button class="btn btn-npc" onclick="openNPCModal('${key}', '${item.name}', ${npcPrice})">
+                                賣店 (${npcPrice}G)
+                            </button>
+                            <button class="btn btn-market" onclick="openMarketModal('${key}', '${item.name}')">
+                                上架市集
+                            </button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                }
+            });
+        }
+
+        function openNPCModal(id, name, price) {
+            currentItemId = id;
+            const msg = `確定要將【${name}】賣給商人嗎？<br><br>回收價: <span style="color:#f1c40f; font-weight:bold;">${price} G</span>`;
+            document.getElementById('npc-msg').innerHTML = msg;
+            document.getElementById('npc-modal').style.display = 'flex';
+        }
+
+        function confirmNPCSell() { socket.emit('npcSell', currentItemId); }
+
+        function openMarketModal(id, name) {
+            currentItemId = id;
+            document.getElementById('market-title').innerText = `上架: ${name}`;
+            document.getElementById('sell-price').value = '';
+            document.getElementById('market-modal').style.display = 'flex';
+        }
+
+        function confirmMarketSell() {
+            const price = document.getElementById('sell-price').value;
+            if (!price || price <= 0) { showMsg("請輸入有效價格"); return; }
+            socket.emit('marketSell', { itemId: currentItemId, price: price });
+        }
+
+        function closeAllModals() {
+            document.getElementById('market-modal').style.display = 'none';
+            document.getElementById('npc-modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
