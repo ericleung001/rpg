@@ -133,7 +133,7 @@
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // 🟢 完整物品資料庫 (含新料理)
+        // 🟢 完整物品資料庫
         const ITEM_DB = {
             // === 消耗品 ===
             'potion_hp':    { name: "小紅藥水", cost: 50, desc: "恢復 50 HP" },
@@ -144,14 +144,14 @@
             'potion_mp':    { name: "小藍藥水", cost: 80, desc: "恢復 30 MP" },
             'potion_mp_mid':{ name: "中藍藥水", cost: 300, desc: "恢復 100 MP" },
             'potion_mp_high':{ name: "大藍藥水", cost: 1500, desc: "恢復 500 MP" },
-            
-            // 🟢 新增料理
+            'sushi_plate':  { name: "壽司拼盤", cost: 200, desc: "恢復 500 HP" },
+
+            // === 新增料理 ===
             'grilled_carp': { name: "烤鯉魚", cost: 30, desc: "HP+100" },
             'salmon_sushi': { name: "鮭魚壽司", cost: 50, desc: "MP+50" },
             'tuna_steak':   { name: "煎鮪魚排", cost: 200, desc: "HP+500" },
             'eel_rice':     { name: "鰻魚飯", cost: 300, desc: "HP+300, MP+100" },
             'void_soup':    { name: "虛空海鮮湯", cost: 1000, desc: "狀態全滿" },
-            'sushi_plate':  { name: "壽司拼盤", cost: 200, desc: "恢復 500 HP" },
 
             // === 武器 ===
             'wood_sword':   { name: "木劍", cost: 100, desc: "ATK+10" },
@@ -170,7 +170,8 @@
             'hero_sword':   { name: "勇者之劍", cost: 2000, desc: "ATK+50" },
             'steel_blade':  { name: "精鋼劍", cost: 0, desc: "ATK+25" },
             'assassin_dag': { name: "刺客短刀", cost: 2000, desc: "ATK+120" },
-            // 新增採集武器
+            
+            // 採集武器
             'oak_bow':      { name: "橡木弓", cost: 200, desc: "ATK+25" },
             'maple_staff':  { name: "楓木法杖", cost: 500, desc: "ATK+50" },
             'shark_tooth':  { name: "鯊魚牙匕首", cost: 800, desc: "ATK+80" },
@@ -200,7 +201,7 @@
             'crown_chaos':  { name: "混沌之冠", cost: 0, desc: "全能力+2000" },
             'ring_life':    { name: "生命護符", cost: 600, desc: "HP+100" },
             'ring_magic':   { name: "魔力耳環", cost: 500, desc: "MP+50" },
-            // 新增採集飾品
+            // 採集飾品
             'fish_ring':    { name: "魚鱗戒指", cost: 400, desc: "DEF+8" },
             'pearl_necklace':{ name: "珍珠項鍊", cost: 2000, desc: "MP+100" },
 
@@ -261,6 +262,7 @@
             'magic_dust':   { name: "魔粉", cost: 30, desc: "材料" }
         };
 
+        // 🟢 統一使用 currentItemId
         let currentItemId = null;
 
         socket.on('connect', () => {
@@ -304,7 +306,6 @@
             keys.forEach(key => {
                 if (inv[key] > 0) {
                     const item = ITEM_DB[key] || { name: key, cost: 10, desc: "未知物品" };
-                    // 計算 NPC 回收價 (20%)
                     let npcPrice = Math.floor((item.cost || 10) * 0.2);
                     if(npcPrice < 1) npcPrice = 1;
 
@@ -341,7 +342,7 @@
         function confirmNPCSell() { socket.emit('npcSell', currentItemId); }
 
         function openMarketModal(id, name) {
-            currentItemId = id;
+            currentItemId = id; // 🟢 修正這裡：使用統一變數
             document.getElementById('market-title').innerText = `上架: ${name}`;
             document.getElementById('sell-price').value = '';
             document.getElementById('market-modal').style.display = 'flex';
@@ -350,7 +351,8 @@
         function confirmMarketSell() {
             const price = document.getElementById('sell-price').value;
             if (!price || price <= 0) { showMsg("請輸入有效價格"); return; }
-            socket.emit('marketSell', { itemId: currentSellId, price: price });
+            // 🟢 修正這裡：發送時使用 currentItemId
+            socket.emit('marketSell', { itemId: currentItemId, price: price });
         }
 
         function closeAllModals() {
