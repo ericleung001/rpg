@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者大廳</title>
+    <title>冒險者大廳v3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -24,7 +24,7 @@
         h1 { font-size: 16px; margin: 0; white-space: nowrap; }
         #conn-status { font-size: 10px; padding: 5px 8px; background: #333; border: 1px solid #fff; border-radius: 6px; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
 
-        /* 狀態欄 (更緊湊) */
+        /* 狀態欄 */
         .status-bar { 
             background: #34495e; border: 3px solid #fff; padding: 10px; 
             width: 100%; max-width: 600px; margin-bottom: 10px; border-radius: 12px; 
@@ -41,36 +41,40 @@
             flex: 1; 
             display: flex; flex-direction: column;
             overflow: hidden; 
-            margin-bottom: 40px; /* 留位給收起的聊天室 */
+            margin-bottom: 40px; 
         }
 
-        /* 🟢 設施按鈕網格 (更小、更密) */
+        /* 🟢 設施按鈕網格 (更緊湊) */
         .facility-grid { 
             display: grid; 
-            grid-template-columns: repeat(4, 1fr); /* 手機改為4列 */
-            gap: 5px; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 4px; 
             margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px dashed #7f8c8d; 
         }
         
-        /* 🟢 設施按鈕樣式 (縮小高度與字體) */
+        /* 🟢 設施按鈕樣式 (字體放大，減少內距) */
         .facility-btn {
-            padding: 8px 2px; 
-            font-family: inherit; font-size: 9px; cursor: pointer; 
+            padding: 0; /* 移除內距 */
+            font-family: inherit; 
+            font-size: 11px; /* 字體放大 */
+            font-weight: bold;
+            cursor: pointer; 
             border: 2px solid #bdc3c7; color: white; text-decoration: none; 
             display: flex; align-items: center; justify-content: center;
             background: #34495e; 
             border-radius: 6px;
-            height: 35px; /* 固定高度 */
-            white-space: nowrap; /* 防止換行 */
+            height: 38px; /*稍微加高一點點*/
+            white-space: nowrap; 
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.3); /* 加點陰影增加立體感 */
         }
-        .facility-btn:active { transform: translateY(1px); filter: brightness(0.8); }
+        .facility-btn:active { transform: translateY(1px); box-shadow: none; filter: brightness(0.9); }
         
         .map-container {
             flex: 1; overflow-y: auto; padding-right: 5px;
             -webkit-overflow-scrolling: touch; 
         }
 
-        /* 地圖區域按鈕 (保持稍大，方便點擊) */
+        /* 地圖區域按鈕 */
         .btn { 
             padding: 12px 8px; font-family: inherit; font-size: 12px; cursor: pointer; 
             border: 2px solid #bdc3c7; color: white; text-decoration: none; 
@@ -85,14 +89,14 @@
         .status-waiting { background: #27ae60; color: white; }
         .status-fighting { background: #c0392b; color: white; }
         
-        /* 聊天室 (伸縮式) */
+        /* 聊天室 */
         #chat-container {
             position: fixed; bottom: 0; left: 0; width: 100%; 
             background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7;
             display: flex; flex-direction: column; font-size: 10px; z-index: 100;
             padding-bottom: env(safe-area-inset-bottom);
             transition: height 0.3s ease-in-out;
-            height: 30px; /* 預設收起高度更小 */
+            height: 30px; 
         }
         
         #chat-header {
@@ -119,19 +123,9 @@
             box-shadow: 0 6px 15px rgba(0,0,0,0.6); z-index: 1000;
             transition: top 0.5s ease-in-out; white-space: nowrap;
         }
-
-         /* === Toast 通知樣式 === */
-        #game-toast {
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f;
-            color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999;
-            font-size: 14px; font-weight: bold; transition: top 0.5s ease-in-out;
-            pointer-events: none;
-        }
     </style>
 </head>
 <body>
-    <div id="game-toast"></div>
     <div id="toast-notification"> 訊息提示</div>
 
     <div class="top-bar">
@@ -294,11 +288,10 @@
             refreshUI();
         });
 
-        // 🟢 監聽 Server 廣播的房間資料
         socket.on('hubDataUpdate', (data) => {
             cityData = data.cityCounts;
             activeRooms = data.roomsList;
-            refreshUI(); // 有資料就即時刷新介面
+            refreshUI(); 
         });
 
         socket.on('marketResult', (res) => { if (res.success) { showToast(res.msg); } });
@@ -311,13 +304,12 @@
             setTimeout(() => { toast.style.top = "-60px"; }, 3000);
         }
 
-        // 🟢 加入房間後跳轉 (兼容 Object 與 String)
         socket.on('roomJoined', (data) => { 
             const roomId = data.roomId || data; 
             window.location.href = `battle.html?room=${roomId}`; 
         });
         
-        socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
+        socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
 
         // --- 聊天邏輯 ---
         socket.on('chatHistory', (history) => {
@@ -378,7 +370,7 @@
         };
 
         window.triggerCreateRoom = function(mobId) {
-            if (!socket.connected) { showMsg("錯誤：未連線到伺服器！"); return; }
+            if (!socket.connected) { showToast("錯誤：未連線到伺服器！"); return; }
             socket.emit('createRoom', mobId);
             document.getElementById('list-title').innerText = "正在建立房間...";
         };
@@ -394,14 +386,6 @@
         };
         window.goBack = function(view) { currentView = view; refreshUI(); };
 
-        // 3. 通用訊息顯示 (取代 alert)
-        function showMsg(text) {
-            const t = document.getElementById('game-toast');
-            t.innerText = text;
-            t.style.top = "30px";
-            setTimeout(() => { t.style.top = "-100px"; }, 3000);
-        }
-        
         function refreshUI() {
             const container = document.getElementById('map-list');
             let html = '';
@@ -413,7 +397,6 @@
                     const count = cityData[city.id] || 0;
                     const warnText = isLowLevel ? `<span style="color:#e74c3c">(LV${city.reqLv})</span>` : '';
                     
-                    // 等級不夠變灰且不能點擊
                     const lockClass = isLowLevel ? 'locked' : '';
                     const action = isLowLevel ? '' : `onclick="triggerEnterCity('${city.id}')"`;
 
