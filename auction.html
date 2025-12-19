@@ -89,7 +89,7 @@
 
     <div class="header">
         <h1>⚖️ 市集</h1>
-        <div class="gold-display"> <span id="my-gold">0</span> G</div>
+        <div class="gold-display">💰 <span id="my-gold">0</span> G</div>
     </div>
 
     <div class="container">
@@ -128,11 +128,8 @@
 
     <script src="socket.io.js"></script>
     <script>
-        // 這是加密後的網址 (一般人看不懂這是什麼)
         const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
-
-        // atob() 函數會把亂碼解開成原本的網址
-        const BACKEND_URL = atob(_0x5a1b); 
+        const BACKEND_URL = atob(_0x5a1b);
         
         const socket = io(BACKEND_URL, {
             transports: ['websocket', 'polling']
@@ -140,7 +137,7 @@
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        //  完整物品名稱翻譯表 (包含材料、裝備、藥水)
+        // 🟢 完整物品名稱對照表 (同步 Server)
         const ITEM_NAMES = {
             // === 1. 材料 (Materials) ===
             'copper_ore': '銅礦石', 'soft_fur': '柔軟皮毛', 'beast_fang': '野獸尖牙', 'slime_gel': '黏液',
@@ -151,10 +148,11 @@
             'mithril': '秘銀', 'void_dust': '虛空之塵', 'demon_horn': '惡魔之角', 'dark_essence': '暗之精華',
             'adamantite': '精金', 'god_blood': '神之血', 'chaos_orb': '混沌寶珠', 'angel_feather': '天使之羽',
 
-            // === 2. 消耗品 (🟢 這裡加入了藍藥水) ===
+            // === 2. 消耗品 ===
             'potion_hp': '小紅藥水', 'potion_mid': '中紅藥水', 'potion_high': '大紅藥水',
             'potion_max': '特級秘藥', 'elixir': '神之甘露',
             'potion_mp': '小藍藥水', 'potion_mp_mid': '中藍藥水', 'potion_mp_high': '大藍藥水',
+            'sushi_plate': '壽司拼盤',
 
             // === 3. 武器 (Weapons) ===
             'wood_sword': '木劍', 'copper_dagger': '銅匕首',
@@ -164,6 +162,8 @@
             'mithril_saber': '秘銀軍刀', 'void_reaper': '虛空收割者',
             'god_slayer': '弒神劍', 'chaos_staff': '混沌法杖',
             'hero_sword': '勇者之劍', 'steel_blade': '精鋼劍', 'assassin_dag': '刺客短刀',
+            // 🟢 新增採集武器
+            'oak_bow': '橡木弓', 'maple_staff': '楓木法杖',
 
             // === 4. 防具 (Armor) ===
             'cloth_armor': '布衣', 'hunt_vest': '獵人背心',
@@ -179,12 +179,25 @@
             'amulet_soul': '靈魂護符', 
             'ring_lord': '領主指環', 
             'crown_chaos': '混沌之冠',
-            'ring_life': '生命護符', 'ring_magic': '魔力耳環'
+            'ring_life': '生命護符', 'ring_magic': '魔力耳環',
+            // 🟢 新增採集飾品
+            'fish_ring': '魚鱗戒指',
+
+            // === 6. 採集材料 (🌲 木材) ===
+            'oak_log': '橡木原木', 'maple_log': '楓木原木', 'yew_log': '紫杉原木', 'ancient_log': '遠古神木',
+            'spirit_wood': '靈木', 'dragon_wood': '龍骨木', 'void_wood': '虛空木', 'chaos_wood': '混沌神木',
+
+            // === 7. 採集材料 (🐟 漁獲) ===
+            'carp': '鯉魚', 'salmon': '鮭魚', 'koi': '錦鯉', 'magic_fish': '魔力魚', 'pearl': '珍珠',
+            'tuna': '黑鮪魚', 'shark': '大白鯊', 'lava_eel': '熔岩鰻', 'void_squid': '虛空烏賊', 'god_carp': '神之鯉',
+
+            // === 8. 採集材料 (⛏️ 礦物) ===
+            'coal': '煤炭', 'ruby': '紅寶石', 'diamond': '鑽石', 'star_fragment': '星之碎片'
         };
 
         let currentSellId = null;
-        let pendingAction = null; // 儲存待確認的動作
-        let pendingId = null;     // 儲存待操作的 ID
+        let pendingAction = null; 
+        let pendingId = null;     
 
         // 1. 初始化
         socket.on('connect', () => {
@@ -210,13 +223,16 @@
                 const div = document.createElement('div');
                 div.className = 'item-card';
                 
-                // 區分按鈕 (取回 vs 購買) - 都改用自訂彈窗
+                // 顯示正確的中文名稱
+                const displayName = ITEM_NAMES[item.itemKey] || item.itemName || item.itemKey;
+
+                // 區分按鈕 (取回 vs 購買)
                 const btnHtml = item.isMine 
                     ? `<button class="btn btn-cancel" onclick="triggerConfirm('cancel', '${item.id}', '確定要從市集取回嗎？')">取回物品</button>`
                     : `<button class="btn btn-buy" onclick="triggerConfirm('buy', '${item.id}', '確定要花 ${item.price} G 購買嗎？')">購買</button>`;
                 
                 div.innerHTML = `
-                    <h3>${item.itemName}</h3>
+                    <h3>${displayName}</h3>
                     <div class="item-info">賣家: ${item.seller}</div>
                     <div class="price-tag">${item.price} G</div>
                     ${btnHtml}
@@ -252,9 +268,12 @@
                     div.style.background = '#34495e';
                     div.style.color = '#fff';
                     div.style.border = '2px solid #555';
+                    
+                    const displayName = ITEM_NAMES[key] || key;
+
                     div.innerHTML = `
-                        <div style="font-size:12px; font-weight:bold;">${ITEM_NAMES[key] || key} x${inv[key]}</div>
-                        <button class="btn btn-sell" onclick="openSellModal('${key}', '${ITEM_NAMES[key]||key}')">上架</button>
+                        <div style="font-size:12px; font-weight:bold;">${displayName} x${inv[key]}</div>
+                        <button class="btn btn-sell" onclick="openSellModal('${key}', '${displayName}')">上架</button>
                     `;
                     list.appendChild(div);
                 }
