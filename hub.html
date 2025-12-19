@@ -13,27 +13,27 @@
             text-align: center; 
             display: flex; flex-direction: column; align-items: center; 
             height: 100dvh; 
-            margin: 0; padding: 15px; box-sizing: border-box; 
+            margin: 0; padding: 10px; box-sizing: border-box; 
             overflow: hidden; 
             overscroll-behavior: none;
         }
         
         /* 頂部列 */
-        .top-bar { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; height: 40px;}
-        .logout-btn { font-size: 12px; color: #e74c3c; cursor: pointer; text-decoration: underline; white-space: nowrap; padding: 10px; }
-        h1 { font-size: 20px; margin: 0; white-space: nowrap; }
-        #conn-status { font-size: 12px; padding: 8px 12px; background: #333; border: 1px solid #fff; border-radius: 6px; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+        .top-bar { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: 30px;}
+        .logout-btn { font-size: 10px; color: #e74c3c; cursor: pointer; text-decoration: underline; white-space: nowrap; padding: 5px; }
+        h1 { font-size: 16px; margin: 0; white-space: nowrap; }
+        #conn-status { font-size: 10px; padding: 5px 8px; background: #333; border: 1px solid #fff; border-radius: 6px; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
 
-        /* 狀態欄 */
+        /* 狀態欄 (更緊湊) */
         .status-bar { 
-            background: #34495e; border: 4px solid #fff; padding: 15px; 
-            width: 100%; max-width: 600px; margin-bottom: 15px; border-radius: 12px; 
-            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: left; 
-            font-size: 12px; box-sizing: border-box;
+            background: #34495e; border: 3px solid #fff; padding: 10px; 
+            width: 100%; max-width: 600px; margin-bottom: 10px; border-radius: 12px; 
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; text-align: left; 
+            font-size: 10px; box-sizing: border-box;
         }
-        .stat-row { color: #f1c40f; margin-bottom: 4px; }
+        .stat-row { color: #f1c40f; margin-bottom: 2px; }
         .val { color: white; float: right; font-weight: bold; }
-        .exp-bar { width: 100%; height: 10px; background: #555; margin-top: 5px; border: 2px solid #fff; border-radius: 4px; }
+        .exp-bar { width: 100%; height: 6px; background: #555; margin-top: 3px; border: 1px solid #fff; border-radius: 4px; }
         .exp-fill { height: 100%; background: #3498db; width: 0%; transition: width 0.3s; }
         
         .main-content {
@@ -41,48 +41,62 @@
             flex: 1; 
             display: flex; flex-direction: column;
             overflow: hidden; 
-            margin-bottom: 50px; /* 留位給收起的聊天室 */
+            margin-bottom: 40px; /* 留位給收起的聊天室 */
         }
 
-        /* 設施按鈕網格 (3列 x 2行) */
+        /* 🟢 設施按鈕網格 (更小、更密) */
         .facility-grid { 
-            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; 
-            margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px dashed #7f8c8d; 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); /* 手機改為4列 */
+            gap: 5px; 
+            margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px dashed #7f8c8d; 
         }
+        
+        /* 🟢 設施按鈕樣式 (縮小高度與字體) */
+        .facility-btn {
+            padding: 8px 2px; 
+            font-family: inherit; font-size: 9px; cursor: pointer; 
+            border: 2px solid #bdc3c7; color: white; text-decoration: none; 
+            display: flex; align-items: center; justify-content: center;
+            background: #34495e; 
+            border-radius: 6px;
+            height: 35px; /* 固定高度 */
+            white-space: nowrap; /* 防止換行 */
+        }
+        .facility-btn:active { transform: translateY(1px); filter: brightness(0.8); }
         
         .map-container {
             flex: 1; overflow-y: auto; padding-right: 5px;
             -webkit-overflow-scrolling: touch; 
         }
 
-        /* 通用按鈕樣式 */
+        /* 地圖區域按鈕 (保持稍大，方便點擊) */
         .btn { 
-            padding: 15px 5px; font-family: inherit; font-size: 12px; cursor: pointer; 
-            border: 3px solid #bdc3c7; color: white; text-decoration: none; 
+            padding: 12px 8px; font-family: inherit; font-size: 12px; cursor: pointer; 
+            border: 2px solid #bdc3c7; color: white; text-decoration: none; 
             display: block; text-shadow: 1px 1px 0 #000; background: #34495e; 
-            position: relative; text-align: left; margin-bottom: 10px; border-radius: 6px;
+            position: relative; text-align: left; margin-bottom: 8px; border-radius: 6px;
         }
         .btn:active { transform: translateY(2px); filter: brightness(0.8); }
-        .btn-center { text-align: center; display: flex; align-items: center; justify-content: center; height: 100%; box-sizing: border-box; }
         .locked { background: #555; color: #888; border-color: #555; pointer-events: none; }
         
         .info-tag { float: right; font-size: 10px; color: #f1c40f; margin-top: 2px; }
-        .room-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; float: right; margin-left: 5px; }
+        .room-tag { font-size: 9px; padding: 2px 4px; border-radius: 4px; float: right; margin-left: 5px; }
         .status-waiting { background: #27ae60; color: white; }
         .status-fighting { background: #c0392b; color: white; }
         
         /* 聊天室 (伸縮式) */
         #chat-container {
             position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: rgba(0, 0, 0, 0.95); border-top: 6px solid #bdc3c7;
-            display: flex; flex-direction: column; font-size: 12px; z-index: 100;
+            background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7;
+            display: flex; flex-direction: column; font-size: 10px; z-index: 100;
             padding-bottom: env(safe-area-inset-bottom);
             transition: height 0.3s ease-in-out;
-            height: 35px; /* 預設收起高度 */
+            height: 30px; /* 預設收起高度更小 */
         }
         
         #chat-header {
-            height: 35px; background: #34495e; color: #fff; line-height: 35px; 
+            height: 30px; background: #34495e; color: #fff; line-height: 30px; 
             cursor: pointer; font-weight: bold; border-bottom: 1px solid #555;
             display: flex; justify-content: center; align-items: center;
         }
@@ -92,22 +106,32 @@
         #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
         .chat-open #chat-body { display: flex; } 
 
-        #chat-history { flex: 1; overflow-y: auto; padding: 10px; text-align: left; color: white; }
-        #chat-input-area { display: flex; border-top: 1px solid #555; height: 45px; }
-        #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 15px; font-family: inherit; font-size: 14px; outline: none; }
-        #chat-send { background: #2980b9; color: white; border: none; padding: 0 20px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: bold; }
+        #chat-history { flex: 1; overflow-y: auto; padding: 8px; text-align: left; color: white; }
+        #chat-input-area { display: flex; border-top: 1px solid #555; height: 40px; }
+        #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 10px; font-family: inherit; font-size: 12px; outline: none; }
+        #chat-send { background: #2980b9; color: white; border: none; padding: 0 15px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; }
 
         /* 通知彈窗 */
         #toast-notification {
             position: fixed; top: -60px; left: 50%; transform: translateX(-50%);
             background: #f1c40f; color: #000; border: 3px solid #fff;
-            padding: 15px 30px; border-radius: 30px; font-size: 14px; font-weight: bold;
+            padding: 10px 20px; border-radius: 30px; font-size: 12px; font-weight: bold;
             box-shadow: 0 6px 15px rgba(0,0,0,0.6); z-index: 1000;
             transition: top 0.5s ease-in-out; white-space: nowrap;
+        }
+
+         /* === Toast 通知樣式 === */
+        #game-toast {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f;
+            color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999;
+            font-size: 14px; font-weight: bold; transition: top 0.5s ease-in-out;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
+    <div id="game-toast"></div>
     <div id="toast-notification"> 訊息提示</div>
 
     <div class="top-bar">
@@ -124,25 +148,26 @@
         <div class="stat-row">MP <span id="mp" class="val" style="color:#3498db">...</span></div>
         <div class="stat-row"></div>
         <div style="grid-column: span 3;">
-            EXP <span id="exp-txt" style="font-size:10px; float:right">0/100</span>
+            EXP <span id="exp-txt" style="font-size:8px; float:right">0/100</span>
             <div class="exp-bar"><div id="exp-fill" class="exp-fill"></div></div>
         </div>
     </div>
 
     <div class="main-content">
-        <div class="section-title" style="text-align:left; font-size:12px; color:#aaa; margin-bottom:10px;">城鎮設施</div>
+        <div class="section-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px;">城鎮設施</div>
         
         <div class="facility-grid">
-            <a href="bag.html" class="btn btn-center" style="background:#16a085; border-color:#1abc9c;"> 背包</a>
-            <a href="market.html" class="btn btn-center" style="background:#f39c12; border-color:#d35400;">道具屋</a>
-            <a href="auction.html" class="btn btn-center" style="background:#2980b9; border-color:#3498db;">市集</a>
-            <a href="smithy.html" class="btn btn-center" style="background:#c0392b; border-color:#e74c3c;">鍛鍊所</a>
-            <a href="equip.html" class="btn btn-center" style="background:#8e44ad; border-color:#9b59b6;">裝備</a>
-            <a href="gathering.html" class="btn btn-center" style="background:#27ae60; border-color:#2ecc71;">採集場</a>
-            <a href="rest.html" class="btn btn-center" style="background:#27ae60; border-color:#2ecc71;">旅館</a>
+            <a href="bag.html" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">🎒 背包</a>
+            <a href="equip.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🛡️ 裝備</a>
+            <a href="market.html" class="facility-btn" style="background:#f39c12; border-color:#d35400;">🏪 道具</a>
+            <a href="auction.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">⚖️ 市集</a>
+            <a href="smithy.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔨 鍛造</a>
+            <a href="gathering.html" class="facility-btn" style="background:#27ae60; border-color:#2ecc71;">🌲 採集</a>
+            <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;">🏨 旅館</a>
+            <div class="facility-btn locked" style="background:#333; border:2px dashed #555;">🚧 維修</div>
         </div>
 
-        <div id="list-title" style="text-align:left; font-size:12px; color:#aaa; margin-bottom:10px;">世界地圖</div>
+        <div id="list-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px;">世界地圖</div>
         <div class="map-container" id="map-list">
             <div class="btn locked">讀取中...</div>
         </div>
@@ -181,59 +206,59 @@
                     { id: 'bee', name: '殺人蜂', lv: 5 },
                     { id: 'boar', name: '野豬', lv: 8 },
                     { id: 'thief', name: '盜賊', lv: 12 },
-                    { id: 'wolf_king', name: ' 狼王 (BOSS)', lv: 15 }
+                    { id: 'wolf_king', name: '🐺 狼王 (BOSS)', lv: 15 }
                 ] 
             },
             { 
-                id: 'city_2', name: '迷霧沼澤', reqLv: 1, desc: '充滿毒氣與亡靈 (Lv.20-40)', 
+                id: 'city_2', name: '迷霧沼澤', reqLv: 20, desc: '充滿毒氣與亡靈 (Lv.20-40)', 
                 monsters: [
                     { id: 'snake', name: '毒蛇', lv: 22 }, 
                     { id: 'zombie', name: '腐屍', lv: 25 },
                     { id: 'skeleton', name: '骷髏兵', lv: 28 },
                     { id: 'ghoul', name: '食屍鬼', lv: 32 },
                     { id: 'witch', name: '沼澤女巫', lv: 35 },
-                    { id: 'hydra', name: ' 九頭蛇 (BOSS)', lv: 40 }
+                    { id: 'hydra', name: '🐍 九頭蛇 (BOSS)', lv: 40 }
                 ] 
             },
             { 
-                id: 'city_3', name: '灼熱峽谷', reqLv: 1, desc: '烈火與熔岩 (Lv.40-60)', 
+                id: 'city_3', name: '灼熱峽谷', reqLv: 40, desc: '烈火與熔岩 (Lv.40-60)', 
                 monsters: [
                     { id: 'fire_imp', name: '火焰小鬼', lv: 42 }, 
                     { id: 'lava_golem', name: '熔岩戈侖', lv: 45 },
                     { id: 'salamander', name: '火蜥蜴', lv: 48 },
                     { id: 'fire_mage', name: '烈焰法師', lv: 52 },
                     { id: 'dragon_hatchling', name: '幼龍', lv: 55 },
-                    { id: 'balrog', name: ' 炎魔 (BOSS)', lv: 60 }
+                    { id: 'balrog', name: '🔥 炎魔 (BOSS)', lv: 60 }
                 ] 
             },
             { 
-                id: 'city_4', name: '極寒凍土', reqLv: 1, desc: '永冬之地 (Lv.60-80)', 
+                id: 'city_4', name: '極寒凍土', reqLv: 60, desc: '永冬之地 (Lv.60-80)', 
                 monsters: [
                     { id: 'snow_wolf', name: '雪原狼', lv: 62 }, 
                     { id: 'yeti', name: '雪人', lv: 65 },
                     { id: 'ice_spirit', name: '冰精靈', lv: 68 },
                     { id: 'frost_knight', name: '寒霜騎士', lv: 72 },
                     { id: 'ice_dragon', name: '冰霜龍', lv: 75 },
-                    { id: 'lich_king', name: ' 巫妖王 (BOSS)', lv: 80 }
+                    { id: 'lich_king', name: '❄️ 巫妖王 (BOSS)', lv: 80 }
                 ] 
             },
             { 
-                id: 'city_5', name: '虛空要塞', reqLv: 1, desc: '接近魔界的地方 (Lv.80-100)', 
+                id: 'city_5', name: '虛空要塞', reqLv: 80, desc: '接近魔界的地方 (Lv.80-100)', 
                 monsters: [
                     { id: 'void_eye', name: '虛空之眼', lv: 82 }, 
                     { id: 'shadow_assassin', name: '暗影刺客', lv: 85 },
                     { id: 'dark_paladin', name: '墮落聖騎', lv: 88 },
                     { id: 'demon_guard', name: '惡魔守衛', lv: 92 },
                     { id: 'succubus', name: '魅魔', lv: 95 },
-                    { id: 'void_lord', name: '️ 虛空領主 (BOSS)', lv: 99 }
+                    { id: 'void_lord', name: '👁️ 虛空領主 (BOSS)', lv: 99 }
                 ] 
             },
             { 
-                id: 'city_6', name: '魔界王座', reqLv: 1, desc: '☠️ 最終決戰 (Lv.100+)', 
+                id: 'city_6', name: '魔界王座', reqLv: 100, desc: '☠️ 最終決戰 (Lv.100+)', 
                 monsters: [
                     { id: 'chaos_beast', name: '混沌巨獸', lv: 105 },
                     { id: 'fallen_angel', name: '墮天使', lv: 110 },
-                    { id: 'demon_king', name: ' 魔王撒旦 (FINAL)', lv: 150 }
+                    { id: 'demon_king', name: '👑 魔王撒旦 (FINAL)', lv: 150 }
                 ] 
             }
         ];
@@ -292,7 +317,7 @@
             window.location.href = `battle.html?room=${roomId}`; 
         });
         
-        socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
+        socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
 
         // --- 聊天邏輯 ---
         socket.on('chatHistory', (history) => {
@@ -353,7 +378,7 @@
         };
 
         window.triggerCreateRoom = function(mobId) {
-            if (!socket.connected) { alert("錯誤：未連線到伺服器！"); return; }
+            if (!socket.connected) { showMsg("錯誤：未連線到伺服器！"); return; }
             socket.emit('createRoom', mobId);
             document.getElementById('list-title').innerText = "正在建立房間...";
         };
@@ -369,6 +394,14 @@
         };
         window.goBack = function(view) { currentView = view; refreshUI(); };
 
+        // 3. 通用訊息顯示 (取代 alert)
+        function showMsg(text) {
+            const t = document.getElementById('game-toast');
+            t.innerText = text;
+            t.style.top = "30px";
+            setTimeout(() => { t.style.top = "-100px"; }, 3000);
+        }
+        
         function refreshUI() {
             const container = document.getElementById('map-list');
             let html = '';
@@ -385,30 +418,28 @@
                     const action = isLowLevel ? '' : `onclick="triggerEnterCity('${city.id}')"`;
 
                     html += `<div class="btn ${lockClass}" style="border-color:#3498db" ${action}>
-                        <div style="display:flex; justify-content:space-between;"><span style="font-size:14px; font-weight:bold;">${city.name} ${warnText}</span><span class="info-tag">${count}</span></div>
+                        <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; font-weight:bold;">${city.name} ${warnText}</span><span class="info-tag">${count}人</span></div>
                         <div style="font-size:10px; color:#bdc3c7; margin-top:5px;">${city.desc}</div></div>`;
                 });
             } else if (currentView === 'monsters') {
                 document.getElementById('list-title').innerText = `${selectedCity.name} - 怪物`;
                 selectedCity.monsters.forEach(mob => {
-                    // 計算目前該怪物的房間數
                     const rooms = activeRooms.filter(r => r.monsterKey === mob.id);
                     const fighting = rooms.filter(r => r.status === 'fighting').length;
                     const waiting = rooms.filter(r => r.status === 'waiting').length;
                     
                     html += `<div class="btn" style="border-color:#c0392b" onclick="triggerSelectMonster('${mob.id}')">
-                        <span style="font-size:14px; font-weight:bold;">${mob.name} (LV.${mob.lv})</span>
-                        <div style="margin-top:5px;"><span class="info-tag" style="color:#2ecc71">等:${waiting}</span><span class="info-tag" style="color:#e74c3c; margin-right:10px;">戰:${fighting}</span></div></div>`;
+                        <span style="font-size:12px; font-weight:bold;">${mob.name} (LV.${mob.lv})</span>
+                        <div style="margin-top:5px; font-size:10px;"><span class="info-tag" style="color:#2ecc71">等:${waiting}</span><span class="info-tag" style="color:#e74c3c; margin-right:10px;">戰:${fighting}</span></div></div>`;
                 });
                 html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('cities')">◀ 返回地圖</div>`;
             } else if (currentView === 'rooms') {
                 document.getElementById('list-title').innerText = `${selectedMonster.name} - 房間`;
-                html += `<div class="btn" style="background:#27ae60; text-align:center; font-weight:bold; font-size:14px;" onclick="triggerCreateRoom('${selectedMonster.id}')">➕ 開新房間</div>`;
+                html += `<div class="btn" style="background:#27ae60; text-align:center; font-weight:bold; font-size:12px;" onclick="triggerCreateRoom('${selectedMonster.id}')">➕ 開新房間</div>`;
                 
-                // 篩選出目前選中怪物的房間
                 const myRooms = activeRooms.filter(r => r.monsterKey === selectedMonster.id);
                 
-                if (myRooms.length === 0) html += `<div style="font-size:12px; color:#aaa; margin:10px;">目前沒有房間...</div>`;
+                if (myRooms.length === 0) html += `<div style="font-size:10px; color:#aaa; margin:10px;">目前沒有房間...</div>`;
                 
                 myRooms.forEach(room => {
                     const isFighting = room.status === 'fighting';
@@ -417,7 +448,7 @@
                     const lockClass = isFighting ? 'locked' : '';
                     
                     html += `<div class="btn ${lockClass}" ${clickAction}>
-                        <div style="font-size:12px;">Room ${room.id.substr(5)}</div>
+                        <div style="font-size:10px;">Room ${room.id.substr(5)}</div>
                         <div style="margin-top:5px;">${statusTag}<span class="info-tag" style="margin-right:5px;">${room.playerCount}/5</span></div>
                     </div>`;
                 });
