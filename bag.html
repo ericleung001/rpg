@@ -144,6 +144,7 @@
             'potion_mp':    { name: "小藍藥水", cost: 80, desc: "恢復 30 MP" },
             'potion_mp_mid':{ name: "中藍藥水", cost: 300, desc: "恢復 100 MP" },
             'potion_mp_high':{ name: "大藍藥水", cost: 1500, desc: "恢復 500 MP" },
+            'sushi_plate':  { name: "壽司拼盤", cost: 200, desc: "恢復 500 HP" },
 
             // === 武器 ===
             'wood_sword':   { name: "木劍", cost: 100, desc: "ATK+10" },
@@ -160,8 +161,12 @@
             'god_slayer':   { name: "弒神劍", cost: 0, desc: "ATK+20000" },
             'chaos_staff':  { name: "混沌法杖", cost: 0, desc: "ATK+25000" },
             // 新增採集武器
-            'oak_bow':      { name: "橡木弓", cost: 0, desc: "ATK+20" },
-            'maple_staff':  { name: "楓木法杖", cost: 0, desc: "ATK+45" },
+            'oak_bow':      { name: "橡木弓", cost: 200, desc: "ATK+25" },
+            'maple_staff':  { name: "楓木法杖", cost: 500, desc: "ATK+50" },
+            'shark_tooth':  { name: "鯊魚牙匕首", cost: 800, desc: "ATK+80" },
+            'emerald_staff':{ name: "翡翠法杖", cost: 5000, desc: "ATK+300" },
+            'obsidian_blade':{ name: "黑曜石之劍", cost: 8000, desc: "ATK+600" },
+            'dragon_spear': { name: "龍骨長槍", cost: 15000, desc: "ATK+1200" },
 
             // === 防具 ===
             'cloth_armor':  { name: "布衣", cost: 100, desc: "DEF+5" },
@@ -173,6 +178,8 @@
             'yeti_cloak':   { name: "雪怪斗篷", cost: 0, desc: "DEF+250" },
             'demon_armor':  { name: "惡魔戰甲", cost: 0, desc: "DEF+1000" },
             'angel_armor':  { name: "熾天使鎧甲", cost: 0, desc: "DEF+5000" },
+            'plate_mail':   { name: "板金甲", cost: 1500, desc: "DEF+15" },
+            'dragon_mail':  { name: "龍鱗甲", cost: 0, desc: "DEF+30" },
 
             // === 飾品 ===
             'bone_ring':    { name: "骨戒", cost: 0, desc: "ATK+2" },
@@ -182,7 +189,8 @@
             'ring_lord':    { name: "領主指環", cost: 0, desc: "全能力+500" },
             'crown_chaos':  { name: "混沌之冠", cost: 0, desc: "全能力+2000" },
             // 新增採集飾品
-            'fish_ring':    { name: "魚鱗戒指", cost: 0, desc: "DEF+5" },
+            'fish_ring':    { name: "魚鱗戒指", cost: 400, desc: "DEF+8, HP+50" },
+            'pearl_necklace':{ name: "珍珠項鍊", cost: 2000, desc: "MP+100, DEF+20" },
 
             // === 採集材料 (🌲 木材) ===
             'oak_log':      { name: "橡木原木", cost: 5, desc: "建材" },
@@ -236,7 +244,9 @@
             'god_blood':    { name: "神之血", cost: 3000, desc: "材料" },
             'chaos_orb':    { name: "混沌寶珠", cost: 5000, desc: "材料" },
             'angel_feather':{ name: "天使之羽", cost: 4000, desc: "材料" },
-            'dragon_scale': { name: "龍鱗", cost: 300, desc: "材料" }
+            'dragon_scale': { name: "龍鱗", cost: 300, desc: "材料" },
+            'leather':      { name: "皮革", cost: 15, desc: "材料" },
+            'magic_dust':   { name: "魔粉", cost: 30, desc: "材料" }
         };
 
         let currentItemId = null;
@@ -328,7 +338,7 @@
         function confirmMarketSell() {
             const price = document.getElementById('sell-price').value;
             if (!price || price <= 0) { showMsg("請輸入有效價格"); return; }
-            socket.emit('marketSell', { itemId: currentItemId, price: price });
+            socket.emit('marketSell', { itemId: currentSellId, price: price });
         }
 
         function closeAllModals() {
