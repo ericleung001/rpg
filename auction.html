@@ -137,7 +137,7 @@
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // 🟢 完整物品名稱對照表 (同步 Server)
+        // 🟢 完整物品名稱對照表 (含新料理)
         const ITEM_NAMES = {
             // === 1. 材料 (Materials) ===
             'copper_ore': '銅礦石', 'soft_fur': '柔軟皮毛', 'beast_fang': '野獸尖牙', 'slime_gel': '黏液',
@@ -152,7 +152,10 @@
             'potion_hp': '小紅藥水', 'potion_mid': '中紅藥水', 'potion_high': '大紅藥水',
             'potion_max': '特級秘藥', 'elixir': '神之甘露',
             'potion_mp': '小藍藥水', 'potion_mp_mid': '中藍藥水', 'potion_mp_high': '大藍藥水',
-            'sushi_plate': '壽司拼盤',
+            
+            // 🟢 新增料理
+            'grilled_carp': '烤鯉魚', 'salmon_sushi': '鮭魚壽司',
+            'tuna_steak': '煎鮪魚排', 'eel_rice': '鰻魚飯', 'void_soup': '虛空海鮮湯', 'sushi_plate': '壽司拼盤',
 
             // === 3. 武器 (Weapons) ===
             'wood_sword': '木劍', 'copper_dagger': '銅匕首',
