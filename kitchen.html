@@ -12,10 +12,12 @@
             text-align: center; padding: 10px; margin: 0;
             display: flex; flex-direction: column; height: 100dvh; box-sizing:border-box;
         }
-        .header { padding: 10px; border-bottom: 2px solid #fff; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header { padding: 10px; border-bottom: 2px solid #fff; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .back-btn { background: #34495e; border: 2px solid #fff; color: white; padding: 8px; cursor: pointer; font-family: inherit; font-size: 10px; text-decoration: none;}
         
-        .recipe-container { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 10px; overflow-y: auto; flex: 1; }
+        .gold-display { font-size: 12px; color: #f1c40f; margin-bottom: 15px; }
+
+        .recipe-container { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 5px; overflow-y: auto; flex: 1; }
         
         .recipe-card { 
             background: #e67e22; border: 4px solid #a04000; 
@@ -24,14 +26,33 @@
         }
         .recipe-name { color: #fff; font-size: 14px; margin-bottom: 5px; font-weight: bold; }
         .recipe-desc { font-size: 10px; color: #fce4ec; margin-bottom: 10px; }
-        .mat-list { font-size: 10px; color: #fff; margin-bottom: 10px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px; }
         
-        .btn-cook { 
-            width: 100%; padding: 12px; background: #c0392b; color: white; 
-            border: 2px solid #922b21; cursor: pointer; font-family: inherit; 
-            font-size: 12px; font-weight: bold; border-radius: 6px;
+        /* 🟢 材料列表樣式 */
+        .mat-list { 
+            font-size: 10px; color: #fff; margin-bottom: 10px; 
+            background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; 
         }
-        .btn-cook:active { transform: translateY(2px); }
+        .mat-item { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .mat-ok { color: #2ecc71; } /* 足夠顯示綠色 */
+        .mat-no { color: #e74c3c; } /* 不足顯示紅色 */
+        
+        /* 🟢 按鈕樣式 */
+        .btn-cook { 
+            width: 100%; padding: 12px; 
+            font-family: inherit; font-size: 12px; font-weight: bold; border-radius: 6px;
+            cursor: pointer; border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .btn-ready { 
+            background: #2ecc71; color: white; border-color: #27ae60; 
+            box-shadow: 0 4px 0 #27ae60;
+        }
+        .btn-ready:active { transform: translateY(2px); box-shadow: 0 2px 0 #27ae60; }
+        
+        .btn-disabled { 
+            background: #7f8c8d; color: #bdc3c7; border-color: #95a5a6; 
+            cursor: not-allowed; opacity: 0.8;
+        }
 
         #game-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); border: 2px solid #f1c40f; padding: 10px 20px; border-radius: 20px; z-index: 999; transition: top 0.5s; font-size: 12px; white-space: nowrap; }
     </style>
@@ -43,11 +64,12 @@
         <span style="font-size:12px;">🍳 料理廚房</span>
         <a href="hub.html" class="back-btn">回大廳</a>
     </div>
-
-    <div style="font-size:10px; margin-bottom:10px;">將新鮮食材變為美味料理！</div>
+    
+    <div class="gold-display">💰 持有金幣: <span id="my-gold">0</span> G</div>
 
     <div id="recipe-list" class="recipe-container">
-        </div>
+        <div style="font-size:12px; color:#ddd; margin-top:20px;">載入食譜中...</div>
+    </div>
 
     <script src="socket.io.js"></script>
     <script>
@@ -58,40 +80,96 @@
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // 只顯示料理類的配方
+        let myInventory = {};
+        let myGold = 0;
+        let allRecipes = [];
+        
+        // 只顯示料理類的配方 ID
         const FOOD_IDs = ['grilled_carp', 'salmon_sushi', 'tuna_steak', 'eel_rice', 'void_soup', 'sushi_plate'];
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
-            socket.emit('getRecipes');
+            socket.emit('getRecipes'); // 請求配方資料
         });
 
+        // 🟢 1. 接收玩家背包資料
+        socket.on('playerStatsUpdate', (p) => { 
+            myInventory = p.inventory; 
+            myGold = p.gold;
+            document.getElementById('my-gold').innerText = myGold;
+            renderRecipes(); // 資料更新時重繪介面
+        });
+
+        // 🟢 2. 接收配方資料
         socket.on('recipeList', (recipes) => {
+            allRecipes = recipes;
+            renderRecipes();
+        });
+
+        socket.on('craftResult', (res) => {
+            showToast(res.success ? "✅ " + res.msg : "❌ " + res.msg);
+        });
+
+        function renderRecipes() {
+            if (allRecipes.length === 0) return;
+
             const container = document.getElementById('recipe-list');
             container.innerHTML = '';
 
-            recipes.forEach(r => {
+            allRecipes.forEach(r => {
                 // 篩選：只顯示食物
                 if (!FOOD_IDs.includes(r.itemId)) return;
 
                 const div = document.createElement('div');
                 div.className = 'recipe-card';
                 
-                let matsHtml = r.materials.map(m => `${m.name} x${m.count}`).join(' + ');
+                let canCook = true;
+                let matsHtml = '';
+
+                // 🟢 檢查材料是否足夠
+                r.materials.forEach(m => {
+                    const have = myInventory[m.id] || 0;
+                    const need = m.count;
+                    const isEnough = have >= need;
+                    
+                    if (!isEnough) canCook = false;
+
+                    const colorClass = isEnough ? 'mat-ok' : 'mat-no';
+                    matsHtml += `
+                        <div class="mat-item">
+                            <span>${m.name}</span>
+                            <span class="${colorClass}">${have}/${need}</span>
+                        </div>
+                    `;
+                });
+
+                // 檢查金錢
+                if (myGold < r.goldCost) canCook = false;
+                const goldClass = (myGold >= r.goldCost) ? 'mat-ok' : 'mat-no';
+
+                // 🟢 設定按鈕狀態
+                let btnHtml = '';
+                if (canCook) {
+                    btnHtml = `<button class="btn-cook btn-ready" onclick="cook('${r.itemId}')">🍳 可以烹飪</button>`;
+                } else {
+                    btnHtml = `<button class="btn-cook btn-disabled" disabled>❌ 材料/金錢不足</button>`;
+                }
 
                 div.innerHTML = `
                     <div class="recipe-name">🍱 ${r.itemName}</div>
                     <div class="recipe-desc">${r.itemDesc}</div>
-                    <div class="mat-list">所需: ${matsHtml}<br>費用: ${r.goldCost} G</div>
-                    <button class="btn-cook" onclick="cook('${r.itemId}')">烹飪</button>
+                    <div class="mat-list">
+                        ${matsHtml}
+                        <div class="mat-item" style="border-top:1px dashed #fff; margin-top:4px; padding-top:4px;">
+                            <span>製作費用</span>
+                            <span class="${goldClass}">${r.goldCost} G</span>
+                        </div>
+                    </div>
+                    ${btnHtml}
                 `;
                 container.appendChild(div);
             });
-        });
-
-        socket.on('craftResult', (res) => {
-            showToast(res.success ? "✅ " + res.msg : "❌ " + res.msg);
-        });
+        }
 
         function cook(id) {
             socket.emit('craftItem', id);
