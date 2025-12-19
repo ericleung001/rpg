@@ -65,9 +65,30 @@
             border: 3px solid #fff; display: block; 
             width: 100%; max-width: 600px; box-sizing: border-box; border-radius: 8px;
         }
+
+        /* === 通用通知條樣式 (加在所有頁面的 style 裡) === */
+        #game-toast {
+            position: fixed; 
+            top: -100px; /* 預設藏在螢幕上面 */
+            left: 50%; 
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #f1c40f; /* 金色邊框 */
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 30px;
+            z-index: 9999; /* 確保在最上層 */
+            font-size: 14px;
+            font-weight: bold;
+            white-space: nowrap;
+            transition: top 0.5s ease-in-out; /* 滑動動畫 */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            pointer-events: none; /* 讓點擊穿透，不會擋住操作 */
+        }
     </style>
 </head>
 <body>
+    <div id="game-toast"></div>
     <div class="header">
         <h1> 鍛鍊所</h1>
         <div class="gold-display"> <span id="my-gold">0</span> G</div>
@@ -133,7 +154,7 @@
             });
         });
 
-        socket.on('craftResult', (res) => { alert(res.msg); });
+        socket.on('craftResult', (res) => { showMsg(res.msg); });
 
         function showDetail(id) {
             const recipe = currentRecipes.find(r => r.itemId === id);
@@ -174,7 +195,17 @@
                 <button class="btn" ${canCraft ? '' : 'disabled'} onclick="doCraft('${id}')">開始鍛造</button>
             `;
         }
-
+        // === 通用顯示訊息函數 ===
+        function showMsg(text) {
+            const toast = document.getElementById('game-toast');
+            toast.innerText = text;
+            toast.style.top = "30px"; // 滑下來顯示
+            
+            // 3秒後自動收回
+            setTimeout(() => {
+                toast.style.top = "-100px"; 
+            }, 3000);
+        }
         function doCraft(id) { socket.emit('craftItem', id); }
     </script>
 </body>
