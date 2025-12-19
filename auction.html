@@ -38,6 +38,15 @@
         }
         .item-card h3 { font-size: 12px; margin: 0 0 5px 0; color: #2980b9; }
         .item-info { font-size: 10px; color: #555; }
+        
+        /* 🟢 屬性顯示樣式 */
+        .item-stats { 
+            font-size: 9px; color: #e67e22; 
+            background: rgba(0,0,0,0.05); padding: 4px; 
+            border-radius: 4px; margin-top: 5px; 
+            line-height: 1.4;
+        }
+
         .price-tag { color: #c0392b; font-weight: bold; margin-top: 5px; font-size: 12px; }
         
         .btn { 
@@ -137,66 +146,75 @@
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // 🟢 完整物品名稱對照表 (含新料理)
-        const ITEM_NAMES = {
-            // === 1. 材料 (Materials) ===
-            'copper_ore': '銅礦石', 'soft_fur': '柔軟皮毛', 'beast_fang': '野獸尖牙', 'slime_gel': '黏液',
-            'iron_ore': '鐵礦石', 'leather': '皮革', 'tough_hide': '硬皮革', 'magic_dust': '魔粉',
-            'poison_sac': '毒囊', 'bone_shard': '碎骨片',
-            'silver_ore': '銀礦石', 'fire_core': '火焰核心', 'lava_rock': '熔岩石', 'dragon_scale': '龍鱗',
-            'gold_ore': '金礦石', 'ice_crystal': '永恆冰晶', 'yeti_fur': '雪怪毛皮', 'spirit_dust': '靈魂粉末',
-            'mithril': '秘銀', 'void_dust': '虛空之塵', 'demon_horn': '惡魔之角', 'dark_essence': '暗之精華',
-            'adamantite': '精金', 'god_blood': '神之血', 'chaos_orb': '混沌寶珠', 'angel_feather': '天使之羽',
+        // 🟢 物品詳細資料庫 (包含名稱與屬性描述)
+        const ITEM_DB = {
+            // === 消耗品 & 料理 ===
+            'potion_hp':    { name: "小紅藥水", desc: "恢復 50 HP" },
+            'potion_mid':   { name: "中紅藥水", desc: "恢復 500 HP" },
+            'potion_high':  { name: "大紅藥水", desc: "恢復 2000 HP" },
+            'potion_max':   { name: "特級秘藥", desc: "恢復 10000 HP" },
+            'elixir':       { name: "神之甘露", desc: "恢復 50000 HP" },
+            'potion_mp':    { name: "小藍藥水", desc: "恢復 30 MP" },
+            'potion_mp_mid':{ name: "中藍藥水", desc: "恢復 100 MP" },
+            'potion_mp_high':{ name: "大藍藥水", desc: "恢復 500 MP" },
+            'grilled_carp': { name: "烤鯉魚", desc: "食用: HP+100" },
+            'salmon_sushi': { name: "鮭魚壽司", desc: "食用: MP+50" },
+            'tuna_steak':   { name: "煎鮪魚排", desc: "食用: HP+500" },
+            'eel_rice':     { name: "鰻魚飯", desc: "食用: HP+300, MP+100" },
+            'void_soup':    { name: "虛空海鮮湯", desc: "食用: 狀態全滿" },
+            'sushi_plate':  { name: "壽司拼盤", desc: "食用: HP+500" },
 
-            // === 2. 消耗品 ===
-            'potion_hp': '小紅藥水', 'potion_mid': '中紅藥水', 'potion_high': '大紅藥水',
-            'potion_max': '特級秘藥', 'elixir': '神之甘露',
-            'potion_mp': '小藍藥水', 'potion_mp_mid': '中藍藥水', 'potion_mp_high': '大藍藥水',
-            
-            // 🟢 新增料理
-            'grilled_carp': '烤鯉魚', 'salmon_sushi': '鮭魚壽司',
-            'tuna_steak': '煎鮪魚排', 'eel_rice': '鰻魚飯', 'void_soup': '虛空海鮮湯', 'sushi_plate': '壽司拼盤',
+            // === 武器 ===
+            'wood_sword':   { name: "木劍", desc: "ATK +10" },
+            'copper_dagger':{ name: "銅匕首", desc: "ATK +15" },
+            'iron_sword':   { name: "鐵劍", desc: "ATK +30" },
+            'spike_club':   { name: "狼牙棒", desc: "ATK +55" },
+            'poison_dag':   { name: "劇毒匕首", desc: "ATK +60 (帶毒)" },
+            'silver_blade': { name: "銀刃", desc: "ATK +150 (對不死系強)" },
+            'flame_staff':  { name: "火焰法杖", desc: "ATK +200 (火屬性)" },
+            'gold_axe':     { name: "黃金巨斧", desc: "ATK +500" },
+            'frost_bow':    { name: "寒冰弓", desc: "ATK +650 (冰屬性)" },
+            'mithril_saber':{ name: "秘銀軍刀", desc: "ATK +2000" },
+            'void_reaper':  { name: "虛空收割者", desc: "ATK +3500" },
+            'god_slayer':   { name: "弒神劍", desc: "ATK +20000 (神器)" },
+            'chaos_staff':  { name: "混沌法杖", desc: "ATK +25000 (傳說)" },
+            'hero_sword':   { name: "勇者之劍", desc: "ATK +50" },
+            'steel_blade':  { name: "精鋼劍", desc: "ATK +25" },
+            'assassin_dag': { name: "刺客短刀", desc: "ATK +120" },
+            'oak_bow':      { name: "橡木弓", desc: "ATK +25" },
+            'maple_staff':  { name: "楓木法杖", desc: "ATK +50" },
+            'shark_tooth':  { name: "鯊魚牙匕首", desc: "ATK +80" },
+            'emerald_staff':{ name: "翡翠法杖", desc: "ATK +300" },
+            'obsidian_blade':{ name: "黑曜石之劍", desc: "ATK +600" },
+            'dragon_spear': { name: "龍骨長槍", desc: "ATK +1200" },
 
-            // === 3. 武器 (Weapons) ===
-            'wood_sword': '木劍', 'copper_dagger': '銅匕首',
-            'iron_sword': '鐵劍', 'spike_club': '狼牙棒', 'poison_dag': '劇毒匕首',
-            'silver_blade': '銀刃', 'flame_staff': '火焰法杖',
-            'gold_axe': '黃金巨斧', 'frost_bow': '寒冰弓',
-            'mithril_saber': '秘銀軍刀', 'void_reaper': '虛空收割者',
-            'god_slayer': '弒神劍', 'chaos_staff': '混沌法杖',
-            'hero_sword': '勇者之劍', 'steel_blade': '精鋼劍', 'assassin_dag': '刺客短刀',
-            // 新增採集武器
-            'oak_bow': '橡木弓', 'maple_staff': '楓木法杖', 'shark_tooth': '鯊魚牙匕首',
-            'emerald_staff': '翡翠法杖', 'obsidian_blade': '黑曜石之劍', 'dragon_spear': '龍骨長槍',
+            // === 防具 ===
+            'cloth_armor':  { name: "布衣", desc: "DEF +5" },
+            'hunt_vest':    { name: "獵人背心", desc: "DEF +8" },
+            'leather_armor':{ name: "皮甲", desc: "DEF +15" },
+            'chain_mail':   { name: "鎖子甲", desc: "DEF +40" },
+            'magma_plate':  { name: "熔岩胸甲", desc: "DEF +100" },
+            'ice_robe':     { name: "冰霜法袍", desc: "DEF +200" },
+            'yeti_cloak':   { name: "雪怪斗篷", desc: "DEF +250" },
+            'demon_armor':  { name: "惡魔戰甲", desc: "DEF +1000" },
+            'angel_armor':  { name: "熾天使鎧甲", desc: "DEF +5000" },
+            'plate_mail':   { name: "板金甲", desc: "DEF +15" },
+            'dragon_mail':  { name: "龍鱗甲", desc: "DEF +30" },
 
-            // === 4. 防具 (Armor) ===
-            'cloth_armor': '布衣', 'hunt_vest': '獵人背心',
-            'leather_armor': '皮甲', 'snake_boots': '蛇皮長靴',
-            'chain_mail': '鎖子甲', 'magma_plate': '熔岩胸甲',
-            'ice_robe': '冰霜法袍', 'yeti_cloak': '雪怪斗篷',
-            'demon_armor': '惡魔戰甲',
-            'angel_armor': '熾天使鎧甲', 'plate_mail': '板金甲', 'dragon_mail': '龍鱗甲',
+            // === 飾品 ===
+            'bone_ring':    { name: "骨戒", desc: "ATK +2" },
+            'ring_str':     { name: "力量戒指", desc: "ATK +10" },
+            'snake_boots':  { name: "蛇皮長靴", desc: "DEF +10" },
+            'amulet_soul':  { name: "靈魂護符", desc: "MP +300" },
+            'ring_lord':    { name: "領主指環", desc: "全能力 +500" },
+            'crown_chaos':  { name: "混沌之冠", desc: "全能力 +2000" },
+            'ring_life':    { name: "生命護符", desc: "HP +100" },
+            'ring_magic':   { name: "魔力耳環", desc: "MP +50" },
+            'fish_ring':    { name: "魚鱗戒指", desc: "DEF +8" },
+            'pearl_necklace':{ name: "珍珠項鍊", desc: "MP +100, DEF +20" },
 
-            // === 5. 飾品 (Accessories) ===
-            'bone_ring': '骨戒', 
-            'ring_str': '力量戒指', 
-            'amulet_soul': '靈魂護符', 
-            'ring_lord': '領主指環', 
-            'crown_chaos': '混沌之冠',
-            'ring_life': '生命護符', 'ring_magic': '魔力耳環',
-            // 新增採集飾品
-            'fish_ring': '魚鱗戒指', 'pearl_necklace': '珍珠項鍊',
-
-            // === 6. 採集材料 (🌲 木材) ===
-            'oak_log': '橡木原木', 'maple_log': '楓木原木', 'yew_log': '紫杉原木', 'ancient_log': '遠古神木',
-            'spirit_wood': '靈木', 'dragon_wood': '龍骨木', 'void_wood': '虛空木', 'chaos_wood': '混沌神木',
-
-            // === 7. 採集材料 (🐟 漁獲) ===
-            'carp': '鯉魚', 'salmon': '鮭魚', 'koi': '錦鯉', 'magic_fish': '魔力魚', 'pearl': '珍珠',
-            'tuna': '黑鮪魚', 'shark': '大白鯊', 'lava_eel': '熔岩鰻', 'void_squid': '虛空烏賊', 'god_carp': '神之鯉',
-
-            // === 8. 採集材料 (⛏️ 礦物) ===
-            'coal': '煤炭', 'ruby': '紅寶石', 'diamond': '鑽石', 'star_fragment': '星之碎片'
+            // === 材料 (顯示為材料即可) ===
+            'default':      { name: "未知物品", desc: "製作/合成材料" }
         };
 
         let currentSellId = null;
@@ -227,16 +245,18 @@
                 const div = document.createElement('div');
                 div.className = 'item-card';
                 
-                // 顯示正確的中文名稱
-                const displayName = ITEM_NAMES[item.itemKey] || item.itemName || item.itemKey;
+                // 取得物品資料，若無則使用預設
+                const itemData = ITEM_DB[item.itemKey] || { name: item.itemName || item.itemKey, desc: "材料" };
 
                 // 區分按鈕 (取回 vs 購買)
                 const btnHtml = item.isMine 
                     ? `<button class="btn btn-cancel" onclick="triggerConfirm('cancel', '${item.id}', '確定要從市集取回嗎？')">取回物品</button>`
                     : `<button class="btn btn-buy" onclick="triggerConfirm('buy', '${item.id}', '確定要花 ${item.price} G 購買嗎？')">購買</button>`;
                 
+                // 🟢 在名稱下方加入屬性描述
                 div.innerHTML = `
-                    <h3>${displayName}</h3>
+                    <h3>${itemData.name}</h3>
+                    <div class="item-stats">${itemData.desc}</div>
                     <div class="item-info">賣家: ${item.seller}</div>
                     <div class="price-tag">${item.price} G</div>
                     ${btnHtml}
@@ -273,11 +293,12 @@
                     div.style.color = '#fff';
                     div.style.border = '2px solid #555';
                     
-                    const displayName = ITEM_NAMES[key] || key;
+                    const itemData = ITEM_DB[key] || { name: key, desc: "材料" };
 
                     div.innerHTML = `
-                        <div style="font-size:12px; font-weight:bold;">${displayName} x${inv[key]}</div>
-                        <button class="btn btn-sell" onclick="openSellModal('${key}', '${displayName}')">上架</button>
+                        <div style="font-size:12px; font-weight:bold;">${itemData.name} x${inv[key]}</div>
+                        <div style="font-size:9px; color:#aaa; margin-bottom:5px;">${itemData.desc}</div>
+                        <button class="btn btn-sell" onclick="openSellModal('${key}', '${itemData.name}')">上架</button>
                     `;
                     list.appendChild(div);
                 }
