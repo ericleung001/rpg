@@ -95,10 +95,7 @@
     <script>
         //  替換成你真正的後端網址 (記得要用 https / wss)
 		// 這是加密後的網址 (一般人看不懂這是什麼)
-        const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
-
-        // atob() 函數會把亂碼解開成原本的網址
-        const BACKEND_URL = atob(_0x5a1b); 
+		const BACKEND_URL = "http://45.76.107.112:3001"; 
         
         const socket = io(BACKEND_URL, {
             transports: ['websocket', 'polling']
