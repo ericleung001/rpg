@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>勇者物語 - 登入v2</title>
+    <title>勇者物語 - 登入v3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -94,11 +94,13 @@
     <script>
         //  替換成你真正的後端網址 (記得要用 https / wss)
 		// 這是加密後的網址 (一般人看不懂這是什麼)
-		const BACKEND_URL = "http://45.76.107.112:3001"; 
-        
-        const socket = io(BACKEND_URL, {
-            transports: ['websocket', 'polling']
-        });
+		const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+		const BACKEND_URL = atob(_0x5a1b);
+		
+		const socket = io(BACKEND_URL, {
+		    transports: ['websocket', 'polling'],
+		    secure: true // 🔒 強制使用加密連線 (HTTPS/WSS)
+		});
 
         if(localStorage.getItem('rpg_token')) {
             window.location.href = 'hub.html';
