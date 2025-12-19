@@ -133,7 +133,7 @@
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // 🟢 完整物品資料庫 (已同步 Server 最新設定)
+        // 🟢 完整物品資料庫 (含新料理)
         const ITEM_DB = {
             // === 消耗品 ===
             'potion_hp':    { name: "小紅藥水", cost: 50, desc: "恢復 50 HP" },
@@ -144,6 +144,13 @@
             'potion_mp':    { name: "小藍藥水", cost: 80, desc: "恢復 30 MP" },
             'potion_mp_mid':{ name: "中藍藥水", cost: 300, desc: "恢復 100 MP" },
             'potion_mp_high':{ name: "大藍藥水", cost: 1500, desc: "恢復 500 MP" },
+            
+            // 🟢 新增料理
+            'grilled_carp': { name: "烤鯉魚", cost: 30, desc: "HP+100" },
+            'salmon_sushi': { name: "鮭魚壽司", cost: 50, desc: "MP+50" },
+            'tuna_steak':   { name: "煎鮪魚排", cost: 200, desc: "HP+500" },
+            'eel_rice':     { name: "鰻魚飯", cost: 300, desc: "HP+300, MP+100" },
+            'void_soup':    { name: "虛空海鮮湯", cost: 1000, desc: "狀態全滿" },
             'sushi_plate':  { name: "壽司拼盤", cost: 200, desc: "恢復 500 HP" },
 
             // === 武器 ===
@@ -160,6 +167,9 @@
             'void_reaper':  { name: "虛空收割者", cost: 0, desc: "ATK+3500" },
             'god_slayer':   { name: "弒神劍", cost: 0, desc: "ATK+20000" },
             'chaos_staff':  { name: "混沌法杖", cost: 0, desc: "ATK+25000" },
+            'hero_sword':   { name: "勇者之劍", cost: 2000, desc: "ATK+50" },
+            'steel_blade':  { name: "精鋼劍", cost: 0, desc: "ATK+25" },
+            'assassin_dag': { name: "刺客短刀", cost: 2000, desc: "ATK+120" },
             // 新增採集武器
             'oak_bow':      { name: "橡木弓", cost: 200, desc: "ATK+25" },
             'maple_staff':  { name: "楓木法杖", cost: 500, desc: "ATK+50" },
@@ -188,9 +198,11 @@
             'amulet_soul':  { name: "靈魂護符", cost: 0, desc: "MP+300" },
             'ring_lord':    { name: "領主指環", cost: 0, desc: "全能力+500" },
             'crown_chaos':  { name: "混沌之冠", cost: 0, desc: "全能力+2000" },
+            'ring_life':    { name: "生命護符", cost: 600, desc: "HP+100" },
+            'ring_magic':   { name: "魔力耳環", cost: 500, desc: "MP+50" },
             // 新增採集飾品
-            'fish_ring':    { name: "魚鱗戒指", cost: 400, desc: "DEF+8, HP+50" },
-            'pearl_necklace':{ name: "珍珠項鍊", cost: 2000, desc: "MP+100, DEF+20" },
+            'fish_ring':    { name: "魚鱗戒指", cost: 400, desc: "DEF+8" },
+            'pearl_necklace':{ name: "珍珠項鍊", cost: 2000, desc: "MP+100" },
 
             // === 採集材料 (🌲 木材) ===
             'oak_log':      { name: "橡木原木", cost: 5, desc: "建材" },
