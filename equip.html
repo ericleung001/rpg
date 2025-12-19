@@ -29,7 +29,7 @@
         .btn { background: #27ae60; color: white; border: 2px solid #2ecc71; padding: 8px 12px; cursor: pointer; font-family: inherit; font-size: 12px; border-radius: 4px;}
         .btn-unequip { background: #c0392b; border-color: #e74c3c; margin-top: 5px; font-size: 10px; padding: 5px 8px; }
         .back-btn { background: #7f8c8d; color: white; padding: 15px; text-decoration: none; font-size: 14px; display: block; width: 100%; max-width: 600px; box-sizing: border-box; border-radius: 8px; margin-top: 15px; border: 3px solid #fff;}
-    	/* === 通用通知條樣式 (加在所有頁面的 style 裡) === */
+        /* === 通用通知條樣式 (加在所有頁面的 style 裡) === */
         #game-toast {
             position: fixed; 
             top: -100px; /* 預設藏在螢幕上面 */
@@ -53,13 +53,13 @@
 <body>
 <div id="game-toast"></div>
     <div class="main-box">
-        <h2>️ 裝備狀態</h2>
+        <h2>🛡️ 裝備狀態</h2>
         <div class="stats-display">
             <div class="stat-grid">
                 <div>⚔️ ATK: <span id="atk" style="color:#e74c3c">0</span></div>
-                <div>️ DEF: <span id="def" style="color:#3498db">0</span></div>
+                <div>🛡️ DEF: <span id="def" style="color:#3498db">0</span></div>
                 <div>❤️ HP : <span id="hp">0</span></div>
-                <div> MP : <span id="mp">0</span></div>
+                <div>💧 MP : <span id="mp">0</span></div>
             </div>
         </div>
         <div class="slots-area">
@@ -67,18 +67,15 @@
             <div class="slot"><div class="slot-title">防具 (Armor)</div><div id="slot-armor" class="slot-item">無</div></div>
             <div class="slot"><div class="slot-title">飾品 (Acc)</div><div id="slot-acc" class="slot-item">無</div></div>
         </div>
-        <h3> 背包 (點擊裝備)</h3>
+        <h3>🎒 背包 (點擊裝備)</h3>
         <div id="inventory-list" class="inventory-container"><div style="font-size:12px; color:#aaa; padding:10px;">讀取中...</div></div>
     </div>
     <a href="hub.html" class="back-btn">◀ 返回大廳</a>
 
     <script src="socket.io.js"></script>
     <script>
-        // 這是加密後的網址 (一般人看不懂這是什麼)
         const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
-
-        // atob() 函數會把亂碼解開成原本的網址
-        const BACKEND_URL = atob(_0x5a1b); 
+        const BACKEND_URL = atob(_0x5a1b);
         
         const socket = io(BACKEND_URL, {
             transports: ['websocket', 'polling']
@@ -86,6 +83,7 @@
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
+        // 🟢 完整裝備列表 (已同步 Server 最新設定)
         const ITEM_MAP = {
             // === 武器 ===
             'wood_sword':   { name: "木劍", cost: 100, desc: "ATK+10" },
@@ -104,6 +102,13 @@
             'hero_sword':   { name: "勇者之劍", cost: 2000, desc: "ATK+50" },
             'steel_blade':  { name: "精鋼劍", cost: 0, desc: "ATK+25" },
             'assassin_dag': { name: "刺客短刀", cost: 2000, desc: "ATK+120" },
+            // 新增採集武器
+            'oak_bow':      { name: "橡木弓", cost: 200, desc: "ATK+25" },
+            'maple_staff':  { name: "楓木法杖", cost: 500, desc: "ATK+50" },
+            'shark_tooth':  { name: "鯊魚牙匕首", cost: 800, desc: "ATK+80" },
+            'emerald_staff':{ name: "翡翠法杖", cost: 5000, desc: "ATK+300" },
+            'obsidian_blade':{ name: "黑曜石之劍", cost: 8000, desc: "ATK+600" },
+            'dragon_spear': { name: "龍骨長槍", cost: 15000, desc: "ATK+1200" },
 
             // === 防具 ===
             'cloth_armor':  { name: "布衣", cost: 100, desc: "DEF+5" },
@@ -126,14 +131,17 @@
             'ring_lord':    { name: "領主指環", cost: 0, desc: "全能力+500" },
             'crown_chaos':  { name: "混沌之冠", cost: 0, desc: "全能力+2000" },
             'ring_life':    { name: "生命護符", cost: 600, desc: "HP+100" },
-            'ring_magic':   { name: "魔力耳環", cost: 500, desc: "MP+50" }
+            'ring_magic':   { name: "魔力耳環", cost: 500, desc: "MP+50" },
+            // 新增採集飾品
+            'fish_ring':    { name: "魚鱗戒指", cost: 400, desc: "DEF+8" },
+            'pearl_necklace':{ name: "珍珠項鍊", cost: 2000, desc: "MP+100" }
         };
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
         socket.on('playerStatsUpdate', (p) => { renderStats(p); renderSlots(p.equipment); renderInventory(p.inventory); });
         socket.on('equipResult', (msg) => { showMsg(msg); });
         
-        // 【新增】監聽錯誤訊息
+        // 監聽錯誤訊息
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
 
         function renderStats(p) {
@@ -162,6 +170,7 @@
             let hasEquipable = false;
             Object.keys(inv).forEach(key => {
                 const item = ITEM_MAP[key];
+                // 只顯示可裝備的物品 (有在 ITEM_MAP 裡面的)
                 if (item && inv[key] > 0) {
                     hasEquipable = true;
                     const div = document.createElement('div');
@@ -175,13 +184,11 @@
 
         function equip(id) { socket.emit('equipItem', id); }
         function unequip(slot) { socket.emit('unequipItem', slot); }
-        // === 通用顯示訊息函數 ===
+        
         function showMsg(text) {
             const toast = document.getElementById('game-toast');
             toast.innerText = text;
-            toast.style.top = "30px"; // 滑下來顯示
-            
-            // 3秒後自動收回
+            toast.style.top = "30px"; 
             setTimeout(() => {
                 toast.style.top = "-100px"; 
             }, 3000);
