@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>料理廚房</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body { 
+            background-color: #d35400; color: #fff; /* 橘色系背景代表廚房 */
+            font-family: 'Press Start 2P', monospace; 
+            text-align: center; padding: 10px; margin: 0;
+            display: flex; flex-direction: column; height: 100dvh; box-sizing:border-box;
+        }
+        .header { padding: 10px; border-bottom: 2px solid #fff; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .back-btn { background: #34495e; border: 2px solid #fff; color: white; padding: 8px; cursor: pointer; font-family: inherit; font-size: 10px; text-decoration: none;}
+        
+        .recipe-container { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 10px; overflow-y: auto; flex: 1; }
+        
+        .recipe-card { 
+            background: #e67e22; border: 4px solid #a04000; 
+            padding: 15px; border-radius: 8px; text-align: left;
+            position: relative;
+        }
+        .recipe-name { color: #fff; font-size: 14px; margin-bottom: 5px; font-weight: bold; }
+        .recipe-desc { font-size: 10px; color: #fce4ec; margin-bottom: 10px; }
+        .mat-list { font-size: 10px; color: #fff; margin-bottom: 10px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px; }
+        
+        .btn-cook { 
+            width: 100%; padding: 12px; background: #c0392b; color: white; 
+            border: 2px solid #922b21; cursor: pointer; font-family: inherit; 
+            font-size: 12px; font-weight: bold; border-radius: 6px;
+        }
+        .btn-cook:active { transform: translateY(2px); }
+
+        #game-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); border: 2px solid #f1c40f; padding: 10px 20px; border-radius: 20px; z-index: 999; transition: top 0.5s; font-size: 12px; white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <div id="game-toast"></div>
+    
+    <div class="header">
+        <span style="font-size:12px;">🍳 料理廚房</span>
+        <a href="hub.html" class="back-btn">回大廳</a>
+    </div>
+
+    <div style="font-size:10px; margin-bottom:10px;">將新鮮食材變為美味料理！</div>
+
+    <div id="recipe-list" class="recipe-container">
+        </div>
+
+    <script src="socket.io.js"></script>
+    <script>
+        const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'] });
+        
+        let myToken = localStorage.getItem('rpg_token');
+        if (!myToken) window.location.href = 'index.html';
+
+        // 只顯示料理類的配方
+        const FOOD_IDs = ['grilled_carp', 'salmon_sushi', 'tuna_steak', 'eel_rice', 'void_soup', 'sushi_plate'];
+
+        socket.on('connect', () => {
+            socket.emit('joinGame', myToken);
+            socket.emit('getRecipes');
+        });
+
+        socket.on('recipeList', (recipes) => {
+            const container = document.getElementById('recipe-list');
+            container.innerHTML = '';
+
+            recipes.forEach(r => {
+                // 篩選：只顯示食物
+                if (!FOOD_IDs.includes(r.itemId)) return;
+
+                const div = document.createElement('div');
+                div.className = 'recipe-card';
+                
+                let matsHtml = r.materials.map(m => `${m.name} x${m.count}`).join(' + ');
+
+                div.innerHTML = `
+                    <div class="recipe-name">🍱 ${r.itemName}</div>
+                    <div class="recipe-desc">${r.itemDesc}</div>
+                    <div class="mat-list">所需: ${matsHtml}<br>費用: ${r.goldCost} G</div>
+                    <button class="btn-cook" onclick="cook('${r.itemId}')">烹飪</button>
+                `;
+                container.appendChild(div);
+            });
+        });
+
+        socket.on('craftResult', (res) => {
+            showToast(res.success ? "✅ " + res.msg : "❌ " + res.msg);
+        });
+
+        function cook(id) {
+            socket.emit('craftItem', id);
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('game-toast');
+            t.innerText = msg;
+            t.style.top = "30px";
+            setTimeout(() => { t.style.top = "-100px"; }, 2000);
+        }
+    </script>
+</body>
+</html>
