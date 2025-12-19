@@ -89,8 +89,8 @@
     <div id="game-toast"></div>
 
     <div class="header">
-        <h1> 背包</h1>
-        <div class="gold-display"> <span id="my-gold">0</span> G</div>
+        <h1>🎒 背包</h1>
+        <div class="gold-display">💰 <span id="my-gold">0</span> G</div>
     </div>
 
     <div class="container">
@@ -124,11 +124,8 @@
 
     <script src="socket.io.js"></script>
     <script>
-        // 這是加密後的網址 (一般人看不懂這是什麼)
         const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
-
-        // atob() 函數會把亂碼解開成原本的網址
-        const BACKEND_URL = atob(_0x5a1b); 
+        const BACKEND_URL = atob(_0x5a1b);
         
         const socket = io(BACKEND_URL, {
             transports: ['websocket', 'polling']
@@ -136,7 +133,7 @@
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        //  完整物品資料庫 (必須包含所有新物品，否則會顯示代碼)
+        // 🟢 完整物品資料庫 (已同步 Server 最新設定)
         const ITEM_DB = {
             // === 消耗品 ===
             'potion_hp':    { name: "小紅藥水", cost: 50, desc: "恢復 50 HP" },
@@ -144,7 +141,6 @@
             'potion_high':  { name: "大紅藥水", cost: 1000, desc: "恢復 2000 HP" },
             'potion_max':   { name: "特級秘藥", cost: 5000, desc: "恢復 10000 HP" },
             'elixir':       { name: "神之甘露", cost: 20000, desc: "恢復 50000 HP" },
-
             'potion_mp':    { name: "小藍藥水", cost: 80, desc: "恢復 30 MP" },
             'potion_mp_mid':{ name: "中藍藥水", cost: 300, desc: "恢復 100 MP" },
             'potion_mp_high':{ name: "大藍藥水", cost: 1500, desc: "恢復 500 MP" },
@@ -163,9 +159,9 @@
             'void_reaper':  { name: "虛空收割者", cost: 0, desc: "ATK+3500" },
             'god_slayer':   { name: "弒神劍", cost: 0, desc: "ATK+20000" },
             'chaos_staff':  { name: "混沌法杖", cost: 0, desc: "ATK+25000" },
-            'hero_sword':   { name: "勇者之劍", cost: 2000, desc: "ATK+50" },
-            'steel_blade':  { name: "精鋼劍", cost: 0, desc: "ATK+25" },
-            'assassin_dag': { name: "刺客短刀", cost: 2000, desc: "ATK+120" },
+            // 新增採集武器
+            'oak_bow':      { name: "橡木弓", cost: 0, desc: "ATK+20" },
+            'maple_staff':  { name: "楓木法杖", cost: 0, desc: "ATK+45" },
 
             // === 防具 ===
             'cloth_armor':  { name: "布衣", cost: 100, desc: "DEF+5" },
@@ -177,8 +173,6 @@
             'yeti_cloak':   { name: "雪怪斗篷", cost: 0, desc: "DEF+250" },
             'demon_armor':  { name: "惡魔戰甲", cost: 0, desc: "DEF+1000" },
             'angel_armor':  { name: "熾天使鎧甲", cost: 0, desc: "DEF+5000" },
-            'plate_mail':   { name: "板金甲", cost: 1500, desc: "DEF+15" },
-            'dragon_mail':  { name: "龍鱗甲", cost: 0, desc: "DEF+30" },
 
             // === 飾品 ===
             'bone_ring':    { name: "骨戒", cost: 0, desc: "ATK+2" },
@@ -187,10 +181,38 @@
             'amulet_soul':  { name: "靈魂護符", cost: 0, desc: "MP+300" },
             'ring_lord':    { name: "領主指環", cost: 0, desc: "全能力+500" },
             'crown_chaos':  { name: "混沌之冠", cost: 0, desc: "全能力+2000" },
-            'ring_life':    { name: "生命護符", cost: 600, desc: "HP+100" },
-            'ring_magic':   { name: "魔力耳環", cost: 500, desc: "MP+50" },
+            // 新增採集飾品
+            'fish_ring':    { name: "魚鱗戒指", cost: 0, desc: "DEF+5" },
 
-            // === 材料 (確保可以賣錢) ===
+            // === 採集材料 (🌲 木材) ===
+            'oak_log':      { name: "橡木原木", cost: 5, desc: "建材" },
+            'maple_log':    { name: "楓木原木", cost: 15, desc: "高級建材" },
+            'yew_log':      { name: "紫杉原木", cost: 30, desc: "魔法木材" },
+            'ancient_log':  { name: "遠古神木", cost: 100, desc: "神話材料" },
+            'spirit_wood':  { name: "靈木", cost: 50, desc: "稀有木材" },
+            'dragon_wood':  { name: "龍骨木", cost: 150, desc: "極硬木材" },
+            'void_wood':    { name: "虛空木", cost: 300, desc: "來自虛空" },
+            'chaos_wood':   { name: "混沌神木", cost: 1000, desc: "傳說材料" },
+
+            // === 採集材料 (🐟 漁獲) ===
+            'carp':         { name: "鯉魚", cost: 5, desc: "食材" },
+            'salmon':       { name: "鮭魚", cost: 10, desc: "美味食材" },
+            'koi':          { name: "錦鯉", cost: 50, desc: "幸運魚" },
+            'magic_fish':   { name: "魔力魚", cost: 30, desc: "發光魚" },
+            'tuna':         { name: "黑鮪魚", cost: 80, desc: "頂級食材" },
+            'shark':        { name: "大白鯊", cost: 100, desc: "兇猛魚類" },
+            'lava_eel':     { name: "熔岩鰻", cost: 120, desc: "燙手" },
+            'void_squid':   { name: "虛空烏賊", cost: 200, desc: "神秘" },
+            'god_carp':     { name: "神之鯉", cost: 500, desc: "神魚" },
+            'pearl':        { name: "珍珠", cost: 500, desc: "珍貴寶石" },
+
+            // === 採集材料 (⛏️ 礦物) ===
+            'coal':         { name: "煤炭", cost: 5, desc: "燃料" },
+            'ruby':         { name: "紅寶石", cost: 200, desc: "寶石" },
+            'diamond':      { name: "鑽石", cost: 500, desc: "堅硬寶石" },
+            'star_fragment':{ name: "星之碎片", cost: 1000, desc: "隕石" },
+
+            // === 怪物掉落材料 ===
             'copper_ore':   { name: "銅礦石", cost: 10, desc: "材料" },
             'soft_fur':     { name: "柔軟皮毛", cost: 10, desc: "材料" },
             'beast_fang':   { name: "野獸尖牙", cost: 15, desc: "材料" },
@@ -214,9 +236,7 @@
             'god_blood':    { name: "神之血", cost: 3000, desc: "材料" },
             'chaos_orb':    { name: "混沌寶珠", cost: 5000, desc: "材料" },
             'angel_feather':{ name: "天使之羽", cost: 4000, desc: "材料" },
-            'dragon_scale': { name: "龍鱗", cost: 300, desc: "材料" },
-            'leather':      { name: "皮革", cost: 15, desc: "材料" },
-            'magic_dust':   { name: "魔粉", cost: 30, desc: "材料" }
+            'dragon_scale': { name: "龍鱗", cost: 300, desc: "材料" }
         };
 
         let currentItemId = null;
@@ -230,7 +250,6 @@
             renderBag(p.inventory);
         });
 
-        // Toast 整合
         socket.on('bagResult', (res) => { 
             if(res.success) showMsg(res.msg); 
             else showMsg("❌ " + res.msg);
