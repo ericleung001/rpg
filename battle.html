@@ -22,7 +22,11 @@
         #turn-bar { background: #333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; border-bottom: 4px solid #000; letter-spacing: 1px;}
         
         .boss-area { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-        .boss-sprite { width: 120px; height: 120px; object-fit: contain; margin-bottom: 10px; transition: transform 0.1s; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5)); image-rendering: pixelated; }
+        .boss-sprite { 
+            width: 120px; height: 120px; object-fit: contain; margin-bottom: 10px; 
+            transition: transform 0.1s; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5)); 
+            image-rendering: pixelated; 
+        }
         .boss-info { width: 80%; text-align: center; }
         
         .player-area { display: flex; flex-direction: column; justify-content: center; padding: 0 15px; width: 100%; box-sizing: border-box; gap: 5px; }
@@ -76,18 +80,6 @@
         @keyframes flash { 0%,100% {filter:none;} 50% {filter:sepia(1) hue-rotate(-50deg) saturate(5);} }
         
         #game-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f; color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999; font-size: 14px; font-weight: bold; transition: top 0.5s ease-in-out; pointer-events: none; }
-        /*  修改：怪物圖片樣式 */
-        .boss-sprite { 
-            width: 120px; height: 120px; 
-            object-fit: contain; 
-            margin-bottom: 10px; 
-            transition: transform 0.1s;
-            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5));
-            
-            /*  加入這兩行，讓像素圖放大後保持銳利，不會糊掉 */
-            image-rendering: pixelated;       /* Chrome/Edge */
-            image-rendering: -moz-crisp-edges; /* Firefox */
-        }
     </style>
 </head>
 <body>
@@ -116,7 +108,7 @@
             <div class="gba-box my-status">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
                     <span style="font-size:12px; font-weight:bold;">勇者(你)</span>
-                    <span style="font-size:10px; color:#f1c40f;">⚔️<span id="atk-val">0</span> ️<span id="def-val">0</span></span>
+                    <span style="font-size:10px; color:#f1c40f;">⚔️<span id="atk-val">0</span> 🛡️<span id="def-val">0</span></span>
                 </div>
                 <div class="hp-bar"><div id="php" class="hp-fill" style="width:100%"></div></div>
                 <div class="mp-bar"><div id="pmp" class="mp-fill" style="width:100%"></div></div>
@@ -166,6 +158,14 @@
             'thunder':    { name: "雷擊",   mp: 15, desc: "傷害+暈眩" },
             'drain':      { name: "吸血",   mp: 20, desc: "吸取生命" },
             'god_light':  { name: "神之光", mp: 50, desc: "恢復500HP" }
+        };
+
+        // 🟢 物品名稱對照表 (用於按鈕顯示)
+        const ITEM_NAMES = {
+            'potion_hp': '紅水(小)', 'potion_mid': '紅水(中)', 'potion_high': '紅水(大)', 'potion_max': '秘藥', 'elixir': '甘露',
+            'potion_mp': '藍水(小)', 'potion_mp_mid': '藍水(中)', 'potion_mp_high': '藍水(大)',
+            'grilled_carp': '烤鯉魚', 'salmon_sushi': '鮭魚壽司', 'tuna_steak': '鮪魚排', 
+            'eel_rice': '鰻魚飯', 'void_soup': '虛空湯', 'sushi_plate': '壽司拼盤'
         };
 
         let myToken = localStorage.getItem('rpg_token');
@@ -230,7 +230,6 @@
                 if (!img.src.includes(newSrc)) { img.src = newSrc; img.style.display = 'block'; }
             }
 
-            // 🟢 更新隊友列表 (含 MP)
             const teammatesBox = document.getElementById('teammates-box');
             teammatesBox.innerHTML = '';
             info.players.forEach(p => {
@@ -268,7 +267,6 @@
             lastMonsterHp = m.hp;
         });
 
-        // 🟢 玩家數值更新 (含 MP)
         socket.on('playerStatsUpdate', (p) => {
             myPlayer = p;
             
@@ -300,8 +298,6 @@
             const img = document.getElementById('monster-img'); img.style.transition = "opacity 2s"; img.style.opacity = 0;
             document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column: span 2;" disabled>下一場...</button><button class="btn" style="grid-column: span 2;" onclick="leaveRoom()">離開</button>`;
         });
-
-
 
         socket.on('playerDead', () => { log("你被打倒了..."); showMsg("👻 你已經死亡..."); document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column:span 2; background:red; color:white" onclick="window.location.href='rest.html'"> 去復活</button>`; });
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
@@ -359,7 +355,12 @@
             const btnArea = document.getElementById('btns');
             btnArea.innerHTML = '';
             
-            const itemsToShow = ['potion_hp', 'potion_mid', 'potion_high', 'potion_max', 'elixir', 'potion_mp', 'potion_mp_mid', 'potion_mp_high'];
+            // 🟢 加入新料理 ID
+            const itemsToShow = [
+                'potion_hp', 'potion_mid', 'potion_high', 'potion_max', 'elixir', 
+                'potion_mp', 'potion_mp_mid', 'potion_mp_high',
+                'grilled_carp', 'salmon_sushi', 'tuna_steak', 'eel_rice', 'void_soup', 'sushi_plate'
+            ];
             
             let hasItem = false;
             itemsToShow.forEach(itemId => {
@@ -368,17 +369,9 @@
                     hasItem = true;
                     const potBtn = document.createElement('button');
                     potBtn.className = 'btn battle-action';
-                    potBtn.style.fontSize = '12px';
+                    potBtn.style.fontSize = '10px'; // 字體稍微縮小以容納更長名稱
                     
-                    let name = '藥水';
-                    if(itemId.includes('hp')) name='紅水';
-                    if(itemId.includes('mid') && itemId.includes('hp')) name='中紅';
-                    if(itemId.includes('high') && itemId.includes('hp')) name='大紅';
-                    if(itemId==='potion_max') name='秘藥';
-                    if(itemId.includes('mp')) name='藍水';
-                    if(itemId.includes('mid') && itemId.includes('mp')) name='中藍';
-                    if(itemId.includes('high') && itemId.includes('mp')) name='大藍';
-
+                    const name = ITEM_NAMES[itemId] || '物品';
                     potBtn.innerText = `${name}(${count})`;
                     potBtn.onclick = () => { useItem(itemId); };
                     btnArea.appendChild(potBtn);
@@ -387,7 +380,7 @@
 
             if(!hasItem) {
                 const div = document.createElement('div');
-                div.innerText = "背包沒有藥水";
+                div.innerText = "背包沒有補給品";
                 div.style.gridColumn = "span 2";
                 div.style.fontSize = "12px";
                 btnArea.appendChild(div);

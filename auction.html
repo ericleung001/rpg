@@ -148,7 +148,35 @@
 
         // 🟢 物品詳細資料庫 (包含名稱與屬性描述)
         const ITEM_DB = {
-            // === 消耗品 & 料理 ===
+            // === 1. 材料 (Materials) ===
+            'copper_ore': { name: '銅礦石', desc: '低階礦石' },
+            'soft_fur': { name: '柔軟皮毛', desc: '基礎皮革材料' },
+            'beast_fang': { name: '野獸尖牙', desc: '鋒利的牙齒' },
+            'slime_gel': { name: '黏液', desc: '黏糊糊的液體' },
+            'iron_ore': { name: '鐵礦石', desc: '鍛造金屬' },
+            'leather': { name: '皮革', desc: '製作防具的材料' },
+            'tough_hide': { name: '硬皮革', desc: '堅韌的獸皮' },
+            'magic_dust': { name: '魔粉', desc: '含有微弱魔力' },
+            'poison_sac': { name: '毒囊', desc: '含有劇毒' },
+            'bone_shard': { name: '碎骨片', desc: '充滿死氣' },
+            'silver_ore': { name: '銀礦石', desc: '對魔物有效' },
+            'fire_core': { name: '火焰核心', desc: '燃燒不滅' },
+            'lava_rock': { name: '熔岩石', desc: '滾燙的石頭' },
+            'dragon_scale': { name: '龍鱗', desc: '極度堅硬' },
+            'gold_ore': { name: '金礦石', desc: '貴金屬' },
+            'ice_crystal': { name: '永恆冰晶', desc: '永不融化' },
+            'yeti_fur': { name: '雪怪毛皮', desc: '非常保暖' },
+            'spirit_dust': { name: '靈魂粉末', desc: '亡靈能量' },
+            'mithril': { name: '秘銀', desc: '傳說金屬' },
+            'void_dust': { name: '虛空之塵', desc: '異次元物質' },
+            'demon_horn': { name: '惡魔之角', desc: '邪惡力量' },
+            'dark_essence': { name: '暗之精華', desc: '純粹黑暗' },
+            'adamantite': { name: '精金', desc: '最堅硬物質' },
+            'god_blood': { name: '神之血', desc: '神聖液體' },
+            'chaos_orb': { name: '混沌寶珠', desc: '創世之力' },
+            'angel_feather': { name: '天使之羽', desc: '神聖羽毛' },
+
+            // === 2. 消耗品 & 料理 ===
             'potion_hp':    { name: "小紅藥水", desc: "恢復 50 HP" },
             'potion_mid':   { name: "中紅藥水", desc: "恢復 500 HP" },
             'potion_high':  { name: "大紅藥水", desc: "恢復 2000 HP" },
@@ -164,7 +192,7 @@
             'void_soup':    { name: "虛空海鮮湯", desc: "食用: 狀態全滿" },
             'sushi_plate':  { name: "壽司拼盤", desc: "食用: HP+500" },
 
-            // === 武器 ===
+            // === 3. 武器 ===
             'wood_sword':   { name: "木劍", desc: "ATK +10" },
             'copper_dagger':{ name: "銅匕首", desc: "ATK +15" },
             'iron_sword':   { name: "鐵劍", desc: "ATK +30" },
@@ -188,7 +216,7 @@
             'obsidian_blade':{ name: "黑曜石之劍", desc: "ATK +600" },
             'dragon_spear': { name: "龍骨長槍", desc: "ATK +1200" },
 
-            // === 防具 ===
+            // === 4. 防具 ===
             'cloth_armor':  { name: "布衣", desc: "DEF +5" },
             'hunt_vest':    { name: "獵人背心", desc: "DEF +8" },
             'leather_armor':{ name: "皮甲", desc: "DEF +15" },
@@ -201,7 +229,7 @@
             'plate_mail':   { name: "板金甲", desc: "DEF +15" },
             'dragon_mail':  { name: "龍鱗甲", desc: "DEF +30" },
 
-            // === 飾品 ===
+            // === 5. 飾品 ===
             'bone_ring':    { name: "骨戒", desc: "ATK +2" },
             'ring_str':     { name: "力量戒指", desc: "ATK +10" },
             'snake_boots':  { name: "蛇皮長靴", desc: "DEF +10" },
@@ -212,9 +240,34 @@
             'ring_magic':   { name: "魔力耳環", desc: "MP +50" },
             'fish_ring':    { name: "魚鱗戒指", desc: "DEF +8" },
             'pearl_necklace':{ name: "珍珠項鍊", desc: "MP +100, DEF +20" },
+            
+            // === 6. 採集材料 (🌲 木材) ===
+            'oak_log':      { name: "橡木原木", desc: "普通建材" },
+            'maple_log':    { name: "楓木原木", desc: "高級建材" },
+            'yew_log':      { name: "紫杉原木", desc: "魔法木材" },
+            'ancient_log':  { name: "遠古神木", desc: "神話材料" },
+            'spirit_wood':  { name: "靈木", desc: "稀有木材" },
+            'dragon_wood':  { name: "龍骨木", desc: "極硬木材" },
+            'void_wood':    { name: "虛空木", desc: "來自虛空" },
+            'chaos_wood':   { name: "混沌神木", desc: "傳說材料" },
 
-            // === 材料 (顯示為材料即可) ===
-            'default':      { name: "未知物品", desc: "製作/合成材料" }
+            // === 7. 採集材料 (🐟 漁獲) ===
+            'carp':         { name: "鯉魚", desc: "普通食材" },
+            'salmon':       { name: "鮭魚", desc: "美味食材" },
+            'koi':          { name: "錦鯉", desc: "幸運魚" },
+            'magic_fish':   { name: "魔力魚", desc: "發光魚" },
+            'tuna':         { name: "黑鮪魚", desc: "頂級食材" },
+            'shark':        { name: "大白鯊", desc: "兇猛魚類" },
+            'lava_eel':     { name: "熔岩鰻", desc: "燙手食材" },
+            'void_squid':   { name: "虛空烏賊", desc: "神秘食材" },
+            'god_carp':     { name: "神之鯉", desc: "神魚" },
+            'pearl':        { name: "珍珠", desc: "珍貴寶石" },
+
+            // === 8. 採集材料 (⛏️ 礦物) ===
+            'coal':         { name: "煤炭", desc: "燃料" },
+            'ruby':         { name: "紅寶石", desc: "寶石" },
+            'diamond':      { name: "鑽石", desc: "堅硬寶石" },
+            'star_fragment':{ name: "星之碎片", desc: "隕石" }
         };
 
         let currentSellId = null;
@@ -253,7 +306,6 @@
                     ? `<button class="btn btn-cancel" onclick="triggerConfirm('cancel', '${item.id}', '確定要從市集取回嗎？')">取回物品</button>`
                     : `<button class="btn btn-buy" onclick="triggerConfirm('buy', '${item.id}', '確定要花 ${item.price} G 購買嗎？')">購買</button>`;
                 
-                // 🟢 在名稱下方加入屬性描述
                 div.innerHTML = `
                     <h3>${itemData.name}</h3>
                     <div class="item-stats">${itemData.desc}</div>
@@ -281,27 +333,35 @@
         
         socket.on('marketRefresh', () => { socket.emit('getMarket'); });
 
-        // 4. 背包渲染
+        // 🟢 4. 背包渲染 (修復：顯示中文名稱與描述)
         function renderInventory(inv) {
             const list = document.getElementById('inventory-list');
             list.innerHTML = '';
-            Object.keys(inv).forEach(key => {
-                if(inv[key] > 0) {
-                    const div = document.createElement('div');
-                    div.className = 'item-card';
-                    div.style.background = '#34495e';
-                    div.style.color = '#fff';
-                    div.style.border = '2px solid #555';
-                    
-                    const itemData = ITEM_DB[key] || { name: key, desc: "材料" };
+            
+            // 過濾出數量 > 0 的物品
+            const keys = Object.keys(inv).filter(k => inv[k] > 0);
+            
+            if (keys.length === 0) {
+                list.innerHTML = '<div style="margin-top:20px; font-size:12px; color:#aaa;">背包是空的</div>';
+                return;
+            }
 
-                    div.innerHTML = `
-                        <div style="font-size:12px; font-weight:bold;">${itemData.name} x${inv[key]}</div>
-                        <div style="font-size:9px; color:#aaa; margin-bottom:5px;">${itemData.desc}</div>
-                        <button class="btn btn-sell" onclick="openSellModal('${key}', '${itemData.name}')">上架</button>
-                    `;
-                    list.appendChild(div);
-                }
+            keys.forEach(key => {
+                const div = document.createElement('div');
+                div.className = 'item-card';
+                div.style.background = '#34495e';
+                div.style.color = '#fff';
+                div.style.border = '2px solid #555';
+                
+                // 🟢 從 ITEM_DB 取得資料，沒有則使用預設值
+                const itemData = ITEM_DB[key] || { name: key, desc: "材料" };
+
+                div.innerHTML = `
+                    <div style="font-size:12px; font-weight:bold;">${itemData.name} x${inv[key]}</div>
+                    <div style="font-size:9px; color:#aaa; margin-bottom:5px;">${itemData.desc}</div>
+                    <button class="btn btn-sell" onclick="openSellModal('${key}', '${itemData.name}')">上架</button>
+                `;
+                list.appendChild(div);
             });
         }
 
