@@ -10,56 +10,127 @@
             background-color: #2c3e50; color: #fff; 
             font-family: 'Press Start 2P', monospace; 
             text-align: center; 
-            padding: 15px; 
+            padding: 10px; 
             display:flex; flex-direction:column; align-items:center; 
             height: 100dvh; margin:0; box-sizing:border-box;
             overscroll-behavior: none;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        /* 🟢 Loading 遮罩層 (與 hub.html 相同風格) */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #2c3e50; 
+            z-index: 99999; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease-out;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid #fff; border-top: 4px solid #f1c40f;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .header { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .gold-display { color: #f1c40f; font-size: 14px; font-weight: bold; }
+        h1 { font-size: 18px; margin: 0; }
+
+        .toolbar {
+            width: 100%; max-width: 600px;
+            display: flex; gap: 8px; margin-bottom: 10px;
         }
         
-        .header { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .gold-display { color: #f1c40f; font-size: 14px; font-weight: bold; }
-        h1 { font-size: 20px; margin: 0; }
+        .filter-select {
+            background: #ecf0f1; color: #2c3e50; border: 2px solid #bdc3c7;
+            padding: 10px; font-family: inherit; font-size: 12px;
+            border-radius: 6px; flex: 2; outline: none; font-weight: bold;
+        }
+
+        .btn-sell-trigger {
+            flex: 1;
+            background: #e67e22; color: white; border: 2px solid #d35400;
+            border-radius: 6px; cursor: pointer; font-family: inherit;
+            font-size: 12px; font-weight: bold; padding: 0 5px;
+            display: flex; align-items: center; justify-content: center;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .btn-sell-trigger:active { transform: translateY(2px); }
 
         .container { 
             display: flex; flex: 1; 
             width: 100%; max-width: 600px; 
-            gap: 15px; overflow: hidden; 
+            overflow: hidden; 
             margin-bottom: 15px; 
         }
         
-        .market-list { flex: 1.5; background: #34495e; border: 3px solid #bdc3c7; overflow-y: auto; padding: 10px; border-radius: 8px; }
-        .my-bag { flex: 1; background: #2c3e50; border: 3px solid #7f8c8d; overflow-y: auto; padding: 10px; border-radius: 8px; }
+        .market-list { 
+            width: 100%; 
+            background: #34495e; 
+            border: 3px solid #bdc3c7; 
+            overflow-y: auto; 
+            padding: 8px; 
+            border-radius: 8px; 
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); 
+            grid-auto-rows: min-content; 
+            gap: 10px; 
+            align-content: start; 
+        }
 
         .item-card { 
             background: #ecf0f1; color: #2c3e50; 
-            padding: 12px; margin-bottom: 10px; 
-            border-radius: 6px; text-align: left; 
-            position: relative; box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-        }
-        .item-card h3 { font-size: 12px; margin: 0 0 5px 0; color: #2980b9; }
-        .item-info { font-size: 10px; color: #555; }
-        
-        /* 🟢 屬性顯示樣式 */
-        .item-stats { 
-            font-size: 9px; color: #e67e22; 
-            background: rgba(0,0,0,0.05); padding: 4px; 
-            border-radius: 4px; margin-top: 5px; 
-            line-height: 1.4;
+            padding: 10px; 
+            border-radius: 8px; 
+            text-align: center; 
+            position: relative; 
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            aspect-ratio: 1 / 0.85; 
+            min-height: 140px; 
         }
 
-        .price-tag { color: #c0392b; font-weight: bold; margin-top: 5px; font-size: 12px; }
+        .item-card h3 { 
+            font-size: 12px; 
+            margin: 0 0 5px 0; 
+            color: #2980b9; 
+            height: 2.4em; 
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.2;
+        }
+
+        .item-info { font-size: 10px; color: #555; width: 100%; margin-bottom: 2px; }
+        
+        .item-stats { 
+            font-size: 10px; 
+            color: #e67e22; 
+            background: rgba(0,0,0,0.05); padding: 3px; 
+            border-radius: 4px; margin: 4px 0; 
+            width: 100%; box-sizing: border-box;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .price-tag { color: #c0392b; font-weight: bold; margin-top: auto; font-size: 12px; }
         
         .btn { 
-            padding: 10px; font-family: inherit; font-size: 12px; cursor: pointer; 
-            border: 2px solid #333; color: white; margin-top: 8px; width: 100%; 
-            border-radius: 4px; font-weight: bold;
+            padding: 8px; font-family: inherit; font-size: 12px; cursor: pointer; 
+            border: 2px solid #333; color: white; margin-top: 6px; width: 100%; 
+            border-radius: 6px; font-weight: bold;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
         }
         .btn-buy { background: #27ae60; border-color: #2ecc71; }
         .btn-sell { background: #e67e22; border-color: #d35400; }
         .btn-cancel { background: #c0392b; border-color: #e74c3c; } 
         .btn:active { filter: brightness(0.8); transform: translateY(2px); }
         
-        /* === 彈窗通用樣式 === */
         .modal-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.85); display: none; 
@@ -67,11 +138,12 @@
         }
         .modal-box { 
             background: #fff; color: #000; 
-            padding: 25px; border: 6px solid #f1c40f; 
-            width: 80%; max-width: 300px; border-radius: 12px;
+            padding: 20px; border: 6px solid #f1c40f; 
+            width: 85%; max-width: 320px; border-radius: 12px;
+            max-height: 80vh; overflow-y: auto; 
         }
         input { 
-            width: 100%; padding: 15px; margin: 15px 0; 
+            width: 100%; padding: 12px; margin: 10px 0; 
             font-family: inherit; font-size: 16px; 
             box-sizing: border-box; border: 2px solid #ccc;
         }
@@ -83,7 +155,6 @@
             width: 100%; max-width: 600px; box-sizing: border-box; border-radius: 8px;
         }
 
-        /* === Toast 通知樣式 === */
         #game-toast {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f;
@@ -91,9 +162,21 @@
             font-size: 14px; font-weight: bold; transition: top 0.5s ease-in-out;
             pointer-events: none;
         }
+        
+        .sell-list-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 5px; border-bottom: 1px solid #eee;
+        }
+        .sell-list-item button { width: auto; margin: 0; padding: 8px 12px; font-size: 12px;}
     </style>
 </head>
 <body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div style="font-size:12px; margin-top:10px;">讀取市集資訊...</div>
+        <div style="font-size:10px; color:#95a5a6; margin-top:5px;">(請稍候)</div>
+    </div>
+
     <div id="game-toast"></div>
 
     <div class="header">
@@ -101,25 +184,41 @@
         <div class="gold-display">💰 <span id="my-gold">0</span> G</div>
     </div>
 
+    <div class="toolbar">
+        <select id="category-filter" class="filter-select" onchange="applyFilter()">
+            <option value="all">🔍 全部商品</option>
+            <option value="weapon">⚔️ 武器</option>
+            <option value="armor">🛡️ 防具</option>
+            <option value="acc">💍 飾品</option>
+            <option value="consumable">🧪 消耗品</option>
+            <option value="material">🪵 材料</option>
+            <option value="mine">🟢 我的拍賣</option>
+        </select>
+        <button class="btn-sell-trigger" onclick="openInventoryModal()">+ 我要賣</button>
+    </div>
+
     <div class="container">
         <div class="market-list" id="market-list">
-            <div style="font-size:12px; color:#aaa; margin-top:20px;">載入中...</div>
-        </div>
-
-        <div class="my-bag">
-            <div style="font-size:12px; color:#aaa; margin-bottom:10px;">-- 背包 --</div>
-            <div id="inventory-list"></div>
+            <div style="font-size:12px; color:#aaa; margin-top:20px; grid-column: span 2;">載入中...</div>
         </div>
     </div>
 
     <a href="hub.html" class="back-btn">◀ 返回大廳</a>
 
-    <div id="sell-modal" class="modal-overlay">
+    <div id="inventory-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 style="font-size:16px; margin-bottom:15px;">選擇要賣的物品</h3>
+            <div id="sell-inventory-list" style="text-align:left;"></div>
+            <button class="btn" style="background:#7f8c8d; margin-top:15px;" onclick="closeInventoryModal()">取消</button>
+        </div>
+    </div>
+
+    <div id="sell-price-modal" class="modal-overlay">
         <div class="modal-box">
             <h3 id="modal-item-name" style="font-size:16px; margin-bottom:10px;">上架物品</h3>
             <input type="number" id="sell-price" placeholder="輸入價格 (G)">
             <button class="btn btn-sell" style="font-size:14px; padding:15px;" onclick="confirmSell()">確認上架</button>
-            <button class="btn" style="background:#555; margin-top:10px; font-size:14px; padding:15px;" onclick="closeSellModal()">取消</button>
+            <button class="btn" style="background:#555; margin-top:10px; font-size:14px; padding:15px;" onclick="closePriceModal()">取消</button>
         </div>
     </div>
 
@@ -137,187 +236,207 @@
 
     <script src="socket.io.js"></script>
     <script>
-        const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
+        // 🟢 Loading 控制 (3.5秒)
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const overlay = document.getElementById('loading-overlay');
+                overlay.style.opacity = '0';
+                setTimeout(() => { overlay.style.display = 'none'; }, 500);
+            }, 3500);
+        });
+
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
         const BACKEND_URL = atob(_0x5a1b);
         
         const socket = io(BACKEND_URL, {
-            transports: ['websocket', 'polling']
+            transports: ['websocket', 'polling'],
+            secure: true 
         });
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // 🟢 物品詳細資料庫 (包含名稱與屬性描述)
         const ITEM_DB = {
-            // === 1. 材料 (Materials) ===
-            'copper_ore': { name: '銅礦石', desc: '低階礦石' },
-            'soft_fur': { name: '柔軟皮毛', desc: '基礎皮革材料' },
-            'beast_fang': { name: '野獸尖牙', desc: '鋒利的牙齒' },
-            'slime_gel': { name: '黏液', desc: '黏糊糊的液體' },
-            'iron_ore': { name: '鐵礦石', desc: '鍛造金屬' },
-            'leather': { name: '皮革', desc: '製作防具的材料' },
-            'tough_hide': { name: '硬皮革', desc: '堅韌的獸皮' },
-            'magic_dust': { name: '魔粉', desc: '含有微弱魔力' },
-            'poison_sac': { name: '毒囊', desc: '含有劇毒' },
-            'bone_shard': { name: '碎骨片', desc: '充滿死氣' },
-            'silver_ore': { name: '銀礦石', desc: '對魔物有效' },
-            'fire_core': { name: '火焰核心', desc: '燃燒不滅' },
-            'lava_rock': { name: '熔岩石', desc: '滾燙的石頭' },
-            'dragon_scale': { name: '龍鱗', desc: '極度堅硬' },
-            'gold_ore': { name: '金礦石', desc: '貴金屬' },
-            'ice_crystal': { name: '永恆冰晶', desc: '永不融化' },
-            'yeti_fur': { name: '雪怪毛皮', desc: '非常保暖' },
-            'spirit_dust': { name: '靈魂粉末', desc: '亡靈能量' },
-            'mithril': { name: '秘銀', desc: '傳說金屬' },
-            'void_dust': { name: '虛空之塵', desc: '異次元物質' },
-            'demon_horn': { name: '惡魔之角', desc: '邪惡力量' },
-            'dark_essence': { name: '暗之精華', desc: '純粹黑暗' },
-            'adamantite': { name: '精金', desc: '最堅硬物質' },
-            'god_blood': { name: '神之血', desc: '神聖液體' },
-            'chaos_orb': { name: '混沌寶珠', desc: '創世之力' },
-            'angel_feather': { name: '天使之羽', desc: '神聖羽毛' },
-
-            // === 2. 消耗品 & 料理 ===
-            'potion_hp':    { name: "小紅藥水", desc: "恢復 50 HP" },
-            'potion_mid':   { name: "中紅藥水", desc: "恢復 500 HP" },
-            'potion_high':  { name: "大紅藥水", desc: "恢復 2000 HP" },
-            'potion_max':   { name: "特級秘藥", desc: "恢復 10000 HP" },
-            'elixir':       { name: "神之甘露", desc: "恢復 50000 HP" },
-            'potion_mp':    { name: "小藍藥水", desc: "恢復 30 MP" },
-            'potion_mp_mid':{ name: "中藍藥水", desc: "恢復 100 MP" },
-            'potion_mp_high':{ name: "大藍藥水", desc: "恢復 500 MP" },
-            'grilled_carp': { name: "烤鯉魚", desc: "食用: HP+100" },
-            'salmon_sushi': { name: "鮭魚壽司", desc: "食用: MP+50" },
-            'tuna_steak':   { name: "煎鮪魚排", desc: "食用: HP+500" },
-            'eel_rice':     { name: "鰻魚飯", desc: "食用: HP+300, MP+100" },
-            'void_soup':    { name: "虛空海鮮湯", desc: "食用: 狀態全滿" },
-            'sushi_plate':  { name: "壽司拼盤", desc: "食用: HP+500" },
-
-            // === 3. 武器 ===
-            'wood_sword':   { name: "木劍", desc: "ATK +10" },
-            'copper_dagger':{ name: "銅匕首", desc: "ATK +15" },
-            'iron_sword':   { name: "鐵劍", desc: "ATK +30" },
-            'spike_club':   { name: "狼牙棒", desc: "ATK +55" },
-            'poison_dag':   { name: "劇毒匕首", desc: "ATK +60 (帶毒)" },
-            'silver_blade': { name: "銀刃", desc: "ATK +150 (對不死系強)" },
-            'flame_staff':  { name: "火焰法杖", desc: "ATK +200 (火屬性)" },
-            'gold_axe':     { name: "黃金巨斧", desc: "ATK +500" },
-            'frost_bow':    { name: "寒冰弓", desc: "ATK +650 (冰屬性)" },
-            'mithril_saber':{ name: "秘銀軍刀", desc: "ATK +2000" },
-            'void_reaper':  { name: "虛空收割者", desc: "ATK +3500" },
-            'god_slayer':   { name: "弒神劍", desc: "ATK +20000 (神器)" },
-            'chaos_staff':  { name: "混沌法杖", desc: "ATK +25000 (傳說)" },
-            'hero_sword':   { name: "勇者之劍", desc: "ATK +50" },
-            'steel_blade':  { name: "精鋼劍", desc: "ATK +25" },
-            'assassin_dag': { name: "刺客短刀", desc: "ATK +120" },
-            'oak_bow':      { name: "橡木弓", desc: "ATK +25" },
-            'maple_staff':  { name: "楓木法杖", desc: "ATK +50" },
-            'shark_tooth':  { name: "鯊魚牙匕首", desc: "ATK +80" },
-            'emerald_staff':{ name: "翡翠法杖", desc: "ATK +300" },
-            'obsidian_blade':{ name: "黑曜石之劍", desc: "ATK +600" },
-            'dragon_spear': { name: "龍骨長槍", desc: "ATK +1200" },
-
-            // === 4. 防具 ===
-            'cloth_armor':  { name: "布衣", desc: "DEF +5" },
-            'hunt_vest':    { name: "獵人背心", desc: "DEF +8" },
-            'leather_armor':{ name: "皮甲", desc: "DEF +15" },
-            'chain_mail':   { name: "鎖子甲", desc: "DEF +40" },
-            'magma_plate':  { name: "熔岩胸甲", desc: "DEF +100" },
-            'ice_robe':     { name: "冰霜法袍", desc: "DEF +200" },
-            'yeti_cloak':   { name: "雪怪斗篷", desc: "DEF +250" },
-            'demon_armor':  { name: "惡魔戰甲", desc: "DEF +1000" },
-            'angel_armor':  { name: "熾天使鎧甲", desc: "DEF +5000" },
-            'plate_mail':   { name: "板金甲", desc: "DEF +15" },
-            'dragon_mail':  { name: "龍鱗甲", desc: "DEF +30" },
-
-            // === 5. 飾品 ===
-            'bone_ring':    { name: "骨戒", desc: "ATK +2" },
-            'ring_str':     { name: "力量戒指", desc: "ATK +10" },
-            'snake_boots':  { name: "蛇皮長靴", desc: "DEF +10" },
-            'amulet_soul':  { name: "靈魂護符", desc: "MP +300" },
-            'ring_lord':    { name: "領主指環", desc: "全能力 +500" },
-            'crown_chaos':  { name: "混沌之冠", desc: "全能力 +2000" },
-            'ring_life':    { name: "生命護符", desc: "HP +100" },
-            'ring_magic':   { name: "魔力耳環", desc: "MP +50" },
-            'fish_ring':    { name: "魚鱗戒指", desc: "DEF +8" },
-            'pearl_necklace':{ name: "珍珠項鍊", desc: "MP +100, DEF +20" },
-            
-            // === 6. 採集材料 (🌲 木材) ===
-            'oak_log':      { name: "橡木原木", desc: "普通建材" },
-            'maple_log':    { name: "楓木原木", desc: "高級建材" },
-            'yew_log':      { name: "紫杉原木", desc: "魔法木材" },
-            'ancient_log':  { name: "遠古神木", desc: "神話材料" },
-            'spirit_wood':  { name: "靈木", desc: "稀有木材" },
-            'dragon_wood':  { name: "龍骨木", desc: "極硬木材" },
-            'void_wood':    { name: "虛空木", desc: "來自虛空" },
-            'chaos_wood':   { name: "混沌神木", desc: "傳說材料" },
-
-            // === 7. 採集材料 (🐟 漁獲) ===
-            'carp':         { name: "鯉魚", desc: "普通食材" },
-            'salmon':       { name: "鮭魚", desc: "美味食材" },
-            'koi':          { name: "錦鯉", desc: "幸運魚" },
-            'magic_fish':   { name: "魔力魚", desc: "發光魚" },
-            'tuna':         { name: "黑鮪魚", desc: "頂級食材" },
-            'shark':        { name: "大白鯊", desc: "兇猛魚類" },
-            'lava_eel':     { name: "熔岩鰻", desc: "燙手食材" },
-            'void_squid':   { name: "虛空烏賊", desc: "神秘食材" },
-            'god_carp':     { name: "神之鯉", desc: "神魚" },
-            'pearl':        { name: "珍珠", desc: "珍貴寶石" },
-
-            // === 8. 採集材料 (⛏️ 礦物) ===
-            'coal':         { name: "煤炭", desc: "燃料" },
-            'ruby':         { name: "紅寶石", desc: "寶石" },
-            'diamond':      { name: "鑽石", desc: "堅硬寶石" },
-            'star_fragment':{ name: "星之碎片", desc: "隕石" }
+            'copper_ore': { name: '銅礦石', type: 'material', desc: '低階礦石' },
+            'soft_fur': { name: '柔軟皮毛', type: 'material', desc: '基礎皮革材料' },
+            'beast_fang': { name: '野獸尖牙', type: 'material', desc: '鋒利的牙齒' },
+            'slime_gel': { name: '黏液', type: 'material', desc: '黏糊糊的液體' },
+            'iron_ore': { name: '鐵礦石', type: 'material', desc: '鍛造金屬' },
+            'leather': { name: '皮革', type: 'material', desc: '製作防具的材料' },
+            'tough_hide': { name: '硬皮革', type: 'material', desc: '堅韌的獸皮' },
+            'magic_dust': { name: '魔粉', type: 'material', desc: '含有微弱魔力' },
+            'poison_sac': { name: '毒囊', type: 'material', desc: '含有劇毒' },
+            'bone_shard': { name: '碎骨片', type: 'material', desc: '充滿死氣' },
+            'silver_ore': { name: '銀礦石', type: 'material', desc: '對魔物有效' },
+            'fire_core': { name: '火焰核心', type: 'material', desc: '燃燒不滅' },
+            'lava_rock': { name: '熔岩石', type: 'material', desc: '滾燙的石頭' },
+            'dragon_scale': { name: '龍鱗', type: 'material', desc: '極度堅硬' },
+            'gold_ore': { name: '金礦石', type: 'material', desc: '貴金屬' },
+            'ice_crystal': { name: '永恆冰晶', type: 'material', desc: '永不融化' },
+            'yeti_fur': { name: '雪怪毛皮', type: 'material', desc: '非常保暖' },
+            'spirit_dust': { name: '靈魂粉末', type: 'material', desc: '亡靈能量' },
+            'mithril': { name: '秘銀', type: 'material', desc: '傳說金屬' },
+            'void_dust': { name: '虛空之塵', type: 'material', desc: '異次元物質' },
+            'demon_horn': { name: '惡魔之角', type: 'material', desc: '邪惡力量' },
+            'dark_essence': { name: '暗之精華', type: 'material', desc: '純粹黑暗' },
+            'adamantite': { name: '精金', type: 'material', desc: '最堅硬物質' },
+            'god_blood': { name: '神之血', type: 'material', desc: '神聖液體' },
+            'chaos_orb': { name: '混沌寶珠', type: 'material', desc: '創世之力' },
+            'angel_feather': { name: '天使之羽', type: 'material', desc: '神聖羽毛' },
+            'potion_hp':    { name: "小紅藥水", type: 'consumable', desc: "恢復 50 HP" },
+            'potion_mid':   { name: "中紅藥水", type: 'consumable', desc: "恢復 500 HP" },
+            'potion_high':  { name: "大紅藥水", type: 'consumable', desc: "恢復 2000 HP" },
+            'potion_max':   { name: "特級秘藥", type: 'consumable', desc: "恢復 10000 HP" },
+            'elixir':       { name: "神之甘露", type: 'consumable', desc: "恢復 50000 HP" },
+            'potion_mp':    { name: "小藍藥水", type: 'consumable', desc: "恢復 30 MP" },
+            'potion_mp_mid':{ name: "中藍藥水", type: 'consumable', desc: "恢復 100 MP" },
+            'potion_mp_high':{ name: "大藍藥水", type: 'consumable', desc: "恢復 500 MP" },
+            'grilled_carp': { name: "烤鯉魚", type: 'consumable', desc: "食用: HP+100" },
+            'salmon_sushi': { name: "鮭魚壽司", type: 'consumable', desc: "食用: MP+50" },
+            'tuna_steak':   { name: "煎鮪魚排", type: 'consumable', desc: "食用: HP+500" },
+            'eel_rice':     { name: "鰻魚飯", type: 'consumable', desc: "食用: HP+300, MP+100" },
+            'void_soup':    { name: "虛空海鮮湯", type: 'consumable', desc: "食用: 狀態全滿" },
+            'sushi_plate':  { name: "壽司拼盤", type: 'consumable', desc: "食用: HP+500" },
+            'wood_sword':   { name: "木劍", type: 'weapon', desc: "ATK +10" },
+            'copper_dagger':{ name: "銅匕首", type: 'weapon', desc: "ATK +15" },
+            'iron_sword':   { name: "鐵劍", type: 'weapon', desc: "ATK +30" },
+            'spike_club':   { name: "狼牙棒", type: 'weapon', desc: "ATK +55" },
+            'poison_dag':   { name: "劇毒匕首", type: 'weapon', desc: "ATK +60 (帶毒)" },
+            'silver_blade': { name: "銀刃", type: 'weapon', desc: "ATK +150 (對不死系強)" },
+            'flame_staff':  { name: "火焰法杖", type: 'weapon', desc: "ATK +200 (火屬性)" },
+            'gold_axe':     { name: "黃金巨斧", type: 'weapon', desc: "ATK +500" },
+            'frost_bow':    { name: "寒冰弓", type: 'weapon', desc: "ATK +650 (冰屬性)" },
+            'mithril_saber':{ name: "秘銀軍刀", type: 'weapon', desc: "ATK +2000" },
+            'void_reaper':  { name: "虛空收割者", type: 'weapon', desc: "ATK +3500" },
+            'god_slayer':   { name: "弒神劍", type: 'weapon', desc: "ATK +20000 (神器)" },
+            'chaos_staff':  { name: "混沌法杖", type: 'weapon', desc: "ATK +25000 (傳說)" },
+            'hero_sword':   { name: "勇者之劍", type: 'weapon', desc: "ATK +50" },
+            'steel_blade':  { name: "精鋼劍", type: 'weapon', desc: "ATK +25" },
+            'assassin_dag': { name: "刺客短刀", type: 'weapon', desc: "ATK +120" },
+            'oak_bow':      { name: "橡木弓", type: 'weapon', desc: "ATK +25" },
+            'maple_staff':  { name: "楓木法杖", type: 'weapon', desc: "ATK +50" },
+            'shark_tooth':  { name: "鯊魚牙匕首", type: 'weapon', desc: "ATK +80" },
+            'emerald_staff':{ name: "翡翠法杖", type: 'weapon', desc: "ATK +300" },
+            'obsidian_blade':{ name: "黑曜石之劍", type: 'weapon', desc: "ATK +600" },
+            'dragon_spear': { name: "龍骨長槍", type: 'weapon', desc: "ATK +1200" },
+            'cloth_armor':  { name: "布衣", type: 'armor', desc: "DEF +5" },
+            'hunt_vest':    { name: "獵人背心", type: 'armor', desc: "DEF +8" },
+            'leather_armor':{ name: "皮甲", type: 'armor', desc: "DEF +15" },
+            'chain_mail':   { name: "鎖子甲", type: 'armor', desc: "DEF +40" },
+            'magma_plate':  { name: "熔岩胸甲", type: 'armor', desc: "DEF +100" },
+            'ice_robe':     { name: "冰霜法袍", type: 'armor', desc: "DEF +200" },
+            'yeti_cloak':   { name: "雪怪斗篷", type: 'armor', desc: "DEF +250" },
+            'demon_armor':  { name: "惡魔戰甲", type: 'armor', desc: "DEF +1000" },
+            'angel_armor':  { name: "熾天使鎧甲", type: 'armor', desc: "DEF +5000" },
+            'plate_mail':   { name: "板金甲", type: 'armor', desc: "DEF +15" },
+            'dragon_mail':  { name: "龍鱗甲", type: 'armor', desc: "DEF +30" },
+            'bone_ring':    { name: "骨戒", type: 'acc', desc: "ATK +2" },
+            'ring_str':     { name: "力量戒指", type: 'acc', desc: "ATK +10" },
+            'snake_boots':  { name: "蛇皮長靴", type: 'acc', desc: "DEF +10" },
+            'amulet_soul':  { name: "靈魂護符", type: 'acc', desc: "MP +300" },
+            'ring_lord':    { name: "領主指環", type: 'acc', desc: "全能力 +500" },
+            'crown_chaos':  { name: "混沌之冠", type: 'acc', desc: "全能力 +2000" },
+            'ring_life':    { name: "生命護符", type: 'acc', desc: "HP +100" },
+            'ring_magic':   { name: "魔力耳環", type: 'acc', desc: "MP +50" },
+            'fish_ring':    { name: "魚鱗戒指", type: 'acc', desc: "DEF +8" },
+            'pearl_necklace':{ name: "珍珠項鍊", type: 'acc', desc: "MP +100, DEF +20" },
+            'oak_log':      { name: "橡木原木", type: 'material', desc: "普通建材" },
+            'maple_log':    { name: "楓木原木", type: 'material', desc: "高級建材" },
+            'yew_log':      { name: "紫杉原木", type: 'material', desc: "魔法木材" },
+            'ancient_log':  { name: "遠古神木", type: 'material', desc: "神話材料" },
+            'spirit_wood':  { name: "靈木", type: 'material', desc: "稀有木材" },
+            'dragon_wood':  { name: "龍骨木", type: 'material', desc: "極硬木材" },
+            'void_wood':    { name: "虛空木", type: 'material', desc: "來自虛空" },
+            'chaos_wood':   { name: "混沌神木", type: 'material', desc: "傳說材料" },
+            'carp':         { name: "鯉魚", type: 'material', desc: "普通食材" },
+            'salmon':       { name: "鮭魚", type: 'material', desc: "美味食材" },
+            'koi':          { name: "錦鯉", type: 'material', desc: "幸運魚" },
+            'magic_fish':   { name: "魔力魚", type: 'material', desc: "發光魚" },
+            'tuna':         { name: "黑鮪魚", type: 'material', desc: "頂級食材" },
+            'shark':        { name: "大白鯊", type: 'material', desc: "兇猛魚類" },
+            'lava_eel':     { name: "熔岩鰻", type: 'material', desc: "燙手食材" },
+            'void_squid':   { name: "虛空烏賊", type: 'material', desc: "神秘食材" },
+            'god_carp':     { name: "神之鯉", type: 'material', desc: "神魚" },
+            'pearl':        { name: "珍珠", type: 'material', desc: "珍貴寶石" },
+            'coal':         { name: "煤炭", type: 'material', desc: "燃料" },
+            'ruby':         { name: "紅寶石", type: 'material', desc: "寶石" },
+            'diamond':      { name: "鑽石", type: 'material', desc: "堅硬寶石" },
+            'star_fragment':{ name: "星之碎片", type: 'material', desc: "隕石" },
+            'default':      { name: "未知物品", type: 'material', desc: "材料" }
         };
 
         let currentSellId = null;
         let pendingAction = null; 
-        let pendingId = null;     
+        let pendingId = null;      
+        let allListings = []; 
+        let myInventory = {};
 
-        // 1. 初始化
         socket.on('connect', () => {
-            socket.emit('joinGame', myToken);
-            socket.emit('getMarket');
+            // 🟢 隨機延遲 (Random Jitter)
+            // 延遲 100ms ~ 1500ms 後再發送請求
+            const delay = Math.floor(Math.random() * 1400) + 100;
+            console.log(`[系統] 市集連線延遲: ${delay}ms`);
+            
+            setTimeout(() => {
+                socket.emit('joinGame', myToken);
+                socket.emit('getMarket');
+            }, delay);
         });
 
-        // 2. 更新資料
         socket.on('playerStatsUpdate', (p) => {
             document.getElementById('my-gold').innerText = p.gold;
-            renderInventory(p.inventory);
+            myInventory = p.inventory;
         });
 
         socket.on('marketUpdate', (listings) => {
+            allListings = listings; 
+            applyFilter(); 
+        });
+
+        function applyFilter() {
+            const filterType = document.getElementById('category-filter').value;
             const list = document.getElementById('market-list');
             list.innerHTML = '';
-            if(listings.length === 0) {
-                list.innerHTML = '<div style="font-size:12px; color:#aaa; margin-top:20px;">暫無商品</div>';
+
+            const filtered = allListings.filter(item => {
+                const dbInfo = ITEM_DB[item.itemKey];
+                const displayName = dbInfo ? dbInfo.name : (item.itemName || item.itemKey);
+
+                if (!isNaN(displayName)) return false;
+
+                if (filterType === 'all') return true;
+                if (filterType === 'mine') return item.isMine;
+                
+                const dbItem = ITEM_DB[item.itemKey];
+                if (!dbItem) return filterType === 'material';
+                return dbItem.type === filterType;
+            });
+
+            if(filtered.length === 0) {
+                list.innerHTML = '<div style="font-size:12px; color:#aaa; margin-top:20px; grid-column: span 2;">沒有商品</div>';
                 return;
             }
 
-            listings.forEach(item => {
+            filtered.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'item-card';
                 
-                // 取得物品資料，若無則使用預設
                 const itemData = ITEM_DB[item.itemKey] || { name: item.itemName || item.itemKey, desc: "材料" };
 
-                // 區分按鈕 (取回 vs 購買)
                 const btnHtml = item.isMine 
-                    ? `<button class="btn btn-cancel" onclick="triggerConfirm('cancel', '${item.id}', '確定要從市集取回嗎？')">取回物品</button>`
-                    : `<button class="btn btn-buy" onclick="triggerConfirm('buy', '${item.id}', '確定要花 ${item.price} G 購買嗎？')">購買</button>`;
+                    ? `<button class="btn btn-cancel" onclick="triggerConfirm('cancel', '${item.id}', '取回？')">取回</button>`
+                    : `<button class="btn btn-buy" onclick="triggerConfirm('buy', '${item.id}', '花 ${item.price}G 購買？')">購買</button>`;
                 
                 div.innerHTML = `
                     <h3>${itemData.name}</h3>
                     <div class="item-stats">${itemData.desc}</div>
-                    <div class="item-info">賣家: ${item.seller}</div>
+                    <div class="item-info">賣家: ${item.seller.substr(0,4)}</div>
                     <div class="price-tag">${item.price} G</div>
                     ${btnHtml}
                 `;
                 list.appendChild(div);
             });
-        });
+        }
 
-        // 3. 通用訊息顯示 (取代 alert)
         function showMsg(text) {
             const t = document.getElementById('game-toast');
             t.innerText = text;
@@ -328,51 +447,47 @@
         socket.on('marketResult', (res) => { 
             if(res.success) showMsg(res.msg); 
             else showMsg("❌ " + res.msg);
-            closeSellModal();
+            closePriceModal();
+            closeInventoryModal();
         });
         
         socket.on('marketRefresh', () => { socket.emit('getMarket'); });
 
-        // 🟢 4. 背包渲染 (修復：顯示中文名稱與描述)
-        function renderInventory(inv) {
-            const list = document.getElementById('inventory-list');
+        function openInventoryModal() {
+            const list = document.getElementById('sell-inventory-list');
             list.innerHTML = '';
             
-            // 過濾出數量 > 0 的物品
-            const keys = Object.keys(inv).filter(k => inv[k] > 0);
+            const keys = Object.keys(myInventory).filter(k => myInventory[k] > 0);
             
             if (keys.length === 0) {
-                list.innerHTML = '<div style="margin-top:20px; font-size:12px; color:#aaa;">背包是空的</div>';
-                return;
+                list.innerHTML = '<div style="padding:20px; color:#aaa; text-align:center;">背包是空的，無物可賣</div>';
+            } else {
+                keys.forEach(key => {
+                    const itemData = ITEM_DB[key] || { name: key };
+                    if (!isNaN(itemData.name)) return;
+
+                    const div = document.createElement('div');
+                    div.className = 'sell-list-item';
+                    div.innerHTML = `
+                        <div style="font-size:12px;">${itemData.name} x${myInventory[key]}</div>
+                        <button class="btn btn-sell" style="font-size:10px;" onclick="openPriceModal('${key}', '${itemData.name}')">賣出</button>
+                    `;
+                    list.appendChild(div);
+                });
             }
-
-            keys.forEach(key => {
-                const div = document.createElement('div');
-                div.className = 'item-card';
-                div.style.background = '#34495e';
-                div.style.color = '#fff';
-                div.style.border = '2px solid #555';
-                
-                // 🟢 從 ITEM_DB 取得資料，沒有則使用預設值
-                const itemData = ITEM_DB[key] || { name: key, desc: "材料" };
-
-                div.innerHTML = `
-                    <div style="font-size:12px; font-weight:bold;">${itemData.name} x${inv[key]}</div>
-                    <div style="font-size:9px; color:#aaa; margin-bottom:5px;">${itemData.desc}</div>
-                    <button class="btn btn-sell" onclick="openSellModal('${key}', '${itemData.name}')">上架</button>
-                `;
-                list.appendChild(div);
-            });
+            
+            document.getElementById('inventory-modal').style.display = 'flex';
         }
+        function closeInventoryModal() { document.getElementById('inventory-modal').style.display = 'none'; }
 
-        // === 上架視窗邏輯 ===
-        function openSellModal(key, name) {
+        function openPriceModal(key, name) {
             currentSellId = key;
             document.getElementById('modal-item-name').innerText = `賣出: ${name}`;
             document.getElementById('sell-price').value = '';
-            document.getElementById('sell-modal').style.display = 'flex';
+            document.getElementById('sell-price-modal').style.display = 'flex';
+            document.getElementById('inventory-modal').style.display = 'none'; 
         }
-        function closeSellModal() { document.getElementById('sell-modal').style.display = 'none'; }
+        function closePriceModal() { document.getElementById('sell-price-modal').style.display = 'none'; }
         
         function confirmSell() {
             const price = document.getElementById('sell-price').value;
@@ -380,7 +495,6 @@
             socket.emit('marketSell', { itemId: currentSellId, price: price });
         }
 
-        // ===  統一確認彈窗邏輯 ===
         function triggerConfirm(action, id, message) {
             pendingAction = action;
             pendingId = id;

@@ -221,13 +221,13 @@
 
     <script src="socket.io.js"></script>
     <script>
-        // 🟢 Loading 控制 (3.5秒強制冷卻)
+        // 🟢 Loading 控制
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const overlay = document.getElementById('loading-overlay');
                 overlay.style.opacity = '0';
                 setTimeout(() => { overlay.style.display = 'none'; }, 500);
-            }, 3500); // 3.5秒
+            }, 2500); // 2.5秒延遲
         });
 
         const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
@@ -318,15 +318,7 @@
             const status = document.getElementById('conn-status');
             status.innerHTML = " 已連線";
             status.style.color = "#2ecc71";
-            
-            // 🟢 隨機延遲 (Random Jitter)
-            // 延遲 100ms ~ 1500ms 後再發送請求，錯開流量
-            const delay = Math.floor(Math.random() * 1400) + 100;
-            console.log(`[系統] 隨機延遲: ${delay}ms`);
-            
-            setTimeout(() => {
-                socket.emit('joinGame', myToken);
-            }, delay);
+            socket.emit('joinGame', myToken);
         });
 
         socket.on('disconnect', () => {

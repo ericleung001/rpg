@@ -124,11 +124,12 @@
 
     <script src="socket.io.js"></script>
     <script>
-        const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
         const BACKEND_URL = atob(_0x5a1b);
         
         const socket = io(BACKEND_URL, {
-            transports: ['websocket', 'polling']
+            transports: ['websocket', 'polling'],
+            secure: true 
         });
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -342,7 +343,7 @@
         function confirmNPCSell() { socket.emit('npcSell', currentItemId); }
 
         function openMarketModal(id, name) {
-            currentItemId = id; // 🟢 修正這裡：使用統一變數
+            currentItemId = id; 
             document.getElementById('market-title').innerText = `上架: ${name}`;
             document.getElementById('sell-price').value = '';
             document.getElementById('market-modal').style.display = 'flex';
@@ -351,7 +352,6 @@
         function confirmMarketSell() {
             const price = document.getElementById('sell-price').value;
             if (!price || price <= 0) { showMsg("請輸入有效價格"); return; }
-            // 🟢 修正這裡：發送時使用 currentItemId
             socket.emit('marketSell', { itemId: currentItemId, price: price });
         }
 

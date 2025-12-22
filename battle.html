@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中</title>
+    <title>戰鬥中v2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -36,15 +36,11 @@
         .gba-box { background: #f0f0d8; border: 4px solid #706870; border-radius: 8px; padding: 8px; color: #383838; font-size: 12px; box-shadow: 4px 4px 0 rgba(0,0,0,0.3); }
         .mini-box { background: #ecf0f1; border: 2px solid #95a5a6; padding: 4px; font-size: 10px; color: #333; overflow: hidden; border-radius: 4px; }
         
-        /* 🟢 血量條 (HP) */
         .hp-bar { width: 100%; height: 12px; background: #555; border: 2px solid #333; margin-top: 5px; border-radius: 2px; }
         .hp-fill { height: 100%; background: #48c058; transition: width 0.3s; }
-        
-        /* 🟢 魔力條 (MP) - 藍色 */
         .mp-bar { width: 100%; height: 8px; background: #555; border: 2px solid #333; margin-top: 2px; border-radius: 2px; }
         .mp-fill { height: 100%; background: #3498db; transition: width 0.3s; }
 
-        /* 🟢 隊友的小血條/魔力條 */
         .mini-hp-bar { width: 100%; height: 6px; background: #555; margin-top: 2px; }
         .mini-hp-fill { height: 100%; background: #e74c3c; width: 100%; }
         .mini-mp-bar { width: 100%; height: 4px; background: #555; margin-top: 1px; }
@@ -54,25 +50,32 @@
         
         .hud { background: #305080; border-top: 6px solid #c8c8f8; display: flex; height: 100%; overflow: hidden; }
         .log { width: 50%; padding: 10px; color: white; font-size: 10px; line-height: 1.6; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-start; }
-        .menu { width: 50%; display: grid; grid-template-columns: 1fr 1fr; background: #fff; border-left: 6px solid #c8c8f8; padding: 5px; gap: 5px; box-sizing: border-box;}
         
-        .btn { background: #f8f8f8; border: 2px solid #888; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: bold; text-align: center; display:flex; align-items:center; justify-content:center; border-radius: 6px;}
-        .btn:active { background: #f8d030; color: #000; transform: translateY(2px); }
-        .btn:disabled { background: #999; color: #555; cursor: not-allowed; }
+        .menu { width: 50%; display: flex; flex-direction: column; background: #fff; border-left: 6px solid #c8c8f8; padding: 5px; box-sizing: border-box; position: relative; }
+        .scroll-area { flex: 1; overflow-y: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; align-content: start; padding-bottom: 5px; }
+
+        .btn { 
+            background: #f8f8f8; border: 2px solid #888; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; 
+            text-align: center; display:flex; align-items:center; justify-content:center; border-radius: 6px; min-height: 40px;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .btn:active { background: #f8d030; color: #000; transform: scale(0.98); }
+        .btn:disabled { background: #999; color: #555; cursor: not-allowed; opacity: 0.6; }
         
         #lobby-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
         .player-list { border: 4px solid #fff; padding: 20px; width: 80%; min-height: 100px; text-align: left; margin-bottom: 30px; font-size: 14px; line-height: 2; }
         .start-btn { display: none; padding: 15px 30px; font-size: 16px; background: #e74c3c; color: white; border: 4px solid #c0392b; cursor: pointer; font-family: inherit; }
+        .start-btn:disabled { background: #7f8c8d; border-color: #555; cursor: wait; }
         
         #chat-container { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7; display: flex; flex-direction: column; font-size: 12px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); transition: height 0.3s ease-in-out; height: 35px; }
-        #chat-header { height: 35px; background: #34495e; color: #fff; line-height: 35px; cursor: pointer; font-weight: bold; border-bottom: 1px solid #555; display: flex; justify-content: center; align-items: center; }
+        #chat-header { height: 35px; background: #34495e; color: #fff; line-height: 35px; cursor: pointer; font-weight: bold; border-bottom: 1px solid #555; display: flex; justify-content: center; align-items: center; touch-action: manipulation; }
         .chat-open { height: 20vh !important; }
         #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
         .chat-open #chat-body { display: flex; }
         #chat-history { flex: 1; overflow-y: auto; padding: 10px; text-align: left; color: white; }
         #chat-input-area { display: flex; border-top: 1px solid #555; height: 45px; }
         #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 15px; font-family: inherit; font-size: 14px; outline: none; }
-        #chat-send { background: #2980b9; color: white; border: none; padding: 0 20px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: bold; }
+        #chat-send { background: #2980b9; color: white; border: none; padding: 0 20px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: bold; touch-action: manipulation; }
         
         .shake { animation: shake 0.5s; } .flash { animation: flash 0.3s; }
         .damaged { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; filter: sepia(1) hue-rotate(-50deg) saturate(3) drop-shadow(0 0 10px red) !important; }
@@ -107,7 +110,7 @@
         <div class="player-area">
             <div class="gba-box my-status">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                    <span style="font-size:12px; font-weight:bold;">勇者(你)</span>
+                    <span style="font-size:12px; font-weight:bold;"><span id="my-name">勇者</span>(你)</span>
                     <span style="font-size:10px; color:#f1c40f;">⚔️<span id="atk-val">0</span> 🛡️<span id="def-val">0</span></span>
                 </div>
                 <div class="hp-bar"><div id="php" class="hp-fill" style="width:100%"></div></div>
@@ -120,11 +123,16 @@
         
         <div class="hud">
             <div class="log" id="log"><div>準備戰鬥...</div></div>
-            <div class="menu" id="btns">
-                <button class="btn battle-action" onclick="act('attack')">攻擊</button>
-                <button class="btn battle-action" onclick="openSkill()">魔法</button>
-                <button class="btn battle-action" onclick="openBag()">物品</button>
-                <button class="btn" onclick="leaveRoom()">逃跑</button>
+            <div class="menu" id="menu-container">
+                <div id="btns" class="scroll-area">
+                    <button class="btn battle-action" onclick="act('attack')">攻擊</button>
+                    <button class="btn battle-action" onclick="openSkill()">魔法</button>
+                    <button class="btn battle-action" onclick="openBag()">物品</button>
+                    <button class="btn" onclick="leaveRoom()">逃跑</button>
+                </div>
+                <div id="fixed-btn-area" style="display:none; padding-top:5px; border-top:1px solid #ccc;">
+                    <button class="btn" style="width:100%; background:#ddd; color:#555;" onclick="resetButtons()">返回</button>
+                </div>
             </div>
         </div>
     </div>
@@ -142,9 +150,13 @@
     
     <script src="socket.io.js"></script>
     <script>
-        const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
         const BACKEND_URL = atob(_0x5a1b);
-        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'] });
+        
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
 
         let isMyTurn = false; 
         const params = new URLSearchParams(window.location.search);
@@ -155,12 +167,15 @@
         const SKILL_INFO = {
             'fireball':   { name: "火球術", mp: 5, desc: "1.5倍傷害" },
             'heal_light': { name: "小回復", mp: 10, desc: "恢復50HP" },
-            'thunder':    { name: "雷擊",   mp: 15, desc: "傷害+暈眩" },
+            'thunder':    { name: "雷擊",   mp: 15, desc: "機率暈眩" },
             'drain':      { name: "吸血",   mp: 20, desc: "吸取生命" },
-            'god_light':  { name: "神之光", mp: 50, desc: "恢復500HP" }
+            'god_light':  { name: "神之光", mp: 50, desc: "恢復500HP" },
+            'frost_nova': { name: "冰霜新星", mp: 30, desc: "降防+傷害" },
+            'poison_touch':{ name: "劇毒之觸", mp: 25, desc: "持續毒傷" },
+            'holy_shield':{ name: "聖光守護", mp: 40, desc: "防禦+50" },
+            'berserk':    { name: "狂暴",     mp: 60, desc: "攻+50% 自殘" }
         };
 
-        // 🟢 物品名稱對照表 (用於按鈕顯示)
         const ITEM_NAMES = {
             'potion_hp': '紅水(小)', 'potion_mid': '紅水(中)', 'potion_high': '紅水(大)', 'potion_max': '秘藥', 'elixir': '甘露',
             'potion_mp': '藍水(小)', 'potion_mp_mid': '藍水(中)', 'potion_mp_high': '藍水(大)',
@@ -173,9 +188,10 @@
         if (!roomId) { showMsg("無效的房間！"); setTimeout(()=>window.location.href = 'hub.html', 1000); }
 
         socket.on('connect', () => {
-            socket.emit('joinGame', myToken); 
-            setTimeout(() => socket.emit('connectToRoom', roomId), 100);
-        });
+        socket.emit('joinGame', myToken); 
+        // 延長到 1000 毫秒 (1秒)，確保伺服器有足夠時間準備好你的資料
+        setTimeout(() => socket.emit('connectToRoom', roomId), 1000);
+    });
 
         function showMsg(text) {
             const t = document.getElementById('game-toast');
@@ -217,11 +233,32 @@
 
         socket.on('roomInfoUpdate', (info) => {
             document.getElementById('lobby-players').innerHTML = info.players.map(p => `<div> ${p.name} (LV.${p.level})</div>`).join('');
-            const amIHost = (info.host === socket.id);
-            const startBtn = document.getElementById('start-btn');
-            const waitTxt = document.getElementById('waiting-txt');
-            if (amIHost) { startBtn.style.display = 'block'; startBtn.disabled = false; startBtn.innerText = `開始 (${info.players.length}人)`; waitTxt.style.display = 'none'; }
-            else { startBtn.style.display = 'none'; waitTxt.style.display = 'block'; }
+            
+            // 🟢 邏輯：只要 status 是 fighting，就隱藏大廳
+            const overlay = document.getElementById('lobby-overlay');
+            if (info.status === 'fighting') {
+                overlay.style.display = 'none';
+            } else {
+                // 如果怪物血量歸零，代表這是一場結束的戰鬥，不顯示大廳
+                if (info.monsterHp <= 0) {
+                    overlay.style.display = 'none';
+                } else {
+                    overlay.style.display = 'flex';
+                    const amIHost = (info.host === socket.id);
+                    const startBtn = document.getElementById('start-btn');
+                    const waitTxt = document.getElementById('waiting-txt');
+                    
+                    if (amIHost) { 
+                        startBtn.style.display = 'block'; 
+                        startBtn.disabled = false;
+                        startBtn.innerText = `開始 (${info.players.length}人)`;
+                        waitTxt.style.display = 'none';
+                    } else { 
+                        startBtn.style.display = 'none'; 
+                        waitTxt.style.display = 'block'; 
+                    }
+                }
+            }
             
             document.getElementById('monster-name').innerText = info.monsterName;
             const img = document.getElementById('monster-img');
@@ -250,7 +287,11 @@
             });
         });
 
-        socket.on('battleStarted', () => { document.getElementById('lobby-overlay').style.display = 'none'; log("戰鬥開始！"); });
+        socket.on('battleStarted', () => { 
+            document.getElementById('lobby-overlay').style.display = 'none'; 
+            log("戰鬥開始！"); 
+        });
+
         socket.on('turnUpdate', (data) => {
             const bar = document.getElementById('turn-bar');
             if (data.currentId === 'monster') { isMyTurn = false; bar.innerText = "⚠️ 怪物回合..."; bar.style.background = "#c0392b"; toggle(true); }
@@ -270,15 +311,13 @@
         socket.on('playerStatsUpdate', (p) => {
             myPlayer = p;
             
-            // HP
+            document.getElementById('my-name').innerText = p.name || "勇者";
             document.getElementById('php').style.width = (p.hp / p.maxHp * 100) + '%';
             
-            // MP (防止負數)
             let mpPct = (p.mp / p.maxMp * 100); 
             if(mpPct < 0) mpPct = 0;
             document.getElementById('pmp').style.width = mpPct + '%';
             
-            // 文字數值
             document.getElementById('hp-txt').innerText = `HP:${p.hp}/${p.maxHp}  MP:${p.mp}/${p.maxMp}`;
             
             if(document.getElementById('atk-val')) document.getElementById('atk-val').innerText = p.atk;
@@ -292,11 +331,14 @@
             log(`<span style="color:#e74c3c">受到 ${d.damage} 傷害！</span>`); 
         });
 
+        // 🟢 結算畫面：只顯示「離開」
         socket.on('battleWon', (data) => {
             document.getElementById('turn-bar').innerText = " 勝利！"; document.getElementById('turn-bar').style.background = "gold"; document.getElementById('turn-bar').style.color = "black";
             showMsg(`勝利！獲得 ${data.gold} G`);
             const img = document.getElementById('monster-img'); img.style.transition = "opacity 2s"; img.style.opacity = 0;
-            document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column: span 2;" disabled>下一場...</button><button class="btn" style="grid-column: span 2;" onclick="leaveRoom()">離開</button>`;
+            
+            // 顯示唯一按鈕：離開
+            document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column: span 2;" onclick="leaveRoom()">離開</button>`;
         });
 
         socket.on('playerDead', () => { log("你被打倒了..."); showMsg("👻 你已經死亡..."); document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column:span 2; background:red; color:white" onclick="window.location.href='rest.html'"> 去復活</button>`; });
@@ -313,34 +355,21 @@
 
         function openSkill() {
             const btnArea = document.getElementById('btns');
-            btnArea.innerHTML = '';
-            
+            const fixedArea = document.getElementById('fixed-btn-area');
+            btnArea.innerHTML = ''; 
+            fixedArea.style.display = 'block'; 
             const mySkills = myPlayer.skills || ['fireball'];
-
             mySkills.forEach(skillId => {
                 const info = SKILL_INFO[skillId] || { name: skillId, mp: 0 };
                 const btn = document.createElement('button');
                 btn.className = 'btn battle-action';
                 btn.style.fontSize = '12px';
                 btn.innerText = `${info.name}(${info.mp})`;
-                
-                if (myPlayer.mp < info.mp) {
-                    btn.disabled = true;
-                    btn.style.opacity = 0.5;
-                }
-
+                if (myPlayer.mp < info.mp) { btn.disabled = true; btn.style.opacity = 0.5; }
                 btn.onclick = () => { useSkill(skillId); };
                 btnArea.appendChild(btn);
             });
-
-            if(mySkills.length === 0) btnArea.innerHTML += '<div style="grid-column:span 2; font-size:10px;">尚未學會魔法</div>';
-
-            const backBtn = document.createElement('button');
-            backBtn.className = 'btn';
-            backBtn.innerText = '返回';
-            backBtn.style.gridColumn = "span 2";
-            backBtn.onclick = resetButtons;
-            btnArea.appendChild(backBtn);
+            if(mySkills.length === 0) { btnArea.innerHTML = '<div style="grid-column:span 2; font-size:10px; padding:10px;">尚未學會魔法</div>'; }
         }
 
         function useSkill(skillId) {
@@ -353,15 +382,14 @@
 
         function openBag() {
             const btnArea = document.getElementById('btns');
+            const fixedArea = document.getElementById('fixed-btn-area');
             btnArea.innerHTML = '';
-            
-            // 🟢 加入新料理 ID
+            fixedArea.style.display = 'block';
             const itemsToShow = [
                 'potion_hp', 'potion_mid', 'potion_high', 'potion_max', 'elixir', 
                 'potion_mp', 'potion_mp_mid', 'potion_mp_high',
                 'grilled_carp', 'salmon_sushi', 'tuna_steak', 'eel_rice', 'void_soup', 'sushi_plate'
             ];
-            
             let hasItem = false;
             itemsToShow.forEach(itemId => {
                 const count = (myPlayer.inventory && myPlayer.inventory[itemId]) || 0;
@@ -369,29 +397,14 @@
                     hasItem = true;
                     const potBtn = document.createElement('button');
                     potBtn.className = 'btn battle-action';
-                    potBtn.style.fontSize = '10px'; // 字體稍微縮小以容納更長名稱
-                    
+                    potBtn.style.fontSize = '10px'; 
                     const name = ITEM_NAMES[itemId] || '物品';
                     potBtn.innerText = `${name}(${count})`;
                     potBtn.onclick = () => { useItem(itemId); };
                     btnArea.appendChild(potBtn);
                 }
             });
-
-            if(!hasItem) {
-                const div = document.createElement('div');
-                div.innerText = "背包沒有補給品";
-                div.style.gridColumn = "span 2";
-                div.style.fontSize = "12px";
-                btnArea.appendChild(div);
-            }
-
-            const backBtn = document.createElement('button');
-            backBtn.className = 'btn';
-            backBtn.innerText = '返回';
-            backBtn.style.gridColumn = "span 2";
-            backBtn.onclick = resetButtons;
-            btnArea.appendChild(backBtn);
+            if(!hasItem) { btnArea.innerHTML = '<div style="grid-column:span 2; font-size:12px; padding:10px;">背包沒有補給品</div>'; }
         }
 
         function useItem(itemId) { socket.emit('useItem', { roomId, itemId }); resetButtons(); }
@@ -405,7 +418,10 @@
         }
         
         function resetButtons() {
-            document.getElementById('btns').innerHTML = `
+            const btnArea = document.getElementById('btns');
+            const fixedArea = document.getElementById('fixed-btn-area');
+            fixedArea.style.display = 'none'; 
+            btnArea.innerHTML = `
                 <button class="btn battle-action" onclick="act('attack')">攻擊</button>
                 <button class="btn battle-action" onclick="openSkill()">魔法</button>
                 <button class="btn battle-action" onclick="openBag()">物品</button>

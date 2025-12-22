@@ -93,9 +93,13 @@
 
     <script src="socket.io.js"></script>
     <script>
-        const _0x5a1b = "aHR0cHM6Ly9tbW8udHRjdHYtMTA1LmNj"; 
-        const BACKEND_URL = atob(_0x5a1b);
-        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'] });
+		const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+		const BACKEND_URL = atob(_0x5a1b);
+		
+		const socket = io(BACKEND_URL, {
+		    transports: ['websocket', 'polling'],
+		    secure: true // 🔒 強制使用加密連線 (HTTPS/WSS)
+		});
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
