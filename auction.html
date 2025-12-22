@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>交易所v2</title>
+    <title>交易所v3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -40,12 +40,12 @@
         /* 1. 分類選擇列 */
         .category-bar {
             width: 100%; max-width: 600px;
-            display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; /* 改為6格以容納"我的" */
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; 
             margin-bottom: 15px;
         }
         .cat-btn {
             background: #34495e; color: #bdc3c7; border: 2px solid #7f8c8d;
-            padding: 8px 2px; font-family: inherit; font-size: 9px; /* 字體稍微縮小 */
+            padding: 8px 2px; font-family: inherit; font-size: 9px; 
             border-radius: 6px; cursor: pointer; outline: none; white-space: nowrap;
         }
         .cat-btn.active { background: #f1c40f; color: #2c3e50; border-color: #fff; font-weight: bold; }
@@ -234,7 +234,7 @@
         let myInventory = {};
         let currentSellId = null;
         let currentItemKey = ''; 
-        let currentPage = 1; // 🟢 新增：當前頁碼
+        let currentPage = 1;
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
@@ -245,10 +245,10 @@
             myInventory = p.inventory;
         });
 
-        // 🟢 1. 點擊分類
+        // 1. 點擊分類
         function selectCategory(cat) {
             currentItemKey = ''; 
-            currentPage = 1; // 🟢 重置頁碼
+            currentPage = 1;
             
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
@@ -258,20 +258,17 @@
             document.getElementById('listings-area').style.display = 'none';
 
             if (cat === 'mine') {
-                // 如果選的是「我的」，直接顯示列表區，並發送請求
                 document.getElementById('status-msg').innerText = "查詢我的掛單...";
                 document.getElementById('listings-list').innerHTML = '<div style="padding:10px;">載入中...</div>';
                 document.getElementById('listings-area').style.display = 'flex';
-                
                 socket.emit('getMyListings');
             } else {
-                // 正常分類流程
                 document.getElementById('status-msg').innerText = "讀取物品清單...";
                 socket.emit('getMarketItems', cat);
             }
         }
 
-        // 🟢 2. 接收物品清單
+        // 2. 接收物品清單
         socket.on('marketItemsList', (items) => {
             const area = document.getElementById('item-select-area');
             area.innerHTML = '';
@@ -293,10 +290,10 @@
             });
         });
 
-        // 🟢 3. 點擊物品 -> 請求掛單 (預設第1頁)
+        // 3. 點擊物品 -> 請求掛單 (預設第1頁)
         function loadListings(itemKey, itemName) {
             currentItemKey = itemKey;
-            currentPage = 1; // 重置為第一頁
+            currentPage = 1;
             document.getElementById('status-msg').innerText = `正在查詢: ${itemName}`;
             document.getElementById('listings-list').innerHTML = '<div style="padding:10px; color:#aaa;">載入中...</div>';
             document.getElementById('listings-area').style.display = 'flex';
@@ -304,7 +301,7 @@
             socket.emit('getMarketListings', { key: itemKey, page: 1 });
         }
 
-        // 🟢 換頁功能
+        // 換頁功能
         function changePage(delta) {
             const newPage = currentPage + delta;
             if (newPage < 1) return;
@@ -317,15 +314,14 @@
             }
         }
 
-        // 🟢 4. 接收掛單 -> 顯示列表 (含分頁)
+        // 4. 接收掛單 -> 顯示列表 (含分頁)
         socket.on('marketListingsUpdate', (data) => {
-            // 相容性處理：如果 data 是陣列(舊版 "我的物品" 邏輯)，轉成物件結構
             let listings = [];
             let totalPages = 1;
             let page = 1;
 
             if (Array.isArray(data)) {
-                listings = data; // "我的物品" 暫時沒做分頁
+                listings = data; 
             } else {
                 listings = data.listings;
                 totalPages = data.totalPages;
@@ -333,34 +329,33 @@
             }
 
             const listDiv = document.getElementById('listings-list');
-            listDiv.innerHTML = '';
+            listDiv.innerHTML = ''; // 🟢 關鍵修正：這裡會把之前的按鈕也清掉
 
             if (listings.length === 0) {
-                listDiv.innerHTML = '<div style="padding:20px; color:#555;">暫無人出售此物品</div>';
-                return;
+                listDiv.innerHTML = '<div style="padding:20px; color:#555;">此頁無物品</div>';
+            } else {
+                listings.forEach(row => {
+                    const div = document.createElement('div');
+                    div.className = 'listing-row';
+                    
+                    let actionBtn = '';
+                    if (row.isMine) {
+                        actionBtn = `<button class="btn-cancel" onclick="cancelItem(${row.id})">取回</button>`;
+                    } else {
+                        actionBtn = `<button class="btn-buy" onclick="buyItem(${row.id}, ${row.price})">購買</button>`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="col-name">${row.itemName}</div>
+                        <div class="col-price">$${row.price}</div>
+                        <div class="col-seller">${row.seller}</div>
+                        <div class="col-action">${actionBtn}</div>
+                    `;
+                    listDiv.appendChild(div);
+                });
             }
 
-            listings.forEach(row => {
-                const div = document.createElement('div');
-                div.className = 'listing-row';
-                
-                let actionBtn = '';
-                if (row.isMine) {
-                    actionBtn = `<button class="btn-cancel" onclick="cancelItem(${row.id})">取回</button>`;
-                } else {
-                    actionBtn = `<button class="btn-buy" onclick="buyItem(${row.id}, ${row.price})">購買</button>`;
-                }
-
-                div.innerHTML = `
-                    <div class="col-name">${row.itemName}</div>
-                    <div class="col-price">$${row.price}</div>
-                    <div class="col-seller">${row.seller}</div>
-                    <div class="col-action">${actionBtn}</div>
-                `;
-                listDiv.appendChild(div);
-            });
-
-            // 🟢 加入分頁控制列 (如果是在看物品分類)
+            // 🟢 修正：將分頁控制列加入到 listDiv (每次更新都會重建)
             if (currentItemKey && totalPages > 0) { 
                 const paginationDiv = document.createElement('div');
                 paginationDiv.style.cssText = "display:flex; justify-content:center; gap:10px; padding:10px; align-items:center; border-top:2px solid #ccc; margin-top:auto;";
@@ -373,7 +368,8 @@
                     <span style="font-size:10px; color:#333;">第 ${page} / ${totalPages} 頁</span>
                     <button class="cat-btn" ${nextDisabled} onclick="changePage(1)">下一頁 ▶</button>
                 `;
-                document.getElementById('listings-area').appendChild(paginationDiv);
+                
+                listDiv.appendChild(paginationDiv);
             }
         });
 
@@ -448,16 +444,13 @@
             closePriceModal();
             closeInventoryModal();
             if (res.success && currentItemKey) {
-                // 停留在當前頁面刷新
                 socket.emit('getMarketListings', { key: currentItemKey, page: currentPage });
             }
             if (res.success && !currentItemKey) {
-                // 如果是在"我的物品"頁面，刷新它
                 socket.emit('getMyListings');
             }
         });
         
-        // 全域刷新監聽
         socket.on('marketRefresh', () => {
             if (currentItemKey) {
                 socket.emit('getMarketListings', { key: currentItemKey, page: currentPage });
