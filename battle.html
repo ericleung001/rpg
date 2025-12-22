@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中v3</title>
+    <title>戰鬥中v4</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -194,11 +194,12 @@
         });
 
         // 🟢 監聽伺服器發送的「離開房間」訊號 (當3秒後被踢時)
+        // 這是上一輪加的，確保它還在
         socket.on('roomLeft', () => {
-            showMsg("🚪 正在離開房間...");
+            showMsg("🚪 戰鬥已結束，返回主城..."); // 提示訊息可以改得更友善
             setTimeout(() => {
                 window.location.href = 'hub.html';
-            }, 500);
+            }, 100); // 縮短時間，F5後幾乎秒跳轉
         });
 
         function showMsg(text) {
