@@ -345,7 +345,7 @@
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
         socket.on('battleLog', (msg) => log(msg));
 
-        //function requestStart() { socket.emit('startBattle', roomId); }
+        function requestStart() { socket.emit('startBattle', roomId); }
         
         function act(type) {
             if(!isMyTurn) return; 
