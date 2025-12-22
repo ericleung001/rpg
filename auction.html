@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>市集</title>
+    <title>交易所v2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -40,15 +40,16 @@
         /* 1. 分類選擇列 */
         .category-bar {
             width: 100%; max-width: 600px;
-            display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px;
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; /* 改為6格以容納"我的" */
             margin-bottom: 15px;
         }
         .cat-btn {
             background: #34495e; color: #bdc3c7; border: 2px solid #7f8c8d;
-            padding: 8px 2px; font-family: inherit; font-size: 10px;
-            border-radius: 6px; cursor: pointer; outline: none;
+            padding: 8px 2px; font-family: inherit; font-size: 9px; /* 字體稍微縮小 */
+            border-radius: 6px; cursor: pointer; outline: none; white-space: nowrap;
         }
         .cat-btn.active { background: #f1c40f; color: #2c3e50; border-color: #fff; font-weight: bold; }
+        .cat-btn:disabled { opacity: 0.5; cursor: default; }
 
         /* 2. 物品選擇區 */
         #item-select-area { 
@@ -70,7 +71,7 @@
             display: none; flex: 1; width: 100%; max-width: 600px;
             background: #fff; color: #000; border: 4px solid #f1c40f; 
             border-radius: 8px; padding: 5px; overflow-y: auto; 
-            min-height: 200px;
+            min-height: 200px; flex-direction: column;
         }
         .listing-header { 
             display: flex; font-size: 10px; font-weight: bold; 
@@ -205,7 +206,7 @@
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // 物品資料庫 (用於顯示名字)
+        // 物品資料庫
         const ITEM_DB = {
             'copper_ore': { name: '銅礦石' }, 'soft_fur': { name: '柔軟皮毛' }, 'beast_fang': { name: '野獸尖牙' }, 'slime_gel': { name: '黏液' },
             'iron_ore': { name: '鐵礦石' }, 'leather': { name: '皮革' }, 'tough_hide': { name: '硬皮革' }, 'magic_dust': { name: '魔粉' },
@@ -233,6 +234,7 @@
         let myInventory = {};
         let currentSellId = null;
         let currentItemKey = ''; 
+        let currentPage = 1; // 🟢 新增：當前頁碼
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
@@ -243,10 +245,10 @@
             myInventory = p.inventory;
         });
 
-        // 🟢 1. 點擊分類 -> 請求物品清單
         // 🟢 1. 點擊分類
         function selectCategory(cat) {
             currentItemKey = ''; 
+            currentPage = 1; // 🟢 重置頁碼
             
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
@@ -256,10 +258,10 @@
             document.getElementById('listings-area').style.display = 'none';
 
             if (cat === 'mine') {
-                // 🟢 如果選的是「我的」，直接顯示列表區，並發送請求
+                // 如果選的是「我的」，直接顯示列表區，並發送請求
                 document.getElementById('status-msg').innerText = "查詢我的掛單...";
                 document.getElementById('listings-list').innerHTML = '<div style="padding:10px;">載入中...</div>';
-                document.getElementById('listings-area').style.display = 'block';
+                document.getElementById('listings-area').style.display = 'flex';
                 
                 socket.emit('getMyListings');
             } else {
@@ -291,18 +293,45 @@
             });
         });
 
-        // 🟢 3. 點擊物品 -> 請求掛單
+        // 🟢 3. 點擊物品 -> 請求掛單 (預設第1頁)
         function loadListings(itemKey, itemName) {
             currentItemKey = itemKey;
+            currentPage = 1; // 重置為第一頁
             document.getElementById('status-msg').innerText = `正在查詢: ${itemName}`;
             document.getElementById('listings-list').innerHTML = '<div style="padding:10px; color:#aaa;">載入中...</div>';
-            document.getElementById('listings-area').style.display = 'block';
+            document.getElementById('listings-area').style.display = 'flex';
             
-            socket.emit('getMarketListings', itemKey);
+            socket.emit('getMarketListings', { key: itemKey, page: 1 });
         }
 
-        // 🟢 4. 接收掛單 -> 顯示列表
-        socket.on('marketListingsUpdate', (listings) => {
+        // 🟢 換頁功能
+        function changePage(delta) {
+            const newPage = currentPage + delta;
+            if (newPage < 1) return;
+            
+            currentPage = newPage;
+            document.getElementById('listings-list').innerHTML = '<div style="padding:10px; color:#aaa;">讀取中...</div>';
+            
+            if (currentItemKey) {
+                socket.emit('getMarketListings', { key: currentItemKey, page: currentPage });
+            }
+        }
+
+        // 🟢 4. 接收掛單 -> 顯示列表 (含分頁)
+        socket.on('marketListingsUpdate', (data) => {
+            // 相容性處理：如果 data 是陣列(舊版 "我的物品" 邏輯)，轉成物件結構
+            let listings = [];
+            let totalPages = 1;
+            let page = 1;
+
+            if (Array.isArray(data)) {
+                listings = data; // "我的物品" 暫時沒做分頁
+            } else {
+                listings = data.listings;
+                totalPages = data.totalPages;
+                page = data.currentPage;
+            }
+
             const listDiv = document.getElementById('listings-list');
             listDiv.innerHTML = '';
 
@@ -330,6 +359,22 @@
                 `;
                 listDiv.appendChild(div);
             });
+
+            // 🟢 加入分頁控制列 (如果是在看物品分類)
+            if (currentItemKey && totalPages > 0) { 
+                const paginationDiv = document.createElement('div');
+                paginationDiv.style.cssText = "display:flex; justify-content:center; gap:10px; padding:10px; align-items:center; border-top:2px solid #ccc; margin-top:auto;";
+                
+                const prevDisabled = page <= 1 ? 'disabled style="opacity:0.5; cursor:default;"' : '';
+                const nextDisabled = page >= totalPages ? 'disabled style="opacity:0.5; cursor:default;"' : '';
+
+                paginationDiv.innerHTML = `
+                    <button class="cat-btn" ${prevDisabled} onclick="changePage(-1)">◀ 上一頁</button>
+                    <span style="font-size:10px; color:#333;">第 ${page} / ${totalPages} 頁</span>
+                    <button class="cat-btn" ${nextDisabled} onclick="changePage(1)">下一頁 ▶</button>
+                `;
+                document.getElementById('listings-area').appendChild(paginationDiv);
+            }
         });
 
         // 交易功能
@@ -357,7 +402,6 @@
             } else {
                 keys.forEach(key => {
                     const itemData = ITEM_DB[key] || { name: key };
-                    // 過濾掉未知的奇怪物品
                     if (!itemData.name) return;
 
                     const div = document.createElement('div');
@@ -386,20 +430,12 @@
             const priceInput = document.getElementById('sell-price');
             const price = parseInt(priceInput.value);
 
-            if(!price || price <= 0) { 
-                showMsg("請輸入有效價格"); 
-                return; 
-            }
-
-            // 🟢 【新增限制】前端檢查
-            if (price > 99999) {
-                showMsg("價格不能超過 99,999 G");
-                return;
-            }
+            if(!price || price <= 0) { showMsg("請輸入有效價格"); return; }
+            if (price > 99999) { showMsg("價格不能超過 99,999 G"); return; }
 
             socket.emit('marketSell', { itemId: currentSellId, price: price });
         }
-        // 通知與刷新
+
         function showMsg(text) {
             const t = document.getElementById('game-toast');
             t.innerText = text;
@@ -411,16 +447,20 @@
             showMsg(res.success ? "✅ " + res.msg : "❌ " + res.msg);
             closePriceModal();
             closeInventoryModal();
-            // 如果剛好在看該物品的頁面，刷新它
             if (res.success && currentItemKey) {
-                socket.emit('getMarketListings', currentItemKey);
+                // 停留在當前頁面刷新
+                socket.emit('getMarketListings', { key: currentItemKey, page: currentPage });
+            }
+            if (res.success && !currentItemKey) {
+                // 如果是在"我的物品"頁面，刷新它
+                socket.emit('getMyListings');
             }
         });
         
-        // 全域刷新監聽 (別人買走時)
+        // 全域刷新監聽
         socket.on('marketRefresh', () => {
             if (currentItemKey) {
-                socket.emit('getMarketListings', currentItemKey);
+                socket.emit('getMarketListings', { key: currentItemKey, page: currentPage });
             }
         });
 
