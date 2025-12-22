@@ -180,7 +180,7 @@
     <div id="sell-price-modal" class="modal-overlay">
         <div class="modal-box">
             <h3 id="modal-item-name" style="font-size:16px; margin-bottom:10px;">上架物品</h3>
-            <input type="number" id="sell-price" placeholder="輸入價格 (G)">
+            <input type="number" id="sell-price" placeholder="輸入價格 (G)" max="99999">
             <button class="btn" style="background:#e67e22; margin-top:10px;" onclick="confirmSell()">確認上架</button>
             <button class="btn" style="background:#555; margin-top:10px;" onclick="closePriceModal()">取消</button>
         </div>
@@ -370,11 +370,22 @@
         function closePriceModal() { document.getElementById('sell-price-modal').style.display = 'none'; }
         
         function confirmSell() {
-            const price = document.getElementById('sell-price').value;
-            if(!price || price <= 0) { showMsg("請輸入有效價格"); return; }
+            const priceInput = document.getElementById('sell-price');
+            const price = parseInt(priceInput.value);
+
+            if(!price || price <= 0) { 
+                showMsg("請輸入有效價格"); 
+                return; 
+            }
+
+            // 🟢 【新增限制】前端檢查
+            if (price > 99999) {
+                showMsg("價格不能超過 99,999 G");
+                return;
+            }
+
             socket.emit('marketSell', { itemId: currentSellId, price: price });
         }
-
         // 通知與刷新
         function showMsg(text) {
             const t = document.getElementById('game-toast');
