@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中v2</title>
+    <title>戰鬥中v3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -188,10 +188,18 @@
         if (!roomId) { showMsg("無效的房間！"); setTimeout(()=>window.location.href = 'hub.html', 1000); }
 
         socket.on('connect', () => {
-        socket.emit('joinGame', myToken); 
-        // 延長到 1000 毫秒 (1秒)，確保伺服器有足夠時間準備好你的資料
-        setTimeout(() => socket.emit('connectToRoom', roomId), 1000);
-    });
+            socket.emit('joinGame', myToken); 
+            // 延長到 1000 毫秒 (1秒)，確保伺服器有足夠時間準備好你的資料
+            setTimeout(() => socket.emit('connectToRoom', roomId), 1000);
+        });
+
+        // 🟢 監聽伺服器發送的「離開房間」訊號 (當3秒後被踢時)
+        socket.on('roomLeft', () => {
+            showMsg("🚪 正在離開房間...");
+            setTimeout(() => {
+                window.location.href = 'hub.html';
+            }, 500);
+        });
 
         function showMsg(text) {
             const t = document.getElementById('game-toast');
@@ -341,7 +349,18 @@
             document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column: span 2;" onclick="leaveRoom()">離開</button>`;
         });
 
-        socket.on('playerDead', () => { log("你被打倒了..."); showMsg("👻 你已經死亡..."); document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column:span 2; background:red; color:white" onclick="window.location.href='rest.html'"> 去復活</button>`; });
+        // 🟢 死亡畫面：顯示倒數提示，並鎖住按鈕
+        socket.on('playerDead', () => { 
+            log("你被打倒了... (3秒後自動回城)"); 
+            showMsg("👻 你已經死亡..."); 
+            
+            // 讓所有按鈕失效，防止玩家亂按，並顯示倒數提示
+            const btnArea = document.getElementById('btns');
+            btnArea.innerHTML = `<div style="grid-column:span 2; color:#e74c3c; text-align:center; padding:10px;">
+                💀 你已陣亡<br>3秒後自動回城...
+            </div>`;
+        });
+
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
         socket.on('battleLog', (msg) => log(msg));
 
@@ -374,7 +393,7 @@
 
         function useSkill(skillId) {
             if(!isMyTurn) return; 
-            toggle(true);
+            toggle(true); 
             socket.emit('combatAction', { roomId, type: 'skill', skillId: skillId });
             const img = document.getElementById('monster-img');
             img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
@@ -383,8 +402,8 @@
         function openBag() {
             const btnArea = document.getElementById('btns');
             const fixedArea = document.getElementById('fixed-btn-area');
-            btnArea.innerHTML = '';
-            fixedArea.style.display = 'block';
+            btnArea.innerHTML = ''; 
+            fixedArea.style.display = 'block'; 
             const itemsToShow = [
                 'potion_hp', 'potion_mid', 'potion_high', 'potion_max', 'elixir', 
                 'potion_mp', 'potion_mp_mid', 'potion_mp_high',
