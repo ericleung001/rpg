@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會v2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -428,11 +428,25 @@
             }
         };
 
+        // 🟢 定義一個變數來鎖定按鈕
+        let isProcessing = false;
+        
         window.triggerCreateRoom = function(mobId) {
+            if (isProcessing) return; // 如果正在處理，直接無視點擊
             if (!socket.connected) { showToast("錯誤：未連線到伺服器！"); return; }
-            socket.emit('createRoom', mobId);
+        
+            isProcessing = true; // 鎖定
             document.getElementById('list-title').innerText = "正在建立房間...";
+            
+            socket.emit('createRoom', mobId);
+        
+            // 🟢 2秒後自動解鎖 (防止如果伺服器沒回應，按鈕永遠卡死)
+            setTimeout(() => {
+                isProcessing = false;
+                document.getElementById('list-title').innerText = `${selectedMonster.name} - 房間`; // 還原標題
+            }, 2000);
         };
+        
         window.triggerJoinRoom = function(roomId) { socket.emit('joinRoom', roomId); };
         window.triggerEnterCity = function(cityId) {
             let city = WORLD_MAP.find(c => c.id === cityId);
