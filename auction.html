@@ -152,6 +152,7 @@
         <button class="cat-btn" onclick="selectCategory('acc')">💍飾品</button>
         <button class="cat-btn" onclick="selectCategory('consumable')">🧪消耗</button>
         <button class="cat-btn" onclick="selectCategory('material')">🪵材料</button>
+        <button class="cat-btn" onclick="selectCategory('mine')">📦我的</button>
     </div>
 
     <div id="status-msg">請選擇上方分類</div>
@@ -243,17 +244,29 @@
         });
 
         // 🟢 1. 點擊分類 -> 請求物品清單
+        // 🟢 1. 點擊分類
         function selectCategory(cat) {
             currentItemKey = ''; 
             
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             
-            document.getElementById('status-msg').innerText = "讀取物品清單...";
+            // 隱藏所有區域
             document.getElementById('item-select-area').style.display = 'none';
             document.getElementById('listings-area').style.display = 'none';
 
-            socket.emit('getMarketItems', cat);
+            if (cat === 'mine') {
+                // 🟢 如果選的是「我的」，直接顯示列表區，並發送請求
+                document.getElementById('status-msg').innerText = "查詢我的掛單...";
+                document.getElementById('listings-list').innerHTML = '<div style="padding:10px;">載入中...</div>';
+                document.getElementById('listings-area').style.display = 'block';
+                
+                socket.emit('getMyListings');
+            } else {
+                // 正常分類流程
+                document.getElementById('status-msg').innerText = "讀取物品清單...";
+                socket.emit('getMarketItems', cat);
+            }
         }
 
         // 🟢 2. 接收物品清單
