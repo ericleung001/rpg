@@ -280,13 +280,13 @@
 
     <script src="socket.io.js"></script>
     <script>
-        // 🟢 Loading 控制 (3.5秒強制冷卻)
+        // 🟢 Loading 控制 (2秒強制冷卻)
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const overlay = document.getElementById('loading-overlay');
                 overlay.style.opacity = '0';
                 setTimeout(() => { overlay.style.display = 'none'; }, 500);
-            }, 3500); // 3.5秒
+            }, 2000); // 🟢 改為 2000ms (2秒)
         });
 
         const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
