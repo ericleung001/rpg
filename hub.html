@@ -11,12 +11,34 @@
             background-color: #2c3e50; color: #ecf0f1; 
             font-family: 'Press Start 2P', monospace; 
             text-align: center; 
-            display: flex; flex-direction: column; align-items: center; 
+            margin: 0; padding: 0; /* 🟢 移除 padding，由內部容器控制 */
             height: 100dvh; 
-            margin: 0; padding: 10px; box-sizing: border-box; 
             overflow: hidden; 
             overscroll-behavior: none;
             user-select: none; -webkit-user-select: none;
+            display: flex; justify-content: center; /* PC版置中 */
+        }
+
+        /* 🟢 App 佈局容器 (核心修改) */
+        #app-layout {
+            display: flex;
+            flex-direction: column; /* 手機版預設垂直排列 */
+            width: 100%;
+            height: 100%;
+            max-width: 600px; /* 手機版最大寬度 */
+            position: relative;
+        }
+
+        /* 🟢 遊戲主畫面容器 */
+        #game-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden;
+            width: 100%;
         }
 
         /* 🟢 Loading 遮罩層 */
@@ -37,7 +59,7 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         /* 頂部列 */
-        .top-bar { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: 30px;}
+        .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: 30px;}
         .logout-btn { font-size: 10px; color: #e74c3c; cursor: pointer; text-decoration: underline; white-space: nowrap; padding: 5px; }
         h1 { font-size: 16px; margin: 0; white-space: nowrap; }
         #conn-status { font-size: 10px; padding: 5px 8px; background: #333; border: 1px solid #fff; border-radius: 6px; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
@@ -45,7 +67,7 @@
         /* 狀態欄 */
         .status-bar { 
             background: #34495e; border: 3px solid #fff; padding: 10px; 
-            width: 100%; max-width: 600px; margin-bottom: 10px; border-radius: 12px; 
+            width: 100%; margin-bottom: 10px; border-radius: 12px; 
             display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; text-align: left; 
             font-size: 10px; box-sizing: border-box;
         }
@@ -55,11 +77,11 @@
         .exp-fill { height: 100%; background: #3498db; width: 0%; transition: width 0.3s; }
         
         .main-content {
-            width: 100%; max-width: 600px;
+            width: 100%;
             flex: 1; 
             display: flex; flex-direction: column;
             overflow: hidden; 
-            margin-bottom: 40px; 
+            /* margin-bottom: 40px;  <-- 移除，因為聊天室不再覆蓋 */
         }
 
         /* 設施按鈕網格 */
@@ -83,7 +105,6 @@
             height: 38px; 
             white-space: nowrap; 
             box-shadow: 2px 2px 0 rgba(0,0,0,0.3); 
-            
             touch-action: manipulation; 
             -webkit-tap-highlight-color: transparent; 
             transition: transform 0.05s;
@@ -101,18 +122,11 @@
             border: 2px solid #bdc3c7; color: white; text-decoration: none; 
             display: block; text-shadow: 1px 1px 0 #000; background: #34495e; 
             position: relative; text-align: left; margin-bottom: 8px; border-radius: 6px;
-            
             touch-action: manipulation; 
             -webkit-tap-highlight-color: transparent;
             transition: transform 0.05s, background-color 0.1s; 
         }
-        
-        .btn:active { 
-            transform: scale(0.98); 
-            filter: brightness(0.8); 
-            background: #2980b9; 
-        }
-
+        .btn:active { transform: scale(0.98); filter: brightness(0.8); background: #2980b9; }
         .locked { background: #555; color: #888; border-color: #555; pointer-events: none; }
         
         .info-tag { float: right; font-size: 10px; color: #f1c40f; margin-top: 2px; }
@@ -120,7 +134,7 @@
         .status-waiting { background: #27ae60; color: white; }
         .status-fighting { background: #c0392b; color: white; }
         
-        /* 聊天室 */
+        /* 聊天室 (手機版預設樣式) */
         #chat-container {
             position: fixed; bottom: 0; left: 0; width: 100%; 
             background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7;
@@ -135,6 +149,7 @@
             cursor: pointer; font-weight: bold; border-bottom: 1px solid #555;
             display: flex; justify-content: center; align-items: center;
             touch-action: manipulation;
+            flex-shrink: 0; /* 防止被壓縮 */
         }
         #chat-header:hover { background: #2c3e50; }
 
@@ -143,7 +158,7 @@
         .chat-open #chat-body { display: flex; } 
 
         #chat-history { flex: 1; overflow-y: auto; padding: 8px; text-align: left; color: white; }
-        #chat-input-area { display: flex; border-top: 1px solid #555; height: 40px; }
+        #chat-input-area { display: flex; border-top: 1px solid #555; height: 40px; flex-shrink: 0; }
         #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 10px; font-family: inherit; font-size: 12px; outline: none; }
         #chat-send { background: #2980b9; color: white; border: none; padding: 0 15px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; touch-action: manipulation; }
 
@@ -156,7 +171,7 @@
             transition: top 0.5s ease-in-out; white-space: nowrap;
         }
 
-        /* 🟢 公告系統樣式 */
+        /* 公告系統 */
         #notice-btn {
             position: fixed; top: 50px; left: 10px;
             width: 40px; height: 40px;
@@ -179,19 +194,68 @@
             z-index: 9999;
         }
         .notice-box {
-            background: #fff; color: #2c3e50;
-            width: 85%; max-width: 400px;
-            border: 4px solid #f1c40f; border-radius: 10px;
-            padding: 20px; text-align: left;
-            font-family: 'Press Start 2P', monospace;
-            max-height: 70vh; overflow-y: auto;
+            background: #fff; color: #2c3e50; width: 85%; max-width: 400px;
+            border: 4px solid #f1c40f; border-radius: 10px; padding: 20px; text-align: left;
+            font-family: 'Press Start 2P', monospace; max-height: 70vh; overflow-y: auto;
         }
         .notice-title { font-size: 16px; color: #d35400; margin-bottom: 15px; text-align: center; font-weight: bold; }
         .notice-content { font-size: 10px; line-height: 1.8; white-space: pre-wrap; }
         .close-notice-btn {
-            margin-top: 20px; width: 100%; padding: 10px;
-            background: #34495e; color: white; border: none; border-radius: 5px;
-            cursor: pointer; font-family: inherit; font-size: 12px;
+            margin-top: 20px; width: 100%; padding: 10px; background: #34495e; 
+            color: white; border: none; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 12px;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* 🟢 PC / 平板 電腦版樣式 (寬度大於 1024px 時生效) */
+        /* ------------------------------------------------------------------ */
+        @media (min-width: 1024px) {
+            body {
+                background-color: #222; /* PC版背景加深，讓遊戲區更突出 */
+            }
+
+            #app-layout {
+                flex-direction: row; /* 改為左右排列 */
+                max-width: 1000px; /* 限制總寬度 */
+                background-color: #2c3e50;
+                box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            }
+
+            #game-view {
+                width: 600px; /* 鎖定遊戲區寬度 */
+                border-right: 4px solid #bdc3c7;
+            }
+
+            /* 聊天室移到右側 */
+            #chat-container {
+                position: static; /* 取消 fixed */
+                width: 400px;
+                height: 100% !important; /* 強制高度 */
+                border-top: none;
+                background: #34495e;
+            }
+
+            /* 隱藏點擊展開的提示，改為固定標題 */
+            #chat-header {
+                cursor: default;
+                background: #2c3e50;
+            }
+            #chat-header:active { pointer-events: none; }
+
+            /* 聊天內容永遠顯示 */
+            #chat-body {
+                display: flex !important;
+                height: calc(100% - 30px);
+            }
+
+            /* 調整主內容區域的下邊距，因為沒有底部聊天室擋住了 */
+            .main-content {
+                margin-bottom: 0;
+            }
+            
+            /* 公告按鈕位置微調 */
+            #notice-btn {
+                left: calc(50% - 540px); /* 讓按鈕黏在遊戲框左邊 */
+            }
         }
 
     </style>
@@ -205,7 +269,6 @@
     </div>
 
     <div id="toast-notification"> 訊息提示</div>
-
     <div id="notice-btn" onclick="openNotice()">📢</div>
 
     <div id="notice-modal">
@@ -217,68 +280,73 @@
 2. 5人聯戰已fix，但需等齊人後，等1-2秒先按下"開始"
 3. 賣買上限每人10件
 4. 已修改在市集打開背包時，顯示英文代碼
+5. 介面優化：電腦版聊天室移至右側
 
 <b style="color:#2980b9;">【其他通知】</b>
-🔥 歡迎加入<a href="https://discord.com/invite/7kKwf5yb">DC Group</a>
+🔥 歡迎加入<a href="https://discord.com/invite/7kKwf5yb" style="color:#f1c40f;">DC Group</a>
 
 <b style="color:#27ae60;">【維護提醒】</b>
-2025/12/23 11:30am 維護測試
+沒有
             </div>
             <button class="close-notice-btn" onclick="closeNotice()">我知道了</button>
         </div>
     </div>
 
-    <div class="top-bar">
-        <div class="logout-btn" onclick="logout()">登出</div>
-        <h1> 公會大廳</h1>
-        <div id="conn-status" style="color:#e74c3c"> 未連線</div>
-    </div>
-    
-    <div class="status-bar">
-        <div class="stat-row">Name <span id="pid" class="val">...</span></div>
-        <div class="stat-row">LV <span id="lvl" class="val">1</span></div>
-        <div class="stat-row">金 <span id="gold" class="val">0</span></div>
-        <div class="stat-row">HP <span id="hp" class="val">...</span></div>
-        <div class="stat-row">MP <span id="mp" class="val" style="color:#3498db">...</span></div>
-        <div class="stat-row"></div>
-        <div style="grid-column: span 3;">
-            EXP <span id="exp-txt" style="font-size:8px; float:right">0/100</span>
-            <div class="exp-bar"><div id="exp-fill" class="exp-fill"></div></div>
-        </div>
-    </div>
-
-    <div class="main-content">
-        <div class="section-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px;">城鎮設施</div>
+    <div id="app-layout">
         
-        <div class="facility-grid">
-            <a href="bag.html" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">🎒 背包</a>
-            <a href="equip.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🛡️ 裝備</a>
-            <a href="market.html" class="facility-btn" style="background:#f39c12; border-color:#d35400;">🏪 道具</a>
-            <a href="auction.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">⚖️ 市集</a>
-            <a href="smithy.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔨 鍛造</a>
-            <a href="gathering.html" class="facility-btn" style="background:#27ae60; border-color:#2ecc71;">🌲 採集</a>
-            <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;">🏨 旅館</a>
-            <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🍳 廚房</a>
-        </div>
+        <div id="game-view">
+            <div class="top-bar">
+                <div class="logout-btn" onclick="logout()">登出</div>
+                <h1> 公會大廳</h1>
+                <div id="conn-status" style="color:#e74c3c"> 未連線</div>
+            </div>
+            
+            <div class="status-bar">
+                <div class="stat-row">Name <span id="pid" class="val">...</span></div>
+                <div class="stat-row">LV <span id="lvl" class="val">1</span></div>
+                <div class="stat-row">金 <span id="gold" class="val">0</span></div>
+                <div class="stat-row">HP <span id="hp" class="val">...</span></div>
+                <div class="stat-row">MP <span id="mp" class="val" style="color:#3498db">...</span></div>
+                <div class="stat-row"></div>
+                <div style="grid-column: span 3;">
+                    EXP <span id="exp-txt" style="font-size:8px; float:right">0/100</span>
+                    <div class="exp-bar"><div id="exp-fill" class="exp-fill"></div></div>
+                </div>
+            </div>
 
-        <div id="list-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px;">世界地圖</div>
-        <div class="map-container" id="map-list">
-            <div class="btn locked">讀取中...</div>
-        </div>
-    </div>
+            <div class="main-content">
+                <div class="section-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px;">城鎮設施</div>
+                
+                <div class="facility-grid">
+                    <a href="bag.html" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">🎒 背包</a>
+                    <a href="equip.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🛡️ 裝備</a>
+                    <a href="market.html" class="facility-btn" style="background:#f39c12; border-color:#d35400;">🏪 道具</a>
+                    <a href="auction.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">⚖️ 市集</a>
+                    <a href="smithy.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔨 鍛造</a>
+                    <a href="gathering.html" class="facility-btn" style="background:#27ae60; border-color:#2ecc71;">🌲 採集</a>
+                    <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;">🏨 旅館</a>
+                    <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🍳 廚房</a>
+                </div>
 
-    <div id="chat-container">
-        <div id="chat-header" onclick="toggleChat()"> 公頻聊天室 (點擊展開)</div>
-        <div id="chat-body">
-            <div id="chat-history"></div>
-            <div id="chat-input-area">
-                <input type="text" id="chat-input" placeholder="輸入訊息..." maxlength="50">
-                <button id="chat-send">發送</button>
+                <div id="list-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px;">世界地圖</div>
+                <div class="map-container" id="map-list">
+                    <div class="btn locked">讀取中...</div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <script src="socket.io.js"></script>
+        <div id="chat-container">
+            <div id="chat-header" onclick="toggleChat()"> 公頻聊天室 (點擊展開)</div>
+            <div id="chat-body">
+                <div id="chat-history"></div>
+                <div id="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="輸入訊息..." maxlength="50">
+                    <button id="chat-send">發送</button>
+                </div>
+            </div>
+        </div>
+
+    </div> <script src="socket.io.js"></script>
     <script>
         // 🟢 Loading 控制 (2秒強制冷卻)
         window.addEventListener('load', () => {
@@ -286,7 +354,7 @@
                 const overlay = document.getElementById('loading-overlay');
                 overlay.style.opacity = '0';
                 setTimeout(() => { overlay.style.display = 'none'; }, 500);
-            }, 2000); // 🟢 改為 2000ms (2秒)
+            }, 2000); 
         });
 
         const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
@@ -387,7 +455,6 @@
             status.style.color = "#2ecc71";
             
             // 🟢 隨機延遲 (Random Jitter)
-            // 延遲 100ms ~ 1500ms 後再發送請求，錯開流量
             const delay = Math.floor(Math.random() * 1400) + 100;
             console.log(`[系統] 隨機延遲: ${delay}ms`);
             
@@ -479,8 +546,12 @@
 
         function toggleChat() {
             const chat = document.getElementById('chat-container');
-            chat.classList.toggle('chat-open');
             const header = document.getElementById('chat-header');
+            
+            // 🟢 PC版禁止收起聊天室
+            if (window.innerWidth >= 1024) return;
+
+            chat.classList.toggle('chat-open');
             if(chat.classList.contains('chat-open')) {
                 header.innerText = " 點擊收起";
             } else {
@@ -499,7 +570,7 @@
         let isProcessing = false;
         
         window.triggerCreateRoom = function(mobId) {
-            if (isProcessing) return; // 如果正在處理，直接無視點擊
+            if (isProcessing) return; 
             if (!socket.connected) { showToast("錯誤：未連線到伺服器！"); return; }
         
             isProcessing = true; // 鎖定
@@ -507,10 +578,10 @@
             
             socket.emit('createRoom', mobId);
         
-            // 🟢 2秒後自動解鎖 (防止如果伺服器沒回應，按鈕永遠卡死)
+            // 2秒後自動解鎖
             setTimeout(() => {
                 isProcessing = false;
-                document.getElementById('list-title').innerText = `${selectedMonster.name} - 房間`; // 還原標題
+                if(selectedMonster) document.getElementById('list-title').innerText = `${selectedMonster.name} - 房間`;
             }, 2000);
         };
         
