@@ -34,6 +34,14 @@
 
     <hr>
 
+    <h3 style="color: #9b59b6;">🔐 帳號管理</h3>
+    <div style="display:flex; flex-direction: column; align-items: center;">
+        <input type="text" id="new-pass" placeholder="輸入新密碼">
+        <button onclick="resetPassword()" style="background:#8e44ad;">重置該玩家密碼</button>
+    </div>
+
+    <hr>
+
     <h3 style="color: #f1c40f;">💰 金錢管理</h3>
     <div style="display:flex; flex-direction: column; align-items: center;">
         <select id="gold-mode">
@@ -188,7 +196,6 @@
             log("✅ 連線成功，請輸入密碼與玩家名稱。");
         });
 
-        // 🟢 維護模式控制
         function setMaintenance(mode) {
             const pass = document.getElementById('admin-pass').value;
             if(!pass) { alert("請輸入管理員密碼"); return; }
@@ -200,6 +207,23 @@
             socket.emit('adminSetMaintenance', {
                 adminPass: pass,
                 mode: mode
+            });
+        }
+
+        // 🟢 重置密碼功能
+        function resetPassword() {
+            const pass = document.getElementById('admin-pass').value;
+            const name = document.getElementById('target-name').value;
+            const newPass = document.getElementById('new-pass').value;
+
+            if(!pass || !name || !newPass) { alert("請輸入密碼、玩家名稱與新密碼"); return; }
+            if(newPass.length < 5) { alert("新密碼至少需 5 字元"); return; }
+
+            log(`[請求] 重置玩家 ${name} 的密碼...`);
+            socket.emit('adminResetPass', {
+                adminPass: pass,
+                targetName: name,
+                newPass: newPass
             });
         }
 
