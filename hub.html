@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會v2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -469,6 +469,12 @@
             status.style.color = "#e74c3c";
         });
 
+        socket.on('tokenExpired', () => {
+            alert("⚠️ 登入憑證已失效 (可能密碼已更改)，請重新登入！");
+            localStorage.removeItem('rpg_token'); // 清除舊 Token
+            window.location.href = 'index.html';  // 跳回登入頁
+        });
+        
         socket.on('playerStatsUpdate', (p) => {
             myLevel = p.level;
             document.getElementById('pid').innerText = p.name || "Unknown";
