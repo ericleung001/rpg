@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>交易所v3</title>
+    <title>交易所</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -149,8 +149,7 @@
 
     <div class="category-bar">
         <button class="cat-btn" onclick="selectCategory('weapon')">⚔️武器</button>
-        <button class="cat-btn" onclick="selectCategory('armor')">🛡️防具</button>
-        <button class="cat-btn" onclick="selectCategory('acc')">💍飾品</button>
+        <button class="cat-btn" onclick="selectCategory('armor')">🛡️防具/飾品</button>
         <button class="cat-btn" onclick="selectCategory('consumable')">🧪消耗</button>
         <button class="cat-btn" onclick="selectCategory('material')">🪵材料</button>
         <button class="cat-btn" onclick="selectCategory('mine')">📦我的</button>
@@ -182,7 +181,7 @@
     <div id="sell-price-modal" class="modal-overlay">
         <div class="modal-box">
             <h3 id="modal-item-name" style="font-size:16px; margin-bottom:10px;">上架物品</h3>
-            <input type="number" id="sell-price" placeholder="輸入價格 (G)" max="99999">
+            <input type="number" id="sell-price" placeholder="輸入價格 (G)" max="999999">
             <button class="btn" style="background:#e67e22; margin-top:10px;" onclick="confirmSell()">確認上架</button>
             <button class="btn" style="background:#555; margin-top:10px;" onclick="closePriceModal()">取消</button>
         </div>
@@ -206,8 +205,9 @@
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // 物品資料庫
+        // 🟢 完整物品資料庫 (修正英文代碼問題)
         const ITEM_DB = {
+            // 材料
             'copper_ore': { name: '銅礦石' }, 'soft_fur': { name: '柔軟皮毛' }, 'beast_fang': { name: '野獸尖牙' }, 'slime_gel': { name: '黏液' },
             'iron_ore': { name: '鐵礦石' }, 'leather': { name: '皮革' }, 'tough_hide': { name: '硬皮革' }, 'magic_dust': { name: '魔粉' },
             'poison_sac': { name: '毒囊' }, 'bone_shard': { name: '碎骨片' }, 'silver_ore': { name: '銀礦石' }, 'fire_core': { name: '火焰核心' },
@@ -215,20 +215,34 @@
             'yeti_fur': { name: '雪怪毛皮' }, 'spirit_dust': { name: '靈魂粉末' }, 'mithril': { name: '秘銀' }, 'void_dust': { name: '虛空之塵' },
             'demon_horn': { name: '惡魔之角' }, 'dark_essence': { name: '暗之精華' }, 'adamantite': { name: '精金' }, 'god_blood': { name: '神之血' },
             'chaos_orb': { name: '混沌寶珠' }, 'angel_feather': { name: '天使之羽' },
+            'oak_log': { name: "橡木原木" }, 'maple_log': { name: "楓木原木" }, 'yew_log': { name: "紫杉原木" }, 'ancient_log': { name: "遠古神木" },
+            'spirit_wood': { name: "靈木" }, 'dragon_wood': { name: "龍骨木" }, 'void_wood': { name: "虛空木" }, 'chaos_wood': { name: "混沌神木" },
+            'carp': { name: "鯉魚" }, 'salmon': { name: "鮭魚" }, 'koi': { name: "錦鯉" }, 'magic_fish': { name: "魔力魚" },
+            'tuna': { name: "黑鮪魚" }, 'shark': { name: "大白鯊" }, 'lava_eel': { name: "熔岩鰻" }, 'void_squid': { name: "虛空烏賊" },
+            'god_carp': { name: "神之鯉" }, 'pearl': { name: "珍珠" }, 'coal': { name: "煤炭" }, 'ruby': { name: "紅寶石" },
+            'diamond': { name: "鑽石" }, 'star_fragment': { name: "星之碎片" },
+
+            // 消耗品
             'potion_hp': { name: "小紅藥水" }, 'potion_mid': { name: "中紅藥水" }, 'potion_high': { name: "大紅藥水" }, 'potion_max': { name: "特級秘藥" },
             'elixir': { name: "神之甘露" }, 'potion_mp': { name: "小藍藥水" }, 'potion_mp_mid': { name: "中藍藥水" }, 'potion_mp_high': { name: "大藍藥水" },
             'grilled_carp': { name: "烤鯉魚" }, 'salmon_sushi': { name: "鮭魚壽司" }, 'tuna_steak': { name: "煎鮪魚排" }, 'eel_rice': { name: "鰻魚飯" },
             'void_soup': { name: "虛空海鮮湯" }, 'sushi_plate': { name: "壽司拼盤" },
+
+            // 武器
             'wood_sword': { name: "木劍" }, 'copper_dagger': { name: "銅匕首" }, 'iron_sword': { name: "鐵劍" }, 'spike_club': { name: "狼牙棒" },
             'poison_dag': { name: "劇毒匕首" }, 'silver_blade': { name: "銀刃" }, 'flame_staff': { name: "火焰法杖" }, 'gold_axe': { name: "黃金巨斧" },
             'frost_bow': { name: "寒冰弓" }, 'mithril_saber': { name: "秘銀軍刀" }, 'void_reaper': { name: "虛空收割者" }, 'god_slayer': { name: "弒神劍" },
             'chaos_staff': { name: "混沌法杖" }, 'oak_bow': { name: "橡木弓" }, 'maple_staff': { name: "楓木法杖" }, 'shark_tooth': { name: "鯊魚牙匕首" },
             'emerald_staff': { name: "翡翠法杖" }, 'obsidian_blade': { name: "黑曜石之劍" }, 'dragon_spear': { name: "龍骨長槍" },
+            'hero_sword': { name: "勇者之劍" }, 'steel_blade': { name: "精鋼劍" }, 'assassin_dag': { name: "刺客短刀" },
+
+            // 防具 & 飾品
             'cloth_armor': { name: "布衣" }, 'hunt_vest': { name: "獵人背心" }, 'leather_armor': { name: "皮甲" }, 'chain_mail': { name: "鎖子甲" },
             'magma_plate': { name: "熔岩胸甲" }, 'ice_robe': { name: "冰霜法袍" }, 'yeti_cloak': { name: "雪怪斗篷" }, 'demon_armor': { name: "惡魔戰甲" },
-            'angel_armor': { name: "熾天使鎧甲" },
+            'angel_armor': { name: "熾天使鎧甲" }, 'plate_mail': { name: "板金甲" }, 'dragon_mail': { name: "龍鱗甲" },
             'bone_ring': { name: "骨戒" }, 'ring_str': { name: "力量戒指" }, 'snake_boots': { name: "蛇皮長靴" }, 'amulet_soul': { name: "靈魂護符" },
-            'ring_lord': { name: "領主指環" }, 'crown_chaos': { name: "混沌之冠" }, 'fish_ring': { name: "魚鱗戒指" }, 'pearl_necklace': { name: "珍珠項鍊" }
+            'ring_lord': { name: "領主指環" }, 'crown_chaos': { name: "混沌之冠" }, 'fish_ring': { name: "魚鱗戒指" }, 'pearl_necklace': { name: "珍珠項鍊" },
+            'ring_life': { name: "生命護符" }, 'ring_magic': { name: "魔力耳環" }
         };
 
         let myInventory = {};
@@ -397,9 +411,9 @@
                 list.innerHTML = '<div style="padding:20px; color:#aaa; text-align:center;">背包是空的，無物可賣</div>';
             } else {
                 keys.forEach(key => {
+                    // 🟢 使用 ITEM_DB 確保有中文名稱，若無則顯示 key
                     const itemData = ITEM_DB[key] || { name: key };
-                    if (!itemData.name) return;
-
+                    
                     const div = document.createElement('div');
                     div.className = 'sell-list-item';
                     div.innerHTML = `
@@ -427,7 +441,7 @@
             const price = parseInt(priceInput.value);
 
             if(!price || price <= 0) { showMsg("請輸入有效價格"); return; }
-            if (price > 99999) { showMsg("價格不能超過 99,999 G"); return; }
+            if (price > 999999) { showMsg("價格不能超過 999,999 G"); return; }
 
             socket.emit('marketSell', { itemId: currentSellId, price: price });
         }
