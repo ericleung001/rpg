@@ -26,6 +26,14 @@
     
     <hr>
 
+    <h3 style="color: #e74c3c;">🚧 系統維護</h3>
+    <div style="display:flex; justify-content:center; gap:10px;">
+        <button onclick="setMaintenance(true)" style="background:#c0392b;">🔴 開啟維護 (踢人)</button>
+        <button onclick="setMaintenance(false)" style="background:#27ae60;">🟢 關閉維護 (開放)</button>
+    </div>
+
+    <hr>
+
     <h3 style="color: #f1c40f;">💰 金錢管理</h3>
     <div style="display:flex; flex-direction: column; align-items: center;">
         <select id="gold-mode">
@@ -179,6 +187,21 @@
         socket.on('connect', () => {
             log("✅ 連線成功，請輸入密碼與玩家名稱。");
         });
+
+        // 🟢 維護模式控制
+        function setMaintenance(mode) {
+            const pass = document.getElementById('admin-pass').value;
+            if(!pass) { alert("請輸入管理員密碼"); return; }
+            
+            const action = mode ? "開啟維護並踢出所有玩家" : "關閉維護並開放登入";
+            if(!confirm(`確定要 ${action} 嗎？`)) return;
+
+            log(`[請求] 正在 ${action}...`);
+            socket.emit('adminSetMaintenance', {
+                adminPass: pass,
+                mode: mode
+            });
+        }
 
         function modifyGold() {
             const pass = document.getElementById('admin-pass').value;
