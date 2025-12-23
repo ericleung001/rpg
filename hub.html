@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會v2</title>
+    <title>冒險者公會v3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -84,7 +84,6 @@
             white-space: nowrap; 
             box-shadow: 2px 2px 0 rgba(0,0,0,0.3); 
             
-            /* 🟢 觸控優化 */
             touch-action: manipulation; 
             -webkit-tap-highlight-color: transparent; 
             transition: transform 0.05s;
@@ -103,7 +102,6 @@
             display: block; text-shadow: 1px 1px 0 #000; background: #34495e; 
             position: relative; text-align: left; margin-bottom: 8px; border-radius: 6px;
             
-            /* 🟢 觸控優化 */
             touch-action: manipulation; 
             -webkit-tap-highlight-color: transparent;
             transition: transform 0.05s, background-color 0.1s; 
@@ -157,6 +155,45 @@
             box-shadow: 0 6px 15px rgba(0,0,0,0.6); z-index: 1000;
             transition: top 0.5s ease-in-out; white-space: nowrap;
         }
+
+        /* 🟢 公告系統樣式 */
+        #notice-btn {
+            position: fixed; top: 50px; left: 10px;
+            width: 40px; height: 40px;
+            background: #e67e22; border: 2px solid #fff;
+            border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; z-index: 90;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        #notice-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            z-index: 9999;
+        }
+        .notice-box {
+            background: #fff; color: #2c3e50;
+            width: 85%; max-width: 400px;
+            border: 4px solid #f1c40f; border-radius: 10px;
+            padding: 20px; text-align: left;
+            font-family: 'Press Start 2P', monospace;
+            max-height: 70vh; overflow-y: auto;
+        }
+        .notice-title { font-size: 16px; color: #d35400; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        .notice-content { font-size: 10px; line-height: 1.8; white-space: pre-wrap; }
+        .close-notice-btn {
+            margin-top: 20px; width: 100%; padding: 10px;
+            background: #34495e; color: white; border: none; border-radius: 5px;
+            cursor: pointer; font-family: inherit; font-size: 12px;
+        }
+
     </style>
 </head>
 <body>
@@ -168,6 +205,29 @@
     </div>
 
     <div id="toast-notification"> 訊息提示</div>
+
+    <div id="notice-btn" onclick="openNotice()">📢</div>
+
+    <div id="notice-modal">
+        <div class="notice-box">
+            <div class="notice-title">📜 公會公告</div>
+            <div class="notice-content">
+<b style="color:#c0392b;">【最新更新 v2.0】</b>
+1. 新增世界地圖與區域怪物
+2. 開放交易市集與拍賣行
+3. 新增裝備與製作系統
+4. 提升等級上限至 Lv.100
+
+<b style="color:#2980b9;">【活動通知】</b>
+🔥 週末經驗值加倍活動開啟！
+請各位冒險者把握機會升級。
+
+<b style="color:#27ae60;">【維護提醒】</b>
+每日凌晨 04:00 進行系統備份。
+            </div>
+            <button class="close-notice-btn" onclick="closeNotice()">我知道了</button>
+        </div>
+    </div>
 
     <div class="top-bar">
         <div class="logout-btn" onclick="logout()">登出</div>
@@ -240,6 +300,14 @@
         let myLevel = 1;
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) { window.location.href = 'index.html'; }
+
+        // 🟢 公告功能
+        function openNotice() {
+            document.getElementById('notice-modal').style.display = 'flex';
+        }
+        function closeNotice() {
+            document.getElementById('notice-modal').style.display = 'none';
+        }
 
         // 地圖設定
         const WORLD_MAP = [
