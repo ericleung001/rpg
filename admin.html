@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GM 管理後台</title>
+    <style>
+        body { background: #222; color: #fff; font-family: monospace; padding: 20px; text-align: center; }
+        input, select, button { padding: 10px; margin: 5px; width: 100%; max-width: 300px; box-sizing: border-box; }
+        button { background: #e74c3c; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:active { background: #c0392b; transform: translateY(2px); }
+        .log { margin-top: 20px; color: #f1c40f; white-space: pre-wrap; border: 1px solid #555; padding: 10px; min-height: 100px; text-align: left; background: #000; }
+        hr { border: 0; border-top: 1px solid #444; margin: 20px 0; }
+        h3 { margin-top: 0; }
+        
+        optgroup { color: #f1c40f; background: #333; font-weight: bold; }
+        option { color: #fff; background: #222; }
+    </style>
+</head>
+<body>
+
+    <h1>🔧 GM 管理後台</h1>
+
+    <input type="password" id="admin-pass" placeholder="輸入管理員密碼">
+    <input type="text" id="target-name" placeholder="目標玩家名稱 (Username)">
+    
+    <hr>
+
+    <h3 style="color: #f1c40f;">💰 金錢管理</h3>
+    <div style="display:flex; flex-direction: column; align-items: center;">
+        <select id="gold-mode">
+            <option value="add">➕ 增加 (輸入負數則扣除)</option>
+            <option value="set">🛑 直接設定 (覆蓋總額)</option>
+        </select>
+        <input type="number" id="gold-amount" placeholder="金額">
+        <button onclick="modifyGold()" style="background:#f39c12;">執行金額變更</button>
+    </div>
+
+    <hr>
+
+    <h3 style="color: #3498db;">🎁 發送物品</h3>
+    <input type="text" id="item-id" placeholder="物品 ID (可直接輸入或選下方列表)">
+    
+    <select id="common-items" onchange="document.getElementById('item-id').value = this.value">
+        <option value="">-- 快速選擇物品 --</option>
+        
+        <optgroup label="=== 消耗品 ===">
+            <option value="potion_hp">小紅藥水 (HP+50)</option>
+            <option value="potion_mid">中紅藥水 (HP+500)</option>
+            <option value="potion_high">大紅藥水 (HP+2000)</option>
+            <option value="potion_max">特級秘藥 (HP+10000)</option>
+            <option value="elixir">神之甘露 (HP+50000)</option>
+            <option value="potion_mp">小藍藥水 (MP+30)</option>
+            <option value="potion_mp_mid">中藍藥水 (MP+100)</option>
+            <option value="potion_mp_high">大藍藥水 (MP+500)</option>
+            <option value="grilled_carp">烤鯉魚 (HP+100)</option>
+            <option value="salmon_sushi">鮭魚壽司 (MP+50)</option>
+            <option value="tuna_steak">煎鮪魚排 (HP+500)</option>
+            <option value="eel_rice">鰻魚飯 (HP+300, MP+100)</option>
+            <option value="void_soup">虛空海鮮湯 (全滿)</option>
+            <option value="sushi_plate">壽司拼盤 (HP+500)</option>
+        </optgroup>
+
+        <optgroup label="=== 材料 ===">
+            <option value="copper_ore">銅礦石</option>
+            <option value="soft_fur">柔軟皮毛</option>
+            <option value="beast_fang">野獸尖牙</option>
+            <option value="slime_gel">黏液</option>
+            <option value="iron_ore">鐵礦石</option>
+            <option value="leather">皮革</option>
+            <option value="tough_hide">硬皮革</option>
+            <option value="magic_dust">魔粉</option>
+            <option value="poison_sac">毒囊</option>
+            <option value="bone_shard">碎骨片</option>
+            <option value="silver_ore">銀礦石</option>
+            <option value="fire_core">火焰核心</option>
+            <option value="lava_rock">熔岩石</option>
+            <option value="dragon_scale">龍鱗</option>
+            <option value="gold_ore">金礦石</option>
+            <option value="ice_crystal">永恆冰晶</option>
+            <option value="yeti_fur">雪怪毛皮</option>
+            <option value="spirit_dust">靈魂粉末</option>
+            <option value="mithril">秘銀</option>
+            <option value="void_dust">虛空之塵</option>
+            <option value="demon_horn">惡魔之角</option>
+            <option value="dark_essence">暗之精華</option>
+            <option value="adamantite">精金</option>
+            <option value="god_blood">神之血</option>
+            <option value="chaos_orb">混沌寶珠</option>
+            <option value="angel_feather">天使之羽</option>
+            <option value="oak_log">橡木原木</option>
+            <option value="maple_log">楓木原木</option>
+            <option value="yew_log">紫杉原木</option>
+            <option value="ancient_log">遠古神木</option>
+            <option value="spirit_wood">靈木</option>
+            <option value="dragon_wood">龍骨木</option>
+            <option value="void_wood">虛空木</option>
+            <option value="chaos_wood">混沌神木</option>
+            <option value="carp">鯉魚</option>
+            <option value="salmon">鮭魚</option>
+            <option value="koi">錦鯉</option>
+            <option value="magic_fish">魔力魚</option>
+            <option value="tuna">黑鮪魚</option>
+            <option value="shark">大白鯊</option>
+            <option value="lava_eel">熔岩鰻</option>
+            <option value="void_squid">虛空烏賊</option>
+            <option value="god_carp">神之鯉</option>
+            <option value="pearl">珍珠</option>
+            <option value="coal">煤炭</option>
+            <option value="ruby">紅寶石</option>
+            <option value="diamond">鑽石</option>
+            <option value="star_fragment">星之碎片</option>
+        </optgroup>
+
+        <optgroup label="=== 武器 ===">
+            <option value="wood_sword">木劍</option>
+            <option value="copper_dagger">銅匕首</option>
+            <option value="oak_bow">橡木弓</option>
+            <option value="iron_sword">鐵劍</option>
+            <option value="spike_club">狼牙棒</option>
+            <option value="maple_staff">楓木法杖</option>
+            <option value="poison_dag">劇毒匕首</option>
+            <option value="shark_tooth">鯊魚牙匕首</option>
+            <option value="silver_blade">銀刃</option>
+            <option value="flame_staff">火焰法杖</option>
+            <option value="emerald_staff">翡翠法杖</option>
+            <option value="gold_axe">黃金巨斧</option>
+            <option value="frost_bow">寒冰弓</option>
+            <option value="obsidian_blade">黑曜石之劍</option>
+            <option value="dragon_spear">龍骨長槍</option>
+            <option value="mithril_saber">秘銀軍刀</option>
+            <option value="void_reaper">虛空收割者</option>
+            <option value="god_slayer">弒神劍</option>
+            <option value="chaos_staff">混沌法杖</option>
+            <option value="hero_sword">勇者之劍</option>
+            <option value="steel_blade">精鋼劍</option>
+            <option value="assassin_dag">刺客短刀</option>
+        </optgroup>
+
+        <optgroup label="=== 防具 ===">
+            <option value="cloth_armor">布衣</option>
+            <option value="hunt_vest">獵人背心</option>
+            <option value="leather_armor">皮甲</option>
+            <option value="plate_mail">板金甲</option>
+            <option value="dragon_mail">龍鱗甲</option>
+            <option value="chain_mail">鎖子甲</option>
+            <option value="magma_plate">熔岩胸甲</option>
+            <option value="ice_robe">冰霜法袍</option>
+            <option value="yeti_cloak">雪怪斗篷</option>
+            <option value="demon_armor">惡魔戰甲</option>
+            <option value="angel_armor">熾天使鎧甲</option>
+        </optgroup>
+
+        <optgroup label="=== 飾品 ===">
+            <option value="bone_ring">骨戒</option>
+            <option value="fish_ring">魚鱗戒指</option>
+            <option value="snake_boots">蛇皮長靴</option>
+            <option value="ring_str">力量戒指</option>
+            <option value="ring_life">生命護符</option>
+            <option value="ring_magic">魔力耳環</option>
+            <option value="pearl_necklace">珍珠項鍊</option>
+            <option value="amulet_soul">靈魂護符</option>
+            <option value="ring_lord">領主指環</option>
+            <option value="crown_chaos">混沌之冠</option>
+        </optgroup>
+    </select>
+
+    <input type="number" id="item-count" placeholder="數量" value="1">
+    <button onclick="sendItem()">🚀 發送物品</button>
+
+    <div class="log" id="log-area">等待操作...</div>
+
+    <script src="socket.io.js"></script>
+    <script>
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], secure: true });
+
+        socket.on('connect', () => {
+            log("✅ 連線成功，請輸入密碼與玩家名稱。");
+        });
+
+        function modifyGold() {
+            const pass = document.getElementById('admin-pass').value;
+            const name = document.getElementById('target-name').value;
+            const mode = document.getElementById('gold-mode').value;
+            const amount = document.getElementById('gold-amount').value;
+
+            if(!pass || !name || !amount) { alert("請填寫所有欄位"); return; }
+
+            const actionText = mode === 'add' ? '增加/扣除' : '設定為';
+            log(`[請求] 將 ${name} 的金錢 ${actionText} ${amount}...`);
+
+            socket.emit('adminSetGold', {
+                adminPass: pass,
+                targetName: name,
+                amount: amount,
+                mode: mode
+            });
+        }
+
+        function sendItem() {
+            const pass = document.getElementById('admin-pass').value;
+            const name = document.getElementById('target-name').value;
+            const item = document.getElementById('item-id').value;
+            const count = document.getElementById('item-count').value;
+
+            if(!pass || !name || !item || !count) { alert("請填寫所有欄位"); return; }
+
+            log(`[請求] 發送 ${count} 個 [${item}] 給 ${name}...`);
+            
+            socket.emit('adminGiveItem', {
+                adminPass: pass,
+                targetName: name,
+                itemId: item,
+                count: count
+            });
+        }
+
+        socket.on('adminResult', (res) => {
+            log(res.msg);
+        });
+
+        function log(msg) {
+            const area = document.getElementById('log-area');
+            area.innerText = `[${new Date().toLocaleTimeString()}] ${msg}\n` + area.innerText;
+        }
+    </script>
+</body>
+</html>
