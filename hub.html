@@ -627,28 +627,33 @@ const socket = io('https://mmo.ttctv-105.cc', {
             window.location.href = 'index.html';  
         });
         
-        // 🟢 [修改] 更新玩家數值，包含 ATK, DEF, HP Bar, MP Bar
+        // 🟢 [修改] 更新玩家數值 (確保讀取最新計算後的 ATK/DEF)
         socket.on('playerStatsUpdate', (p) => {
             myLevel = p.level;
+            
+            // 基本資訊
             document.getElementById('pid').innerText = p.name || "Unknown";
             document.getElementById('lvl').innerText = p.level;
-            document.getElementById('gold').innerText = p.gold.toLocaleString();
+            document.getElementById('gold').innerText = (p.gold || 0).toLocaleString();
 
-            // HP
+            // HP 條 (確保不超過 100%)
+            let hpPct = (p.hp / p.maxHp) * 100;
             document.getElementById('hp').innerText = `${p.hp}/${p.maxHp}`;
-            document.getElementById('hp-bar-fill').style.width = Math.max(0, Math.min(100, (p.hp / p.maxHp * 100))) + '%';
+            document.getElementById('hp-bar-fill').style.width = Math.max(0, Math.min(100, hpPct)) + '%';
 
-            // MP
+            // MP 條
+            let mpPct = (p.mp / p.maxMp) * 100;
             document.getElementById('mp').innerText = `${p.mp}/${p.maxMp}`;
-            document.getElementById('mp-bar-fill').style.width = Math.max(0, Math.min(100, (p.mp / p.maxMp * 100))) + '%';
+            document.getElementById('mp-bar-fill').style.width = Math.max(0, Math.min(100, mpPct)) + '%';
 
-            // ATK & DEF
-            document.getElementById('atk').innerText = p.atk || 0;
-            document.getElementById('def').innerText = p.def || 0;
+            // 🟢 [關鍵] ATK & DEF (確保顯示 0 而不是 undefined)
+            // 這裡讀取的 p.atk 已經包含了 (基礎 + 裝備 + 強化) 的總和
+            document.getElementById('atk').innerText = (p.atk || 0).toLocaleString();
+            document.getElementById('def').innerText = (p.def || 0).toLocaleString();
 
-            // EXP
+            // EXP 條
             document.getElementById('exp-txt').innerText = `${p.exp}/${p.maxExp}`;
-            document.getElementById('exp-fill').style.width = (p.exp / p.maxExp * 100) + '%';
+            document.getElementById('exp-fill').style.width = Math.min(100, (p.exp / p.maxExp * 100)) + '%';
             
             refreshUI();
         });
