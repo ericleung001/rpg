@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的背包</title>
+    <title>我的背包2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -11,8 +11,8 @@
             font-family: 'Press Start 2P', monospace; 
             text-align: center; padding: 15px; 
             display:flex; flex-direction:column; align-items:center; 
-            height: 100dvh; margin:0; box-sizing:border-box;
-            overscroll-behavior: none;
+            height: 100dvh; margin:0; box-sizing:border-box; 
+            overflow: hidden;
         }
         .header { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .gold-display { color: #f1c40f; font-size: 14px; font-weight: bold; }
@@ -54,6 +54,7 @@
         .item-name { font-size: 14px; font-weight: bold; color: #2980b9; }
         .item-count { font-size: 14px; background: #2c3e50; color: #fff; padding: 2px 6px; border-radius: 4px; }
         .item-desc { font-size: 10px; color: #7f8c8d; margin-bottom: 10px; }
+        .plus-tag { color: #f1c40f; font-weight: bold; margin-left: 5px; }
 
         .action-btns { display: flex; gap: 8px; flex-wrap: wrap; }
         
@@ -163,16 +164,18 @@
         </div>
     </div>
 
-    <script src="socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const socket = io('https://mmo.ttctv-105.cc', { 
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
+        
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
         let myInventory = {};
+        let myEnhancements = {}; // 🔥 新增
         let currentFilter = 'all'; 
         let currentItemId = null;
 
@@ -198,7 +201,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         const ITEM_DB = {
             'lucky_bag': { name: "🧧 奇蹟福袋(節日限定)", cost: 1000000000, desc: "隨機獲得巨量稀有材料！" },
-            // 🟢 [新增] 強化石資料
             'enhance_stone': { name: "強化石", cost: 5000, desc: "蘊含神祕力量，用於強化裝備 (鐵匠鋪)" },
 
             'potion_hp': { name: "小紅藥水", cost: 50, desc: "恢復 50 HP" },
@@ -250,7 +252,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             'chain_mail': { name: "鎖子甲", cost: 1500, desc: "DEF+40" }, 
             'iron_armor': { name: "鐵盔甲", cost: 4000, desc: "DEF+100" }, 
             'magma_plate': { name: "熔岩胸甲", cost: 0, desc: "DEF+150 HP+1500" }, 
-            'ice_robe': { name: "冰霜法袍", cost: 0, desc: "DEF+200 MP+500" }, 
+            'ice_robe': { name: "冰霜法袍", cost: 0, desc: "DEF+200 MP+500" },
             'yeti_cloak': { name: "雪怪斗篷", cost: 0, desc: "DEF+350 HP+4000" }, 
             'demon_armor': { name: "惡魔戰甲", cost: 0, desc: "DEF+1000 HP+12000" }, 
             'angel_armor': { name: "熾天使鎧甲", cost: 0, desc: "DEF+5000 HP+50000" },
@@ -338,6 +340,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
         socket.on('playerStatsUpdate', (p) => {
             document.getElementById('my-gold').innerText = p.gold;
             myInventory = p.inventory;
+            // 🔥 [關鍵修改] 接收強化數據
+            myEnhancements = p.enhancements || {}; 
             renderBag(); 
         });
 
@@ -375,39 +379,27 @@ const socket = io('https://mmo.ttctv-105.cc', {
             
             let keys = Object.keys(myInventory).filter(k => myInventory[k] > 0);
             
+            // --- 分類邏輯 ---
             if (currentFilter !== 'all') {
                 keys = keys.filter(key => {
                     const id = key.toLowerCase();
+                    if (currentFilter === 'consumable') return id.includes('potion') || id.includes('elixir') || id.includes('enhance_stone');
+                    if (currentFilter === 'food') return id.includes('grilled') || id.includes('sushi') || id.includes('steak') || id.includes('rice') || id.includes('soup') || id.includes('plate');
+                    if (currentFilter === 'weapon') return id.includes('sword') || id.includes('bow') || id.includes('staff') || id.includes('dagger') || id.includes('axe') || id.includes('spear') || id.includes('blade') || id.includes('saber') || id.includes('slayer') || id.includes('reaper') || id.includes('club') || id.includes('tooth') || id.includes('dag') || id.includes('weapon');
+                    if (currentFilter === 'armor') return id.includes('armor') || id.includes('mail') || id.includes('vest') || id.includes('plate') || id.includes('robe') || id.includes('cloak');
+                    if (currentFilter === 'accessory') return id.includes('ring') || id.includes('necklace') || id.includes('amulet') || id.includes('bracelet') || id.includes('boots') || id.includes('crown');
                     
-                    if (currentFilter === 'consumable') {
-                        return id.includes('potion') || id.includes('elixir') || id.includes('enhance_stone');
-                    }
-                    if (currentFilter === 'food') {
-                        return id.includes('grilled') || id.includes('sushi') || id.includes('steak') || id.includes('rice') || id.includes('soup') || id.includes('plate');
-                    }
-                    if (currentFilter === 'weapon') {
-                        return id.includes('sword') || id.includes('bow') || id.includes('staff') || id.includes('dagger') || id.includes('axe') || id.includes('spear') || id.includes('blade') || id.includes('saber') || id.includes('slayer') || id.includes('reaper') || id.includes('club') || id.includes('tooth') || id.includes('dag') || id.includes('weapon');
-                    }
-                    if (currentFilter === 'armor') {
-                        return id.includes('armor') || id.includes('mail') || id.includes('vest') || id.includes('plate') || id.includes('robe') || id.includes('cloak');
-                    }
-                    if (currentFilter === 'accessory') {
-                        return id.includes('ring') || id.includes('necklace') || id.includes('amulet') || id.includes('bracelet') || id.includes('boots') || id.includes('crown');
-                    }
+                    // 材料 (排除所有裝備和消耗品)
                     if (currentFilter === 'material') {
-                        // 排除所有裝備和消耗品，剩下的就是材料
-                        return !id.includes('potion') && !id.includes('elixir') && 
-                               !id.includes('enhance_stone') && // 強化石歸類為消耗品
-                               !id.includes('grilled') && !id.includes('sushi') && !id.includes('steak') && 
-                               !id.includes('rice') && !id.includes('soup') && !id.includes('plate') &&
+                        return !id.includes('potion') && !id.includes('elixir') && !id.includes('enhance_stone') && 
+                               !id.includes('grilled') && !id.includes('sushi') && !id.includes('steak') && !id.includes('rice') && !id.includes('soup') && !id.includes('plate') &&
                                !id.includes('sword') && !id.includes('bow') && !id.includes('staff') && 
                                !id.includes('dagger') && !id.includes('axe') && !id.includes('spear') && 
                                !id.includes('blade') && !id.includes('saber') && !id.includes('slayer') && 
                                !id.includes('reaper') && !id.includes('club') && !id.includes('tooth') && !id.includes('dag') && !id.includes('weapon') &&
                                !id.includes('armor') && !id.includes('mail') && !id.includes('vest') && !id.includes('robe') && !id.includes('cloak') && 
                                !id.includes('ring') && !id.includes('necklace') && !id.includes('amulet') && !id.includes('bracelet') && !id.includes('boots') && !id.includes('crown') &&
-                               !id.includes('plate') && 
-                               true; 
+                               !id.includes('plate') && true; 
                     }
                     return true;
                 });
@@ -432,16 +424,15 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     showDismantle = true;
                 }
 
-                // 🟢 [修改] 只有福袋顯示「使用」按鈕
+                // 只有福袋顯示「使用」
                 let useBtn = '';
                 if (key === 'lucky_bag') { 
                     useBtn = `<button class="btn btn-use" onclick="useItem('${key}')">使用</button>`;
                 }
 
-                // 🟢 [是否顯示賣店與上架按鈕] (福袋與神裝皆不可賣)
+                // 賣店與上架按鈕
                 let sellBtns = '';
                 if (!PROHIBITED_ITEMS.includes(key)) {
-                    // 傳入擁有的數量 (myInventory[key]) 給 openMarketModal
                     sellBtns = `
                         <button class="btn btn-npc" onclick="openNPCModal('${key}', '${item.name}', ${npcPrice})">
                             賣店 (${npcPrice}G)
@@ -452,11 +443,20 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     `;
                 }
 
+                // 🔥 [核心修正] 讀取強化等級
+                const lv = myEnhancements[key] || 0;
+                let displayName = item.name;
+                
+                // 如果有強化，加上金色 +N
+                if (lv > 0) {
+                    displayName += `<span class="plus-tag">+${lv}</span>`;
+                }
+
                 const div = document.createElement('div');
                 div.className = 'item-card';
                 div.innerHTML = `
                     <div class="item-header">
-                        <span class="item-name">${item.name}</span>
+                        <span class="item-name">${displayName}</span>
                         <span class="item-count">x${myInventory[key]}</span>
                     </div>
                     <div class="item-desc">${item.desc}</div>
@@ -492,7 +492,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         function confirmNPCSell() { socket.emit('npcSell', currentItemId); }
 
-        // 🟢 批量上架：接收 count 參數並設置 input 屬性
         function openMarketModal(id, name, count) {
             currentItemId = id; 
             document.getElementById('market-title').innerText = `上架: ${name}`;
@@ -500,7 +499,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             
             const amountInput = document.getElementById('sell-amount');
             amountInput.value = 1; 
-            amountInput.max = Math.min(30, count); // 上限為 30 或 擁有數量
+            amountInput.max = Math.min(30, count); 
             document.getElementById('owned-count').innerText = count;
 
             document.getElementById('market-modal').style.display = 'flex';
@@ -527,7 +526,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 return;
             }
 
-            // 🟢 發送數量給伺服器
             socket.emit('marketSell', { itemId: currentItemId, price: price, amount: amount });
         }
 
