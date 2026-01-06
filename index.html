@@ -95,14 +95,8 @@
 const socket = io('https://mmo.ttctv-105.cc', { 
     transports: ['websocket', 'polling'],
     secure: true // 因為你用 https，建議加呢個
-});
+}
 
-        const io = require('socket.io')(http, {
-    cors: {
-        origin: "*",  // 🟢 允許所有網址連接 (包括你的 NAS)
-        methods: ["GET", "POST"]
-    }
-});
 
         const statusSpan = document.getElementById('status');
         const msgDiv = document.getElementById('msg');
