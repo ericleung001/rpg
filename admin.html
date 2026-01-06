@@ -271,9 +271,10 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     
     <script>
-        const socket = io({ 
-            transports: ['websocket', 'polling']
-        });
+const socket = io('https://mmo.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
 
         socket.on('connect', () => {
             log("✅ 連線成功，請輸入密碼與玩家名稱。");
