@@ -91,11 +91,11 @@
     	
     
     <script>
-        // 🟢 建立連線：留空 URL，讓它自動連線到當前網址 (rpggameser.cc)
-        // Nginx 會負責把這個連線轉給後端
-        const socket = io({ 
-            transports: ['websocket', 'polling'] 
-        });
+// 指定連接到你的 https 網址
+const socket = io('https://mmorpg.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
 
         const statusSpan = document.getElementById('status');
         const msgDiv = document.getElementById('msg');
