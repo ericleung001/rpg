@@ -15,26 +15,51 @@
         
         optgroup { color: #f1c40f; background: #333; font-weight: bold; }
         option { color: #fff; background: #222; }
+
+        /* 福袋專屬按鈕顏色 */
+        .btn-open { background: #27ae60; }
+        .btn-close { background: #c0392b; }
+        .btn-reset { background: #f39c12; }
+        
+        /* BOSS 專屬按鈕顏色 */
+        .btn-boss { background: #8e44ad; box-shadow: 0 0 10px #8e44ad; }
     </style>
 </head>
 <body>
 
-    <h1>ߔ砇M 管理後台</h1>
+    <h1>🔧 GM 管理後台</h1>
 
     <input type="password" id="admin-pass" placeholder="輸入管理員密碼">
     <input type="text" id="target-name" placeholder="目標玩家名稱 (Username)">
     
     <hr>
 
-    <h3 style="color: #e74c3c;">ߚ砧㻧屧歨/h3>
+    <h3 style="color: #e74c3c;">🚧 系統維護</h3>
     <div style="display:flex; justify-content:center; gap:10px;">
-        <button onclick="setMaintenance(true)" style="background:#c0392b;">ߔ䠩拥埧歨(踢人)</button>
-        <button onclick="setMaintenance(false)" style="background:#27ae60;">ߟ⠩眩执歨(開放)</button>
+        <button onclick="setMaintenance(true)" style="background:#c0392b;">🔴 開啟維護 (踢人)</button>
+        <button onclick="setMaintenance(false)" style="background:#27ae60;">🟢 關閉維護 (開放)</button>
     </div>
 
     <hr>
 
-    <h3 style="color: #9b59b6;">ߔࠥ賨韧Ƽ/h3>
+    <h3 style="color: #c0392b; text-shadow: 0 0 5px red;">🌍 世界 BOSS</h3>
+    <div style="display:flex; flex-direction: column; align-items: center;">
+        <button class="btn-boss" onclick="spawnBoss()">☠️ 召喚虛空滅世者 (開啟活動)</button>
+        <div style="font-size:10px; color:#aaa; margin-top:5px;">(警告：這會向全服發送廣播)</div>
+    </div>
+
+    <hr>
+
+    <h3 style="color: #f1c40f;">🧧 福袋活動管理</h3>
+    <div style="display:flex; flex-direction: column; align-items: center;">
+        <button class="btn-open" onclick="controlLuckyBag('open')">🟢 開啟活動 (允許購買)</button>
+        <button class="btn-close" onclick="controlLuckyBag('close')">🔴 關閉活動 (禁止購買)</button>
+        <button class="btn-reset" onclick="controlLuckyBag('reset')">🔄 重置庫存 (補滿 20 個)</button>
+    </div>
+
+    <hr>
+
+    <h3 style="color: #9b59b6;">🔐 帳號管理</h3>
     <div style="display:flex; flex-direction: column; align-items: center;">
         <input type="text" id="new-pass" placeholder="輸入新密碼">
         <button onclick="resetPassword()" style="background:#8e44ad;">重置該玩家密碼</button>
@@ -42,11 +67,26 @@
 
     <hr>
 
-    <h3 style="color: #f1c40f;">ߒࠩ瑩좧Ƽ/h3>
+    <h3 style="color: #2ecc71;">📊 戰鬥等級管理</h3>
+    <div style="display:flex; flex-direction: column; align-items: center;">
+        <input type="number" id="level-amount" placeholder="設定等級 (例如: 50)">
+        <button onclick="setLevel()" style="background:#27ae60;">設定戰鬥等級 (重算能力)</button>
+    </div>
+
+    <hr>
+    <h3 style="color: #16a085;">🌲 採集等級管理</h3>
+    <div style="display:flex; flex-direction: column; align-items: center;">
+        <input type="number" id="gather-level-amount" placeholder="設定採集等級 (例如: 20)">
+        <button onclick="setGatherLevel()" style="background:#16a085;">設定採集等級</button>
+    </div>
+
+    <hr>
+
+    <h3 style="color: #f1c40f;">💰 金錢管理</h3>
     <div style="display:flex; flex-direction: column; align-items: center;">
         <select id="gold-mode">
             <option value="add">➕ 增加 (輸入負數則扣除)</option>
-            <option value="set">ߛᠧ봦譥(覆蓋總額)</option>
+            <option value="set">🛑 直接設定 (覆蓋總額)</option>
         </select>
         <input type="number" id="gold-amount" placeholder="金額">
         <button onclick="modifyGold()" style="background:#f39c12;">執行金額變更</button>
@@ -54,13 +94,55 @@
 
     <hr>
 
-    <h3 style="color: #3498db;">ߎᠧ鼩g驥ぼ/h3>
+    <h3 style="color: #3498db;">🎁 發送物品</h3>
     <input type="text" id="item-id" placeholder="物品 ID (可直接輸入或選下方列表)">
     
     <select id="common-items" onchange="document.getElementById('item-id').value = this.value">
         <option value="">-- 快速選擇物品 --</option>
+
+        <optgroup label="=== 🔨 強化道具 ===">
+            <option value="enhance_stone">✨ 強化石</option>
+        </optgroup>
+
+        <optgroup label="=== 🟢 Lv.300 終焉神裝 (畢業) ===">
+            <option value="entropy_sword">終焉·熱寂之劍 (武)</option>
+            <option value="entropy_god_armor">終焉·神之庇護 (甲)</option>
+            <option value="entropy_origin">熱寂原點 (材料)</option>
+        </optgroup>
+
+        <optgroup label="=== 🔵 Lv.260 星際套裝 ===">
+            <option value="galaxy_saber">銀河光劍 (武)</option>
+            <option value="nebula_plate">星雲板甲 (甲)</option>
+            <option value="cosmic_steel">宇宙鋼 (材料)</option>
+            <option value="star_core">恆星核心 (材料)</option>
+        </optgroup>
+
+        <optgroup label="=== 🟣 Lv.230 虛空套裝 ===">
+            <option value="void_blade">虛空之刃 (武)</option>
+            <option value="void_armor">虛空戰甲 (甲)</option>
+            <option value="void_shard">虛空碎片 (材料)</option>
+            <option value="dark_matter">暗物質 (材料)</option>
+        </optgroup>
+
+        <optgroup label="=== 🟡 Lv.280 維度飾品 ===">
+            <option value="dimension_ring">維度指環 (飾)</option>
+            <option value="time_sand">時光之沙 (材料)</option>
+            <option value="dimension_gem">維度寶石 (材料)</option>
+        </optgroup>
+
+        <optgroup label="=== ✨ Lv.200 創世神裝 ===">
+            <option value="elixir">神之甘露 (全補)</option>
+            <option value="titan_steel">泰坦神鋼</option>
+            <option value="star_fragment">星之碎片</option>
+            <option value="god_blood">神之血</option>
+            <option value="genesis_weapon">創世·終焉之劍 (武)</option>
+            <option value="genesis_armor">創世·神之庇護 (甲)</option>
+            <option value="ring_galaxy">銀河指環 (飾)</option>
+            <option value="void_reaper_dark">闇·虛空收割者 (武)</option>
+        </optgroup>
         
         <optgroup label="=== 消耗品 ===">
+            <option value="lucky_bag">🧧 奇蹟福袋</option>
             <option value="potion_hp">小紅藥水 (HP+50)</option>
             <option value="potion_mid">中紅藥水 (HP+500)</option>
             <option value="potion_high">大紅藥水 (HP+2000)</option>
@@ -182,20 +264,55 @@
     </select>
 
     <input type="number" id="item-count" placeholder="數量" value="1">
-    <button onclick="sendItem()">ߚࠧ鼩g驥ぼ/button>
+    <button onclick="sendItem()">🚀 發送物品</button>
 
     <div class="log" id="log-area">等待操作...</div>
 
-    <script src="socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    
     <script>
-        const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const socket = io({ 
+            transports: ['websocket', 'polling']
+        });
 
         socket.on('connect', () => {
             log("✅ 連線成功，請輸入密碼與玩家名稱。");
         });
+
+        socket.on('connect_error', (err) => {
+            console.error(err);
+            log("❌ 無法連線到伺服器");
+        });
+
+        // 🟢 [新增] 召喚世界 BOSS
+        function spawnBoss() {
+            const pass = document.getElementById('admin-pass').value;
+            if(!pass) { alert("請輸入管理員密碼"); return; }
+            
+            if(!confirm("⚠️ 確定要召喚 [虛空滅世者] 嗎？\n這會向全服發送通知！")) return;
+
+            log("[請求] 正在召喚世界 BOSS...");
+            socket.emit('adminSpawnWorldBoss', { password: pass });
+        }
+
+        // 福袋活動控制
+        function controlLuckyBag(action) {
+            const pass = document.getElementById('admin-pass').value;
+            if(!pass) { alert("請輸入管理員密碼"); return; }
+            
+            let actionText = "";
+            if(action === 'open') actionText = "開啟福袋活動";
+            if(action === 'close') actionText = "關閉福袋活動";
+            if(action === 'reset') actionText = "重置福袋庫存";
+
+            if(!confirm(`確定要 ${actionText} 嗎？`)) return;
+
+            log(`[請求] ${actionText}...`);
+            socket.emit('adminSetLuckyBag', {
+                password: pass,
+                action: action
+            });
+        }
 
         function setMaintenance(mode) {
             const pass = document.getElementById('admin-pass').value;
@@ -211,7 +328,7 @@
             });
         }
 
-        // ߟ⠩獧⼥꟨㽊        function resetPassword() {
+        function resetPassword() {
             const pass = document.getElementById('admin-pass').value;
             const name = document.getElementById('target-name').value;
             const newPass = document.getElementById('new-pass').value;
@@ -224,6 +341,42 @@
                 adminPass: pass,
                 targetName: name,
                 newPass: newPass
+            });
+        }
+
+        // 設定戰鬥等級函式
+        function setLevel() {
+            const pass = document.getElementById('admin-pass').value;
+            const name = document.getElementById('target-name').value;
+            const level = document.getElementById('level-amount').value;
+
+            if(!pass || !name || !level) { alert("請填寫所有欄位"); return; }
+            if(level < 1) { alert("等級至少為 1"); return; }
+
+            log(`[請求] 將 ${name} 的戰鬥等級設定為 Lv.${level}...`);
+
+            socket.emit('adminSetLevel', {
+                adminPass: pass,
+                targetName: name,
+                level: level
+            });
+        }
+
+        // 設定採集等級函式
+        function setGatherLevel() {
+            const pass = document.getElementById('admin-pass').value;
+            const name = document.getElementById('target-name').value;
+            const level = document.getElementById('gather-level-amount').value;
+
+            if(!pass || !name || !level) { alert("請填寫所有欄位"); return; }
+            if(level < 1) { alert("等級至少為 1"); return; }
+
+            log(`[請求] 將 ${name} 的採集等級設定為 Lv.${level}...`);
+
+            socket.emit('adminSetGatherLevel', {
+                adminPass: pass,
+                targetName: name,
+                level: level
             });
         }
 
@@ -266,6 +419,10 @@
 
         socket.on('adminResult', (res) => {
             log(res.msg);
+        });
+        
+        socket.on('errorMessage', (msg) => {
+            log("❌ " + msg);
         });
 
         function log(msg) {
