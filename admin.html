@@ -19,22 +19,22 @@
 </head>
 <body>
 
-    <h1>🔧 GM 管理後台</h1>
+    <h1>ߔ砇M 管理後台</h1>
 
     <input type="password" id="admin-pass" placeholder="輸入管理員密碼">
     <input type="text" id="target-name" placeholder="目標玩家名稱 (Username)">
     
     <hr>
 
-    <h3 style="color: #e74c3c;">🚧 系統維護</h3>
+    <h3 style="color: #e74c3c;">ߚ砧㻧屧歨/h3>
     <div style="display:flex; justify-content:center; gap:10px;">
-        <button onclick="setMaintenance(true)" style="background:#c0392b;">🔴 開啟維護 (踢人)</button>
-        <button onclick="setMaintenance(false)" style="background:#27ae60;">🟢 關閉維護 (開放)</button>
+        <button onclick="setMaintenance(true)" style="background:#c0392b;">ߔ䠩拥埧歨(踢人)</button>
+        <button onclick="setMaintenance(false)" style="background:#27ae60;">ߟ⠩眩执歨(開放)</button>
     </div>
 
     <hr>
 
-    <h3 style="color: #9b59b6;">🔐 帳號管理</h3>
+    <h3 style="color: #9b59b6;">ߔࠥ賨韧Ƽ/h3>
     <div style="display:flex; flex-direction: column; align-items: center;">
         <input type="text" id="new-pass" placeholder="輸入新密碼">
         <button onclick="resetPassword()" style="background:#8e44ad;">重置該玩家密碼</button>
@@ -42,11 +42,11 @@
 
     <hr>
 
-    <h3 style="color: #f1c40f;">💰 金錢管理</h3>
+    <h3 style="color: #f1c40f;">ߒࠩ瑩좧Ƽ/h3>
     <div style="display:flex; flex-direction: column; align-items: center;">
         <select id="gold-mode">
             <option value="add">➕ 增加 (輸入負數則扣除)</option>
-            <option value="set">🛑 直接設定 (覆蓋總額)</option>
+            <option value="set">ߛᠧ봦譥(覆蓋總額)</option>
         </select>
         <input type="number" id="gold-amount" placeholder="金額">
         <button onclick="modifyGold()" style="background:#f39c12;">執行金額變更</button>
@@ -54,7 +54,7 @@
 
     <hr>
 
-    <h3 style="color: #3498db;">🎁 發送物品</h3>
+    <h3 style="color: #3498db;">ߎᠧ鼩g驥ぼ/h3>
     <input type="text" id="item-id" placeholder="物品 ID (可直接輸入或選下方列表)">
     
     <select id="common-items" onchange="document.getElementById('item-id').value = this.value">
@@ -182,15 +182,16 @@
     </select>
 
     <input type="number" id="item-count" placeholder="數量" value="1">
-    <button onclick="sendItem()">🚀 發送物品</button>
+    <button onclick="sendItem()">ߚࠧ鼩g驥ぼ/button>
 
     <div class="log" id="log-area">等待操作...</div>
 
     <script src="socket.io.js"></script>
     <script>
-        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
-        const BACKEND_URL = atob(_0x5a1b);
-        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], secure: true });
+        const socket = io('https://mmo.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
 
         socket.on('connect', () => {
             log("✅ 連線成功，請輸入密碼與玩家名稱。");
@@ -210,8 +211,7 @@
             });
         }
 
-        // 🟢 重置密碼功能
-        function resetPassword() {
+        // ߟ⠩獧⼥꟨㽊        function resetPassword() {
             const pass = document.getElementById('admin-pass').value;
             const name = document.getElementById('target-name').value;
             const newPass = document.getElementById('new-pass').value;
