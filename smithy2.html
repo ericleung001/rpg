@@ -202,12 +202,13 @@
 
     <a href="hub.html" class="back-btn">◀ 返回大廳</a>
 
-    <script src="socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const socket = io('https://mmo.ttctv-105.cc', { 
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
+        
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
@@ -258,7 +259,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             if(res.success) {
                 showMsg(res.msg);
             } else {
-                alert(res.msg); // 失敗用彈窗比較有警示效果
+                alert(res.msg); 
             }
             
             if(res.broken) {
@@ -390,16 +391,25 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         function doCraft(id) { socket.emit('craftItem', id); }
 
-        // --- 強化邏輯 ---
+        // --- 強化邏輯 (修正版) ---
         function updateEnhanceUI() {
             if(!myData) return;
             
             const stones = myData.inventory['enhance_stone'] || 0;
             document.getElementById('stone-count').innerText = stones;
 
-            updateSlotDisplay('weapon', myData.equipment.weapon, myData.enhancements?.weapon);
-            updateSlotDisplay('armor', myData.equipment.armor, myData.enhancements?.armor);
-            updateSlotDisplay('acc', myData.equipment.acc, myData.enhancements?.acc);
+            // 🔥 [核心修正] 讀取強化等級 (改用 ItemID)
+            const weaponId = myData.equipment.weapon;
+            const armorId = myData.equipment.armor;
+            const accId = myData.equipment.acc;
+
+            const weaponLv = weaponId ? (myData.enhancements[weaponId] || 0) : 0;
+            const armorLv = armorId ? (myData.enhancements[armorId] || 0) : 0;
+            const accLv = accId ? (myData.enhancements[accId] || 0) : 0;
+
+            updateSlotDisplay('weapon', weaponId, weaponLv);
+            updateSlotDisplay('armor', armorId, armorLv);
+            updateSlotDisplay('acc', accId, accLv);
 
             if (selectedEnhanceSlot) selectEnhanceSlot(selectedEnhanceSlot);
         }
@@ -418,7 +428,10 @@ const socket = io('https://mmo.ttctv-105.cc', {
             document.querySelectorAll('.slot-btn').forEach(el => el.classList.remove('selected'));
             document.getElementById(`btn-${slot}`).classList.add('selected');
 
-            if (!myData.equipment[slot]) {
+            // 1. 取得該部位裝備 ID
+            const itemId = myData.equipment[slot];
+
+            if (!itemId) {
                 alert("該部位沒有裝備！");
                 document.getElementById('enhance-info').style.display = 'none';
                 selectedEnhanceSlot = null;
@@ -426,7 +439,9 @@ const socket = io('https://mmo.ttctv-105.cc', {
             }
 
             selectedEnhanceSlot = slot;
-            const currentLv = (myData.enhancements && myData.enhancements[slot]) || 0;
+
+            // 🔥 [核心修正] 讀取強化等級 (使用 itemId)
+            const currentLv = (myData.enhancements && myData.enhancements[itemId]) || 0;
             const nextLv = currentLv + 1;
 
             if (nextLv > 10) {
