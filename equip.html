@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>裝備管理2</title>
+    <title>裝備管理3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -12,7 +12,7 @@
             text-align: center; padding: 15px; 
             display:flex; flex-direction:column; align-items:center; 
             height: 100dvh; margin:0; box-sizing:border-box; overscroll-behavior: none;
-		overflow: scroll;
+            overflow: scroll;
         }
         .main-box { background: #34495e; border: 4px solid #fff; padding: 15px; width: 100%; max-width: 600px; border-radius: 12px; box-sizing: border-box; flex: 1; display: flex; flex-direction: column;}
         h2 { font-size: 18px; margin: 0 0 15px 0; }
@@ -30,24 +30,24 @@
         .btn { background: #27ae60; color: white; border: 2px solid #2ecc71; padding: 8px 12px; cursor: pointer; font-family: inherit; font-size: 12px; border-radius: 4px;}
         .btn-unequip { background: #c0392b; border-color: #e74c3c; margin-top: 5px; font-size: 10px; padding: 5px 8px; }
         .back-btn { background: #7f8c8d; color: white; padding: 15px; text-decoration: none; font-size: 14px; display: block; width: 100%; max-width: 600px; box-sizing: border-box; border-radius: 8px; margin-top: 15px; border: 3px solid #fff;}
-        /* === 通用通知條樣式 (加在所有頁面的 style 裡) === */
+        /* === 通用通知條樣式 === */
         #game-toast {
             position: fixed; 
-            top: -100px; /* 預設藏在螢幕上面 */
+            top: -100px; 
             left: 50%; 
             transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.95);
-            border: 2px solid #f1c40f; /* 金色邊框 */
+            border: 2px solid #f1c40f; 
             color: #fff;
             padding: 15px 30px;
             border-radius: 30px;
-            z-index: 9999; /* 確保在最上層 */
+            z-index: 9999; 
             font-size: 14px;
             font-weight: bold;
             white-space: nowrap;
-            transition: top 0.5s ease-in-out; /* 滑動動畫 */
+            transition: top 0.5s ease-in-out; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            pointer-events: none; /* 讓點擊穿透，不會擋住操作 */
+            pointer-events: none; 
         }
     </style>
 </head>
@@ -162,13 +162,12 @@
         
         socket.on('playerStatsUpdate', (p) => { 
             renderStats(p); 
-            // 🔥 [修改] 傳入完整的玩家資料 p，以便讀取 enhancements
+            // 🔥 [修改 1] 傳入 enhancements
             renderSlots(p.equipment, p.enhancements); 
-            renderInventory(p.inventory); 
+            renderInventory(p.inventory, p.enhancements); 
         });
         
         socket.on('equipResult', (msg) => { showMsg(msg); });
-        
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
 
         function renderStats(p) {
@@ -178,11 +177,9 @@
             document.getElementById('mp').innerText = p.maxMp.toLocaleString();
         }
 
-        // 🟢 [修改] 顯示裝備與強化等級
+        // 裝備中物品顯示
         function renderSlots(eq, enhancements) {
             const types = ['weapon', 'armor', 'acc'];
-            
-            // 確保 enhancements 是物件 (防止 null 報錯)
             if (!enhancements) enhancements = {};
 
             types.forEach(type => {
@@ -190,14 +187,9 @@
                 const itemId = eq[type];
                 
                 if (itemId && ITEM_MAP[itemId]) {
-                    // 🔥 讀取該物品的強化等級
                     const lv = enhancements[itemId] || 0;
-                    
-                    // 組合顯示文字，例如 "木劍 (+3)"
                     let displayName = ITEM_MAP[itemId].name;
-                    if (lv > 0) {
-                        displayName += ` <span style="color:#f1c40f; font-weight:bold;">+${lv}</span>`;
-                    }
+                    if (lv > 0) displayName += ` <span style="color:#f1c40f; font-weight:bold;">+${lv}</span>`;
 
                     div.innerHTML = `
                         <div style="color:#2ecc71; margin-bottom:5px;">${displayName}</div>
@@ -209,20 +201,42 @@
             });
         }
 
-        function renderInventory(inv) {
+        // 🟢 [修改 2] 背包物品顯示 (加入強化等級)
+        function renderInventory(inv, enhancements) {
             const list = document.getElementById('inventory-list');
             list.innerHTML = '';
             let hasEquipable = false;
+            
+            // 確保 enhancements 不會 undefined
+            if (!enhancements) enhancements = {};
+
             Object.keys(inv).forEach(key => {
                 const item = ITEM_MAP[key];
                 if (item && inv[key] > 0) {
                     hasEquipable = true;
+                    
+                    // 🔥 讀取強化等級
+                    const lv = enhancements[key] || 0;
+                    let nameDisplay = `${item.name} x${inv[key]}`;
+                    
+                    // 如果有強化，加上 +N
+                    if (lv > 0) {
+                        nameDisplay += ` <span style="color:#f1c40f; font-weight:bold;">+${lv}</span>`;
+                    }
+
                     const div = document.createElement('div');
                     div.className = 'inv-item';
-                    div.innerHTML = `<div><div class="inv-name">${item.name} x${inv[key]}</div><div class="inv-desc">${item.desc}</div></div><button class="btn" onclick="equip('${key}')">裝備</button>`;
+                    div.innerHTML = `
+                        <div>
+                            <div class="inv-name">${nameDisplay}</div>
+                            <div class="inv-desc">${item.desc}</div>
+                        </div>
+                        <button class="btn" onclick="equip('${key}')">裝備</button>
+                    `;
                     list.appendChild(div);
                 }
             });
+            
             if (!hasEquipable) list.innerHTML = `<div style="color:#7f8c8d; font-size:12px; padding:20px;">背包沒有可裝備的物品<br>(如藥水請至背包查看)</div>`;
         }
 
