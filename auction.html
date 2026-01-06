@@ -188,17 +188,17 @@
         <div id="main-content">
             <div class="header">
                 <h1>⚖️ 自由市場</h1>
-                <div class="gold-display">ߒ࠼span id="my-gold">0</span> G</div>
+                <div class="gold-display">💰 <span id="my-gold">0</span> G</div>
             </div>
 
             <button class="btn-sell-trigger" onclick="openInventoryModal()">+ 上架物品</button>
 
             <div class="category-bar">
                 <button class="cat-btn" onclick="selectCategory('weapon')">⚔️武器</button>
-                <button class="cat-btn" onclick="selectCategory('armor')">ߛ᯸縉⥅篩㾥ぼ/button>
-                <button class="cat-btn" onclick="selectCategory('consumable')">ߧꦶ言缯button>
-                <button class="cat-btn" onclick="selectCategory('material')">ߪ妝খ鼯button>
-                <button class="cat-btn" onclick="selectCategory('mine')">ߓ榈᧚伯button>
+                <button class="cat-btn" onclick="selectCategory('armor')">🛡️防具/飾品</button>
+                <button class="cat-btn" onclick="selectCategory('consumable')">🧪消耗</button>
+                <button class="cat-btn" onclick="selectCategory('material')">🪵材料</button>
+                <button class="cat-btn" onclick="selectCategory('mine')">📦我的</button>
             </div>
 
             <div id="status-msg">請選擇上方分類</div>
@@ -267,10 +267,9 @@
             }, 1000);
         });
 
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], secure: true });
 
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -282,7 +281,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         
         let pendingBuyId = null; // 暫存要買的物品 ID
 
-        // ߟ⠛修改] 禁止上架清單 (包含福袋及神裝)
+        // 🟢 [修改] 禁止上架清單 (包含福袋及神裝)
         const PROHIBITED_ITEMS = [
             'lucky_bag',
             'genesis_weapon', 'genesis_armor', 'void_reaper_dark', 'ring_galaxy', 
@@ -332,7 +331,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             'ring_life': { name: "生命護符" }, 'ring_magic': { name: "魔力耳環" },
             'bracelet_def': { name: "堅毅手環" }, 'necklace_hp': { name: "紅水晶項鍊" }, 'necklace_mp': { name: "藍水晶項鍊" },
             'ring_galaxy': { name: "銀河指環" }, 'dimension_ring': { name: "維度指環" },
-            'lucky_bag': { name: "ߧ砥凨韧揨⋢ } 
+            'lucky_bag': { name: "🧧 奇蹟福袋" } 
         };
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
@@ -395,7 +394,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             const area = document.getElementById('item-select-area');
             area.innerHTML = '';
             
-            // ߟ⠛過濾] 前端隱藏禁售物品
+            // 🟢 [過濾] 前端隱藏禁售物品
             const allowedItems = items.filter(item => !PROHIBITED_ITEMS.includes(item.id));
 
             if (allowedItems.length === 0) { document.getElementById('status-msg').innerText = "此分類暫無可交易物品"; return; }
@@ -505,7 +504,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function openInventoryModal() {
             const list = document.getElementById('sell-inventory-list');
             list.innerHTML = '';
-            // ߟ⠛修改] 過濾不可上架的物品 (福袋 + 神裝)
+            // 🟢 [修改] 過濾不可上架的物品 (福袋 + 神裝)
             const keys = Object.keys(myInventory).filter(k => myInventory[k] > 0 && !PROHIBITED_ITEMS.includes(k));
             
             if (keys.length === 0) { list.innerHTML = '<div style="padding:20px; color:#aaa; text-align:center;">沒有可上架的物品</div>'; } 

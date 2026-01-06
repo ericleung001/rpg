@@ -299,11 +299,11 @@
     </div>
 
     <div id="toast-notification"> 訊息提示</div>
-    <div id="notice-btn" onclick="openNotice()"></div>
+    <div id="notice-btn" onclick="openNotice()">📢</div>
 
     <div id="notice-modal">
         <div class="notice-box">
-            <div class="notice-title"> 公會公告</div>
+            <div class="notice-title">📜 公會公告</div>
             <div class="notice-content">
 <b style="color:#c0392b;">【最新更新 v2.7 幸運與榮耀】</b>
 為著遊戲公平性及之後發展，
@@ -313,7 +313,7 @@
 但該裝備有裝備上身的話，
 會分解不到，如需分解，請將裝備除下。
 
-1.  全新功能：彩票 (Lottery)
+1. 🎱 全新功能：彩票 (Lottery)
 開獎時間： 每日晚上 22:00 (HKT) 自動攪珠。
 玩法： 每注 10,000 G，自選 6 個號碼 (1-49)。
 獎勵： 頭獎獨得 80% 累積獎金池！
@@ -325,17 +325,17 @@
 修復： 修正結算時排名顯示異常及重複召喚的 Bug。
 
 <b style="color:#2980b9;">【其他通知】</b>
- 歡迎加入<a href="https://discord.com/invite/7kKwf5yb" style="color:#f1c40f;">DC Group</a>
+🔥 歡迎加入<a href="https://discord.com/invite/7kKwf5yb" style="color:#f1c40f;">DC Group</a>
 
 <b style="color:#27ae60;">【維護提醒】</b>
 彩票2026/01/06下午6時正暫停，請留意。
 另外怪物血量會觀察一晚再作調整。
 2026/01/06 22:05再會更新Server。
 
-<b style="color:#8e44ad;">【 神話技能指南 (Lv.200+)】</b>
+<b style="color:#8e44ad;">【🌌 神話技能指南 (Lv.200+)】</b>
 突破凡人極限，掌握宇宙真理的力量！
 
- <b>[Lv.200] 虛空碎擊 (1000 MP)</b>
+🟣 <b>[Lv.200] 虛空碎擊 (1000 MP)</b>
 <span style="font-size:9px; color:#aaa;">"凝聚虛空之力，粉碎萬物。"</span>
 造成 <b>10倍</b> 傷害。
 這是踏入神話領域的入門磚，威力遠超次元斬。
@@ -367,7 +367,7 @@
                 <div class="status-row-top">
                     <div class="status-item"><span class="label">LV</span> <span id="lvl" class="val">1</span></div>
                     <div class="status-item"><span id="pid" class="val" style="color:#2ecc71;">Unknown</span></div>
-                    <div class="status-item"><span class="label"></span> <span id="gold" class="val">0</span></div>
+                    <div class="status-item"><span class="label">💰</span> <span id="gold" class="val">0</span></div>
                 </div>
 
                 <div class="status-row-bars">
@@ -387,7 +387,7 @@
 
                 <div class="status-row-stats">
                     <div class="status-item"><span class="label">⚔️ ATK</span> <span id="atk" class="val">0</span></div>
-                    <div class="status-item"><span class="label">️ DEF</span> <span id="def" class="val">0</span></div>
+                    <div class="status-item"><span class="label">🛡️ DEF</span> <span id="def" class="val">0</span></div>
                 </div>
 
                 <div class="exp-container">
@@ -419,7 +419,7 @@
                 </div>
 
                 <div class="ranking-box" id="boss-ranking-area" style="display:none;">
-                    <div class="rank-title"> 上屆討伐英雄榜</div>
+                    <div class="rank-title">🏆 上屆討伐英雄榜</div>
                     <div id="ranking-list">
                         </div>
                 </div>
@@ -427,16 +427,16 @@
                 <div class="section-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px; flex-shrink: 0;">城鎮設施</div>
                 
                 <div class="facility-grid">
-                    <a href="bag.html" class="facility-btn" style="background:#16a085; border-color:#1abc9c;"> 背包</a>
-                    <a href="equip.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">️ 裝備</a>
-                    <a href="market.html" class="facility-btn" style="background:#f39c12; border-color:#d35400;"> 道具</a>
+                    <a href="bag.html" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">🎒 背包</a>
+                    <a href="equip.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🛡️ 裝備</a>
+                    <a href="market.html" class="facility-btn" style="background:#f39c12; border-color:#d35400;">🏪 道具</a>
                     <a href="auction.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">⚖️ 市集</a>
-                    <a href="smithy.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;"> 鍛造</a>
-                    <a href="gathering.html" class="facility-btn" style="background:#27ae60; border-color:#2ecc71;"> 採集</a>
-                    <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;"> 旅館</a>
-                    <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;"> 廚房</a>
-		<a href="lottery.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;"> 彩票</a>
-		<a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;"> 圖鑑</a>
+                    <a href="smithy.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔨 鍛造</a>
+                    <a href="gathering.html" class="facility-btn" style="background:#27ae60; border-color:#2ecc71;">🌲 採集</a>
+                    <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;">🏨 旅館</a>
+                    <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🍳 廚房</a>
+		<a href="lottery.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🎱 彩票</a>
+		<a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;">📜 圖鑑</a>
                 </div>
 
                 <div id="list-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px; flex-shrink: 0;">世界地圖</div>
@@ -457,8 +457,7 @@
             </div>
         </div>
 
-    </div> 
-    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    </div> <script src="socket.io.js"></script>
     <script>
         // Loading 控制 (2秒強制冷卻)
         window.addEventListener('load', () => {
@@ -469,11 +468,13 @@
             }, 2000); 
         });
 
-// 指定連接到你的 https 網址
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         let myLevel = 1;
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) { window.location.href = 'index.html'; }
@@ -486,7 +487,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             document.getElementById('notice-modal').style.display = 'none';
         }
 
-        //  [更新] 完整的世界地圖 (包含 Lv.201 - Lv.300)
+        // 🟢 [更新] 完整的世界地圖 (包含 Lv.201 - Lv.300)
         const WORLD_MAP = [
             { 
                 id: 'city_1', name: '曙光平原', reqLv: 1, desc: '冒險的起點 (Lv.1-20)', 
@@ -496,7 +497,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     { id: 'bee', name: '殺人蜂', lv: 5 },
                     { id: 'boar', name: '野豬', lv: 8 },
                     { id: 'thief', name: '盜賊', lv: 12 },
-                    { id: 'wolf_king', name: ' 狼王 (BOSS)', lv: 15 }
+                    { id: 'wolf_king', name: '🐺 狼王 (BOSS)', lv: 15 }
                 ] 
             },
             { 
@@ -507,7 +508,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     { id: 'skeleton', name: '骷髏兵', lv: 28 },
                     { id: 'ghoul', name: '食屍鬼', lv: 32 },
                     { id: 'witch', name: '沼澤女巫', lv: 35 },
-                    { id: 'hydra', name: ' 九頭蛇 (BOSS)', lv: 40 }
+                    { id: 'hydra', name: '🐍 九頭蛇 (BOSS)', lv: 40 }
                 ] 
             },
             { 
@@ -518,7 +519,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     { id: 'salamander', name: '火蜥蜴', lv: 48 },
                     { id: 'fire_mage', name: '烈焰法師', lv: 52 },
                     { id: 'dragon_hatchling', name: '幼龍', lv: 55 },
-                    { id: 'balrog', name: ' 炎魔 (BOSS)', lv: 60 }
+                    { id: 'balrog', name: '🔥 炎魔 (BOSS)', lv: 60 }
                 ] 
             },
             { 
@@ -540,7 +541,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     { id: 'dark_paladin', name: '墮落聖騎', lv: 88 },
                     { id: 'demon_guard', name: '惡魔守衛', lv: 92 },
                     { id: 'succubus', name: '魅魔', lv: 95 },
-                    { id: 'void_lord', name: '️ 虛空領主 (BOSS)', lv: 99 }
+                    { id: 'void_lord', name: '👁️ 虛空領主 (BOSS)', lv: 99 }
                 ] 
             },
             { 
@@ -548,50 +549,50 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 monsters: [
                     { id: 'chaos_beast', name: '混沌巨獸', lv: 105 },
                     { id: 'fallen_angel', name: '墮天使', lv: 110 },
-                    { id: 'demon_king', name: ' 魔王撒旦', lv: 150 }
+                    { id: 'demon_king', name: '👑 魔王撒旦', lv: 150 }
                 ] 
             },
             {
-                id: 'city_7', name: '虛空裂縫', reqLv: 1, desc: ' 扭曲的次元 (Lv.160-180)',
+                id: 'city_7', name: '虛空裂縫', reqLv: 1, desc: '🟣 扭曲的次元 (Lv.160-180)',
                 monsters: [
                     { id: 'void_walker', name: '虛空行者', lv: 160 },
                     { id: 'chaos_knight', name: '混沌騎士', lv: 170 },
-                    { id: 'abyss_dragon', name: ' 深淵魔龍 (BOSS)', lv: 180 }
+                    { id: 'abyss_dragon', name: '🐉 深淵魔龍 (BOSS)', lv: 180 }
                 ]
             },
             {
-                id: 'city_8', name: '眾神墓地', reqLv: 130, desc: ' 神話終結之地 (Lv.190-200)',
+                id: 'city_8', name: '眾神墓地', reqLv: 130, desc: '💀 神話終結之地 (Lv.190-200)',
                 monsters: [
                     { id: 'fallen_titan', name: '墮落泰坦', lv: 190 },
                     { id: 'genesis_god', name: '☠️ 創世破壞神 (FINAL)', lv: 200 }
                 ]
             },
             
-            //  [新增] Lv.201 - Lv.230 虛空之界
+            // 🟢 [新增] Lv.201 - Lv.230 虛空之界
             {
                 id: 'city_9', name: '虛空之界', reqLv: 160, desc: '⚫ 虛無的盡頭 (Lv.210-225)',
                 monsters: [
                     { id: 'void_worm', name: '虛空吞噬蟲', lv: 210 },
-                    { id: 'shadow_phantom', name: ' 虚影夢魘 (BOSS)', lv: 225 }
+                    { id: 'shadow_phantom', name: '👻 虚影夢魘 (BOSS)', lv: 225 }
                 ]
             },
 
-            //  [新增] Lv.231 - Lv.260 星際航道
+            // 🟢 [新增] Lv.231 - Lv.260 星際航道
             {
-                id: 'city_10', name: '星際航道', reqLv: 200, desc: ' 穿越星辰 (Lv.245-260)',
+                id: 'city_10', name: '星際航道', reqLv: 200, desc: '🌌 穿越星辰 (Lv.245-260)',
                 monsters: [
                     { id: 'star_eater', name: '吞星巨獸', lv: 245 },
-                    { id: 'nebula_dragon', name: ' 星雲幻龍 (BOSS)', lv: 260 }
+                    { id: 'nebula_dragon', name: '🐲 星雲幻龍 (BOSS)', lv: 260 }
                 ]
             },
 
-            //  [新增] Lv.261 - Lv.300 維度盡頭
+            // 🟢 [新增] Lv.261 - Lv.300 維度盡頭
             {
                 id: 'city_11', name: '維度盡頭', reqLv: 230, desc: '⏳ 時間與空間的終點 (Lv.280-300)',
                 monsters: [
                     { id: 'time_keeper', name: '時空裁決者', lv: 280 },
                     { id: 'dimension_breaker', name: '維度粉碎者', lv: 290 },
-                    { id: 'entropy_god', name: ' 終焉·熱寂之神 (GOD)', lv: 300 }
+                    { id: 'entropy_god', name: '👑 終焉·熱寂之神 (GOD)', lv: 300 }
                 ]
             }
         ];
@@ -628,7 +629,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             window.location.href = 'index.html';  
         });
         
-        //  [修改] 更新玩家數值，包含 ATK, DEF, HP Bar, MP Bar
+        // 🟢 [修改] 更新玩家數值，包含 ATK, DEF, HP Bar, MP Bar
         socket.on('playerStatsUpdate', (p) => {
             myLevel = p.level;
             document.getElementById('pid').innerText = p.name || "Unknown";
@@ -660,7 +661,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             refreshUI(); 
         });
 
-        //  [修改] 監聽世界 BOSS 狀態 (包含倒數邏輯)
+        // 🟢 [修改] 監聽世界 BOSS 狀態 (包含倒數邏輯)
         socket.on('worldBossUpdate', (data) => {
             const banner = document.getElementById('boss-banner');
             if (data.active) {
@@ -692,7 +693,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             }
         });
 
-        //  接收排名更新
+        // 🟢 接收排名更新
         socket.on('updateHubRanking', (ranking) => {
             const box = document.getElementById('boss-ranking-area');
             const list = document.getElementById('ranking-list');
@@ -711,14 +712,14 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 
                 let medal = `#${index + 1}`;
                 let rankClass = '';
-                if (index === 0) { medal = ''; rankClass = 'rank-1'; }
-                else if (index === 1) { medal = ''; rankClass = 'rank-2'; }
-                else if (index === 2) { medal = ''; rankClass = 'rank-3'; }
+                if (index === 0) { medal = '🥇'; rankClass = 'rank-1'; }
+                else if (index === 1) { medal = '🥈'; rankClass = 'rank-2'; }
+                else if (index === 2) { medal = '🥉'; rankClass = 'rank-3'; }
 
                 let dmgText = (r.dmg / 100000000).toFixed(2) + "億";
                 if (r.dmg < 100000000) dmgText = (r.dmg / 10000).toFixed(0) + "萬";
 
-                //  [核心修改] 在數字前加上 "輸出能力: "
+                // 🔥 [核心修改] 在數字前加上 "輸出能力: "
                 div.innerHTML = `
                     <span class="${rankClass}">${medal} ${r.name}</span>
                     <span style="color:#ccc;">輸出: ${dmgText}</span>
@@ -900,7 +901,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     html += `<div class="btn ${lockClass}" ${clickAction}>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:12px; font-weight:bold; color:#f1c40f;">
-                                 ${room.hostName} 的隊伍
+                                🚩 ${room.hostName} 的隊伍
                             </span>
                             <span style="font-size:10px; color:#bdc3c7;">#${index + 1}</span>
                         </div>

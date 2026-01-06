@@ -86,7 +86,7 @@
             width: 80%; max-width: 300px; border-radius: 12px; text-align: center;
         }
         
-        /* ߟ⠨츥奦ᆦ裥쏥䪥얠*/
+        /* 🟢 輸入框樣式優化 */
         .input-group { margin: 15px 0; }
         .input-label { display: block; font-size: 10px; color: #555; margin-bottom: 5px; text-align: left;}
         input { 
@@ -108,8 +108,8 @@
     <div id="game-toast"></div>
 
     <div class="header">
-        <h1>ߎ⠨㌥셼</h1>
-        <div class="gold-display">ߒ࠼span id="my-gold">0</span> G</div>
+        <h1>🎒 背包</h1>
+        <div class="gold-display">💰 <span id="my-gold">0</span> G</div>
     </div>
 
     <div class="category-bar">
@@ -165,10 +165,13 @@
 
     <script src="socket.io.js"></script>
     <script>
- const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
@@ -196,7 +199,7 @@
         ];
 
         const ITEM_DB = {
-            'lucky_bag': { name: "ߧ砥凨韧揨⋨節日限定)", cost: 1000000000, desc: "隨機獲得巨量稀有材料！" },
+            'lucky_bag': { name: "🧧 奇蹟福袋(節日限定)", cost: 1000000000, desc: "隨機獲得巨量稀有材料！" },
             'potion_hp': { name: "小紅藥水", cost: 50, desc: "恢復 50 HP" },
             'potion_mid': { name: "中紅藥水", cost: 200, desc: "恢復 500 HP" },
             'potion_high': { name: "大紅藥水", cost: 600, desc: "恢復 2000 HP" }, 
@@ -427,13 +430,13 @@
                     showDismantle = true;
                 }
 
-                // ߟ⠛修改] 只有福袋顯示「使用」按鈕
+                // 🟢 [修改] 只有福袋顯示「使用」按鈕
                 let useBtn = '';
                 if (key === 'lucky_bag') { 
                     useBtn = `<button class="btn btn-use" onclick="useItem('${key}')">使用</button>`;
                 }
 
-                // ߟ⠛是否顯示賣店與上架按鈕] (福袋與神裝皆不可賣)
+                // 🟢 [是否顯示賣店與上架按鈕] (福袋與神裝皆不可賣)
                 let sellBtns = '';
                 if (!PROHIBITED_ITEMS.includes(key)) {
                     // 傳入擁有的數量 (myInventory[key]) 給 openMarketModal
@@ -487,7 +490,7 @@
 
         function confirmNPCSell() { socket.emit('npcSell', currentItemId); }
 
-        // ߟ⠦鹩珤芦욦䶠count 參數並設置 input 屬性
+        // 🟢 批量上架：接收 count 參數並設置 input 屬性
         function openMarketModal(id, name, count) {
             currentItemId = id; 
             document.getElementById('market-title').innerText = `上架: ${name}`;
@@ -522,7 +525,8 @@
                 return;
             }
 
-            // ߟ⠧鼩f帩珧妤캦썥騊            socket.emit('marketSell', { itemId: currentItemId, price: price, amount: amount });
+            // 🟢 發送數量給伺服器
+            socket.emit('marketSell', { itemId: currentItemId, price: price, amount: amount });
         }
 
         function closeAllModals() {

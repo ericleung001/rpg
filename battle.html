@@ -138,7 +138,7 @@
             <div class="gba-box my-status">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
                     <span style="font-size:12px; font-weight:bold;"><span id="my-name">勇者</span>(你)</span>
-                    <span style="font-size:10px; color:#f1c40f;">⚔️<span id="atk-val">0</span> ߛ᯸Ｓpan id="def-val">0</span></span>
+                    <span style="font-size:10px; color:#f1c40f;">⚔️<span id="atk-val">0</span> 🛡️<span id="def-val">0</span></span>
                 </div>
                 <div class="hp-bar"><div id="php" class="hp-fill" style="width:100%"></div></div>
                 <div class="mp-bar"><div id="pmp" class="mp-fill" style="width:100%"></div></div>
@@ -176,12 +176,15 @@
         </div>
     </div>
     
-    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="socket.io.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
 
         let isMyTurn = false; 
         const params = new URLSearchParams(window.location.search);
@@ -235,11 +238,11 @@ const socket = io('https://mmo.ttctv-105.cc', {
             socket.emit('joinGame', myToken); 
             
             setTimeout(() => {
-                // ߟ⠛修正] 如果是世界 BOSS，直接隱藏等待大廳，直接開打
+                // 🟢 [修正] 如果是世界 BOSS，直接隱藏等待大廳，直接開打
                 if (roomId === 'world_boss') {
                     socket.emit('connectToBossRoom');
                     
-                    document.getElementById('turn-bar').innerText = "ߔ堤薧匠BOSS 討伐戰 ߔ墻
+                    document.getElementById('turn-bar').innerText = "🔥 世界 BOSS 討伐戰 🔥";
                     document.getElementById('turn-bar').style.background = "#c0392b";
                     document.getElementById('teammates-box').style.display = 'none'; 
                     document.getElementById('lobby-overlay').style.display = 'none';
@@ -295,7 +298,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             document.getElementById('chat-header').innerText = chat.classList.contains('chat-open') ? " 收起" : " 聊天室 (點擊展開)";
         }
 
-        // ߟ⠛新增] 接收世界 BOSS 數據同步
+        // 🟢 [新增] 接收世界 BOSS 數據同步
         socket.on('worldBossSync', (data) => {
             if (!data.active) {
                 showMsg("BOSS 已被擊敗！");
@@ -314,7 +317,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             const bossSrc = "img/monsters/entropy_god.png"; 
             if (!img.src.includes(bossSrc)) { img.src = bossSrc; img.style.display = 'block'; }
 
-            // ߟ⠛新增] 同步 Server 的倒數時間
+            // 🟢 [新增] 同步 Server 的倒數時間
             if (data.remainingTime !== undefined) {
                 const serverTimeSec = Math.floor(data.remainingTime / 1000);
                 
@@ -460,7 +463,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             log(`<span style="color:#e74c3c">受到 ${d.damage} 傷害！</span>`); 
         });
 
-        // ߟ⠛修正] 移除 GIF 彈窗，只保留按鈕變化和簡單提示
+        // 🟢 [修正] 移除 GIF 彈窗，只保留按鈕變化和簡單提示
         socket.on('battleWon', (data) => {
             console.log("收到勝利數據:", data); 
 
@@ -471,7 +474,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             const img = document.getElementById('monster-img'); img.style.transition = "opacity 2s"; img.style.opacity = 0;
 
             if (roomId === 'world_boss') {
-                showMsg(`ߑᠨ莤쐦营꟯쁧${data.gold} G`);
+                showMsg(`👑 討伐成功！獲得 ${data.gold} G`);
                 showNormalVictoryBtn(); // 顯示離開按鈕
                 // 排名已由 Server 透過 battleLog 廣播，這裡不再顯示
             }
@@ -482,21 +485,21 @@ const socket = io('https://mmo.ttctv-105.cc', {
         });
 
         function showNormalVictoryBtn() {
-            document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column: span 2; background:#f1c40f; color:black; font-weight:bold;" onclick="leaveRoom()">ߏ栥띥詩뢩拼/button>`;
+            document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column: span 2; background:#f1c40f; color:black; font-weight:bold;" onclick="leaveRoom()">🏆 勝利離開</button>`;
             document.getElementById('fixed-top-area').style.display = 'none'; 
         }
 
         socket.on('playerDead', () => { 
             if (battleTimer) clearInterval(battleTimer);
             document.getElementById('countdown-timer').style.display = 'none';
-            log("你被打倒了..."); showMsg("ߑ려粧擦ꡮ.."); 
+            log("你被打倒了..."); showMsg("👻 你已經死亡..."); 
             document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column:span 2; background:red; color:white" onclick="window.location.href='rest.html'"> 去復活</button>`; 
             document.getElementById('fixed-top-area').style.display = 'none'; 
         });
 
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
         
-        // ߟ⠛關鍵] battleLog 負責顯示 Server 傳來的所有戰鬥資訊 (包含排名 HTML)
+        // 🟢 [關鍵] battleLog 負責顯示 Server 傳來的所有戰鬥資訊 (包含排名 HTML)
         socket.on('battleLog', (msg) => log(msg));
         
         socket.on('roomLeft', () => {
@@ -650,7 +653,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         function log(m) { 
             const box = document.getElementById('log');
-            // ߟ⠛修正] 支援 HTML (讓排名榜的 div/span 樣式能顯示出來)
+            // 🟢 [修正] 支援 HTML (讓排名榜的 div/span 樣式能顯示出來)
             const div = document.createElement('div');
             div.innerHTML = `> ${m}`;
             box.insertBefore(div, box.firstChild); // 插入最上方

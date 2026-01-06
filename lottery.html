@@ -46,7 +46,7 @@
         
         .back-btn { margin-top: 20px; background: #7f8c8d; padding: 10px 20px; color: white; text-decoration: none; border-radius: 5px; font-size: 12px; display: inline-block;}
 
-        /* ߟ⠦葧ꄥ娦裥쏠*/
+        /* 🟢 我的彩票樣式 */
         .my-tickets-area {
             width: 100%; max-width: 500px; margin-top: 30px;
             text-align: left;
@@ -70,7 +70,7 @@
 </head>
 <body>
 
-    <h1 class="header">ߎᠥ娼/h1>
+    <h1 class="header">🎱 彩票</h1>
 
     <div class="jackpot-box">
         <div class="jackpot-title">本期累積獎金</div>
@@ -104,10 +104,9 @@
 
     <script src="socket.io.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], secure: true });
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -156,7 +155,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
         socket.on('lotteryUpdate', (data) => {
             document.getElementById('jackpot-display').innerText = `$ ${data.jackpot.toLocaleString()}`;
             
-            // ߟ⠦봦氦葧ꄥ娥藨ᨊ            if (data.myBets) {
+            // 🟢 更新我的彩票列表
+            if (data.myBets) {
                 const list = document.getElementById('my-ticket-list');
                 const count = document.getElementById('my-ticket-count');
                 

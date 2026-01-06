@@ -88,14 +88,14 @@
 
     <div class="footer">Server Status: <span id="status" style="color:red">Connecting...</span></div>
 
-    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    	
     
     <script>
-        
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        // 🟢 建立連線：留空 URL，讓它自動連線到當前網址 (rpggameser.cc)
+        // Nginx 會負責把這個連線轉給後端
+        const socket = io({ 
+            transports: ['websocket', 'polling'] 
+        });
 
         const statusSpan = document.getElementById('status');
         const msgDiv = document.getElementById('msg');

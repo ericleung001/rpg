@@ -86,16 +86,16 @@
 <body>
     <div id="game-toast"></div>
     <div class="header">
-        <h1>ߔ蠩훩튦逼/h1>
-        <div class="gold-display">ߒ࠼span id="my-gold">0</span> G</div>
+        <h1>🔨 鍛鍊所</h1>
+        <div class="gold-display">💰 <span id="my-gold">0</span> G</div>
     </div>
 
     <div class="category-tabs">
         <button class="tab-btn active" onclick="filterRecipes('all')">全部</button>
         <button class="tab-btn" onclick="filterRecipes('weapon')">⚔️武器</button>
-        <button class="tab-btn" onclick="filterRecipes('armor')">ߛ᯸縉⥅缯button>
-        <button class="tab-btn" onclick="filterRecipes('accessory')">ߒἯbutton>
-        <button class="tab-btn" onclick="filterRecipes('consumable')">ߧꨣ쥅奓Ἧbutton>
+        <button class="tab-btn" onclick="filterRecipes('armor')">🛡️防具</button>
+        <button class="tab-btn" onclick="filterRecipes('accessory')">💍飾品</button>
+        <button class="tab-btn" onclick="filterRecipes('consumable')">🧪補充品</button>
     </div>
 
     <div class="container">
@@ -110,10 +110,13 @@
 
     <script src="socket.io.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
@@ -140,7 +143,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         socket.on('craftResult', (res) => { showMsg(res.msg); });
 
-        // ߟ⠛核心修改] 增強分類邏輯，支援新裝備
+        // 🟢 [核心修改] 增強分類邏輯，支援新裝備
         function renderList() {
             const list = document.getElementById('recipe-list');
             list.innerHTML = '';
@@ -159,20 +162,21 @@ const socket = io('https://mmo.ttctv-105.cc', {
                            id.includes('tooth') || id.includes('weapon');
                 }
                 
-                // 2. ߛ᯸貥巠(新增 void, nebula, entropy)
+                // 2. 🛡️ 防具 (新增 void, nebula, entropy)
                 if (currentFilter === 'armor') {
                     return id.includes('armor') || id.includes('mail') || id.includes('vest') || 
                            id.includes('plate') || id.includes('robe') || id.includes('cloak') || 
                            id.includes('shield');
                 }
                 
-                // 3. ߒ㾥だ(新增 dimension)
+                // 3. 💍 飾品 (新增 dimension)
                 if (currentFilter === 'accessory') {
                     return id.includes('ring') || id.includes('necklace') || id.includes('amulet') || 
                            id.includes('bracelet') || id.includes('boots') || id.includes('crown');
                 }
                 
-                // 4. ߧ꠨㜥入お                if (currentFilter === 'consumable') {
+                // 4. 🧪 補充品
+                if (currentFilter === 'consumable') {
                     return id.includes('potion') || id.includes('elixir') || id.includes('scroll') || 
                            id.includes('food') || id.includes('soup') || id.includes('steak') || 
                            id.includes('sushi') || id.includes('rice') || id.includes('grilled');

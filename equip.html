@@ -54,13 +54,13 @@
 <body>
 <div id="game-toast"></div>
     <div class="main-box">
-        <h2>ߛ᯸㝥♧뀦勼/h2>
+        <h2>🛡️ 裝備狀態</h2>
         <div class="stats-display">
             <div class="stat-grid">
                 <div>⚔️ ATK: <span id="atk" style="color:#e74c3c">0</span></div>
-                <div>ߛ᯸EF: <span id="def" style="color:#3498db">0</span></div>
+                <div>🛡️ DEF: <span id="def" style="color:#3498db">0</span></div>
                 <div>❤️ HP : <span id="hp">0</span></div>
-                <div>ߒ砍P : <span id="mp">0</span></div>
+                <div>💧 MP : <span id="mp">0</span></div>
             </div>
         </div>
         <div class="slots-area">
@@ -68,21 +68,24 @@
             <div class="slot"><div class="slot-title">防具 (Armor)</div><div id="slot-armor" class="slot-item">無</div></div>
             <div class="slot"><div class="slot-title">飾品 (Acc)</div><div id="slot-acc" class="slot-item">無</div></div>
         </div>
-        <h3>ߎ⠨㌥셠(點擊裝備)</h3>
+        <h3>🎒 背包 (點擊裝備)</h3>
         <div id="inventory-list" class="inventory-container"><div style="font-size:12px; color:#aaa; padding:10px;">讀取中...</div></div>
     </div>
     <a href="hub.html" class="back-btn">◀ 返回大廳</a>
 
     <script src="socket.io.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // ߟ⠥崨㝥♥藨ᨠ(含 Lv.201 - Lv.300 神裝)
+        // 🟢 完整裝備列表 (含 Lv.201 - Lv.300 神裝)
         const ITEM_MAP = {
             // === 武器 ===
             'wood_sword':       { name: "木劍", cost: 100, desc: "ATK+10" },
@@ -108,7 +111,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             'assassin_dag':     { name: "刺客短刀", cost: 0, desc: "ATK+120" },
             'genesis_weapon':   { name: "創世·終焉之劍", cost: 0, desc: "ATK+50000 HP+20000" }, 
             
-            // ߟ⠛新增] Lv.230 - 300 新武器
+            // 🟢 [新增] Lv.230 - 300 新武器
             'void_blade':       { name: "虛空之刃", cost: 0, desc: "ATK+75000 HP+80000" }, 
             'galaxy_saber':     { name: "銀河光劍", cost: 0, desc: "ATK+110000 HP+150000" }, 
             'entropy_sword':    { name: "終焉·熱寂之劍", cost: 0, desc: "ATK+200000 HP+300000" },
@@ -132,7 +135,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             'angel_armor':      { name: "熾天使鎧甲", cost: 0, desc: "DEF+5000 HP+50000" },
             'genesis_armor':    { name: "創世·神之庇護", cost: 0, desc: "DEF+20000 HP+150000" }, 
 
-            // ߟ⠛新增] Lv.230 - 300 新防具
+            // 🟢 [新增] Lv.230 - 300 新防具
             'void_armor':       { name: "虛空戰甲", cost: 0, desc: "DEF+45000 HP+300000" }, 
             'nebula_plate':     { name: "星雲板甲", cost: 0, desc: "DEF+70000 HP+600000" }, 
             'entropy_god_armor':{ name: "終焉·神之庇護", cost: 0, desc: "DEF+120000 HP+1500000" },
@@ -153,7 +156,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             'ring_life':        { name: "生命護符", cost: 0, desc: "HP+100" },
             'ring_magic':       { name: "魔力耳環", cost: 0, desc: "MP+50" },
 
-            // ߟ⠛新增] Lv.280 新飾品
+            // 🟢 [新增] Lv.280 新飾品
             'dimension_ring':   { name: "維度指環", cost: 0, desc: "全能力+15000" }
         };
 
