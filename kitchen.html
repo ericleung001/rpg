@@ -27,7 +27,7 @@
         .recipe-name { color: #fff; font-size: 14px; margin-bottom: 5px; font-weight: bold; }
         .recipe-desc { font-size: 10px; color: #fce4ec; margin-bottom: 10px; }
         
-        /* 🟢 材料列表樣式 */
+        /* ߟ⠦퐦晥藨ᨦ裥쏠*/
         .mat-list { 
             font-size: 10px; color: #fff; margin-bottom: 10px; 
             background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; 
@@ -36,7 +36,7 @@
         .mat-ok { color: #2ecc71; } /* 足夠顯示綠色 */
         .mat-no { color: #e74c3c; } /* 不足顯示紅色 */
         
-        /* 🟢 按鈕樣式 */
+        /* ߟ⠦쉩蕦裥쏠*/
         .btn-cook { 
             width: 100%; padding: 12px; 
             font-family: inherit; font-size: 12px; font-weight: bold; border-radius: 6px;
@@ -61,11 +61,11 @@
     <div id="game-toast"></div>
     
     <div class="header">
-        <span style="font-size:12px;">🍳 料理廚房</span>
+        <span style="font-size:12px;">ߍ㠦晧ƥ뚦迼/span>
         <a href="hub.html" class="back-btn">回大廳</a>
     </div>
     
-    <div class="gold-display">💰 持有金幣: <span id="my-gold">0</span> G</div>
+    <div class="gold-display">ߒࠦ쁦쉩瑥飺 <span id="my-gold">0</span> G</div>
 
     <div id="recipe-list" class="recipe-container">
         <div style="font-size:12px; color:#ddd; margin-top:20px;">載入食譜中...</div>
@@ -73,13 +73,10 @@
 
     <script src="socket.io.js"></script>
     <script>
-		const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
-		const BACKEND_URL = atob(_0x5a1b);
-		
-		const socket = io(BACKEND_URL, {
-		    transports: ['websocket', 'polling'],
-		    secure: true // 🔒 強制使用加密連線 (HTTPS/WSS)
-		});
+const socket = io('https://mmo.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -96,7 +93,7 @@
             socket.emit('getRecipes'); // 請求配方資料
         });
 
-        // 🟢 1. 接收玩家背包資料
+        // ߟ⠱. 接收玩家背包資料
         socket.on('playerStatsUpdate', (p) => { 
             myInventory = p.inventory; 
             myGold = p.gold;
@@ -104,7 +101,7 @@
             renderRecipes(); // 資料更新時重繪介面
         });
 
-        // 🟢 2. 接收配方資料
+        // ߟ⠲. 接收配方資料
         socket.on('recipeList', (recipes) => {
             allRecipes = recipes;
             renderRecipes();
@@ -130,8 +127,7 @@
                 let canCook = true;
                 let matsHtml = '';
 
-                // 🟢 檢查材料是否足夠
-                r.materials.forEach(m => {
+                // ߟ⠦ꢦ復퐦晦该ন泥䠊                r.materials.forEach(m => {
                     const have = myInventory[m.id] || 0;
                     const need = m.count;
                     const isEnough = have >= need;
@@ -151,16 +147,15 @@
                 if (myGold < r.goldCost) canCook = false;
                 const goldClass = (myGold >= r.goldCost) ? 'mat-ok' : 'mat-no';
 
-                // 🟢 設定按鈕狀態
-                let btnHtml = '';
+                // ߟ⠨譥쉩蕧뀦勊                let btnHtml = '';
                 if (canCook) {
-                    btnHtml = `<button class="btn-cook btn-ready" onclick="cook('${r.itemId}')">🍳 可以烹飪</button>`;
+                    btnHtml = `<button class="btn-cook btn-ready" onclick="cook('${r.itemId}')">ߍ㠥ﯤ륧㹩㪼/button>`;
                 } else {
                     btnHtml = `<button class="btn-cook btn-disabled" disabled>❌ 材料/金錢不足</button>`;
                 }
 
                 div.innerHTML = `
-                    <div class="recipe-name">🍱 ${r.itemName}</div>
+                    <div class="recipe-name">ߍᠤ{r.itemName}</div>
                     <div class="recipe-desc">${r.itemDesc}</div>
                     <div class="mat-list">
                         ${matsHtml}

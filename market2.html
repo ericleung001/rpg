@@ -68,8 +68,8 @@
 <body>
     <div id="game-toast"></div>
     <div class="header">
-        <h1>ߛ⠩ᓥ工ዼ/h1>
-        <div class="gold-display">ߒ࠼span id="my-gold">...</span> G</div>
+        <h1>🛒 道具屋</h1>
+        <div class="gold-display">💰 <span id="my-gold">...</span> G</div>
     </div>
 
     <div class="category-bar">
@@ -86,17 +86,23 @@
 
     <script src="socket.io.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // ߟ⠩ᓥ工ዥ藨ᨠ(含分類與限量標記)
+        // 🟢 道具屋列表 (含分類與限量標記)
         const SHOP_ITEMS = [
-            // === ߧ砧鹦冥だ===
-            { id: 'lucky_bag', name: "ߧ砥凨韧揨⋢, cost: 1000000000, desc: "隨機開出價值連城的稀有材料！", type: 'consumable', isLimited: true },
+            // === 🧧 特殊商品 ===
+            { id: 'lucky_bag', name: "🧧 奇蹟福袋", cost: 1000000000, desc: "隨機開出價值連城的稀有材料！", type: 'consumable', isLimited: true },
+            
+            // 🟢 [新增] 強化石 (放在消耗品類)
+            { id: 'enhance_stone', name: "強化石", cost: 500000, desc: "用於強化裝備 (成功率+)", type: 'consumable' },
 
             // === 消耗品 ===
             { id: 'potion_hp', name: "小紅藥水", cost: 50, desc: "恢復 50 HP", type: 'consumable' },
@@ -138,13 +144,15 @@ const socket = io('https://mmo.ttctv-105.cc', {
         ];
 
         let currentFilter = 'all';
-        let currentStock = { 'lucky_bag': 0 }; // ߟ⠦쬥찥ꫥ혊
+        let currentStock = { 'lucky_bag': 0 }; // 🟢 本地庫存
+
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
         socket.on('playerStatsUpdate', (p) => { document.getElementById('my-gold').innerText = p.gold; });
         socket.on('buyResult', (res) => { showMsg(res.message); });
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
 
-        // ߟ⠧루ὥꫥ혦봦氊        socket.on('stockUpdate', (data) => {
+        // 🟢 監聽庫存更新
+        socket.on('stockUpdate', (data) => {
             currentStock[data.itemId] = data.count;
             renderShop(); // 庫存變動時刷新介面
         });
@@ -152,14 +160,15 @@ const socket = io('https://mmo.ttctv-105.cc', {
         // 初始化渲染
         renderShop();
 
-        // ߟ⠥臦膩ឥ罦帊        function filterShop(type) {
+        // 🟢 切換分類函數
+        function filterShop(type) {
             currentFilter = type;
             document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             renderShop();
         }
 
-        // ߟ⠦貦藨ᨥ罦帠(含庫存邏輯)
+        // 🟢 渲染列表函數 (含庫存邏輯)
         function renderShop() {
             const list = document.getElementById('shop-list');
             list.innerHTML = '';
@@ -178,7 +187,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 const div = document.createElement('div');
                 div.className = 'item-card';
 
-                // ߟ⠨镧Ʃ鐩珩ᯧ亊                let stockHtml = '';
+                // 🟢 處理限量顯示
+                let stockHtml = '';
                 let btnDisabled = false;
                 let btnText = '購買';
 
@@ -218,10 +228,10 @@ const socket = io('https://mmo.ttctv-105.cc', {
             setTimeout(() => { toast.style.top = "-100px"; }, 3000);
         }
 
-        // ߟ⠛修正] 統一使用 playerBuy
+        // 🟢 [修正] 統一使用 playerBuy
         function buy(id) { 
             if(id === 'lucky_bag') {
-                if(!confirm("ߧ砧⺥恨걨⻠10億 G 購買福袋嗎？\n(購買後請至背包使用)")) return;
+                if(!confirm("🧧 確定要花費 10億 G 購買福袋嗎？\n(購買後請至背包使用)")) return;
             }
             // 關鍵修改：不論買什麼，一律發送 playerBuy
             socket.emit('playerBuy', id); 

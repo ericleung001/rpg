@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會v2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -11,25 +11,23 @@
             background-color: #2c3e50; color: #ecf0f1; 
             font-family: 'Press Start 2P', monospace; 
             text-align: center; 
-            margin: 0; padding: 0; /* 🟢 移除 padding，由內部容器控制 */
+            margin: 0; padding: 0; 
             height: 100dvh; 
             overflow: hidden; 
             overscroll-behavior: none;
             user-select: none; -webkit-user-select: none;
-            display: flex; justify-content: center; /* PC版置中 */
+            display: flex; justify-content: center; 
         }
 
-        /* 🟢 App 佈局容器 (核心修改) */
         #app-layout {
             display: flex;
-            flex-direction: column; /* 手機版預設垂直排列 */
+            flex-direction: column; 
             width: 100%;
             height: 100%;
-            max-width: 600px; /* 手機版最大寬度 */
+            max-width: 600px; 
             position: relative;
         }
 
-        /* 🟢 遊戲主畫面容器 */
         #game-view {
             flex: 1;
             display: flex;
@@ -41,7 +39,6 @@
             width: 100%;
         }
 
-        /* 🟢 Loading 遮罩層 */
         #loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #2c3e50; 
@@ -58,38 +55,57 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* 頂部列 */
         .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: 30px;}
         .logout-btn { font-size: 10px; color: #e74c3c; cursor: pointer; text-decoration: underline; white-space: nowrap; padding: 5px; }
         h1 { font-size: 16px; margin: 0; white-space: nowrap; }
         #conn-status { font-size: 10px; padding: 5px 8px; background: #333; border: 1px solid #fff; border-radius: 6px; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
 
-        /* 狀態欄 */
         .status-bar { 
             background: #34495e; border: 3px solid #fff; padding: 10px; 
             width: 100%; margin-bottom: 10px; border-radius: 12px; 
-            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; text-align: left; 
-            font-size: 10px; box-sizing: border-box;
+            display: flex; flex-direction: column; gap: 8px;
+            font-size: 10px; box-sizing: border-box; text-align: left;
+            flex-shrink: 0; 
         }
-        .stat-row { color: #f1c40f; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .val { color: white; float: right; font-weight: bold; }
-        .exp-bar { width: 100%; height: 6px; background: #555; margin-top: 3px; border: 1px solid #fff; border-radius: 4px; }
+
+        .status-row-top {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #555; padding-bottom: 6px;
+        }
+        .status-item { display: flex; gap: 5px; align-items: center; }
+        .label { color: #f1c40f; font-weight: bold; }
+        .val { color: white; font-weight: bold; }
+
+        .status-row-bars {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+        }
+        .bar-container { display: flex; flex-direction: column; }
+        .bar-label { font-size: 9px; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .bar-bg { width:100%; height:6px; background:#555; border-radius:3px; overflow:hidden; }
+        
+        .status-row-stats {
+            display: flex; justify-content: space-around; background: rgba(0,0,0,0.2);
+            padding: 6px; border-radius: 4px; 
+        }
+
+        .exp-container { margin-top: 2px; }
+        .exp-bar { width: 100%; height: 6px; background: #555; border: 1px solid #fff; border-radius: 4px; overflow: hidden; }
         .exp-fill { height: 100%; background: #3498db; width: 0%; transition: width 0.3s; }
         
         .main-content {
             width: 100%;
             flex: 1; 
             display: flex; flex-direction: column;
-            overflow: hidden; 
-            /* margin-bottom: 40px;  <-- 移除，因為聊天室不再覆蓋 */
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch;
         }
 
-        /* 設施按鈕網格 */
         .facility-grid { 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
             gap: 4px; 
             margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px dashed #7f8c8d; 
+            flex-shrink: 0;
         }
         
         .facility-btn {
@@ -112,11 +128,10 @@
         .facility-btn:active { transform: scale(0.95); box-shadow: none; filter: brightness(0.9); }
         
         .map-container {
-            flex: 1; overflow-y: auto; padding-right: 5px;
-            -webkit-overflow-scrolling: touch; 
+            padding-right: 5px;
+            padding-bottom: 60px; 
         }
 
-        /* 地圖區域按鈕 */
         .btn { 
             padding: 12px 8px; font-family: inherit; font-size: 12px; cursor: pointer; 
             border: 2px solid #bdc3c7; color: white; text-decoration: none; 
@@ -134,7 +149,6 @@
         .status-waiting { background: #27ae60; color: white; }
         .status-fighting { background: #c0392b; color: white; }
         
-        /* 聊天室 (手機版預設樣式) */
         #chat-container {
             position: fixed; bottom: 0; left: 0; width: 100%; 
             background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7;
@@ -149,7 +163,7 @@
             cursor: pointer; font-weight: bold; border-bottom: 1px solid #555;
             display: flex; justify-content: center; align-items: center;
             touch-action: manipulation;
-            flex-shrink: 0; /* 防止被壓縮 */
+            flex-shrink: 0; 
         }
         #chat-header:hover { background: #2c3e50; }
 
@@ -162,7 +176,6 @@
         #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 10px; font-family: inherit; font-size: 12px; outline: none; }
         #chat-send { background: #2980b9; color: white; border: none; padding: 0 15px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; touch-action: manipulation; }
 
-        /* 通知彈窗 */
         #toast-notification {
             position: fixed; top: -60px; left: 50%; transform: translateX(-50%);
             background: #f1c40f; color: #000; border: 3px solid #fff;
@@ -171,9 +184,8 @@
             transition: top 0.5s ease-in-out; white-space: nowrap;
         }
 
-        /* 公告系統 */
         #notice-btn {
-            position: fixed; top: 50px; left: 10px;
+            position: fixed; top: 80px; left: 10px;
             width: 40px; height: 40px;
             background: #e67e22; border: 2px solid #fff;
             border-radius: 50%; cursor: pointer;
@@ -205,56 +217,74 @@
             color: white; border: none; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 12px;
         }
 
-        /* ------------------------------------------------------------------ */
-        /* 🟢 PC / 平板 電腦版樣式 (寬度大於 1024px 時生效) */
-        /* ------------------------------------------------------------------ */
+        /* 英雄榜樣式 */
+        .ranking-box {
+            width: 100%; max-width: 600px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #f1c40f;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            text-align: left;
+            box-sizing: border-box;
+            box-shadow: 0 0 10px rgba(241, 196, 15, 0.2);
+            flex-shrink: 0; 
+        }
+        .rank-title {
+            color: #f1c40f; font-size: 12px; font-weight: bold; 
+            text-align: center; margin-bottom: 8px; border-bottom: 1px dashed #555; padding-bottom: 5px;
+        }
+        .rank-row {
+            display: flex; justify-content: space-between; 
+            font-size: 10px; margin-bottom: 4px; padding: 4px 5px;
+        }
+        .rank-row:nth-child(odd) { background: rgba(255,255,255,0.05); }
+        .rank-1 { color: #ffd700; font-weight: bold; text-shadow: 0 0 5px #ffd700; }
+        .rank-2 { color: #c0c0c0; font-weight: bold; }
+        .rank-3 { color: #cd7f32; font-weight: bold; }
+
         @media (min-width: 1024px) {
             body {
-                background-color: #222; /* PC版背景加深，讓遊戲區更突出 */
+                background-color: #222; 
             }
 
             #app-layout {
-                flex-direction: row; /* 改為左右排列 */
-                max-width: 1000px; /* 限制總寬度 */
+                flex-direction: row; 
+                max-width: 1000px; 
                 background-color: #2c3e50;
                 box-shadow: 0 0 20px rgba(0,0,0,0.5);
             }
 
             #game-view {
-                width: 600px; /* 鎖定遊戲區寬度 */
+                width: 600px; 
                 border-right: 4px solid #bdc3c7;
             }
 
-            /* 聊天室移到右側 */
             #chat-container {
-                position: static; /* 取消 fixed */
+                position: static; 
                 width: 400px;
-                height: 100% !important; /* 強制高度 */
+                height: 100% !important; 
                 border-top: none;
                 background: #34495e;
             }
 
-            /* 隱藏點擊展開的提示，改為固定標題 */
             #chat-header {
                 cursor: default;
                 background: #2c3e50;
             }
             #chat-header:active { pointer-events: none; }
 
-            /* 聊天內容永遠顯示 */
             #chat-body {
                 display: flex !important;
                 height: calc(100% - 30px);
             }
 
-            /* 調整主內容區域的下邊距，因為沒有底部聊天室擋住了 */
             .main-content {
                 margin-bottom: 0;
             }
             
-            /* 公告按鈕位置微調 */
             #notice-btn {
-                left: calc(50% - 540px); /* 讓按鈕黏在遊戲框左邊 */
+                left: calc(50% - 540px); 
             }
         }
 
@@ -269,24 +299,56 @@
     </div>
 
     <div id="toast-notification"> 訊息提示</div>
-    <div id="notice-btn" onclick="openNotice()">📢</div>
+    <div id="notice-btn" onclick="openNotice()"></div>
 
     <div id="notice-modal">
         <div class="notice-box">
-            <div class="notice-title">📜 公會公告</div>
+            <div class="notice-title"> 公會公告</div>
             <div class="notice-content">
-<b style="color:#c0392b;">【最新更新 v3.0】</b>
-1. 已更改市場賣出上限為999999G
-2. 5人聯戰已fix，但需等齊人後，等1-2秒先按下"開始"
-3. 賣買上限每人10件
-4. 已修改在市集打開背包時，顯示英文代碼
-5. 介面優化：電腦版聊天室移至右側
+<b style="color:#c0392b;">【最新更新 v2.7 幸運與榮耀】</b>
+為著遊戲公平性及之後發展，
+已更新怪物數值及跌落物，採集也修正得到物品。
+
+注意：分解暫時有bug, 如身上有多件相同裝備，
+但該裝備有裝備上身的話，
+會分解不到，如需分解，請將裝備除下。
+
+1.  全新功能：彩票 (Lottery)
+開獎時間： 每日晚上 22:00 (HKT) 自動攪珠。
+玩法： 每注 10,000 G，自選 6 個號碼 (1-49)。
+獎勵： 頭獎獨得 80% 累積獎金池！
+優化： 購買後紀錄會永久保存，重整頁面 (F5) 亦可隨時查閱「我的彩票」。
+
+2. ☠️ 世界 BOSS 優化
+固定排程： 虛空滅世者將於每晚 21:00 (HKT) 準時降臨，限時 9 分鐘！
+英雄榜： 大廳 (Hub) 新增 「上屆討伐英雄榜」，隨時查看前 5 名輸出大神及傷害數據。
+修復： 修正結算時排名顯示異常及重複召喚的 Bug。
 
 <b style="color:#2980b9;">【其他通知】</b>
-🔥 歡迎加入<a href="https://discord.com/invite/7kKwf5yb" style="color:#f1c40f;">DC Group</a>
+ 歡迎加入<a href="https://discord.com/invite/7kKwf5yb" style="color:#f1c40f;">DC Group</a>
 
 <b style="color:#27ae60;">【維護提醒】</b>
-沒有
+彩票2026/01/06下午6時正暫停，請留意。
+另外怪物血量會觀察一晚再作調整。
+2026/01/06 22:05再會更新Server。
+
+<b style="color:#8e44ad;">【 神話技能指南 (Lv.200+)】</b>
+突破凡人極限，掌握宇宙真理的力量！
+
+ <b>[Lv.200] 虛空碎擊 (1000 MP)</b>
+<span style="font-size:9px; color:#aaa;">"凝聚虛空之力，粉碎萬物。"</span>
+造成 <b>10倍</b> 傷害。
+這是踏入神話領域的入門磚，威力遠超次元斬。
+
+⚫ <b>[Lv.240] 熱寂·衰變 (2500 MP)</b>
+<span style="font-size:9px; color:#aaa;">"萬物終將歸於虛無，防禦毫無意義。"</span>
+<b>BOSS剋星！</b>造成目標最大生命 <b>5%</b> 的<span style="color:#e74c3c">真實傷害</span>。
+無視防禦力，專門對付百億血量的神級怪物。
+
+✨ <b>[Lv.280] 宇宙大爆炸 (5000 MP)</b>
+<span style="font-size:9px; color:#aaa;">"模擬宇宙誕生的奇異點，毀滅一切。"</span>
+造成 <b>25倍</b> 的極致毀滅傷害。
+耗魔巨大，但能瞬間蒸發敵人的最強奧義。
             </div>
             <button class="close-notice-btn" onclick="closeNotice()">我知道了</button>
         </div>
@@ -302,33 +364,82 @@
             </div>
             
             <div class="status-bar">
-                <div class="stat-row">Name <span id="pid" class="val">...</span></div>
-                <div class="stat-row">LV <span id="lvl" class="val">1</span></div>
-                <div class="stat-row">金 <span id="gold" class="val">0</span></div>
-                <div class="stat-row">HP <span id="hp" class="val">...</span></div>
-                <div class="stat-row">MP <span id="mp" class="val" style="color:#3498db">...</span></div>
-                <div class="stat-row"></div>
-                <div style="grid-column: span 3;">
-                    EXP <span id="exp-txt" style="font-size:8px; float:right">0/100</span>
+                <div class="status-row-top">
+                    <div class="status-item"><span class="label">LV</span> <span id="lvl" class="val">1</span></div>
+                    <div class="status-item"><span id="pid" class="val" style="color:#2ecc71;">Unknown</span></div>
+                    <div class="status-item"><span class="label"></span> <span id="gold" class="val">0</span></div>
+                </div>
+
+                <div class="status-row-bars">
+                    <div class="bar-container">
+                        <div class="bar-label"><span style="color:#e74c3c">HP</span> <span id="hp">...</span></div>
+                        <div class="bar-bg">
+                            <div id="hp-bar-fill" style="width:100%; height:100%; background:#e74c3c; transition:width 0.3s;"></div>
+                        </div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-label"><span style="color:#3498db">MP</span> <span id="mp">...</span></div>
+                        <div class="bar-bg">
+                            <div id="mp-bar-fill" style="width:100%; height:100%; background:#3498db; transition:width 0.3s;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-row-stats">
+                    <div class="status-item"><span class="label">⚔️ ATK</span> <span id="atk" class="val">0</span></div>
+                    <div class="status-item"><span class="label">️ DEF</span> <span id="def" class="val">0</span></div>
+                </div>
+
+                <div class="exp-container">
+                    <div style="display:flex; justify-content:space-between; font-size:8px; color:#bdc3c7; margin-bottom:1px;">
+                        <span>EXP</span> <span id="exp-txt">0/100</span>
+                    </div>
                     <div class="exp-bar"><div id="exp-fill" class="exp-fill"></div></div>
                 </div>
             </div>
 
             <div class="main-content">
-                <div class="section-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px;">城鎮設施</div>
                 
-                <div class="facility-grid">
-                    <a href="bag.html" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">🎒 背包</a>
-                    <a href="equip.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🛡️ 裝備</a>
-                    <a href="market.html" class="facility-btn" style="background:#f39c12; border-color:#d35400;">🏪 道具</a>
-                    <a href="auction.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">⚖️ 市集</a>
-                    <a href="smithy.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔨 鍛造</a>
-                    <a href="gathering.html" class="facility-btn" style="background:#27ae60; border-color:#2ecc71;">🌲 採集</a>
-                    <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;">🏨 旅館</a>
-                    <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🍳 廚房</a>
+                <div id="boss-banner" style="display:none; background: linear-gradient(90deg, #2c3e50, #c0392b); padding: 15px; border-radius: 8px; border: 2px solid #e74c3c; margin-bottom: 15px; text-align: left; box-shadow: 0 0 15px #c0392b; animation: pulse 2s infinite; flex-shrink: 0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="color:#f1c40f; font-weight:bold; font-size:14px; margin-bottom:5px;">☠️ 虛空滅世者 降臨！</div>
+                            <div style="color:#fff; font-size:10px;">
+                                <div style="margin-bottom:2px;">全服 HP: <span id="boss-hp-text">計算中...</span></div>
+                                <div style="color:#e74c3c; font-weight:bold;">⏱️ 剩餘時間: <span id="boss-timer">--:--</span></div>
+                            </div>
+                        </div>
+                        <button onclick="joinBoss()" style="background:#f1c40f; color:#000; border:none; padding:10px 20px; font-weight:bold; border-radius:5px; cursor:pointer;">
+                            ⚔️ 立即討伐
+                        </button>
+                    </div>
+                    <div style="width:100%; height:8px; background:#333; margin-top:10px; border-radius:4px;">
+                        <div id="boss-hp-bar" style="width:100%; height:100%; background:#e74c3c; transition: width 0.5s;"></div>
+                    </div>
                 </div>
 
-                <div id="list-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px;">世界地圖</div>
+                <div class="ranking-box" id="boss-ranking-area" style="display:none;">
+                    <div class="rank-title"> 上屆討伐英雄榜</div>
+                    <div id="ranking-list">
+                        </div>
+                </div>
+
+                <div class="section-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px; flex-shrink: 0;">城鎮設施</div>
+                
+                <div class="facility-grid">
+                    <a href="bag.html" class="facility-btn" style="background:#16a085; border-color:#1abc9c;"> 背包</a>
+                    <a href="equip.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">️ 裝備</a>
+                    <a href="market.html" class="facility-btn" style="background:#f39c12; border-color:#d35400;"> 道具</a>
+                    <a href="auction.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">⚖️ 市集</a>
+                    <a href="smithy.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;"> 鍛造</a>
+                    <a href="gathering.html" class="facility-btn" style="background:#27ae60; border-color:#2ecc71;"> 採集</a>
+                    <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;"> 旅館</a>
+                    <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;"> 廚房</a>
+		<a href="lottery.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;"> 彩票</a>
+		<a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;"> 圖鑑</a>
+                </div>
+
+                <div id="list-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px; flex-shrink: 0;">世界地圖</div>
                 <div class="map-container" id="map-list">
                     <div class="btn locked">讀取中...</div>
                 </div>
@@ -346,9 +457,10 @@
             </div>
         </div>
 
-    </div> <script src="socket.io.js"></script>
+    </div> 
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        // 🟢 Loading 控制 (2秒強制冷卻)
+        // Loading 控制 (2秒強制冷卻)
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const overlay = document.getElementById('loading-overlay');
@@ -357,18 +469,16 @@
             }, 2000); 
         });
 
-        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
-        const BACKEND_URL = atob(_0x5a1b);
-        
-        const socket = io(BACKEND_URL, {
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+// 指定連接到你的 https 網址
+const socket = io('https://mmo.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         let myLevel = 1;
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) { window.location.href = 'index.html'; }
 
-        // 🟢 公告功能
+        // 公告功能
         function openNotice() {
             document.getElementById('notice-modal').style.display = 'flex';
         }
@@ -376,7 +486,7 @@
             document.getElementById('notice-modal').style.display = 'none';
         }
 
-        // 地圖設定
+        //  [更新] 完整的世界地圖 (包含 Lv.201 - Lv.300)
         const WORLD_MAP = [
             { 
                 id: 'city_1', name: '曙光平原', reqLv: 1, desc: '冒險的起點 (Lv.1-20)', 
@@ -386,7 +496,7 @@
                     { id: 'bee', name: '殺人蜂', lv: 5 },
                     { id: 'boar', name: '野豬', lv: 8 },
                     { id: 'thief', name: '盜賊', lv: 12 },
-                    { id: 'wolf_king', name: '🐺 狼王 (BOSS)', lv: 15 }
+                    { id: 'wolf_king', name: ' 狼王 (BOSS)', lv: 15 }
                 ] 
             },
             { 
@@ -397,7 +507,7 @@
                     { id: 'skeleton', name: '骷髏兵', lv: 28 },
                     { id: 'ghoul', name: '食屍鬼', lv: 32 },
                     { id: 'witch', name: '沼澤女巫', lv: 35 },
-                    { id: 'hydra', name: '🐍 九頭蛇 (BOSS)', lv: 40 }
+                    { id: 'hydra', name: ' 九頭蛇 (BOSS)', lv: 40 }
                 ] 
             },
             { 
@@ -408,7 +518,7 @@
                     { id: 'salamander', name: '火蜥蜴', lv: 48 },
                     { id: 'fire_mage', name: '烈焰法師', lv: 52 },
                     { id: 'dragon_hatchling', name: '幼龍', lv: 55 },
-                    { id: 'balrog', name: '🔥 炎魔 (BOSS)', lv: 60 }
+                    { id: 'balrog', name: ' 炎魔 (BOSS)', lv: 60 }
                 ] 
             },
             { 
@@ -430,16 +540,59 @@
                     { id: 'dark_paladin', name: '墮落聖騎', lv: 88 },
                     { id: 'demon_guard', name: '惡魔守衛', lv: 92 },
                     { id: 'succubus', name: '魅魔', lv: 95 },
-                    { id: 'void_lord', name: '👁️ 虛空領主 (BOSS)', lv: 99 }
+                    { id: 'void_lord', name: '️ 虛空領主 (BOSS)', lv: 99 }
                 ] 
             },
             { 
-                id: 'city_6', name: '魔界王座', reqLv: 1, desc: '☠️ 最終決戰 (Lv.100+)', 
+                id: 'city_6', name: '魔界王座', reqLv: 1, desc: '☠️ 最終決戰 (Lv.100-150)', 
                 monsters: [
                     { id: 'chaos_beast', name: '混沌巨獸', lv: 105 },
                     { id: 'fallen_angel', name: '墮天使', lv: 110 },
-                    { id: 'demon_king', name: '👑 魔王撒旦 (FINAL)', lv: 150 }
+                    { id: 'demon_king', name: ' 魔王撒旦', lv: 150 }
                 ] 
+            },
+            {
+                id: 'city_7', name: '虛空裂縫', reqLv: 1, desc: ' 扭曲的次元 (Lv.160-180)',
+                monsters: [
+                    { id: 'void_walker', name: '虛空行者', lv: 160 },
+                    { id: 'chaos_knight', name: '混沌騎士', lv: 170 },
+                    { id: 'abyss_dragon', name: ' 深淵魔龍 (BOSS)', lv: 180 }
+                ]
+            },
+            {
+                id: 'city_8', name: '眾神墓地', reqLv: 130, desc: ' 神話終結之地 (Lv.190-200)',
+                monsters: [
+                    { id: 'fallen_titan', name: '墮落泰坦', lv: 190 },
+                    { id: 'genesis_god', name: '☠️ 創世破壞神 (FINAL)', lv: 200 }
+                ]
+            },
+            
+            //  [新增] Lv.201 - Lv.230 虛空之界
+            {
+                id: 'city_9', name: '虛空之界', reqLv: 160, desc: '⚫ 虛無的盡頭 (Lv.210-225)',
+                monsters: [
+                    { id: 'void_worm', name: '虛空吞噬蟲', lv: 210 },
+                    { id: 'shadow_phantom', name: ' 虚影夢魘 (BOSS)', lv: 225 }
+                ]
+            },
+
+            //  [新增] Lv.231 - Lv.260 星際航道
+            {
+                id: 'city_10', name: '星際航道', reqLv: 200, desc: ' 穿越星辰 (Lv.245-260)',
+                monsters: [
+                    { id: 'star_eater', name: '吞星巨獸', lv: 245 },
+                    { id: 'nebula_dragon', name: ' 星雲幻龍 (BOSS)', lv: 260 }
+                ]
+            },
+
+            //  [新增] Lv.261 - Lv.300 維度盡頭
+            {
+                id: 'city_11', name: '維度盡頭', reqLv: 230, desc: '⏳ 時間與空間的終點 (Lv.280-300)',
+                monsters: [
+                    { id: 'time_keeper', name: '時空裁決者', lv: 280 },
+                    { id: 'dimension_breaker', name: '維度粉碎者', lv: 290 },
+                    { id: 'entropy_god', name: ' 終焉·熱寂之神 (GOD)', lv: 300 }
+                ]
             }
         ];
 
@@ -448,13 +601,13 @@
         let selectedMonster = null;
         let cityData = {}; 
         let activeRooms = []; 
+        let bossHubTimer = null; // 大廳的計時器
 
         socket.on('connect', () => {
             const status = document.getElementById('conn-status');
             status.innerHTML = " 已連線";
             status.style.color = "#2ecc71";
             
-            // 🟢 隨機延遲 (Random Jitter)
             const delay = Math.floor(Math.random() * 1400) + 100;
             console.log(`[系統] 隨機延遲: ${delay}ms`);
             
@@ -471,19 +624,33 @@
 
         socket.on('tokenExpired', () => {
             alert("⚠️ 登入憑證已失效 (可能密碼已更改)，請重新登入！");
-            localStorage.removeItem('rpg_token'); // 清除舊 Token
-            window.location.href = 'index.html';  // 跳回登入頁
+            localStorage.removeItem('rpg_token'); 
+            window.location.href = 'index.html';  
         });
         
+        //  [修改] 更新玩家數值，包含 ATK, DEF, HP Bar, MP Bar
         socket.on('playerStatsUpdate', (p) => {
             myLevel = p.level;
             document.getElementById('pid').innerText = p.name || "Unknown";
             document.getElementById('lvl').innerText = p.level;
-            document.getElementById('gold').innerText = p.gold;
+            document.getElementById('gold').innerText = p.gold.toLocaleString();
+
+            // HP
             document.getElementById('hp').innerText = `${p.hp}/${p.maxHp}`;
+            document.getElementById('hp-bar-fill').style.width = Math.max(0, Math.min(100, (p.hp / p.maxHp * 100))) + '%';
+
+            // MP
             document.getElementById('mp').innerText = `${p.mp}/${p.maxMp}`;
+            document.getElementById('mp-bar-fill').style.width = Math.max(0, Math.min(100, (p.mp / p.maxMp * 100))) + '%';
+
+            // ATK & DEF
+            document.getElementById('atk').innerText = p.atk || 0;
+            document.getElementById('def').innerText = p.def || 0;
+
+            // EXP
             document.getElementById('exp-txt').innerText = `${p.exp}/${p.maxExp}`;
             document.getElementById('exp-fill').style.width = (p.exp / p.maxExp * 100) + '%';
+            
             refreshUI();
         });
 
@@ -492,6 +659,84 @@
             activeRooms = data.roomsList;
             refreshUI(); 
         });
+
+        //  [修改] 監聽世界 BOSS 狀態 (包含倒數邏輯)
+        socket.on('worldBossUpdate', (data) => {
+            const banner = document.getElementById('boss-banner');
+            if (data.active) {
+                banner.style.display = 'block';
+                const pct = (data.hp / data.maxHp) * 100;
+                document.getElementById('boss-hp-bar').style.width = pct + "%";
+                document.getElementById('boss-hp-text').innerText = `${(data.hp/100000000).toFixed(1)}億 / ${(data.maxHp/100000000).toFixed(1)}億`;
+
+                // 啟動大廳倒數
+                if (data.remainingTime !== undefined) {
+                    let timeLeft = Math.floor(data.remainingTime / 1000);
+                    const timerSpan = document.getElementById('boss-timer');
+                    
+                    if (bossHubTimer) clearInterval(bossHubTimer);
+                    
+                    // 立即更新一次
+                    updateHubTimer(timerSpan, timeLeft);
+                    
+                    bossHubTimer = setInterval(() => {
+                        timeLeft--;
+                        updateHubTimer(timerSpan, timeLeft);
+                        if (timeLeft <= 0) clearInterval(bossHubTimer);
+                    }, 1000);
+                }
+
+            } else {
+                banner.style.display = 'none';
+                if (bossHubTimer) clearInterval(bossHubTimer);
+            }
+        });
+
+        //  接收排名更新
+        socket.on('updateHubRanking', (ranking) => {
+            const box = document.getElementById('boss-ranking-area');
+            const list = document.getElementById('ranking-list');
+            
+            if (!ranking || ranking.length === 0) {
+                box.style.display = 'none'; 
+                return;
+            }
+
+            box.style.display = 'block';
+            list.innerHTML = '';
+
+            ranking.forEach((r, index) => {
+                const div = document.createElement('div');
+                div.className = 'rank-row';
+                
+                let medal = `#${index + 1}`;
+                let rankClass = '';
+                if (index === 0) { medal = ''; rankClass = 'rank-1'; }
+                else if (index === 1) { medal = ''; rankClass = 'rank-2'; }
+                else if (index === 2) { medal = ''; rankClass = 'rank-3'; }
+
+                let dmgText = (r.dmg / 100000000).toFixed(2) + "億";
+                if (r.dmg < 100000000) dmgText = (r.dmg / 10000).toFixed(0) + "萬";
+
+                //  [核心修改] 在數字前加上 "輸出能力: "
+                div.innerHTML = `
+                    <span class="${rankClass}">${medal} ${r.name}</span>
+                    <span style="color:#ccc;">輸出: ${dmgText}</span>
+                `;
+                list.appendChild(div);
+            });
+        });
+
+        function updateHubTimer(el, sec) {
+            if (sec < 0) sec = 0;
+            const m = Math.floor(sec / 60).toString().padStart(2, '0');
+            const s = (sec % 60).toString().padStart(2, '0');
+            el.innerText = `${m}:${s}`;
+        }
+
+        function joinBoss() {
+            socket.emit('joinWorldBoss');
+        }
 
         socket.on('marketResult', (res) => { if (res.success) { showToast(res.msg); } });
         socket.on('bagResult', (res) => { if (res.success) { showToast(res.msg); } });
@@ -554,7 +799,6 @@
             const chat = document.getElementById('chat-container');
             const header = document.getElementById('chat-header');
             
-            // 🟢 PC版禁止收起聊天室
             if (window.innerWidth >= 1024) return;
 
             chat.classList.toggle('chat-open');
@@ -572,19 +816,17 @@
             }
         };
 
-        // 🟢 定義一個變數來鎖定按鈕
         let isProcessing = false;
         
         window.triggerCreateRoom = function(mobId) {
             if (isProcessing) return; 
             if (!socket.connected) { showToast("錯誤：未連線到伺服器！"); return; }
         
-            isProcessing = true; // 鎖定
+            isProcessing = true; 
             document.getElementById('list-title').innerText = "正在建立房間...";
             
             socket.emit('createRoom', mobId);
         
-            // 2秒後自動解鎖
             setTimeout(() => {
                 isProcessing = false;
                 if(selectedMonster) document.getElementById('list-title').innerText = `${selectedMonster.name} - 房間`;
@@ -641,15 +883,31 @@
                 
                 if (myRooms.length === 0) html += `<div style="font-size:10px; color:#aaa; margin:10px;">目前沒有房間...</div>`;
                 
-                myRooms.forEach(room => {
+                myRooms.forEach((room, index) => { 
                     const isFighting = room.status === 'fighting';
                     const clickAction = isFighting ? '' : `onclick="triggerJoinRoom('${room.id}')"`;
-                    const statusTag = isFighting ? '<span class="room-tag status-fighting">戰鬥</span>' : '<span class="room-tag status-waiting">等待</span>';
-                    const lockClass = isFighting ? 'locked' : '';
                     
+                    let statusTag = '<span class="room-tag status-waiting">等待中</span>';
+                    let lockClass = '';
+                    
+                    if (isFighting) {
+                        statusTag = '<span class="room-tag status-fighting">戰鬥中</span>';
+                        lockClass = 'locked'; 
+                    } else if (room.playerCount >= 5) { 
+                        statusTag = '<span class="room-tag" style="background:#e67e22; color:white">已滿員</span>';
+                    }
+
                     html += `<div class="btn ${lockClass}" ${clickAction}>
-                        <div style="font-size:10px;">Room ${room.id.substr(5)}</div>
-                        <div style="margin-top:5px;">${statusTag}<span class="info-tag" style="margin-right:5px;">${room.playerCount}/5</span></div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:12px; font-weight:bold; color:#f1c40f;">
+                                 ${room.hostName} 的隊伍
+                            </span>
+                            <span style="font-size:10px; color:#bdc3c7;">#${index + 1}</span>
+                        </div>
+                        <div style="margin-top:5px; display:flex; justify-content:space-between;">
+                            ${statusTag}
+                            <span class="info-tag">${room.playerCount}/5 人</span>
+                        </div>
                     </div>`;
                 });
                 html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('monsters')">◀ 返回列表</div>`;

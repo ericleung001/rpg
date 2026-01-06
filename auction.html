@@ -6,15 +6,24 @@
     <title>交易所</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
         body { 
             background-color: #2c3e50; color: #fff; 
             font-family: 'Press Start 2P', monospace; 
-            text-align: center; 
-            padding: 10px; 
-            display:flex; flex-direction:column; align-items:center; 
-            height: 100dvh; margin:0; box-sizing:border-box;
-            overscroll-behavior: none;
-            user-select: none; -webkit-user-select: none;
+            text-align: center; margin: 0; padding: 0;
+            display: flex; flex-direction: column; height: 100dvh;
+            overflow: scroll;
+        }
+
+        /* 主內容區塊 */
+        #main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 10px;
+            padding-bottom: 40px; 
+            align-items: center;
         }
 
         #loading-overlay {
@@ -37,7 +46,7 @@
         .gold-display { color: #f1c40f; font-size: 14px; font-weight: bold; }
         h1 { font-size: 18px; margin: 0; }
 
-        /* 1. 分類選擇列 */
+        /* 分類選擇列 */
         .category-bar {
             width: 100%; max-width: 600px;
             display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; 
@@ -51,7 +60,7 @@
         .cat-btn.active { background: #f1c40f; color: #2c3e50; border-color: #fff; font-weight: bold; }
         .cat-btn:disabled { opacity: 0.5; cursor: default; }
 
-        /* 2. 物品選擇區 */
+        /* 物品選擇區 */
         #item-select-area { 
             display: none; width: 100%; max-width: 600px;
             background: #34495e; border: 2px solid #bdc3c7; border-radius: 8px;
@@ -66,7 +75,7 @@
         }
         .item-btn:hover { background: #95a5a6; color: #2c3e50; }
 
-        /* 3. 掛單列表區 */
+        /* 掛單列表區 */
         #listings-area { 
             display: none; flex: 1; width: 100%; max-width: 600px;
             background: #fff; color: #000; border: 4px solid #f1c40f; 
@@ -105,7 +114,7 @@
         .modal-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.85); display: none; 
-            flex-direction: column; justify-content: center; align-items: center; z-index: 100;
+            flex-direction: column; justify-content: center; align-items: center; z-index: 200;
         }
         .modal-box { 
             background: #fff; color: #000; 
@@ -130,6 +139,41 @@
             border-radius: 6px; cursor: pointer; font-family: inherit;
             font-size: 12px; font-weight: bold; padding: 10px;
         }
+
+        /* 聊天室樣式 */
+        #chat-container {
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7;
+            display: flex; flex-direction: column; font-size: 10px; z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom);
+            transition: height 0.3s ease-in-out;
+            height: 30px; 
+        }
+        #chat-header {
+            height: 30px; background: #34495e; color: #fff; line-height: 30px; 
+            cursor: pointer; font-weight: bold; border-bottom: 1px solid #555;
+            display: flex; justify-content: center; align-items: center;
+            touch-action: manipulation;
+            flex-shrink: 0; 
+        }
+        #chat-header:hover { background: #2c3e50; }
+        .chat-open { height: 40vh !important; }
+        #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+        .chat-open #chat-body { display: flex; } 
+        #chat-history { flex: 1; overflow-y: auto; padding: 8px; text-align: left; color: white; }
+        #chat-input-area { display: flex; border-top: 1px solid #555; height: 40px; flex-shrink: 0; }
+        #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 10px; font-family: inherit; font-size: 12px; outline: none; }
+        #chat-send { background: #2980b9; color: white; border: none; padding: 0 15px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; touch-action: manipulation; }
+
+        @media (min-width: 1024px) {
+            body { flex-direction: row; justify-content: center; background-color: #222; }
+            #app-layout { display: flex; width: 1000px; background-color: #2c3e50; box-shadow: 0 0 20px rgba(0,0,0,0.5); height: 100%; }
+            #main-content { width: 600px; border-right: 4px solid #bdc3c7; padding-bottom: 10px; }
+            #chat-container { position: static; width: 400px; height: 100% !important; border-top: none; background: #34495e; }
+            #chat-header { cursor: default; background: #2c3e50; }
+            #chat-header:active { pointer-events: none; }
+            #chat-body { display: flex !important; height: calc(100% - 30px); }
+        }
     </style>
 </head>
 <body>
@@ -140,35 +184,50 @@
 
     <div id="game-toast"></div>
 
-    <div class="header">
-        <h1>⚖️ 自由市場</h1>
-        <div class="gold-display">💰 <span id="my-gold">0</span> G</div>
-    </div>
+    <div id="app-layout">
+        <div id="main-content">
+            <div class="header">
+                <h1>⚖️ 自由市場</h1>
+                <div class="gold-display">ߒ࠼span id="my-gold">0</span> G</div>
+            </div>
 
-    <button class="btn-sell-trigger" onclick="openInventoryModal()">+ 上架物品</button>
+            <button class="btn-sell-trigger" onclick="openInventoryModal()">+ 上架物品</button>
 
-    <div class="category-bar">
-        <button class="cat-btn" onclick="selectCategory('weapon')">⚔️武器</button>
-        <button class="cat-btn" onclick="selectCategory('armor')">🛡️防具/飾品</button>
-        <button class="cat-btn" onclick="selectCategory('consumable')">🧪消耗</button>
-        <button class="cat-btn" onclick="selectCategory('material')">🪵材料</button>
-        <button class="cat-btn" onclick="selectCategory('mine')">📦我的</button>
-    </div>
+            <div class="category-bar">
+                <button class="cat-btn" onclick="selectCategory('weapon')">⚔️武器</button>
+                <button class="cat-btn" onclick="selectCategory('armor')">ߛ᯸縉⥅篩㾥ぼ/button>
+                <button class="cat-btn" onclick="selectCategory('consumable')">ߧꦶ言缯button>
+                <button class="cat-btn" onclick="selectCategory('material')">ߪ妝খ鼯button>
+                <button class="cat-btn" onclick="selectCategory('mine')">ߓ榈᧚伯button>
+            </div>
 
-    <div id="status-msg">請選擇上方分類</div>
-    <div id="item-select-area"></div>
+            <div id="status-msg">請選擇上方分類</div>
+            <div id="item-select-area"></div>
 
-    <div id="listings-area">
-        <div class="listing-header">
-            <div class="col-name">物品</div>
-            <div class="col-price">價格</div>
-            <div class="col-seller">賣家</div>
-            <div class="col-action">操作</div>
+            <div id="listings-area">
+                <div class="listing-header">
+                    <div class="col-name">物品</div>
+                    <div class="col-price">價格</div>
+                    <div class="col-seller">賣家</div>
+                    <div class="col-action">操作</div>
+                </div>
+                <div id="listings-list"></div>
+            </div>
+
+            <a href="hub.html" class="back-btn">◀ 返回大廳</a>
         </div>
-        <div id="listings-list"></div>
-    </div>
 
-    <a href="hub.html" class="back-btn">◀ 返回大廳</a>
+        <div id="chat-container">
+            <div id="chat-header" onclick="toggleChat()"> 公頻聊天室 (點擊展開)</div>
+            <div id="chat-body">
+                <div id="chat-history"></div>
+                <div id="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="輸入訊息..." maxlength="50">
+                    <button id="chat-send">發送</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="inventory-modal" class="modal-overlay">
         <div class="modal-box">
@@ -181,15 +240,25 @@
     <div id="sell-price-modal" class="modal-overlay">
         <div class="modal-box">
             <h3 id="modal-item-name" style="font-size:16px; margin-bottom:10px;">上架物品</h3>
-            <input type="number" id="sell-price" placeholder="輸入價格 (G)" max="999999">
+            <input type="number" id="sell-price" placeholder="輸入價格 (G)" max="999999999">
             <button class="btn" style="background:#e67e22; margin-top:10px;" onclick="confirmSell()">確認上架</button>
             <button class="btn" style="background:#555; margin-top:10px;" onclick="closePriceModal()">取消</button>
         </div>
     </div>
 
+    <div id="captcha-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 style="font-size:16px; margin-bottom:10px; color:#e74c3c;">安全驗證</h3>
+            <div style="font-size:12px; color:#555; margin-bottom:10px;">請回答以下問題以繼續購買：</div>
+            <div id="captcha-question" style="font-size:24px; font-weight:bold; color:#2c3e50; margin:15px 0;">? + ? = ?</div>
+            <input type="number" id="captcha-input" placeholder="輸入答案">
+            <button class="btn" style="background:#27ae60; margin-top:10px;" onclick="submitCaptcha()">送出</button>
+            <button class="btn" style="background:#7f8c8d; margin-top:10px;" onclick="closeCaptchaModal()">取消</button>
+        </div>
+    </div>
+
     <script src="socket.io.js"></script>
     <script>
-        // Loading
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const overlay = document.getElementById('loading-overlay');
@@ -198,76 +267,116 @@
             }, 1000);
         });
 
-        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
-        const BACKEND_URL = atob(_0x5a1b);
-        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], secure: true });
+const socket = io('https://mmo.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
 
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // 🟢 完整物品資料庫 (修正英文代碼問題)
+        let myInventory = {};
+        let currentSellId = null;
+        let currentItemKey = ''; 
+        let currentPage = 1;
+        
+        let pendingBuyId = null; // 暫存要買的物品 ID
+
+        // ߟ⠛修改] 禁止上架清單 (包含福袋及神裝)
+        const PROHIBITED_ITEMS = [
+            'lucky_bag',
+            'genesis_weapon', 'genesis_armor', 'void_reaper_dark', 'ring_galaxy', 
+            'void_blade', 'void_armor', 
+            'galaxy_saber', 'nebula_plate', 
+            'dimension_ring',
+            'entropy_sword', 'entropy_god_armor'
+        ];
+
         const ITEM_DB = {
-            // 材料
             'copper_ore': { name: '銅礦石' }, 'soft_fur': { name: '柔軟皮毛' }, 'beast_fang': { name: '野獸尖牙' }, 'slime_gel': { name: '黏液' },
             'iron_ore': { name: '鐵礦石' }, 'leather': { name: '皮革' }, 'tough_hide': { name: '硬皮革' }, 'magic_dust': { name: '魔粉' },
             'poison_sac': { name: '毒囊' }, 'bone_shard': { name: '碎骨片' }, 'silver_ore': { name: '銀礦石' }, 'fire_core': { name: '火焰核心' },
             'lava_rock': { name: '熔岩石' }, 'dragon_scale': { name: '龍鱗' }, 'gold_ore': { name: '金礦石' }, 'ice_crystal': { name: '永恆冰晶' },
             'yeti_fur': { name: '雪怪毛皮' }, 'spirit_dust': { name: '靈魂粉末' }, 'mithril': { name: '秘銀' }, 'void_dust': { name: '虛空之塵' },
             'demon_horn': { name: '惡魔之角' }, 'dark_essence': { name: '暗之精華' }, 'adamantite': { name: '精金' }, 'god_blood': { name: '神之血' },
-            'chaos_orb': { name: '混沌寶珠' }, 'angel_feather': { name: '天使之羽' },
+            'chaos_orb': { name: '混沌寶珠' }, 'angel_feather': { name: '天使之羽' }, 'titan_steel': { name: '泰坦神鋼' }, 'star_fragment': { name: '星之碎片' },
+            'void_shard': { name: '虛空碎片' }, 'dark_matter': { name: '暗物質' }, 'star_core': { name: '恆星核心' },
+            'cosmic_steel': { name: '宇宙鋼' }, 'time_sand': { name: '時光之沙' }, 'dimension_gem': { name: '維度寶石' },
+            'entropy_origin': { name: '熱寂原點' },
             'oak_log': { name: "橡木原木" }, 'maple_log': { name: "楓木原木" }, 'yew_log': { name: "紫杉原木" }, 'ancient_log': { name: "遠古神木" },
             'spirit_wood': { name: "靈木" }, 'dragon_wood': { name: "龍骨木" }, 'void_wood': { name: "虛空木" }, 'chaos_wood': { name: "混沌神木" },
             'carp': { name: "鯉魚" }, 'salmon': { name: "鮭魚" }, 'koi': { name: "錦鯉" }, 'magic_fish': { name: "魔力魚" },
             'tuna': { name: "黑鮪魚" }, 'shark': { name: "大白鯊" }, 'lava_eel': { name: "熔岩鰻" }, 'void_squid': { name: "虛空烏賊" },
             'god_carp': { name: "神之鯉" }, 'pearl': { name: "珍珠" }, 'coal': { name: "煤炭" }, 'ruby': { name: "紅寶石" },
-            'diamond': { name: "鑽石" }, 'star_fragment': { name: "星之碎片" },
-
-            // 消耗品
+            'diamond': { name: "鑽石" },
             'potion_hp': { name: "小紅藥水" }, 'potion_mid': { name: "中紅藥水" }, 'potion_high': { name: "大紅藥水" }, 'potion_max': { name: "特級秘藥" },
-            'elixir': { name: "神之甘露" }, 'potion_mp': { name: "小藍藥水" }, 'potion_mp_mid': { name: "中藍藥水" }, 'potion_mp_high': { name: "大藍藥水" },
+            'elixir': { name: "神之甘露" }, 
+            'potion_mp': { name: "小藍藥水" }, 'potion_mp_mid': { name: "中藍藥水" }, 'potion_mp_high': { name: "大藍藥水" },
             'grilled_carp': { name: "烤鯉魚" }, 'salmon_sushi': { name: "鮭魚壽司" }, 'tuna_steak': { name: "煎鮪魚排" }, 'eel_rice': { name: "鰻魚飯" },
             'void_soup': { name: "虛空海鮮湯" }, 'sushi_plate': { name: "壽司拼盤" },
-
-            // 武器
             'wood_sword': { name: "木劍" }, 'copper_dagger': { name: "銅匕首" }, 'iron_sword': { name: "鐵劍" }, 'spike_club': { name: "狼牙棒" },
             'poison_dag': { name: "劇毒匕首" }, 'silver_blade': { name: "銀刃" }, 'flame_staff': { name: "火焰法杖" }, 'gold_axe': { name: "黃金巨斧" },
             'frost_bow': { name: "寒冰弓" }, 'mithril_saber': { name: "秘銀軍刀" }, 'void_reaper': { name: "虛空收割者" }, 'god_slayer': { name: "弒神劍" },
             'chaos_staff': { name: "混沌法杖" }, 'oak_bow': { name: "橡木弓" }, 'maple_staff': { name: "楓木法杖" }, 'shark_tooth': { name: "鯊魚牙匕首" },
             'emerald_staff': { name: "翡翠法杖" }, 'obsidian_blade': { name: "黑曜石之劍" }, 'dragon_spear': { name: "龍骨長槍" },
             'hero_sword': { name: "勇者之劍" }, 'steel_blade': { name: "精鋼劍" }, 'assassin_dag': { name: "刺客短刀" },
-
-            // 防具 & 飾品
+            'void_reaper_dark': { name: "闇·虛空收割者" }, 'genesis_weapon': { name: "創世·終焉之劍" },
+            'void_blade': { name: "虛空之刃" }, 'galaxy_saber': { name: "銀河光劍" }, 'entropy_sword': { name: "終焉·熱寂之劍" },
             'cloth_armor': { name: "布衣" }, 'hunt_vest': { name: "獵人背心" }, 'leather_armor': { name: "皮甲" }, 'chain_mail': { name: "鎖子甲" },
             'magma_plate': { name: "熔岩胸甲" }, 'ice_robe': { name: "冰霜法袍" }, 'yeti_cloak': { name: "雪怪斗篷" }, 'demon_armor': { name: "惡魔戰甲" },
-            'angel_armor': { name: "熾天使鎧甲" }, 'plate_mail': { name: "板金甲" }, 'dragon_mail': { name: "龍鱗甲" },
+            'angel_armor': { name: "熾天使鎧甲" }, 'plate_mail': { name: "板金甲" }, 'dragon_mail': { name: "龍鱗甲" }, 'iron_armor': { name: "鐵盔甲" },
+            'genesis_armor': { name: "創世·神之庇護" },
+            'void_armor': { name: "虛空戰甲" }, 'nebula_plate': { name: "星雲板甲" }, 'entropy_god_armor': { name: "終焉·神之庇護" },
             'bone_ring': { name: "骨戒" }, 'ring_str': { name: "力量戒指" }, 'snake_boots': { name: "蛇皮長靴" }, 'amulet_soul': { name: "靈魂護符" },
             'ring_lord': { name: "領主指環" }, 'crown_chaos': { name: "混沌之冠" }, 'fish_ring': { name: "魚鱗戒指" }, 'pearl_necklace': { name: "珍珠項鍊" },
-            'ring_life': { name: "生命護符" }, 'ring_magic': { name: "魔力耳環" }
+            'ring_life': { name: "生命護符" }, 'ring_magic': { name: "魔力耳環" },
+            'bracelet_def': { name: "堅毅手環" }, 'necklace_hp': { name: "紅水晶項鍊" }, 'necklace_mp': { name: "藍水晶項鍊" },
+            'ring_galaxy': { name: "銀河指環" }, 'dimension_ring': { name: "維度指環" },
+            'lucky_bag': { name: "ߧ砥凨韧揨⋢ } 
         };
 
-        let myInventory = {};
-        let currentSellId = null;
-        let currentItemKey = ''; 
-        let currentPage = 1;
-
-        socket.on('connect', () => {
-            socket.emit('joinGame', myToken);
-        });
-
+        socket.on('connect', () => { socket.emit('joinGame', myToken); });
         socket.on('playerStatsUpdate', (p) => {
             document.getElementById('my-gold').innerText = p.gold;
             myInventory = p.inventory;
         });
 
-        // 1. 點擊分類
+        // 聊天室
+        socket.on('chatHistory', (history) => {
+            const box = document.getElementById('chat-history');
+            box.innerHTML = ''; 
+            history.forEach(data => appendChat(data.name, data.msg));
+        });
+        socket.on('chatMessage', (data) => { appendChat(data.name, data.msg); });
+        function appendChat(name, msg) {
+            const history = document.getElementById('chat-history');
+            const div = document.createElement('div');
+            const nameSpan = document.createElement('span');
+            nameSpan.style.color = '#f1c40f'; nameSpan.style.fontWeight = 'bold';
+            nameSpan.textContent = `[${name}]: `;
+            const msgNode = document.createTextNode(msg);
+            div.appendChild(nameSpan); div.appendChild(msgNode);
+            history.appendChild(div); history.scrollTop = history.scrollHeight;
+        }
+        document.getElementById('chat-send').onclick = sendChat;
+        document.getElementById('chat-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChat(); });
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (msg) { socket.emit('sendChat', msg); input.value = ''; }
+        }
+        function toggleChat() {
+            const chat = document.getElementById('chat-container');
+            const header = document.getElementById('chat-header');
+            if (window.innerWidth >= 1024) return;
+            chat.classList.toggle('chat-open');
+            header.innerText = chat.classList.contains('chat-open') ? " 點擊收起" : " 公頻聊天室 (點擊展開)";
+        }
+
         function selectCategory(cat) {
-            currentItemKey = ''; 
-            currentPage = 1;
-            
+            currentItemKey = ''; currentPage = 1;
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
-            
-            // 隱藏所有區域
             document.getElementById('item-select-area').style.display = 'none';
             document.getElementById('listings-area').style.display = 'none';
 
@@ -282,20 +391,17 @@
             }
         }
 
-        // 2. 接收物品清單
         socket.on('marketItemsList', (items) => {
             const area = document.getElementById('item-select-area');
             area.innerHTML = '';
             
-            if (items.length === 0) {
-                document.getElementById('status-msg').innerText = "此分類暫無可交易物品";
-                return;
-            }
+            // ߟ⠛過濾] 前端隱藏禁售物品
+            const allowedItems = items.filter(item => !PROHIBITED_ITEMS.includes(item.id));
 
+            if (allowedItems.length === 0) { document.getElementById('status-msg').innerText = "此分類暫無可交易物品"; return; }
             document.getElementById('status-msg').innerText = "請選擇物品查詢價格";
             area.style.display = 'grid';
-
-            items.forEach(item => {
+            allowedItems.forEach(item => {
                 const btn = document.createElement('div');
                 btn.className = 'item-btn';
                 btn.innerText = item.name;
@@ -304,61 +410,43 @@
             });
         });
 
-        // 3. 點擊物品 -> 請求掛單 (預設第1頁)
         function loadListings(itemKey, itemName) {
-            currentItemKey = itemKey;
-            currentPage = 1;
+            currentItemKey = itemKey; currentPage = 1;
             document.getElementById('status-msg').innerText = `正在查詢: ${itemName}`;
             document.getElementById('listings-list').innerHTML = '<div style="padding:10px; color:#aaa;">載入中...</div>';
             document.getElementById('listings-area').style.display = 'flex';
-            
             socket.emit('getMarketListings', { key: itemKey, page: 1 });
         }
 
-        // 換頁功能
         function changePage(delta) {
             const newPage = currentPage + delta;
             if (newPage < 1) return;
-            
             currentPage = newPage;
             document.getElementById('listings-list').innerHTML = '<div style="padding:10px; color:#aaa;">讀取中...</div>';
-            
-            if (currentItemKey) {
-                socket.emit('getMarketListings', { key: currentItemKey, page: currentPage });
-            }
+            if (currentItemKey) { socket.emit('getMarketListings', { key: currentItemKey, page: currentPage }); }
         }
 
-        // 4. 接收掛單 -> 顯示列表 (含分頁)
         socket.on('marketListingsUpdate', (data) => {
             let listings = [];
             let totalPages = 1;
             let page = 1;
-
-            if (Array.isArray(data)) {
-                listings = data; 
-            } else {
-                listings = data.listings;
-                totalPages = data.totalPages;
-                page = data.currentPage;
-            }
+            if (Array.isArray(data)) { listings = data; } 
+            else { listings = data.listings; totalPages = data.totalPages; page = data.currentPage; }
 
             const listDiv = document.getElementById('listings-list');
-            listDiv.innerHTML = ''; // 🟢 關鍵修正：這裡會把之前的按鈕也清掉
+            listDiv.innerHTML = ''; 
 
-            if (listings.length === 0) {
-                listDiv.innerHTML = '<div style="padding:20px; color:#555;">此頁無物品</div>';
-            } else {
+            if (listings.length === 0) { listDiv.innerHTML = '<div style="padding:20px; color:#555;">此頁無物品</div>'; } 
+            else {
                 listings.forEach(row => {
                     const div = document.createElement('div');
                     div.className = 'listing-row';
-                    
                     let actionBtn = '';
                     if (row.isMine) {
                         actionBtn = `<button class="btn-cancel" onclick="cancelItem(${row.id})">取回</button>`;
                     } else {
                         actionBtn = `<button class="btn-buy" onclick="buyItem(${row.id}, ${row.price})">購買</button>`;
                     }
-
                     div.innerHTML = `
                         <div class="col-name">${row.itemName}</div>
                         <div class="col-price">$${row.price}</div>
@@ -369,51 +457,61 @@
                 });
             }
 
-            // 🟢 修正：將分頁控制列加入到 listDiv (每次更新都會重建)
             if (currentItemKey && totalPages > 0) { 
                 const paginationDiv = document.createElement('div');
                 paginationDiv.style.cssText = "display:flex; justify-content:center; gap:10px; padding:10px; align-items:center; border-top:2px solid #ccc; margin-top:auto;";
-                
                 const prevDisabled = page <= 1 ? 'disabled style="opacity:0.5; cursor:default;"' : '';
                 const nextDisabled = page >= totalPages ? 'disabled style="opacity:0.5; cursor:default;"' : '';
-
                 paginationDiv.innerHTML = `
                     <button class="cat-btn" ${prevDisabled} onclick="changePage(-1)">◀ 上一頁</button>
                     <span style="font-size:10px; color:#333;">第 ${page} / ${totalPages} 頁</span>
                     <button class="cat-btn" ${nextDisabled} onclick="changePage(1)">下一頁 ▶</button>
                 `;
-                
                 listDiv.appendChild(paginationDiv);
             }
         });
 
-        // 交易功能
+        // 購買流程
         function buyItem(id, price) {
             if(confirm(`確定要花費 ${price} G 購買嗎？`)) {
-                socket.emit('marketBuy', id);
+                pendingBuyId = id; 
+                socket.emit('requestCaptcha'); 
             }
+        }
+
+        socket.on('captchaGenerated', (data) => {
+            document.getElementById('captcha-question').innerText = data.question;
+            document.getElementById('captcha-input').value = '';
+            document.getElementById('captcha-modal').style.display = 'flex';
+        });
+
+        function submitCaptcha() {
+            const ans = document.getElementById('captcha-input').value;
+            if(!ans) return;
+            
+            socket.emit('marketBuy', { listingId: pendingBuyId, answer: ans });
+            closeCaptchaModal();
+        }
+
+        function closeCaptchaModal() {
+            document.getElementById('captcha-modal').style.display = 'none';
+            pendingBuyId = null;
         }
 
         function cancelItem(id) {
-            if(confirm("確定下架並取回物品嗎？")) {
-                socket.emit('marketCancel', id);
-            }
+            if(confirm("確定下架並取回物品嗎？")) { socket.emit('marketCancel', id); }
         }
 
-        // 上架流程
         function openInventoryModal() {
             const list = document.getElementById('sell-inventory-list');
             list.innerHTML = '';
+            // ߟ⠛修改] 過濾不可上架的物品 (福袋 + 神裝)
+            const keys = Object.keys(myInventory).filter(k => myInventory[k] > 0 && !PROHIBITED_ITEMS.includes(k));
             
-            const keys = Object.keys(myInventory).filter(k => myInventory[k] > 0);
-            
-            if (keys.length === 0) {
-                list.innerHTML = '<div style="padding:20px; color:#aaa; text-align:center;">背包是空的，無物可賣</div>';
-            } else {
+            if (keys.length === 0) { list.innerHTML = '<div style="padding:20px; color:#aaa; text-align:center;">沒有可上架的物品</div>'; } 
+            else {
                 keys.forEach(key => {
-                    // 🟢 使用 ITEM_DB 確保有中文名稱，若無則顯示 key
                     const itemData = ITEM_DB[key] || { name: key };
-                    
                     const div = document.createElement('div');
                     div.className = 'sell-list-item';
                     div.innerHTML = `
@@ -439,10 +537,8 @@
         function confirmSell() {
             const priceInput = document.getElementById('sell-price');
             const price = parseInt(priceInput.value);
-
             if(!price || price <= 0) { showMsg("請輸入有效價格"); return; }
-            if (price > 999999) { showMsg("價格不能超過 999,999 G"); return; }
-
+            if (price > 999999999) { showMsg("價格不能超過 999999999 G"); return; }
             socket.emit('marketSell', { itemId: currentSellId, price: price });
         }
 
@@ -457,20 +553,13 @@
             showMsg(res.success ? "✅ " + res.msg : "❌ " + res.msg);
             closePriceModal();
             closeInventoryModal();
-            if (res.success && currentItemKey) {
-                socket.emit('getMarketListings', { key: currentItemKey, page: currentPage });
-            }
-            if (res.success && !currentItemKey) {
-                socket.emit('getMyListings');
-            }
+            if (res.success && currentItemKey) { socket.emit('getMarketListings', { key: currentItemKey, page: currentPage }); }
+            if (res.success && !currentItemKey) { socket.emit('getMyListings'); }
         });
         
         socket.on('marketRefresh', () => {
-            if (currentItemKey) {
-                socket.emit('getMarketListings', { key: currentItemKey, page: currentPage });
-            }
+            if (currentItemKey) { socket.emit('getMarketListings', { key: currentItemKey, page: currentPage }); }
         });
-
     </script>
 </body>
 </html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>幸運彩票</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body { 
+            background-color: #2c3e50; color: #fff; 
+            font-family: 'Press Start 2P', monospace; 
+            text-align: center; padding: 20px; 
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .header { color: #f1c40f; margin-bottom: 20px; text-shadow: 2px 2px #000; }
+        
+        .jackpot-box {
+            background: #c0392b; padding: 15px; border-radius: 10px; border: 4px solid #e74c3c;
+            margin-bottom: 20px; width: 100%; max-width: 500px; box-sizing: border-box;
+            box-shadow: 0 0 20px #e74c3c;
+        }
+        .jackpot-title { font-size: 12px; margin-bottom: 10px; }
+        .jackpot-amount { font-size: 20px; font-weight: bold; color: #f1c40f; word-break: break-all; }
+
+        .number-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+            max-width: 500px; margin-bottom: 20px;
+        }
+        .ball {
+            width: 35px; height: 35px; border-radius: 50%;
+            background: #ecf0f1; color: #2c3e50;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 12px; font-weight: bold; cursor: pointer;
+            border: 2px solid #bdc3c7; user-select: none;
+            transition: transform 0.1s;
+        }
+        .ball:active { transform: scale(0.9); }
+        .ball.selected { background: #e74c3c; color: white; border-color: #fff; box-shadow: 0 0 10px #e74c3c; }
+
+        .selected-info { font-size: 12px; margin-bottom: 15px; color: #aaa; }
+        .buy-btn {
+            background: #27ae60; color: white; padding: 15px 30px; font-family: inherit; font-size: 14px;
+            border: none; border-radius: 5px; cursor: pointer; box-shadow: 0 4px 0 #1e8449;
+        }
+        .buy-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        .back-btn { margin-top: 20px; background: #7f8c8d; padding: 10px 20px; color: white; text-decoration: none; border-radius: 5px; font-size: 12px; display: inline-block;}
+
+        /* ߟ⠦葧ꄥ娦裥쏠*/
+        .my-tickets-area {
+            width: 100%; max-width: 500px; margin-top: 30px;
+            text-align: left;
+        }
+        .section-title { font-size: 12px; color: #3498db; margin-bottom: 10px; border-bottom: 1px dashed #555; padding-bottom: 5px; }
+        
+        .ticket-row {
+            background: rgba(0,0,0,0.3); padding: 8px; margin-bottom: 5px; border-radius: 5px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-left: 4px solid #f1c40f;
+        }
+        .ticket-nums { font-size: 10px; color: #fff; letter-spacing: 1px; }
+        .ticket-tag { font-size: 8px; color: #aaa; }
+
+        .last-result {
+            margin-top: 30px; border-top: 1px dashed #7f8c8d; padding-top: 10px; font-size: 10px; color: #bdc3c7; width: 100%; max-width: 500px;
+        }
+        .result-balls { display: flex; gap: 5px; justify-content: center; margin-top: 10px; }
+        .res-ball { width: 30px; height: 30px; border-radius: 50%; background: #3498db; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <h1 class="header">ߎᠥ娼/h1>
+
+    <div class="jackpot-box">
+        <div class="jackpot-title">本期累積獎金</div>
+        <div class="jackpot-amount" id="jackpot-display">Loading...</div>
+        <div style="font-size:10px; margin-top:5px;">每晚 10:00 開獎</div>
+    </div>
+
+    <div class="selected-info">
+        已選號碼: <span id="count">0</span> / 6
+        <br><br>
+        <span id="selected-nums" style="color:#f1c40f; min-height: 20px; display:block;">-</span>
+    </div>
+
+    <div class="number-grid" id="grid"></div>
+
+    <button class="buy-btn" onclick="buyTicket()">購買彩票 (1萬 G)</button>
+
+    <div class="my-tickets-area">
+        <div class="section-title">我的彩票 (<span id="my-ticket-count">0</span>)</div>
+        <div id="my-ticket-list">
+            <div style="font-size:10px; color:#aaa; padding:10px;">尚未購買</div>
+        </div>
+    </div>
+
+    <div class="last-result" id="last-result-area" style="display:none;">
+        上次開獎結果:
+        <div class="result-balls" id="res-balls"></div>
+    </div>
+
+    <a href="hub.html" class="back-btn">◀ 返回大廳</a>
+
+    <script src="socket.io.js"></script>
+    <script>
+const socket = io('https://mmo.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
+        
+        let myToken = localStorage.getItem('rpg_token');
+        if (!myToken) window.location.href = 'index.html';
+
+        let selected = [];
+
+        // 初始化 49 個號碼球
+        const grid = document.getElementById('grid');
+        for(let i=1; i<=49; i++) {
+            const ball = document.createElement('div');
+            ball.className = 'ball';
+            ball.innerText = i;
+            ball.onclick = () => toggleNumber(i, ball);
+            grid.appendChild(ball);
+        }
+
+        function toggleNumber(n, el) {
+            if (selected.includes(n)) {
+                selected = selected.filter(x => x !== n);
+                el.classList.remove('selected');
+            } else {
+                if (selected.length >= 6) { alert("最多只能選 6 個號碼！"); return; }
+                selected.push(n);
+                el.classList.add('selected');
+            }
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            document.getElementById('count').innerText = selected.length;
+            document.getElementById('selected-nums').innerText = selected.sort((a,b)=>a-b).join(', ');
+        }
+
+        function buyTicket() {
+            if (selected.length !== 6) { alert("請選擇 6 個號碼！"); return; }
+            if (!confirm(`確定要花費 10,000 G 購買號碼 [${selected.join(',')}] 嗎？`)) return;
+            
+            socket.emit('buyLottery', selected);
+        }
+
+        socket.on('connect', () => {
+            socket.emit('joinGame', myToken);
+            socket.emit('getLotteryInfo'); // 請求獎池資訊
+        });
+
+        socket.on('lotteryUpdate', (data) => {
+            document.getElementById('jackpot-display').innerText = `$ ${data.jackpot.toLocaleString()}`;
+            
+            // ߟ⠦봦氦葧ꄥ娥藨ᨊ            if (data.myBets) {
+                const list = document.getElementById('my-ticket-list');
+                const count = document.getElementById('my-ticket-count');
+                
+                count.innerText = data.myBets.length;
+                list.innerHTML = '';
+
+                if (data.myBets.length === 0) {
+                    list.innerHTML = '<div style="font-size:10px; color:#aaa; padding:10px;">尚未購買</div>';
+                } else {
+                    data.myBets.forEach((nums, idx) => {
+                        const div = document.createElement('div');
+                        div.className = 'ticket-row';
+                        
+                        // 將號碼美化顯示
+                        // 補零 (01, 02) 看起來比較整齊
+                        const fmtNums = nums.map(n => n.toString().padStart(2, '0')).join(' - ');
+
+                        div.innerHTML = `
+                            <span class="ticket-tag">#${idx + 1}</span>
+                            <span class="ticket-nums">${fmtNums}</span>
+                        `;
+                        list.appendChild(div);
+                    });
+                }
+            }
+
+            if (data.lastResult) {
+                document.getElementById('last-result-area').style.display = 'block';
+                const container = document.getElementById('res-balls');
+                container.innerHTML = '';
+                data.lastResult.forEach(n => {
+                    const b = document.createElement('div');
+                    b.className = 'res-ball';
+                    b.innerText = n;
+                    container.appendChild(b);
+                });
+            }
+        });
+
+        socket.on('lotteryResult', (res) => {
+            alert(res.msg);
+            if(res.success) {
+                // 清空選擇
+                selected = [];
+                document.querySelectorAll('.ball').forEach(b => b.classList.remove('selected'));
+                updateDisplay();
+            }
+        });
+
+        socket.on('errorMessage', (msg) => { alert(msg); });
+
+    </script>
+</body>
+</html>

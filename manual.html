@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>冒險者圖鑑</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body { 
+            background-color: #2c3e50; color: #ecf0f1; 
+            font-family: 'Press Start 2P', monospace; 
+            text-align: center; padding: 10px; margin: 0;
+            padding-bottom: 50px;
+        }
+        h1 { color: #f1c40f; font-size: 16px; margin: 15px 0; text-shadow: 2px 2px #000; }
+
+        .nav-bar { display: flex; justify-content: center; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
+        .nav-btn {
+            background: #34495e; border: 2px solid #bdc3c7; color: white;
+            padding: 8px 12px; font-family: inherit; font-size: 10px; cursor: pointer;
+            border-radius: 5px;
+        }
+        .nav-btn.active { background: #f39c12; color: #000; font-weight: bold; border-color: #fff; }
+
+        .search-box { margin-bottom: 15px; width: 100%; max-width: 400px; display: inline-block; }
+        .search-input {
+            width: 100%; padding: 10px; font-family: inherit; font-size: 12px;
+            background: #222; color: white; border: 2px solid #7f8c8d; border-radius: 5px;
+            box-sizing: border-box; text-align: center;
+        }
+
+        .grid-container {
+            display: grid; grid-template-columns: 1fr; gap: 10px;
+            max-width: 600px; margin: 0 auto;
+        }
+        
+        .card {
+            background: rgba(0,0,0,0.3); border: 2px solid #555; border-radius: 8px;
+            padding: 10px; text-align: left; position: relative;
+        }
+        .card-header { display: flex; justify-content: space-between; border-bottom: 1px dashed #777; padding-bottom: 5px; margin-bottom: 5px; }
+        .card-title { color: #3498db; font-weight: bold; font-size: 12px; }
+        .card-lv { color: #f1c40f; font-size: 10px; }
+        
+        /* 數值顯示區 */
+        .stats-row {
+            display: flex; gap: 10px; font-size: 9px; margin-bottom: 8px; 
+            background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px;
+        }
+        .stat-gold { color: #f1c40f; }
+        .stat-exp { color: #bdc3c7; }
+
+        .drop-list { display: flex; flex-wrap: wrap; gap: 5px; }
+        .drop-item {
+            font-size: 9px; padding: 3px 6px; border-radius: 3px;
+            background: #2c3e50; border: 1px solid #7f8c8d;
+            display: flex; align-items: center; gap: 3px;
+        }
+        .rate-high { border-color: #2ecc71; color: #2ecc71; } /* > 50% */
+        .rate-mid { border-color: #f1c40f; color: #f1c40f; } /* > 20% */
+        .rate-low { border-color: #e74c3c; color: #e74c3c; } /* <= 20% */
+
+        .back-btn {
+            position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+            background: #c0392b; color: white; padding: 10px 30px; text-decoration: none;
+            border-radius: 20px; font-size: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            border: 2px solid #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📜 掉落物手冊</h1>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 搜尋怪物、物品或金幣..." onkeyup="filterData()">
+    </div>
+
+    <div class="nav-bar">
+        <button class="nav-btn active" onclick="showTab('monster')">👹 怪物</button>
+        <button class="nav-btn" onclick="showTab('wood')">🌲 伐木</button>
+        <button class="nav-btn" onclick="showTab('mine')">⛏️ 挖礦</button>
+        <button class="nav-btn" onclick="showTab('fish')">🎣 釣魚</button>
+    </div>
+
+    <div id="content-area" class="grid-container">
+        </div>
+
+    <a href="hub.html" class="back-btn">◀ 返回大廳</a>
+
+    <script>
+        // 🟢 物品名稱對照表 (已更新)
+        const ITEM_NAMES = {
+            // 基礎材料
+            'slime_gel': '史萊姆凝膠', 'soft_fur': '柔軟皮毛', 'beast_fang': '野獸獠牙',
+            'poison_sac': '毒囊', 'bone_shard': '碎骨', 'tough_hide': '硬皮', 'magic_dust': '魔粉',
+            'spirit_dust': '靈魂之塵', 'void_dust': '虛空之塵', 'dark_essence': '黑暗精華',
+            'demon_horn': '惡魔之角', 'angel_feather': '天使之羽', 'god_blood': '神之血',
+            'dragon_scale': '龍鱗', 'yeti_fur': '雪人皮毛', 'chaos_orb': '混沌寶珠',
+
+            // 礦石與金屬
+            'copper_ore': '銅礦石', 'iron_ore': '鐵礦石', 'silver_ore': '銀礦石', 'gold_ore': '金礦石',
+            'coal': '煤炭', 'mithril': '秘銀', 'adamantite': '精金', 'titan_steel': '泰坦鋼', 
+            'cosmic_steel': '宇宙鋼', 'star_fragment': '星辰碎片', 'star_core': '恆星核心',
+            'void_shard': '虛空碎片', 'magma_plate': '熔岩胸甲碎片', 'lava_rock': '熔岩石',
+            'dark_matter': '暗物質', 'entropy_origin': '熱寂原點',
+
+            // 木材
+            'oak_log': '橡木', 'maple_log': '楓木', 'yew_log': '紫杉木', 'spirit_wood': '靈魂木',
+            'dragon_wood': '龍骨木', 'chaos_wood': '混沌木', 'void_wood': '虛空木', 'ancient_log': '遠古原木',
+
+            // 漁獲
+            'carp': '鯉魚', 'salmon': '鮭魚', 'tuna': '鮪魚', 'shark': '鯊魚', 'koi': '錦鯉',
+            'magic_fish': '魔力魚', 'lava_eel': '熔岩鰻', 'void_squid': '虛空魷魚', 'god_carp': '神之鯉',
+            'pearl': '珍珠',
+
+            // 寶石
+            'ruby': '紅寶石', 'diamond': '鑽石', 'ice_crystal': '冰晶', 'fire_core': '火焰核心',
+            'dimension_gem': '維度寶石', 'time_sand': '時之沙',
+
+            // 裝備與道具
+            'potion_hp': 'HP藥水', 'potion_mp': 'MP藥水', 'potion_mid': '中級藥水', 
+            'potion_high': '高級藥水', 'potion_max': '全滿藥水', 'elixir': '萬靈藥',
+            'copper_dagger': '銅匕首', 'bone_ring': '骨戒指', 'cloth_armor': '布甲',
+            'snake_boots': '蛇皮靴', 'amulet_soul': '靈魂護符', 'leather': '皮革',
+            
+            // 神器
+            'void_reaper': '虛空收割者', 'god_slayer': '弑神者',
+            'void_reaper_dark': '暗·虛空收割者', 'genesis_armor': '創世神甲'
+        };
+
+        function getItemName(id) {
+            return ITEM_NAMES[id] || id; 
+        }
+
+        // 🟢 更新後的採集數據
+        const GATHER_CONFIG = {
+            'forest_1': { name: "迷霧森林 (Lv.1)",   type: 'wood', reqLv: 1,   time: 3000, drops: [{id:'oak_log', rate:0.7}, {id:'soft_fur', rate:0.2}, {id:'potion_hp', rate:0.1}] },
+            'forest_2': { name: "精靈之森 (Lv.20)",  type: 'wood', reqLv: 20,  time: 4000, drops: [{id:'maple_log', rate:0.6}, {id:'oak_log', rate:0.2}, {id:'slime_gel', rate:0.1}, {id:'magic_dust', rate:0.1}] },
+            'forest_3': { name: "巨木之森 (Lv.40)",  type: 'wood', reqLv: 40,  time: 5000, drops: [{id:'yew_log', rate:0.5}, {id:'maple_log', rate:0.3}, {id:'poison_sac', rate:0.1}, {id:'potion_mp', rate:0.1}] },
+            'forest_4': { name: "靈魂樹海 (Lv.60)",  type: 'wood', reqLv: 60,  time: 6000, drops: [{id:'spirit_wood', rate:0.4}, {id:'yew_log', rate:0.3}, {id:'spirit_dust', rate:0.2}, {id:'amulet_soul', rate:0.05}] },
+            'forest_5': { name: "龍棲之森 (Lv.80)",  type: 'wood', reqLv: 80,  time: 7000, drops: [{id:'dragon_wood', rate:0.4}, {id:'dragon_scale', rate:0.2}, {id:'fire_core', rate:0.2}, {id:'potion_high', rate:0.1}] },
+            'forest_6':  { name: "混沌樹界 (Lv.100)", type: 'wood', reqLv: 100, time: 8000, drops: [{id:'chaos_wood', rate:0.4}, {id:'dark_essence', rate:0.3}, {id:'chaos_orb', rate:0.05}] },
+            'forest_7':  { name: "腐化密林 (Lv.105)", type: 'wood', reqLv: 105, time: 8200, drops: [{id:'chaos_wood', rate:0.3}, {id:'void_dust', rate:0.3}, {id:'poison_sac', rate:0.2}] },
+            'forest_8':  { name: "虛空邊界 (Lv.110)", type: 'wood', reqLv: 110, time: 8400, drops: [{id:'void_wood', rate:0.4}, {id:'void_dust', rate:0.3}, {id:'void_shard', rate:0.1}] },
+            'forest_9':  { name: "神聖古樹 (Lv.115)", type: 'wood', reqLv: 115, time: 8600, drops: [{id:'ancient_log', rate:0.4}, {id:'god_blood', rate:0.2}, {id:'angel_feather', rate:0.1}] },
+            'forest_10': { name: "泰坦之森 (Lv.120)", type: 'wood', reqLv: 120, time: 8800, drops: [{id:'ancient_log', rate:0.3}, {id:'titan_steel', rate:0.2}, {id:'adamantite', rate:0.2}] },
+            'forest_11': { name: "星光林地 (Lv.125)", type: 'wood', reqLv: 125, time: 9000, drops: [{id:'void_wood', rate:0.3}, {id:'star_fragment', rate:0.3}, {id:'mithril', rate:0.2}] },
+            'forest_12': { name: "恆星核心 (Lv.130)", type: 'wood', reqLv: 130, time: 9200, drops: [{id:'star_core', rate:0.2}, {id:'fire_core', rate:0.3}, {id:'magma_plate', rate:0.05}] },
+            'forest_13': { name: "宇宙星雲 (Lv.135)", type: 'wood', reqLv: 135, time: 9400, drops: [{id:'cosmic_steel', rate:0.2}, {id:'star_fragment', rate:0.3}, {id:'void_shard', rate:0.2}] },
+            'forest_14': { name: "維度裂縫 (Lv.140)", type: 'wood', reqLv: 140, time: 9600, drops: [{id:'dimension_gem', rate:0.1}, {id:'void_wood', rate:0.3}] },
+            'forest_15': { name: "黑洞視界 (Lv.145)", type: 'wood', reqLv: 145, time: 9800, drops: [{id:'dark_matter', rate:0.2}, {id:'dark_essence', rate:0.3}] },
+            'forest_16': { name: "終焉之森 (Lv.150)", type: 'wood', reqLv: 150, time: 10000,drops: [{id:'entropy_origin', rate:0.02},  {id:'ancient_log', rate:0.4}] },
+
+            'lake_1': { name: "寧靜湖泊 (Lv.1)",   type: 'fish', reqLv: 1,   time: 3000, drops: [{id:'carp', rate:0.6}, {id:'salmon', rate:0.3}, {id:'leather', rate:0.1}] },
+            'lake_2': { name: "神秘深潭 (Lv.20)",  type: 'fish', reqLv: 20,  time: 4000, drops: [{id:'magic_fish', rate:0.4}, {id:'pearl', rate:0.1}, {id:'koi', rate:0.3}, {id:'slime_gel', rate:0.1}] },
+            'lake_3': { name: "暴風海灣 (Lv.40)",  type: 'fish', reqLv: 40,  time: 5000, drops: [{id:'tuna', rate:0.5}, {id:'shark', rate:0.3}, {id:'bone_shard', rate:0.1}, {id:'snake_boots', rate:0.05}] },
+            'lake_4': { name: "熔岩之河 (Lv.60)",  type: 'fish', reqLv: 60,  time: 6000, drops: [{id:'lava_eel', rate:0.5}, {id:'fire_core', rate:0.3}, {id:'coal', rate:0.1}, {id:'magma_plate', rate:0.02}] },
+            'lake_5': { name: "虛空之海 (Lv.80)",  type: 'fish', reqLv: 80,  time: 7000, drops: [{id:'void_squid', rate:0.4}, {id:'void_dust', rate:0.3}, {id:'demon_horn', rate:0.1}, {id:'potion_max', rate:0.1}] },
+            'lake_6':  { name: "神之天池 (Lv.100)", type: 'fish', reqLv: 100, time: 8000, drops: [{id:'god_carp', rate:0.3}, {id:'angel_feather', rate:0.3}, {id:'diamond', rate:0.2}] },
+            'lake_7':  { name: "冰封海域 (Lv.105)", type: 'fish', reqLv: 105, time: 8200, drops: [{id:'ice_crystal', rate:0.4}, {id:'pearl', rate:0.3}, {id:'diamond', rate:0.1}] },
+            'lake_8':  { name: "深淵海溝 (Lv.110)", type: 'fish', reqLv: 110, time: 8400, drops: [{id:'void_squid', rate:0.3}, {id:'dark_essence', rate:0.3}, {id:'void_shard', rate:0.1}] },
+            'lake_9':  { name: "血色河流 (Lv.115)", type: 'fish', reqLv: 115, time: 8600, drops: [{id:'god_blood', rate:0.3}, {id:'ruby', rate:0.3}, {id:'demon_horn', rate:0.2}] },
+            'lake_10': { name: "水銀之海 (Lv.120)", type: 'fish', reqLv: 120, time: 8800, drops: [{id:'mithril', rate:0.3}, {id:'silver_ore', rate:0.3}, {id:'titan_steel', rate:0.1}] },
+            'lake_11': { name: "銀河之流 (Lv.125)", type: 'fish', reqLv: 125, time: 9000, drops: [{id:'star_fragment', rate:0.3}, {id:'magic_fish', rate:0.3}, {id:'star_core', rate:0.1}] },
+            'lake_12': { name: "隕石瀑布 (Lv.130)", type: 'fish', reqLv: 130, time: 9200, drops: [{id:'star_core', rate:0.2}, {id:'fire_core', rate:0.3}, {id:'gold_ore', rate:0.2}] },
+            'lake_13': { name: "宇宙洋流 (Lv.135)", type: 'fish', reqLv: 135, time: 9400, drops: [{id:'cosmic_steel', rate:0.2}, {id:'void_shard', rate:0.2}, {id:'void_squid', rate:0.2}] },
+            'lake_14': { name: "時光漩渦 (Lv.140)", type: 'fish', reqLv: 140, time: 9600, drops: [{id:'time_sand', rate:0.2}, {id:'dimension_gem', rate:0.1}, {id:'elixir', rate:0.05}] },
+            'lake_15': { name: "暗物質泉 (Lv.145)", type: 'fish', reqLv: 145, time: 9800, drops: [{id:'dark_matter', rate:0.2}, {id:'dark_essence', rate:0.3}] },
+            'lake_16': { name: "起源之海 (Lv.150)", type: 'fish', reqLv: 150, time: 10000,drops: [{id:'entropy_origin', rate:0.02},  {id:'god_carp', rate:0.3}] },
+
+            'mine_1': { name: "廢棄礦坑 (Lv.10)", type: 'mine', reqLv: 10, time: 3500, drops: [{id:'copper_ore', rate:0.5}, {id:'iron_ore', rate:0.3}, {id:'coal', rate:0.2}] },
+            'mine_2': { name: "水晶洞窟 (Lv.50)", type: 'mine', reqLv: 50, time: 5500, drops: [{id:'silver_ore', rate:0.4}, {id:'ruby', rate:0.3}, {id:'ice_crystal', rate:0.2}, {id:'gold_ore', rate:0.1}] },
+            'mine_3': { name: "隕石坑 (Lv.90)",   type: 'mine', reqLv: 90, time: 7500, drops: [{id:'mithril', rate:0.4}, {id:'adamantite', rate:0.3}, {id:'star_fragment', rate:0.2}, {id:'chaos_orb', rate:0.1}] },
+            'mine_4':  { name: "地獄熔爐 (Lv.100)", type: 'mine', reqLv: 100, time: 8000, drops: [{id:'fire_core', rate:0.3}, {id:'lava_rock', rate:0.4}, {id:'adamantite', rate:0.2}] },
+            'mine_5':  { name: "惡魔巢穴 (Lv.105)", type: 'mine', reqLv: 105, time: 8200, drops: [{id:'demon_horn', rate:0.3}, {id:'dark_essence', rate:0.3}, {id:'ruby', rate:0.2}] },
+            'mine_6':  { name: "虛空礦脈 (Lv.110)", type: 'mine', reqLv: 110, time: 8400, drops: [{id:'void_dust', rate:0.4}, {id:'void_shard', rate:0.2}, {id:'mithril', rate:0.2}] },
+            'mine_7':  { name: "神聖採石場 (Lv.115)",type:'mine', reqLv: 115, time: 8600, drops: [{id:'god_blood', rate:0.2}, {id:'angel_feather', rate:0.2}, {id:'diamond', rate:0.2}] },
+            'mine_8':  { name: "泰坦遺跡 (Lv.120)", type: 'mine', reqLv: 120, time: 8800, drops: [{id:'titan_steel', rate:0.2}, {id:'adamantite', rate:0.3}, {id:'iron_ore', rate:0.1}] },
+            'mine_9':  { name: "星塵峽谷 (Lv.125)", type: 'mine', reqLv: 125, time: 9000, drops: [{id:'star_fragment', rate:0.4}, {id:'mithril', rate:0.3}, {id:'star_core', rate:0.1}] },
+            'mine_10': { name: "恆星地核 (Lv.130)", type: 'mine', reqLv: 130, time: 9200, drops: [{id:'star_core', rate:0.2}, {id:'gold_ore', rate:0.3}, {id:'fire_core', rate:0.2}] },
+            'mine_11': { name: "銀河岩床 (Lv.135)", type: 'mine', reqLv: 135, time: 9400, drops: [{id:'cosmic_steel', rate:0.2}, {id:'star_fragment', rate:0.3}, {id:'diamond', rate:0.1}] },
+            'mine_12': { name: "維度斷層 (Lv.140)", type: 'mine', reqLv: 140, time: 9600, drops: [{id:'dimension_gem', rate:0.15}, {id:'void_shard', rate:0.2}] },
+            'mine_13': { name: "暗物質倉 (Lv.145)", type: 'mine', reqLv: 145, time: 9800, drops: [{id:'dark_matter', rate:0.2}, {id:'dark_essence', rate:0.3}] },
+            'mine_14': { name: "熱寂核心 (Lv.150)", type: 'mine', reqLv: 150, time: 10000,drops: [{id:'entropy_origin', rate:0.02},  {id:'diamond', rate:0.3}] }
+        };
+
+        // 🟢 更新後的怪物數據
+        const MONSTER_CONFIG = {
+            'slime': { name: "史萊姆", level: 1, hp: 100, exp: 10, gold: 5, atk: 10, drops: [{id:'slime_gel', rate:0.5}] },
+            'rat': { name: "大老鼠", level: 3, hp: 200, exp: 20, gold: 10, atk: 15, drops: [{id:'soft_fur', rate:0.4}] },
+            'bee': { name: "殺人蜂", level: 5, hp: 300, exp: 35, gold: 15, atk: 25, drops: [{id:'beast_fang', rate:0.3}, {id:'potion_hp', rate:0.1}] },
+            'boar': { name: "野豬", level: 8, hp: 600, exp: 60, gold: 25, atk: 35, drops: [{id:'soft_fur', rate:0.5}, {id:'beast_fang', rate:0.3}] },
+            'thief': { name: "盜賊", level: 12, hp: 1000, exp: 100, gold: 100, atk: 50, drops: [{id:'copper_ore', rate:0.4}, {id:'copper_dagger', rate:0.05}] },
+            'wolf_king': { name: "狼王", level: 15, hp: 2500, exp: 300, gold: 300, atk: 80, drops: [{id:'bone_ring', rate:0.1}, {id:'soft_fur', rate:1.0}] },
+            'snake': { name: "毒蛇", level: 22, hp: 3500, exp: 400, gold: 50, atk: 100, drops: [{id:'poison_sac', rate:0.4}, {id:'tough_hide', rate:0.2}] },
+            'zombie': { name: "腐屍", level: 25, hp: 5000, exp: 500, gold: 60, atk: 110, drops: [{id:'bone_shard', rate:0.5}, {id:'cloth_armor', rate:0.1}] },
+            'skeleton': { name: "骷髏兵", level: 28, hp: 4500, exp: 600, gold: 70, atk: 130, drops: [{id:'iron_ore', rate:0.4}, {id:'bone_shard', rate:0.4}] },
+            'ghoul': { name: "食屍鬼", level: 32, hp: 7000, exp: 800, gold: 90, atk: 150, drops: [{id:'tough_hide', rate:0.5}] },
+            'witch': { name: "沼澤女巫", level: 35, hp: 6000, exp: 1000, gold: 150, atk: 200, drops: [{id:'poison_sac', rate:0.5}, {id:'potion_mid', rate:0.2}] },
+            'hydra': { name: "九頭蛇", level: 40, hp: 20000, exp: 3000, gold: 1000, atk: 300, drops: [{id:'snake_boots', rate:0.1}, {id:'poison_sac', rate:1.0}] },
+            'fire_imp': { name: "火焰小鬼", level: 42, hp: 15000, exp: 1500, gold: 200, atk: 350, drops: [{id:'fire_core', rate:0.3}] },
+            'lava_golem': { name: "熔岩戈侖", level: 45, hp: 30000, exp: 2000, gold: 250, atk: 400, drops: [{id:'lava_rock', rate:0.6}, {id:'iron_ore', rate:0.5}] },
+            'salamander': { name: "火蜥蜴", level: 48, hp: 25000, exp: 2500, gold: 300, atk: 450, drops: [{id:'tough_hide', rate:0.4}, {id:'fire_core', rate:0.2}] },
+            'fire_mage': { name: "烈焰法師", level: 52, hp: 20000, exp: 3000, gold: 400, atk: 600, drops: [{id:'silver_ore', rate:0.4}, {id:'potion_mid', rate:0.3}] },
+            'dragon_hatchling': { name: "幼龍", level: 55, hp: 40000, exp: 4000, gold: 500, atk: 700, drops: [{id:'dragon_scale', rate:0.2}, {id:'fire_core', rate:0.4}] },
+            'balrog': { name: "炎魔", level: 60, hp: 100000, exp: 10000, gold: 3000, atk: 1000, drops: [{id:'magma_plate', rate:0.01}, {id:'fire_core', rate:0.5}] },
+            'snow_wolf': { name: "雪原狼", level: 62, hp: 60000, exp: 5000, gold: 600, atk: 1200, drops: [{id:'soft_fur', rate:0.5}, {id:'ice_crystal', rate:0.2}] },
+            'yeti': { name: "雪人", level: 65, hp: 120000, exp: 6000, gold: 700, atk: 1500, drops: [{id:'yeti_fur', rate:0.6}, {id:'gold_ore', rate:0.2}] },
+            'ice_spirit': { name: "冰精靈", level: 68, hp: 80000, exp: 7000, gold: 800, atk: 1800, drops: [{id:'ice_crystal', rate:0.5}, {id:'spirit_dust', rate:0.3}] },
+            'frost_knight': { name: "寒霜騎士", level: 72, hp: 150000, exp: 9000, gold: 1000, atk: 2000, drops: [{id:'gold_ore', rate:0.4}, {id:'ice_crystal', rate:0.3}] },
+            'ice_dragon': { name: "冰霜龍", level: 75, hp: 200000, exp: 12000, gold: 1500, atk: 2500, drops: [{id:'dragon_scale', rate:0.5}, {id:'potion_high', rate:0.2}] },
+            'lich_king': { name: "巫妖王", level: 80, hp: 500000, exp: 30000, gold: 10000, atk: 3500, drops: [{id:'amulet_soul', rate:0.05}, {id:'spirit_dust', rate:0.05}] },
+            'void_eye': { name: "虛空之眼", level: 82, hp: 300000, exp: 15000, gold: 2000, atk: 4000, drops: [{id:'void_dust', rate:0.1}] },
+            'shadow_assassin': { name: "暗影刺客", level: 85, hp: 400000, exp: 18000, gold: 2500, atk: 5000, drops: [{id:'mithril', rate:0.1}, {id:'dark_essence', rate:0.2}] },
+            'dark_paladin': { name: "墮落聖騎", level: 88, hp: 600000, exp: 22000, gold: 3000, atk: 6000, drops: [{id:'mithril', rate:0.5}, {id:'void_dust', rate:0.4}] },
+            'demon_guard': { name: "惡魔守衛", level: 92, hp: 800000, exp: 28000, gold: 4000, atk: 7500, drops: [{id:'demon_horn', rate:0.4}, {id:'dragon_scale', rate:0.2}] },
+            'succubus': { name: "魅魔", level: 95, hp: 700000, exp: 35000, gold: 5000, atk: 8500, drops: [{id:'dark_essence', rate:0.5}, {id:'potion_max', rate:0.1}] },
+            'void_lord': { name: "虛空領主", level: 99, hp: 2000000, exp: 100000, gold: 50000, atk: 12000, drops: [{id:'void_reaper', rate:0.05}, {id:'dark_essence', rate:0.2}] },
+            'chaos_beast': { name: "混沌巨獸", level: 105, hp: 3000000, exp: 150000, gold: 10000, atk: 15000, drops: [{id:'chaos_orb', rate:0.2}, {id:'adamantite', rate:0.2}] },
+            'fallen_angel': { name: "墮天使", level: 110, hp: 4000000, exp: 200000, gold: 20000, atk: 18000, drops: [{id:'angel_feather', rate:0.2}, {id:'god_blood', rate:0.1}] },
+            'demon_king': { name: "魔王撒旦", level: 150, hp: 7000000, exp: 2000000, gold: 2000000, atk: 25000, drops: [{id:'god_slayer', rate:0.1}, {id:'chaos_orb', rate:0.8}, {id:'angel_feather', rate:0.8}] },
+            
+            'void_walker':  { name: "虛空行者", level: 160, hp: 8000000, exp: 3000000, gold: 15000, atk: 35000, drops: [{id:'void_dust', rate:0.5}, {id:'mithril', rate:0.3}, {id:'potion_max', rate:0.2}] },
+            'chaos_knight': { name: "混沌騎士", level: 170, hp: 12000000, exp: 5000000, gold: 25000, atk: 45000, drops: [{id:'chaos_orb', rate:0.4}, {id:'adamantite', rate:0.3}, {id:'dark_essence', rate:0.3}] },
+            'abyss_dragon': { name: "深淵魔龍", level: 180, hp: 20000000, exp: 12000000, gold: 50000, atk: 55000, drops: [{id:'dragon_scale', rate:0.8}, {id:'god_blood', rate:0.2}, {id:'void_reaper', rate:0.02}] },
+            'fallen_titan': { name: "墮落泰坦", level: 190, hp: 35000000, exp: 25000000, gold: 100000, atk: 65000, drops: [{id:'titan_steel', rate:0.3}, {id:'star_fragment', rate:0.3}, {id:'elixir', rate:0.2}] },
+            'genesis_god':  { name: "創世破壞神", level: 200, hp: 50000000, exp: 1000000000, gold: 500000, atk: 75000, drops: [ {id:'titan_steel', rate:0.5}, {id:'god_blood', rate:0.5}, {id:'elixir', rate:0.5}] },
+
+            // 🟢 Lv.201 - 230 虛空界
+            'void_worm': { name: "虛空吞噬蟲", level: 210, hp: 80000000, exp: 2000000000, gold: 3000000, atk: 85000, drops: [{id:'void_shard', rate:0.5}, {id:'mithril', rate:0.5}, {id:'potion_max', rate:0.3}] },
+            'shadow_phantom': { name: "虚影夢魘", level: 225, hp: 90000000, exp: 3500000000, gold: 4000000, atk: 100000, drops: [{id:'dark_matter', rate:0.4}, {id:'void_shard', rate:0.4}, {id:'elixir', rate:0.1}] },
+
+            // 🟢 Lv.231 - 260 星際界
+            'star_eater': { name: "吞星巨獸", level: 245, hp: 300000000, exp: 6000000000, gold: 5000000, atk: 130000, drops: [{id:'cosmic_steel', rate:0.3}, {id:'titan_steel', rate:0.5}, {id:'star_fragment', rate:0.2}] },
+            'nebula_dragon': { name: "星雲幻龍", level: 260, hp: 600000000, exp: 10000000000, gold: 6000000, atk: 160000, drops: [{id:'star_core', rate:0.2}, {id:'dragon_scale', rate:0.8}, {id:'god_blood', rate:0.3}] },
+
+            // 🟢 Lv.261 - 290 維度界
+            'time_keeper': { name: "時空裁決者", level: 280, hp: 1500000000, exp: 25000000000, gold: 7000000, atk: 220000, drops: [{id:'time_sand', rate:0.3}, {id:'chaos_orb', rate:0.5}, {id:'elixir', rate:0.5}] },
+            'dimension_breaker': { name: "維度粉碎者", level: 290, hp: 2000000000, exp: 50000000000, gold: 8000000, atk: 260000, drops: [{id:'dimension_gem', rate:0.2}, {id:'god_blood', rate:0.5}, {id:'genesis_armor', rate:0.05}] },
+
+            // 🟢 Lv.300 最終 BOSS
+            'entropy_god': { name: "終焉·熱寂之神", level: 300, hp: 3500000000, exp: 90000000000, gold: 10000000, atk: 700000, drops: [{id:'entropy_origin', rate:1.0}, {id:'elixir', rate:0.7}] }
+        };
+
+        let currentTab = 'monster';
+
+        function showTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            filterData();
+        }
+
+        function filterData() {
+            const container = document.getElementById('content-area');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            container.innerHTML = '';
+
+            let source = {};
+            if (currentTab === 'monster') source = MONSTER_CONFIG;
+            else {
+                // 採集類別篩選
+                Object.keys(GATHER_CONFIG).forEach(key => {
+                    if (GATHER_CONFIG[key].type === currentTab) source[key] = GATHER_CONFIG[key];
+                });
+            }
+
+            Object.values(source).forEach(item => {
+                // 搜尋邏輯
+                let hit = false;
+                if (item.name.toLowerCase().includes(search)) hit = true;
+                
+                const dropsHtml = item.drops.map(d => {
+                    const iName = getItemName(d.id);
+                    if (iName.toLowerCase().includes(search)) hit = true;
+                    
+                    let rateClass = 'rate-low';
+                    if (d.rate > 0.5) rateClass = 'rate-high';
+                    else if (d.rate > 0.2) rateClass = 'rate-mid';
+
+                    return `<span class="drop-item ${rateClass}">${iName} (${Math.round(d.rate*100)}%)</span>`;
+                }).join('');
+
+                if (hit) {
+                    const req = item.reqLv ? `需 Lv.${item.reqLv}` : `Lv.${item.level}`;
+                    
+                    // 🟢 判斷是否為怪物，顯示金幣和經驗
+                    let statsInfo = '';
+                    if (currentTab === 'monster' && item.gold) {
+                        statsInfo = `
+                            <div class="stats-row">
+                                <span class="stat-gold">💰 ${item.gold.toLocaleString()}</span>
+                                <span class="stat-exp">✨ ${item.exp.toLocaleString()} exp</span>
+                            </div>
+                        `;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <div class="card-header">
+                            <span class="card-title">${item.name}</span>
+                            <span class="card-lv">${req}</span>
+                        </div>
+                        ${statsInfo}
+                        <div class="drop-list">${dropsHtml}</div>
+                    `;
+                    container.appendChild(card);
+                }
+            });
+
+            if (container.innerHTML === '') {
+                container.innerHTML = '<div style="color:#777; margin-top:20px;">找不到符合的資料...</div>';
+            }
+        }
+
+        // 初始化
+        filterData();
+
+    </script>
+</body>
+</html>

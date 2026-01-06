@@ -12,6 +12,7 @@
             text-align: center; padding: 15px; 
             display:flex; flex-direction:column; align-items:center; 
             height: 100dvh; margin:0; box-sizing:border-box; overscroll-behavior: none;
+		overflow: scroll;
         }
         .main-box { background: #34495e; border: 4px solid #fff; padding: 15px; width: 100%; max-width: 600px; border-radius: 12px; box-sizing: border-box; flex: 1; display: flex; flex-direction: column;}
         h2 { font-size: 18px; margin: 0 0 15px 0; }
@@ -53,13 +54,13 @@
 <body>
 <div id="game-toast"></div>
     <div class="main-box">
-        <h2>🛡️ 裝備狀態</h2>
+        <h2>ߛ᯸㝥♧뀦勼/h2>
         <div class="stats-display">
             <div class="stat-grid">
                 <div>⚔️ ATK: <span id="atk" style="color:#e74c3c">0</span></div>
-                <div>🛡️ DEF: <span id="def" style="color:#3498db">0</span></div>
+                <div>ߛ᯸EF: <span id="def" style="color:#3498db">0</span></div>
                 <div>❤️ HP : <span id="hp">0</span></div>
-                <div>💧 MP : <span id="mp">0</span></div>
+                <div>ߒ砍P : <span id="mp">0</span></div>
             </div>
         </div>
         <div class="slots-area">
@@ -67,82 +68,99 @@
             <div class="slot"><div class="slot-title">防具 (Armor)</div><div id="slot-armor" class="slot-item">無</div></div>
             <div class="slot"><div class="slot-title">飾品 (Acc)</div><div id="slot-acc" class="slot-item">無</div></div>
         </div>
-        <h3>🎒 背包 (點擊裝備)</h3>
+        <h3>ߎ⠨㌥셠(點擊裝備)</h3>
         <div id="inventory-list" class="inventory-container"><div style="font-size:12px; color:#aaa; padding:10px;">讀取中...</div></div>
     </div>
     <a href="hub.html" class="back-btn">◀ 返回大廳</a>
 
     <script src="socket.io.js"></script>
     <script>
-		const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
-		const BACKEND_URL = atob(_0x5a1b);
-		
-		const socket = io(BACKEND_URL, {
-		    transports: ['websocket', 'polling'],
-		    secure: true // 🔒 強制使用加密連線 (HTTPS/WSS)
-		});
+const socket = io('https://mmo.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // 🟢 完整裝備列表 (已同步 Server 最新設定)
+        // ߟ⠥崨㝥♥藨ᨠ(含 Lv.201 - Lv.300 神裝)
         const ITEM_MAP = {
             // === 武器 ===
-            'wood_sword':   { name: "木劍", cost: 100, desc: "ATK+10" },
-            'copper_dagger':{ name: "銅匕首", cost: 200, desc: "ATK+15" },
-            'iron_sword':   { name: "鐵劍", cost: 500, desc: "ATK+30" },
-            'spike_club':   { name: "狼牙棒", cost: 0, desc: "ATK+55" },
-            'poison_dag':   { name: "劇毒匕首", cost: 0, desc: "ATK+60" },
-            'silver_blade': { name: "銀刃", cost: 2000, desc: "ATK+150" },
-            'flame_staff':  { name: "火焰法杖", cost: 0, desc: "ATK+200" },
-            'gold_axe':     { name: "黃金巨斧", cost: 10000, desc: "ATK+500" },
-            'frost_bow':    { name: "寒冰弓", cost: 0, desc: "ATK+650" },
-            'mithril_saber':{ name: "秘銀軍刀", cost: 50000, desc: "ATK+2000" },
-            'void_reaper':  { name: "虛空收割者", cost: 0, desc: "ATK+3500" },
-            'god_slayer':   { name: "弒神劍", cost: 0, desc: "ATK+20000" },
-            'chaos_staff':  { name: "混沌法杖", cost: 0, desc: "ATK+25000" },
-            'hero_sword':   { name: "勇者之劍", cost: 2000, desc: "ATK+50" },
-            'steel_blade':  { name: "精鋼劍", cost: 0, desc: "ATK+25" },
-            'assassin_dag': { name: "刺客短刀", cost: 2000, desc: "ATK+120" },
-            // 新增採集武器
-            'oak_bow':      { name: "橡木弓", cost: 200, desc: "ATK+25" },
-            'maple_staff':  { name: "楓木法杖", cost: 500, desc: "ATK+50" },
-            'shark_tooth':  { name: "鯊魚牙匕首", cost: 800, desc: "ATK+80" },
-            'emerald_staff':{ name: "翡翠法杖", cost: 5000, desc: "ATK+300" },
-            'obsidian_blade':{ name: "黑曜石之劍", cost: 8000, desc: "ATK+600" },
-            'dragon_spear': { name: "龍骨長槍", cost: 15000, desc: "ATK+1200" },
+            'wood_sword':       { name: "木劍", cost: 100, desc: "ATK+10" },
+            'copper_dagger':    { name: "銅匕首", cost: 400, desc: "ATK+20" }, 
+            'iron_sword':       { name: "鐵劍", cost: 1500, desc: "ATK+60" }, 
+            'silver_blade':     { name: "銀刃", cost: 4000, desc: "ATK+100" },
+            'spike_club':       { name: "狼牙棒", cost: 0, desc: "ATK+140 HP+300" }, 
+            'poison_dag':       { name: "劇毒匕首", cost: 0, desc: "ATK+160" }, 
+            'shark_tooth':      { name: "鯊魚牙匕首", cost: 800, desc: "ATK+80" },
+            'flame_staff':      { name: "火焰法杖", cost: 0, desc: "ATK+300 MP+100" }, 
+            'emerald_staff':    { name: "翡翠法杖", cost: 5000, desc: "ATK+300" },
+            'gold_axe':         { name: "黃金巨斧", cost: 10000, desc: "ATK+500" },
+            'obsidian_blade':   { name: "黑曜石之劍", cost: 8000, desc: "ATK+600" },
+            'frost_bow':        { name: "寒冰弓", cost: 0, desc: "ATK+1300" }, 
+            'dragon_spear':     { name: "龍骨長槍", cost: 15000, desc: "ATK+1200" },
+            'mithril_saber':    { name: "秘銀軍刀", cost: 50000, desc: "ATK+2000" },
+            'void_reaper':      { name: "虛空收割者", cost: 0, desc: "ATK+3500" },
+            'void_reaper_dark': { name: "闇·虛空收割者", cost: 0, desc: "ATK+5500" }, 
+            'god_slayer':       { name: "弒神劍", cost: 0, desc: "ATK+20000 HP+4000" }, 
+            'chaos_staff':      { name: "混沌法杖", cost: 0, desc: "ATK+25000 MP+300" }, 
+            'hero_sword':       { name: "勇者之劍", cost: 0, desc: "ATK+50" },
+            'steel_blade':      { name: "精鋼劍", cost: 0, desc: "ATK+25" },
+            'assassin_dag':     { name: "刺客短刀", cost: 0, desc: "ATK+120" },
+            'genesis_weapon':   { name: "創世·終焉之劍", cost: 0, desc: "ATK+50000 HP+20000" }, 
+            
+            // ߟ⠛新增] Lv.230 - 300 新武器
+            'void_blade':       { name: "虛空之刃", cost: 0, desc: "ATK+75000 HP+80000" }, 
+            'galaxy_saber':     { name: "銀河光劍", cost: 0, desc: "ATK+110000 HP+150000" }, 
+            'entropy_sword':    { name: "終焉·熱寂之劍", cost: 0, desc: "ATK+200000 HP+300000" },
+            
+            // 採集武器
+            'oak_bow':          { name: "橡木弓", cost: 200, desc: "ATK+25" },
+            'maple_staff':      { name: "楓木法杖", cost: 500, desc: "ATK+50" },
 
             // === 防具 ===
-            'cloth_armor':  { name: "布衣", cost: 100, desc: "DEF+5" },
-            'hunt_vest':    { name: "獵人背心", cost: 0, desc: "DEF+8" },
-            'leather_armor':{ name: "皮甲", cost: 400, desc: "DEF+15" },
-            'chain_mail':   { name: "鎖子甲", cost: 1500, desc: "DEF+40" },
-            'magma_plate':  { name: "熔岩胸甲", cost: 0, desc: "DEF+100" },
-            'ice_robe':     { name: "冰霜法袍", cost: 0, desc: "DEF+200" },
-            'yeti_cloak':   { name: "雪怪斗篷", cost: 0, desc: "DEF+250" },
-            'demon_armor':  { name: "惡魔戰甲", cost: 0, desc: "DEF+1000" },
-            'angel_armor':  { name: "熾天使鎧甲", cost: 0, desc: "DEF+5000" },
-            'plate_mail':   { name: "板金甲", cost: 1500, desc: "DEF+15" },
-            'dragon_mail':  { name: "龍鱗甲", cost: 0, desc: "DEF+30" },
+            'cloth_armor':      { name: "布衣", cost: 100, desc: "DEF+5" },
+            'hunt_vest':        { name: "獵人背心", cost: 0, desc: "DEF+25 HP+200" },
+            'leather_armor':    { name: "皮甲", cost: 400, desc: "DEF+15" }, 
+            'plate_mail':       { name: "板金甲", cost: 0, desc: "DEF+15" },
+            'dragon_mail':      { name: "龍鱗甲", cost: 0, desc: "DEF+30" },
+            'chain_mail':       { name: "鎖子甲", cost: 1500, desc: "DEF+40" }, 
+            'iron_armor':       { name: "鐵盔甲", cost: 4000, desc: "DEF+100" }, 
+            'magma_plate':      { name: "熔岩胸甲", cost: 0, desc: "DEF+150 HP+1500" }, 
+            'ice_robe':         { name: "冰霜法袍", cost: 0, desc: "DEF+200 MP+500" },
+            'yeti_cloak':       { name: "雪怪斗篷", cost: 0, desc: "DEF+350 HP+4000" }, 
+            'demon_armor':      { name: "惡魔戰甲", cost: 0, desc: "DEF+1000 HP+12000" }, 
+            'angel_armor':      { name: "熾天使鎧甲", cost: 0, desc: "DEF+5000 HP+50000" },
+            'genesis_armor':    { name: "創世·神之庇護", cost: 0, desc: "DEF+20000 HP+150000" }, 
+
+            // ߟ⠛新增] Lv.230 - 300 新防具
+            'void_armor':       { name: "虛空戰甲", cost: 0, desc: "DEF+45000 HP+300000" }, 
+            'nebula_plate':     { name: "星雲板甲", cost: 0, desc: "DEF+70000 HP+600000" }, 
+            'entropy_god_armor':{ name: "終焉·神之庇護", cost: 0, desc: "DEF+120000 HP+1500000" },
 
             // === 飾品 ===
-            'bone_ring':    { name: "骨戒", cost: 0, desc: "ATK+2" },
-            'ring_str':     { name: "力量戒指", cost: 300, desc: "ATK+10" },
-            'snake_boots':  { name: "蛇皮長靴", cost: 0, desc: "DEF+10" },
-            'amulet_soul':  { name: "靈魂護符", cost: 0, desc: "MP+300" },
-            'ring_lord':    { name: "領主指環", cost: 0, desc: "全能力+500" },
-            'crown_chaos':  { name: "混沌之冠", cost: 0, desc: "全能力+2000" },
-            'ring_life':    { name: "生命護符", cost: 600, desc: "HP+100" },
-            'ring_magic':   { name: "魔力耳環", cost: 500, desc: "MP+50" },
-            // 新增採集飾品
-            'fish_ring':    { name: "魚鱗戒指", cost: 400, desc: "DEF+8" },
-            'pearl_necklace':{ name: "珍珠項鍊", cost: 2000, desc: "MP+100" }
+            'bone_ring':        { name: "骨戒", cost: 0, desc: "ATK+15 HP+200" }, 
+            'ring_str':         { name: "力量戒指", cost: 3000, desc: "ATK+30" },
+            'bracelet_def':     { name: "堅毅手環", cost: 3000, desc: "DEF+30" }, 
+            'necklace_hp':      { name: "紅水晶項鍊", cost: 5000, desc: "HP+250" }, 
+            'necklace_mp':      { name: "藍水晶項鍊", cost: 5000, desc: "MP+60" }, 
+            'snake_boots':      { name: "蛇皮長靴", cost: 0, desc: "DEF+30 HP+200" }, 
+            'fish_ring':        { name: "魚鱗戒指", cost: 400, desc: "DEF+50 HP+500" }, 
+            'pearl_necklace':   { name: "珍珠項鍊", cost: 2000, desc: "DEF+20 MP+150" }, 
+            'amulet_soul':      { name: "靈魂護符", cost: 0, desc: "MP+300 HP+1000" },
+            'ring_lord':        { name: "領主指環", cost: 0, desc: "全能力+600" }, 
+            'crown_chaos':      { name: "混沌之冠", cost: 0, desc: "全能力+2000" },
+            'ring_galaxy':      { name: "銀河指環", cost: 0, desc: "全能力+5000" }, 
+            'ring_life':        { name: "生命護符", cost: 0, desc: "HP+100" },
+            'ring_magic':       { name: "魔力耳環", cost: 0, desc: "MP+50" },
+
+            // ߟ⠛新增] Lv.280 新飾品
+            'dimension_ring':   { name: "維度指環", cost: 0, desc: "全能力+15000" }
         };
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
         socket.on('playerStatsUpdate', (p) => { renderStats(p); renderSlots(p.equipment); renderInventory(p.inventory); });
         socket.on('equipResult', (msg) => { showMsg(msg); });
         
-        // 監聽錯誤訊息
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
 
         function renderStats(p) {
@@ -171,7 +189,6 @@
             let hasEquipable = false;
             Object.keys(inv).forEach(key => {
                 const item = ITEM_MAP[key];
-                // 只顯示可裝備的物品 (有在 ITEM_MAP 裡面的)
                 if (item && inv[key] > 0) {
                     hasEquipable = true;
                     const div = document.createElement('div');

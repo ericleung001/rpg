@@ -101,6 +101,34 @@
         
         #game-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f; color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999; font-size: 14px; font-weight: bold; transition: top 0.5s ease-in-out; pointer-events: none; }
 
+        /* 勝利畫面樣式 */
+        #victory-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999; 
+            display: none; 
+            flex-direction: column; justify-content: center; align-items: center;
+            animation: fadeIn 2s ease-in;
+        }
+        #victory-gif {
+            width: 80%;        
+            max-width: 400px;  
+            height: auto;       
+            object-fit: contain;
+            border: 4px solid #f1c40f; border-radius: 10px;
+            box-shadow: 0 0 30px #f1c40f;
+            margin-bottom: 20px;
+        }
+        #victory-title {
+            color: #f1c40f; text-shadow: 0 0 10px red; margin-bottom: 20px;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 10px 10px rgba(241, 196, 15, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); }
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
         /* 倒數計時器樣式 */
         #countdown-timer {
             position: absolute; top: 10px; right: 10px;
@@ -138,7 +166,7 @@
             <div class="gba-box my-status">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
                     <span style="font-size:12px; font-weight:bold;"><span id="my-name">勇者</span>(你)</span>
-                    <span style="font-size:10px; color:#f1c40f;">⚔️<span id="atk-val">0</span> ߛ᯸Ｓpan id="def-val">0</span></span>
+                    <span style="font-size:10px; color:#f1c40f;">⚔️<span id="atk-val">0</span> 🛡️<span id="def-val">0</span></span>
                 </div>
                 <div class="hp-bar"><div id="php" class="hp-fill" style="width:100%"></div></div>
                 <div class="mp-bar"><div id="pmp" class="mp-fill" style="width:100%"></div></div>
@@ -163,6 +191,18 @@
                 </div>
             </div>
         </div>
+
+        <div id="victory-overlay">
+            <h2 id="victory-title">🎉 討伐成功 🎉</h2>
+            <img id="victory-gif" src="https://rpggameser.cc/img/win.gif" alt="Victory">
+            <div id="victory-text" style="margin:20px 0; line-height:1.6;">
+                恭喜擊敗<br>
+                <span style="color:red; font-size:14px;">LV.200 創世破壞神</span>
+            </div>
+            <button class="btn" style="background:#f1c40f; color:#000; border-color:#fff; padding:15px 30px; animation: pulse 1s infinite;" onclick="leaveRoom()">
+                🏆 返回主頁 🏆
+            </button>
+        </div>
     </div>
     
     <div id="chat-container">
@@ -176,12 +216,15 @@
         </div>
     </div>
     
-    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="socket.io.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
 
         let isMyTurn = false; 
         const params = new URLSearchParams(window.location.search);
@@ -235,18 +278,17 @@ const socket = io('https://mmo.ttctv-105.cc', {
             socket.emit('joinGame', myToken); 
             
             setTimeout(() => {
-                // ߟ⠛修正] 如果是世界 BOSS，直接隱藏等待大廳，直接開打
+                // 🟢 [修正] 如果是世界 BOSS，直接隱藏等待大廳，直接開打
                 if (roomId === 'world_boss') {
                     socket.emit('connectToBossRoom');
                     
-                    document.getElementById('turn-bar').innerText = "ߔ堤薧匠BOSS 討伐戰 ߔ墻
+                    document.getElementById('turn-bar').innerText = "🔥 世界 BOSS 討伐戰 🔥";
                     document.getElementById('turn-bar').style.background = "#c0392b";
                     document.getElementById('teammates-box').style.display = 'none'; 
                     document.getElementById('lobby-overlay').style.display = 'none';
                     
                     document.getElementById('countdown-timer').style.display = 'block'; 
-                    // Note: We don't need to call startCountdown here because the 'worldBossSync' event will trigger it.
-                    // This avoids race conditions where the timer resets to 540s before receiving server time.
+                    startCountdown(); 
 
                 } else {
                     socket.emit('connectToRoom', roomId);
@@ -277,8 +319,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
             const nameSpan = document.createElement('span');
             nameSpan.style.color = '#f1c40f'; nameSpan.style.fontWeight = 'bold';
             nameSpan.textContent = `[${name}]: `;
-            // 允許 HTML 渲染 (因為 Server 傳過來的 Log 有 span style)
-            div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${name}]:</span> ${msg}`;
+            const msgNode = document.createTextNode(msg);
+            div.appendChild(nameSpan); div.appendChild(msgNode);
             history.appendChild(div); history.scrollTop = history.scrollHeight;
         }
 
@@ -295,7 +337,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             document.getElementById('chat-header').innerText = chat.classList.contains('chat-open') ? " 收起" : " 聊天室 (點擊展開)";
         }
 
-        // ߟ⠛新增] 接收世界 BOSS 數據同步
+        // 🟢 [新增] 接收世界 BOSS 數據同步
         socket.on('worldBossSync', (data) => {
             if (!data.active) {
                 showMsg("BOSS 已被擊敗！");
@@ -310,19 +352,15 @@ const socket = io('https://mmo.ttctv-105.cc', {
             document.getElementById('mhp-txt').innerText = `${(data.hp/100000000).toFixed(2)}億`;
             
             const img = document.getElementById('monster-img');
-            // 世界BOSS圖片
             const bossSrc = "img/monsters/entropy_god.png"; 
             if (!img.src.includes(bossSrc)) { img.src = bossSrc; img.style.display = 'block'; }
 
-            // ߟ⠛新增] 同步 Server 的倒數時間
+            // 🟢 [新增] 同步 Server 的倒數時間
             if (data.remainingTime !== undefined) {
-                const serverTimeSec = Math.floor(data.remainingTime / 1000);
-                
-                // 誤差修正：只有當本地時間跟伺服器差超過 2 秒，才強制更新
-                if (Math.abs(timeLeft - serverTimeSec) > 2 || !battleTimer) {
-                    timeLeft = serverTimeSec;
-                    if (!battleTimer) startCountdown(); 
-                    else updateTimerDisplay();
+                timeLeft = Math.floor(data.remainingTime / 1000);
+                if (!battleTimer) {
+                    document.getElementById('countdown-timer').style.display = 'block';
+                    startCountdown(); 
                 }
             }
         });
@@ -397,29 +435,14 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function startCountdown() {
             const timerDiv = document.getElementById('countdown-timer');
             timerDiv.style.display = 'block';
-            
-            // 防止重複啟動
             if (battleTimer) clearInterval(battleTimer);
-            
-            updateTimerDisplay();
-
             battleTimer = setInterval(() => {
                 timeLeft--;
-                updateTimerDisplay();
-                
-                if (timeLeft <= 0) { 
-                    clearInterval(battleTimer); 
-                    timerDiv.innerText = "☠️ 時間到！"; 
-                }
+                const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                const sec = (timeLeft % 60).toString().padStart(2, '0');
+                timerDiv.innerText = `⚠️ 滅團倒數: ${min}:${sec}`;
+                if (timeLeft <= 0) { clearInterval(battleTimer); timerDiv.innerText = "☠️ 時間到！"; }
             }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const timerDiv = document.getElementById('countdown-timer');
-            if (timeLeft < 0) timeLeft = 0;
-            const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            const sec = (timeLeft % 60).toString().padStart(2, '0');
-            timerDiv.innerText = `⚠️ 滅團倒數: ${min}:${sec}`;
         }
 
         socket.on('turnUpdate', (data) => {
@@ -460,43 +483,52 @@ const socket = io('https://mmo.ttctv-105.cc', {
             log(`<span style="color:#e74c3c">受到 ${d.damage} 傷害！</span>`); 
         });
 
-        // ߟ⠛修正] 移除 GIF 彈窗，只保留按鈕變化和簡單提示
         socket.on('battleWon', (data) => {
-            console.log("收到勝利數據:", data); 
-
             if (battleTimer) clearInterval(battleTimer);
             document.getElementById('countdown-timer').style.display = 'none';
             const bar = document.getElementById('turn-bar');
             bar.innerText = " 勝利！"; bar.style.background = "gold"; bar.style.color = "black";
             const img = document.getElementById('monster-img'); img.style.transition = "opacity 2s"; img.style.opacity = 0;
 
+            const overlay = document.getElementById('victory-overlay');
+            const title = document.getElementById('victory-title');
+            const txt = document.getElementById('victory-text');
+            const gif = document.getElementById('victory-gif');
+
             if (roomId === 'world_boss') {
-                showMsg(`ߑᠨ莤쐦营꟯쁧${data.gold} G`);
-                showNormalVictoryBtn(); // 顯示離開按鈕
-                // 排名已由 Server 透過 battleLog 廣播，這裡不再顯示
+                // 🟢 [修改] 世界 BOSS 獎勵文字
+                showMsg(`👑 獲得巨額賞金！`);
+                title.innerText = "👑 傳說達成 👑";
+                gif.src = "https://rpggameser.cc/img/win2.gif"; 
+                txt.innerHTML = `虛空滅世者已被討伐！<br><span style="color:#f1c40f; font-size:16px;">全服發放巨額金幣！</span>`;
+                setTimeout(() => { overlay.style.display = 'flex'; }, 1000);
             }
-            else {
+            else if (currentMonsterLevel >= 300) {
+                showMsg(`👑 弒神者誕生！獲得 ${data.gold} G`);
+                title.innerText = "👑 宇宙制霸 👑";
+                gif.src = "https://rpggameser.cc/img/win2.gif"; 
+                txt.innerHTML = `你已擊敗<br><span style="color:red; font-size:16px;">LV.300 終焉·熱寂之神</span>`;
+                setTimeout(() => { overlay.style.display = 'flex'; }, 1000);
+            } else {
                 showMsg(`勝利！獲得 ${data.gold} G`);
                 showNormalVictoryBtn();
             }
         });
 
         function showNormalVictoryBtn() {
-            document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column: span 2; background:#f1c40f; color:black; font-weight:bold;" onclick="leaveRoom()">ߏ栥띥詩뢩拼/button>`;
+            document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column: span 2; background:#f1c40f; color:black; font-weight:bold;" onclick="leaveRoom()">🏆 勝利離開</button>`;
             document.getElementById('fixed-top-area').style.display = 'none'; 
         }
 
         socket.on('playerDead', () => { 
             if (battleTimer) clearInterval(battleTimer);
             document.getElementById('countdown-timer').style.display = 'none';
-            log("你被打倒了..."); showMsg("ߑ려粧擦ꡮ.."); 
+            log("你被打倒了..."); showMsg("👻 你已經死亡..."); 
             document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column:span 2; background:red; color:white" onclick="window.location.href='rest.html'"> 去復活</button>`; 
             document.getElementById('fixed-top-area').style.display = 'none'; 
         });
 
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
-        
-        // ߟ⠛關鍵] battleLog 負責顯示 Server 傳來的所有戰鬥資訊 (包含排名 HTML)
         socket.on('battleLog', (msg) => log(msg));
         
         socket.on('roomLeft', () => {
@@ -508,9 +540,11 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function requestStart() { socket.emit('startBattle', roomId); }
         
         function act(type) {
+            // 🟢 [修改] 區分世界 BOSS 動作
             if (roomId === 'world_boss') {
                 toggle(true);
                 socket.emit('worldBossAction', { type: 'attack' });
+                // 模擬冷卻
                 setTimeout(() => toggle(false), 500); 
             } else {
                 if(!isMyTurn) return; 
@@ -566,6 +600,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         }
 
         function useSkill(skillId) {
+            // 🟢 [修改] 區分世界 BOSS 動作
             if (roomId === 'world_boss') {
                 toggle(true);
                 socket.emit('worldBossAction', { type: 'skill', skillId: skillId });
@@ -610,7 +645,9 @@ const socket = io('https://mmo.ttctv-105.cc', {
         }
 
         function useItem(itemId) {
+            // 🟢 [修改] 區分世界 BOSS 動作 (不允許使用道具? 這裡假設可以)
             if (roomId === 'world_boss') {
+               // 世界 BOSS 暫時不實作道具 (或者可以像攻擊一樣發送 worldBossAction)
                showMsg("BOSS 戰無法使用道具！");
                resetButtons();
             } else {
@@ -641,6 +678,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 <button class="btn battle-action" onclick="openBag()">物品</button>
                 <button class="btn" onclick="leaveRoom()">逃跑</button>
             `;
+            // 如果是世界 BOSS，按鈕永遠可以按 (受冷卻控制)
             if (roomId === 'world_boss') {
                 toggle(false);
             } else {
@@ -650,11 +688,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         function log(m) { 
             const box = document.getElementById('log');
-            // ߟ⠛修正] 支援 HTML (讓排名榜的 div/span 樣式能顯示出來)
-            const div = document.createElement('div');
-            div.innerHTML = `> ${m}`;
-            box.insertBefore(div, box.firstChild); // 插入最上方
-            
+            box.innerHTML = `<div>> ${m}</div>` + box.innerHTML;
             const lines = box.querySelectorAll('div');
             if (lines.length > 20) for(let i=20; i<lines.length; i++) lines[i].remove();
         }

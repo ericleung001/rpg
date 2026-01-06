@@ -51,7 +51,7 @@
 
         #btn-login { background: #2ecc71; color: white; }
         #btn-reg { background: #f1c40f; color: black; }
-        #btn-change { background: #3498db; color: white; width: 100%; margin-top: 5px; } /* 新增 */
+        #btn-change { background: #3498db; color: white; width: 100%; margin-top: 5px; }
 
         button:active { transform: translateY(3px); box-shadow: none; }
         
@@ -59,7 +59,7 @@
         
         .footer { margin-top: 30px; font-size: 10px; color: #bdc3c7; }
 
-        /* 🟢 修改密碼專用欄位 (預設隱藏) */
+        /* 修改密碼專用欄位 (預設隱藏) */
         #new-pass-area { display: none; margin-top: 10px; border-top: 2px dashed #ccc; padding-top: 10px; }
     </style>
 </head>
@@ -88,15 +88,14 @@
 
     <div class="footer">Server Status: <span id="status" style="color:red">Connecting...</span></div>
 
-    <script src="socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    
     <script>
-        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
-        const BACKEND_URL = atob(_0x5a1b);
         
-        const socket = io(BACKEND_URL, {
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+const socket = io('https://mmo.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
 
         const statusSpan = document.getElementById('status');
         const msgDiv = document.getElementById('msg');
@@ -107,9 +106,16 @@
         }
 
         socket.on('connect', () => {
+            console.log("✅ 連線成功！Socket ID:", socket.id);
             statusSpan.innerText = "Online";
             statusSpan.style.color = "#2ecc71";
             if (savedToken) window.location.href = 'hub.html';
+        });
+
+        socket.on('connect_error', (err) => {
+            console.error("❌ 連線失敗:", err);
+            statusSpan.innerText = "Error";
+            msgDiv.innerText = "無法連線伺服器，請稍後再試";
         });
 
         socket.on('disconnect', () => {
@@ -140,7 +146,7 @@
             }
         });
 
-        // 🟢 強密碼驗證 (8位, 大寫, 小寫, 數字)
+        // 強密碼驗證 (8位, 大寫, 小寫, 數字)
         function validatePassword(pw) {
             if (pw.length < 8) return "密碼長度需至少 8 位";
             if (!/[A-Z]/.test(pw)) return "密碼需包含大寫英文 (A-Z)";
@@ -168,7 +174,7 @@
             socket.emit(type, { user, pass });
         }
 
-        // 🟢 切換修改密碼模式
+        // 切換修改密碼模式
         function toggleChangeMode() {
             const area = document.getElementById('new-pass-area');
             const btns = document.getElementById('main-btns');
@@ -185,7 +191,7 @@
             }
         }
 
-        // 🟢 執行修改密碼
+        // 執行修改密碼
         function doChangePass() {
             const user = document.getElementById('user').value.trim();
             const oldPass = document.getElementById('pass').value.trim();
