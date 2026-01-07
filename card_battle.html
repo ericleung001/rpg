@@ -19,9 +19,9 @@
 
         /* 手牌區 */
         .hand-zone { 
-            height: 110px; display: flex; justify-content: center; align-items: center; 
+            height: 120px; display: flex; justify-content: center; align-items: center; 
             gap: 5px; padding: 5px; background: rgba(0,0,0,0.3); 
-            overflow-x: auto; /* 手牌多時可滑動 */
+            overflow-x: auto;
         }
         
         /* 卡背 (對手手牌) */
@@ -32,7 +32,10 @@
         }
 
         /* 戰場區 (放怪物的) */
-        .field-zone { flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .field-zone { 
+            flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px; 
+            padding: 10px; 
+        }
         
         /* 玩家資訊 (HP/AP) */
         .player-info { 
@@ -72,11 +75,24 @@
             color: #fff; font-size: 16px; display: none; z-index: 200; pointer-events: none;
             border-radius: 10px; box-shadow: 0 0 20px #e74c3c;
         }
+
+        /* 結束回合按鈕 */
+        #end-turn-btn {
+            position: fixed; right: 10px; top: 50%; transform: translateY(-50%);
+            padding: 15px; background: #f39c12; border: none; color: white;
+            border-radius: 50%; width: 70px; height: 70px; font-weight: bold;
+            cursor: pointer; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center; text-align: center;
+            font-family: inherit; font-size: 10px;
+        }
+        #end-turn-btn:active { transform: translateY(-50%) scale(0.95); }
     </style>
 </head>
 <body>
 
     <div id="turn-indicator">戰鬥開始</div>
+
+    <button id="end-turn-btn" onclick="endTurn()">結束<br>回合</button>
 
     <div class="opponent-area">
         <div class="hand-zone" id="opp-hand"></div>
@@ -108,10 +124,10 @@ const socket = io('https://mmo.ttctv-105.cc', {
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // 🟢 [設定] GitHub 圖片路徑
+        // 圖片路徑
         const IMG_BASE_URL = "https://ericleung001.github.io/rpg/img/monsters/";
         
-        // 🟢 [重要] 完整的怪物與魔法列表 (必須與 cards.html 一致)
+        // 怪物列表 (需與 cards.html 一致)
         const MONSTER_LIST = {
             'slime': { name: "史萊姆", img: "slime.png" },
             'rat': { name: "大老鼠", img: "rat.png" },
@@ -166,7 +182,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             'card_shield': { name: "護盾卡", icon: "🛡️", desc: "獲得護盾" }
         };
 
-        // 🟢 建立快速查詢表
+        // 建立快速查詢表
         const CARD_DB = {};
         Object.keys(MONSTER_LIST).forEach(k => {
             CARD_DB[`card_${k}`] = { ...MONSTER_LIST[k], type: 'unit', cost: 2 };
@@ -182,10 +198,19 @@ const socket = io('https://mmo.ttctv-105.cc', {
             socket.emit('joinGame', myToken); 
         });
 
-        // 🟢 [核心] 接收戰況更新
+        // 接收戰況更新
         socket.on('cardGameUpdate', (data) => {
-            console.log("收到戰況:", data); // Debug 用
+            console.log("收到戰況:", data);
             renderGame(data);
+        });
+
+        // 接收錯誤訊息
+        socket.on('errorMessage', (msg) => alert(msg));
+
+        // 接收遊戲結束
+        socket.on('cardGameEnd', (res) => {
+            alert(`遊戲結束！勝利者: ${res.winner}`);
+            window.location.href = 'hub.html';
         });
 
         function renderGame(data) {
@@ -205,13 +230,14 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 indicator.innerText = "👉 你的回合 👈";
                 indicator.style.borderColor = "#2ecc71";
                 indicator.style.boxShadow = "0 0 20px #2ecc71";
+                document.getElementById('end-turn-btn').style.display = 'flex'; // 顯示結束按鈕
             } else {
                 indicator.innerText = "⏳ 對手回合";
                 indicator.style.borderColor = "#e74c3c";
                 indicator.style.boxShadow = "0 0 20px #e74c3c";
+                document.getElementById('end-turn-btn').style.display = 'none'; // 隱藏結束按鈕
             }
             indicator.style.display = 'block';
-            // 2秒後淡出，但如果是自己回合可以留久一點提醒
             setTimeout(() => indicator.style.display = 'none', 1500);
 
             // 3. 渲染我方手牌
@@ -221,14 +247,13 @@ const socket = io('https://mmo.ttctv-105.cc', {
             if (me.hand && me.hand.length > 0) {
                 me.hand.forEach((cardId, index) => {
                     const el = createCardElement(cardId);
-                    // 點擊出牌 (下階段實作)
+                    // 點擊出牌
                     el.onclick = () => {
-                        console.log(`點擊卡片: ${cardId}`);
                         if (data.turn !== socket.id) {
                             alert("還沒輪到你！");
                             return;
                         }
-                        // socket.emit('cardAction', { type: 'play', index: index });
+                        socket.emit('cardAction', { type: 'play', index: index });
                     };
                     myHandDiv.appendChild(el);
                 });
@@ -244,24 +269,24 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 back.className = 'card-back';
                 oppHandDiv.appendChild(back);
             }
+
+            // 5. 渲染戰場
+            renderField(me.field, 'my-field', true);
+            renderField(opp.field, 'opp-field', false);
         }
 
-        // 🟢 [核心] 建立卡片 DOM
         function createCardElement(cardId) {
             const div = document.createElement('div');
-            
-            // 嘗試從本地資料庫找資料
             const cardInfo = CARD_DB[cardId];
             
-            // 預設值 (防呆)
-            let name = "未知卡片";
+            let name = "未知";
             let visual = "❓";
             let cost = 1;
             let type = "spell";
 
             if (cardInfo) {
                 name = cardInfo.name;
-                cost = cardInfo.cost; // 怪=2, 法=1
+                cost = cardInfo.cost; 
                 type = cardInfo.type;
 
                 if (type === 'unit') {
@@ -273,7 +298,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     visual = `<div style="font-size:24px; margin-top:10px;">${cardInfo.icon}</div>`;
                 }
             } else {
-                div.className = 'battle-card'; // 未知
+                div.className = 'battle-card'; 
             }
 
             div.innerHTML = `
@@ -283,6 +308,42 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 <div class="stats">${type==='unit'?'':''}</div> 
             `;
             return div;
+        }
+
+        // 渲染戰場上的怪物
+        function renderField(fieldData, elementId, isMine) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+
+            fieldData.forEach(monster => {
+                const div = document.createElement('div');
+                div.className = 'battle-card unit';
+                
+                let imgUrl = '👾';
+                const cardInfo = CARD_DB[monster.id];
+                if (cardInfo) {
+                    imgUrl = `<img src="${IMG_BASE_URL + cardInfo.img}" onerror="this.style.display='none'">`;
+                }
+
+                div.innerHTML = `
+                    ${imgUrl}
+                    <div style="font-size:8px; margin-top:2px;">${cardInfo ? cardInfo.name : '怪物'}</div>
+                    <div style="color:#e74c3c; font-weight:bold; font-size:9px;">
+                        ⚔️${monster.atk} ❤️${monster.hp}
+                    </div>
+                `;
+                
+                // 如果是剛召喚 (不能攻擊)，變半透明
+                if (isMine && !monster.canAttack) {
+                    div.style.opacity = "0.6";
+                }
+
+                container.appendChild(div);
+            });
+        }
+
+        function endTurn() {
+            socket.emit('cardAction', { type: 'endTurn' });
         }
 
     </script>
