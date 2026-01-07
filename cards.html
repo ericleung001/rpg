@@ -23,21 +23,36 @@
             background: #34495e; border: 2px solid #7f8c8d; border-radius: 8px;
             padding: 10px 5px; position: relative; cursor: pointer;
             transition: transform 0.1s;
-            min-height: 120px; display: flex; flex-direction: column; justify-content: space-between;
+            min-height: 140px; display: flex; flex-direction: column; justify-content: space-between;
+            overflow: hidden;
         }
         .card:active { transform: scale(0.95); }
         .card.owned { border-color: #f1c40f; background: #2c3e50; }
         .card.not-owned { opacity: 0.4; filter: grayscale(100%); }
         .card.in-deck { border: 2px solid #2ecc71; box-shadow: 0 0 10px #2ecc71; }
 
-        .card-name { font-size: 10px; color: #fff; margin-bottom: 5px; font-weight: bold; }
-        .card-img { font-size: 24px; margin: 5px 0; }
-        .card-stats { font-size: 8px; color: #bdc3c7; }
+        /* 稀有度顏色 */
+        .card[data-rarity="1"] { border-color: #bdc3c7; } /* 白 */
+        .card[data-rarity="2"] { border-color: #2ecc71; } /* 綠 */
+        .card[data-rarity="3"] { border-color: #3498db; } /* 藍 */
+        .card[data-rarity="4"] { border-color: #9b59b6; } /* 紫 */
+        .card[data-rarity="5"] { border-color: #f1c40f; box-shadow: 0 0 5px #f1c40f; } /* 金 */
+
+        .card-name { font-size: 8px; color: #fff; margin-bottom: 5px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* 怪物圖片區域 */
+        .card-img { 
+            font-size: 32px; margin: 5px 0; height: 50px; display: flex; 
+            align-items: center; justify-content: center; 
+            background: rgba(0,0,0,0.2); border-radius: 5px;
+        }
+        
+        .card-stats { font-size: 8px; color: #bdc3c7; line-height: 1.4; }
         .card-count { 
             position: absolute; top: -5px; right: -5px; 
             background: #e74c3c; color: white; 
             border-radius: 50%; width: 20px; height: 20px; 
-            font-size: 8px; line-height: 20px;
+            font-size: 8px; line-height: 20px; z-index: 10;
         }
 
         /* 牌組區域 */
@@ -45,7 +60,7 @@
             position: fixed; bottom: 0; left: 0; width: 100%;
             background: rgba(0,0,0,0.9); border-top: 2px solid #f1c40f;
             padding: 10px; box-sizing: border-box; display: flex; 
-            justify-content: space-between; align-items: center;
+            justify-content: space-between; align-items: center; z-index: 100;
         }
         .deck-info { font-size: 10px; text-align: left; }
         .save-btn {
@@ -56,7 +71,7 @@
         .back-btn {
             position: fixed; top: 10px; left: 10px;
             background: #7f8c8d; color: white; padding: 5px 10px; text-decoration: none;
-            border-radius: 5px; font-size: 10px; border: 1px solid #fff;
+            border-radius: 5px; font-size: 10px; border: 1px solid #fff; z-index: 100;
         }
     </style>
 </head>
@@ -77,66 +92,142 @@
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        const socket = io('https://mmo.ttctv-105.cc', { transports: ['websocket', 'polling'], secure: true });
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], secure: true });
+        
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
         let myCards = {};
         let myDeck = [];
         
-        // 🟢 這裡複製 Server 的 CARD_CONFIG，讓前端能顯示資料
-        const CARD_CONFIG = {
-            'card_slime':   { name: "史萊姆卡", type: 'unit', atk: 5, hp: 20, desc: "普通的史萊姆" },
-            'card_wolf':    { name: "狼王卡",   type: 'unit', atk: 15, hp: 50, desc: "兇猛的狼王" },
-            'card_demon':   { name: "惡魔卡",   type: 'unit', atk: 50, hp: 200, desc: "強大的惡魔" },
-            'card_potion':  { name: "回復卡",   type: 'spell', desc: "回復 50 HP" },
-            'card_fire':    { name: "火球卡",   type: 'spell', desc: "造成 30 傷害" },
-            'card_shield':  { name: "護盾卡",   type: 'spell', desc: "獲得護盾" }
+        // 🟢 完整的怪物資料 (需與 Server 同步)
+        // 這裡我們只列出名稱與屬性，讓前端能顯示
+        const MONSTER_LIST = {
+            'slime': { name: "史萊姆", icon: "💧" },
+            'rat': { name: "大老鼠", icon: "🐀" },
+            'bee': { name: "殺人蜂", icon: "🐝" },
+            'boar': { name: "野豬", icon: "🐗" },
+            'thief': { name: "盜賊", icon: "🥷" },
+            'wolf_king': { name: "狼王", icon: "🐺" },
+            'snake': { name: "毒蛇", icon: "🐍" },
+            'zombie': { name: "腐屍", icon: "🧟" },
+            'skeleton': { name: "骷髏兵", icon: "💀" },
+            'ghoul': { name: "食屍鬼", icon: "🧟‍♂️" },
+            'witch': { name: "沼澤女巫", icon: "🧙‍♀️" },
+            'hydra': { name: "九頭蛇", icon: "🐉" },
+            'fire_imp': { name: "火焰小鬼", icon: "🔥" },
+            'lava_golem': { name: "熔岩戈侖", icon: "🗿" },
+            'salamander': { name: "火蜥蜴", icon: "🦎" },
+            'fire_mage': { name: "烈焰法師", icon: "🧙‍♂️" },
+            'dragon_hatchling': { name: "幼龍", icon: "🐲" },
+            'balrog': { name: "炎魔", icon: "👹" },
+            'snow_wolf': { name: "雪原狼", icon: "🐕" },
+            'yeti': { name: "雪人", icon: "⛄" },
+            'ice_spirit': { name: "冰精靈", icon: "🧚" },
+            'frost_knight': { name: "寒霜騎士", icon: "🛡️" },
+            'ice_dragon': { name: "冰霜龍", icon: "❄️" },
+            'lich_king': { name: "巫妖王", icon: "👑" },
+            'void_eye': { name: "虛空之眼", icon: "👁️" },
+            'shadow_assassin': { name: "暗影刺客", icon: "🗡️" },
+            'dark_paladin': { name: "墮落聖騎", icon: "🏇" },
+            'demon_guard': { name: "惡魔守衛", icon: "🛡️" },
+            'succubus': { name: "魅魔", icon: "💋" },
+            'void_lord': { name: "虛空領主", icon: "👿" },
+            'chaos_beast': { name: "混沌巨獸", icon: "🐗" },
+            'fallen_angel': { name: "墮天使", icon: "🪽" },
+            'demon_king': { name: "魔王撒旦", icon: "😈" },
+            'void_walker': { name: "虛空行者", icon: "🚶" },
+            'chaos_knight': { name: "混沌騎士", icon: "⚔️" },
+            'abyss_dragon': { name: "深淵魔龍", icon: "🐲" },
+            'fallen_titan': { name: "墮落泰坦", icon: "🗿" },
+            'genesis_god': { name: "創世破壞神", icon: "🌟" },
+            'void_worm': { name: "虛空吞噬蟲", icon: "🐛" },
+            'shadow_phantom': { name: "虚影夢魘", icon: "👻" },
+            'star_eater': { name: "吞星巨獸", icon: "🌌" },
+            'nebula_dragon': { name: "星雲幻龍", icon: "🐉" },
+            'time_keeper': { name: "時空裁決者", icon: "⏳" },
+            'dimension_breaker': { name: "維度粉碎者", icon: "🔨" },
+            'entropy_god': { name: "終焉·熱寂之神", icon: "⚫" }
         };
+
+        // 功能卡 (手動定義)
+        const SPELL_LIST = {
+            'card_potion': { name: "回復卡", icon: "💊", desc: "回復 50 HP" },
+            'card_fire': { name: "火球卡", icon: "🔥", desc: "30 傷害" },
+            'card_shield': { name: "護盾卡", icon: "🛡️", desc: "獲得護盾" }
+        };
+
+        // 動態生成 CARD_CONFIG
+        const CARD_CONFIG = {};
+        
+        // 1. 加入怪物卡
+        Object.keys(MONSTER_LIST).forEach(key => {
+            const mon = MONSTER_LIST[key];
+            const cardId = `card_${key}`;
+            CARD_CONFIG[cardId] = {
+                name: mon.name + "卡",
+                icon: mon.icon,
+                type: 'unit',
+                rarity: 1, // 暫時預設，顯示時可調整
+                desc: `${mon.name} 的靈魂`
+            };
+        });
+
+        // 2. 加入功能卡
+        Object.keys(SPELL_LIST).forEach(key => {
+            CARD_CONFIG[key] = {
+                name: SPELL_LIST[key].name,
+                icon: SPELL_LIST[key].icon,
+                type: 'spell',
+                rarity: 2,
+                desc: SPELL_LIST[key].desc
+            };
+        });
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
 
         socket.on('playerStatsUpdate', (p) => {
             myCards = p.cards || {};
-            myDeck = p.cardDeck || []; // 確保 Server 有存這個欄位
+            myDeck = p.cardDeck || []; 
             renderCards();
         });
 
         socket.on('errorMessage', (msg) => alert(msg));
-        socket.on('marketResult', (res) => alert(res.msg)); // 借用這個顯示儲存成功
+        socket.on('marketResult', (res) => alert(res.msg)); 
 
         function renderCards() {
             const list = document.getElementById('card-list');
             list.innerHTML = '';
             
-            // 遍歷所有已知的卡片 (不論有無擁有，顯示圖鑑感)
             Object.keys(CARD_CONFIG).forEach(id => {
                 const cardData = CARD_CONFIG[id];
                 const ownedCount = myCards[id] || 0;
                 const isOwned = ownedCount > 0;
                 const isInDeck = myDeck.includes(id);
 
+                // 如果未擁有且不是功能卡，可能選擇不顯示 (或顯示為未知)
+                // 這裡選擇全部顯示，未擁有的變灰
+                
                 const div = document.createElement('div');
                 div.className = `card ${isOwned ? 'owned' : 'not-owned'} ${isInDeck ? 'in-deck' : ''}`;
-                
-                // 卡片圖示 (簡單用 Emoji)
-                let icon = '🃏';
-                if(id.includes('slime')) icon = '💧';
-                if(id.includes('wolf')) icon = '🐺';
-                if(id.includes('demon')) icon = '👿';
-                if(id.includes('potion')) icon = '💊';
-                if(id.includes('fire')) icon = '🔥';
-                if(id.includes('shield')) icon = '🛡️';
+                // 設定稀有度屬性 (用於邊框顏色)
+                div.setAttribute('data-rarity', cardData.rarity);
 
                 // 數值顯示
                 let statsHtml = '';
-                if(cardData.type === 'unit') statsHtml = `⚔️${cardData.atk} ❤️${cardData.hp}`;
-                else statsHtml = `✨${cardData.desc}`;
+                if(cardData.type === 'unit') {
+                    // 這裡數值只是示意，實際上 Server 會算
+                    statsHtml = `召喚單位<br>${cardData.desc}`;
+                } else {
+                    statsHtml = `魔法卡<br>${cardData.desc}`;
+                }
 
                 div.innerHTML = `
                     ${isOwned ? `<div class="card-count">${ownedCount}</div>` : ''}
                     <div class="card-name">${cardData.name}</div>
-                    <div class="card-img">${icon}</div>
+                    <div class="card-img">${cardData.icon}</div>
                     <div class="card-stats">${statsHtml}</div>
                 `;
 
@@ -148,14 +239,12 @@
         }
 
         function toggleDeck(id, isOwned) {
-            if (!isOwned) return; // 沒擁有不能放
+            if (!isOwned) return; 
 
             const idx = myDeck.indexOf(id);
             if (idx > -1) {
-                // 移除
                 myDeck.splice(idx, 1);
             } else {
-                // 加入
                 if (myDeck.length >= 5) {
                     alert("牌組最多只能放 5 張卡！");
                     return;
