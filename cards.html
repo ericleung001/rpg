@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>卡片圖鑑2</title>
+    <title>卡片圖鑑</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -83,10 +83,18 @@
             border-radius: 5px; font-size: 10px; border: 1px solid #fff; z-index: 100;
         }
         
-        /* 🟢 [新增] 狀態文字顏色 */
+        /* 狀態文字顏色 */
         .status-ok { color: #2ecc71; }
         .status-warn { color: #f1c40f; }
         .status-err { color: #e74c3c; }
+
+        /* 配對中視窗 */
+        #queue-msg {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95); padding: 20px; border: 2px solid #f1c40f;
+            color: #fff; border-radius: 10px; text-align: center; z-index: 200;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -101,7 +109,16 @@
             出戰牌組: <span id="deck-count" class="status-warn">0</span> / 10<br>
             <span style="color:#aaa; font-size:8px;">(需 3 張怪物卡)</span>
         </div>
-        <button class="save-btn" onclick="saveDeck()">💾 儲存牌組</button>
+        <div>
+            <button class="save-btn" onclick="startMatch()" style="background:#e74c3c; margin-right:5px;">⚔️ 對戰</button>
+            <button class="save-btn" onclick="saveDeck()">💾 儲存</button>
+        </div>
+    </div>
+
+    <div id="queue-msg">
+        <div style="font-size:14px; margin-bottom:10px;">🔍 正在尋找對手...</div>
+        <div style="font-size:10px; color:#aaa;">請稍候，配對成功將自動跳轉</div>
+        <button onclick="cancelMatch()" style="margin-top:15px; padding:5px 10px; background:#c0392b; border:none; color:white; border-radius:5px;">取消</button>
     </div>
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
@@ -209,6 +226,24 @@ const socket = io('https://mmo.ttctv-105.cc', {
         socket.on('errorMessage', (msg) => alert(msg));
         socket.on('marketResult', (res) => alert(res.msg)); 
 
+        // 🟢 [監聽] 配對成功，跳轉到戰鬥頁面
+        socket.on('matchFound', (data) => {
+            document.getElementById('queue-msg').innerHTML = 
+                `<div style="font-size:14px; color:#2ecc71;">✅ 配對成功！</div>
+                 <div style="margin-top:10px;">對手: ${data.opponent}</div>`;
+            
+            setTimeout(() => {
+                window.location.href = 'card_battle.html';
+            }, 1000);
+        });
+
+        // 🟢 [監聽] 取消配對確認
+        socket.on('queueStatus', (msg) => {
+            if (msg === '已取消配對') {
+                document.getElementById('queue-msg').style.display = 'none';
+            }
+        });
+
         function renderCards() {
             const list = document.getElementById('card-list');
             list.innerHTML = '';
@@ -223,7 +258,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 div.className = `card ${isOwned ? 'owned' : 'not-owned'} ${isInDeck ? 'in-deck' : ''}`;
                 div.setAttribute('data-rarity', cardData.rarity);
 
-                // 使用 GitHub 連結
                 let visualHtml = '';
                 if (cardData.type === 'unit') {
                     const imgUrl = IMG_BASE_URL + cardData.src;
@@ -250,11 +284,9 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 list.appendChild(div);
             });
 
-            // 🟢 更新下方狀態文字
             updateDeckInfo();
         }
 
-        // 🟢 [修改] 牌組選擇邏輯 (上限 10 張)
         function toggleDeck(id, isOwned) {
             if (!isOwned) return; 
 
@@ -262,16 +294,15 @@ const socket = io('https://mmo.ttctv-105.cc', {
             if (idx > -1) {
                 myDeck.splice(idx, 1);
             } else {
-                if (myDeck.length >= 10) { // 限制 10 張
+                if (myDeck.length >= 10) { 
                     alert("牌組最多只能放 10 張卡！");
                     return;
                 }
                 myDeck.push(id);
             }
-            renderCards(); // renderCards 裡面會呼叫 updateDeckInfo
+            renderCards(); 
         }
 
-        // 🟢 [新增] 更新牌組資訊顯示
         function updateDeckInfo() {
             let monsterCount = 0;
             myDeck.forEach(cardId => {
@@ -280,7 +311,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 }
             });
             
-            // 更新下方 UI
             const infoDiv = document.querySelector('.deck-info');
             if (infoDiv) {
                 const countClass = myDeck.length === 10 ? 'status-ok' : 'status-warn';
@@ -292,14 +322,12 @@ const socket = io('https://mmo.ttctv-105.cc', {
             }
         }
 
-        // 🟢 [修改] 儲存檢查 (10張 + 3怪)
         function saveDeck() {
             if (myDeck.length !== 10) {
                 alert(`你的牌組目前有 ${myDeck.length} 張卡。\n必須剛好湊滿 10 張卡才能儲存！`);
                 return;
             }
 
-            // 計算怪物卡數量
             let monsterCount = 0;
             myDeck.forEach(cardId => {
                 if (CARD_CONFIG[cardId] && CARD_CONFIG[cardId].type === 'unit') {
@@ -313,6 +341,19 @@ const socket = io('https://mmo.ttctv-105.cc', {
             }
 
             socket.emit('updateDeck', myDeck);
+        }
+
+        // 🟢 [新增] 配對相關函式
+        function startMatch() {
+            // 先儲存 (觸發檢查)
+            if (myDeck.length !== 10) { saveDeck(); return; }
+            
+            socket.emit('joinCardQueue');
+            document.getElementById('queue-msg').style.display = 'block';
+        }
+
+        function cancelMatch() {
+            socket.emit('leaveCardQueue');
         }
     </script>
 </body>
