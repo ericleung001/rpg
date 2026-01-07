@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>卡片圖鑑3</title>
+    <title>卡片圖鑑4</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -23,7 +23,7 @@
             background: #34495e; border: 2px solid #7f8c8d; border-radius: 8px;
             padding: 10px 5px; position: relative; cursor: pointer;
             transition: transform 0.1s;
-            min-height: 140px; display: flex; flex-direction: column; justify-content: space-between;
+            min-height: 150px; display: flex; flex-direction: column; justify-content: space-between;
             overflow: hidden;
         }
         .card:active { transform: scale(0.95); }
@@ -31,34 +31,43 @@
         .card.not-owned { opacity: 0.4; filter: grayscale(100%); }
         .card.in-deck { border: 2px solid #2ecc71; box-shadow: 0 0 10px #2ecc71; }
 
-        /* 稀有度顏色 (對應 CARD_CONFIG 的 rarity) */
-        .card[data-rarity="1"] { border-color: #bdc3c7; } /* 白 */
-        .card[data-rarity="2"] { border-color: #2ecc71; } /* 綠 */
-        .card[data-rarity="3"] { border-color: #3498db; } /* 藍 */
-        .card[data-rarity="4"] { border-color: #9b59b6; } /* 紫 */
-        .card[data-rarity="5"] { border-color: #f1c40f; box-shadow: 0 0 5px #f1c40f; } /* 金 */
+        /* 稀有度邊框 */
+        .card[data-rarity="1"] { border-color: #bdc3c7; } 
+        .card[data-rarity="2"] { border-color: #2ecc71; } 
+        .card[data-rarity="3"] { border-color: #3498db; } 
+        .card[data-rarity="4"] { border-color: #9b59b6; } 
+        .card[data-rarity="5"] { border-color: #f1c40f; box-shadow: 0 0 8px #f1c40f; } 
 
         .card-name { font-size: 8px; color: #fff; margin-bottom: 5px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* 怪物圖片區域 */
-        .card-img { 
-            font-size: 32px; margin: 5px 0; height: 50px; display: flex; 
+        /* 🟢 [修改] 圖片容器樣式 */
+        .card-img-box { 
+            margin: 5px 0; height: 60px; display: flex; 
             align-items: center; justify-content: center; 
-            background: rgba(0,0,0,0.2); border-radius: 5px;
+            background: rgba(0,0,0,0.3); border-radius: 5px;
+            padding: 5px;
         }
+        /* 怪物圖片 */
+        .monster-pic {
+            max-width: 100%; max-height: 100%; 
+            object-fit: contain; /* 保持比例 */
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));
+        }
+        /* 魔法卡 Emoji */
+        .spell-icon { font-size: 30px; }
         
-        .card-stats { font-size: 8px; color: #bdc3c7; line-height: 1.4; }
+        .card-stats { font-size: 8px; color: #bdc3c7; line-height: 1.4; margin-top: 5px; }
         .card-count { 
             position: absolute; top: -5px; right: -5px; 
             background: #e74c3c; color: white; 
             border-radius: 50%; width: 20px; height: 20px; 
             font-size: 8px; line-height: 20px; z-index: 10;
+            border: 1px solid #fff;
         }
 
-        /* 牌組區域 */
         .deck-bar {
             position: fixed; bottom: 0; left: 0; width: 100%;
-            background: rgba(0,0,0,0.9); border-top: 2px solid #f1c40f;
+            background: rgba(0,0,0,0.95); border-top: 2px solid #f1c40f;
             padding: 10px; box-sizing: border-box; display: flex; 
             justify-content: space-between; align-items: center; z-index: 100;
         }
@@ -92,95 +101,93 @@
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-                // 指定連接到你的 https 網址
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], secure: true });
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        let myInventory = {}; // 改用背包
+        let myInventory = {}; 
         let myDeck = [];
         
-        // 🟢 完整的怪物資料 (需與 Server 同步)
+        // 🟢 怪物列表 (Icon 改為圖片檔名)
+        // 假設你的圖片是 png，如果你的檔案是 jpg，請自行修改
         const MONSTER_LIST = {
-            'slime': { name: "史萊姆", icon: "💧" },
-            'rat': { name: "大老鼠", icon: "🐀" },
-            'bee': { name: "殺人蜂", icon: "🐝" },
-            'boar': { name: "野豬", icon: "🐗" },
-            'thief': { name: "盜賊", icon: "🥷" },
-            'wolf_king': { name: "狼王", icon: "🐺" },
-            'snake': { name: "毒蛇", icon: "🐍" },
-            'zombie': { name: "腐屍", icon: "🧟" },
-            'skeleton': { name: "骷髏兵", icon: "💀" },
-            'ghoul': { name: "食屍鬼", icon: "🧟‍♂️" },
-            'witch': { name: "沼澤女巫", icon: "🧙‍♀️" },
-            'hydra': { name: "九頭蛇", icon: "🐉" },
-            'fire_imp': { name: "火焰小鬼", icon: "🔥" },
-            'lava_golem': { name: "熔岩戈侖", icon: "🗿" },
-            'salamander': { name: "火蜥蜴", icon: "🦎" },
-            'fire_mage': { name: "烈焰法師", icon: "🧙‍♂️" },
-            'dragon_hatchling': { name: "幼龍", icon: "🐲" },
-            'balrog': { name: "炎魔", icon: "👹" },
-            'snow_wolf': { name: "雪原狼", icon: "🐕" },
-            'yeti': { name: "雪人", icon: "⛄" },
-            'ice_spirit': { name: "冰精靈", icon: "🧚" },
-            'frost_knight': { name: "寒霜騎士", icon: "🛡️" },
-            'ice_dragon': { name: "冰霜龍", icon: "❄️" },
-            'lich_king': { name: "巫妖王", icon: "👑" },
-            'void_eye': { name: "虛空之眼", icon: "👁️" },
-            'shadow_assassin': { name: "暗影刺客", icon: "🗡️" },
-            'dark_paladin': { name: "墮落聖騎", icon: "🏇" },
-            'demon_guard': { name: "惡魔守衛", icon: "🛡️" },
-            'succubus': { name: "魅魔", icon: "💋" },
-            'void_lord': { name: "虛空領主", icon: "👿" },
-            'chaos_beast': { name: "混沌巨獸", icon: "🐗" },
-            'fallen_angel': { name: "墮天使", icon: "🪽" },
-            'demon_king': { name: "魔王撒旦", icon: "😈" },
-            'void_walker': { name: "虛空行者", icon: "🚶" },
-            'chaos_knight': { name: "混沌騎士", icon: "⚔️" },
-            'abyss_dragon': { name: "深淵魔龍", icon: "🐲" },
-            'fallen_titan': { name: "墮落泰坦", icon: "🗿" },
-            'genesis_god': { name: "創世破壞神", icon: "🌟" },
-            'void_worm': { name: "虛空吞噬蟲", icon: "🐛" },
-            'shadow_phantom': { name: "虚影夢魘", icon: "👻" },
-            'star_eater': { name: "吞星巨獸", icon: "🌌" },
-            'nebula_dragon': { name: "星雲幻龍", icon: "🐉" },
-            'time_keeper': { name: "時空裁決者", icon: "⏳" },
-            'dimension_breaker': { name: "維度粉碎者", icon: "🔨" },
-            'entropy_god': { name: "終焉·熱寂之神", icon: "⚫" }
+            'slime': { name: "史萊姆", img: "slime.png" },
+            'rat': { name: "大老鼠", img: "rat.png" },
+            'bee': { name: "殺人蜂", img: "bee.png" },
+            'boar': { name: "野豬", img: "boar.png" },
+            'thief': { name: "盜賊", img: "thief.png" },
+            'wolf_king': { name: "狼王", img: "wolf_king.png" },
+            'snake': { name: "毒蛇", img: "snake.png" },
+            'zombie': { name: "腐屍", img: "zombie.png" },
+            'skeleton': { name: "骷髏兵", img: "skeleton.png" },
+            'ghoul': { name: "食屍鬼", img: "ghoul.png" },
+            'witch': { name: "沼澤女巫", img: "witch.png" },
+            'hydra': { name: "九頭蛇", img: "hydra.png" },
+            'fire_imp': { name: "火焰小鬼", img: "fire_imp.png" },
+            'lava_golem': { name: "熔岩戈侖", img: "lava_golem.png" },
+            'salamander': { name: "火蜥蜴", img: "salamander.png" },
+            'fire_mage': { name: "烈焰法師", img: "fire_mage.png" },
+            'dragon_hatchling': { name: "幼龍", img: "dragon_hatchling.png" },
+            'balrog': { name: "炎魔", img: "balrog.png" },
+            'snow_wolf': { name: "雪原狼", img: "snow_wolf.png" },
+            'yeti': { name: "雪人", img: "yeti.png" },
+            'ice_spirit': { name: "冰精靈", img: "ice_spirit.png" },
+            'frost_knight': { name: "寒霜騎士", img: "frost_knight.png" },
+            'ice_dragon': { name: "冰霜龍", img: "ice_dragon.png" },
+            'lich_king': { name: "巫妖王", img: "lich_king.png" },
+            'void_eye': { name: "虛空之眼", img: "void_eye.png" },
+            'shadow_assassin': { name: "暗影刺客", img: "shadow_assassin.png" },
+            'dark_paladin': { name: "墮落聖騎", img: "dark_paladin.png" },
+            'demon_guard': { name: "惡魔守衛", img: "demon_guard.png" },
+            'succubus': { name: "魅魔", img: "succubus.png" },
+            'void_lord': { name: "虛空領主", img: "void_lord.png" },
+            'chaos_beast': { name: "混沌巨獸", img: "chaos_beast.png" },
+            'fallen_angel': { name: "墮天使", img: "fallen_angel.png" },
+            'demon_king': { name: "魔王撒旦", img: "demon_king.png" },
+            'void_walker': { name: "虛空行者", img: "void_walker.png" },
+            'chaos_knight': { name: "混沌騎士", img: "chaos_knight.png" },
+            'abyss_dragon': { name: "深淵魔龍", img: "abyss_dragon.png" },
+            'fallen_titan': { name: "墮落泰坦", img: "fallen_titan.png" },
+            'genesis_god': { name: "創世破壞神", img: "genesis_god.png" },
+            'void_worm': { name: "虛空吞噬蟲", img: "void_worm.png" },
+            'shadow_phantom': { name: "虚影夢魘", img: "shadow_phantom.png" },
+            'star_eater': { name: "吞星巨獸", img: "star_eater.png" },
+            'nebula_dragon': { name: "星雲幻龍", img: "nebula_dragon.png" },
+            'time_keeper': { name: "時空裁決者", img: "time_keeper.png" },
+            'dimension_breaker': { name: "維度粉碎者", img: "dimension_breaker.png" },
+            'entropy_god': { name: "終焉·熱寂之神", img: "entropy_god.png" }
         };
 
-        // 功能卡 (手動定義)
+        // 功能卡 (保持 Emoji)
         const SPELL_LIST = {
             'card_potion': { name: "回復卡", icon: "💊", desc: "回復 50 HP" },
             'card_fire': { name: "火球卡", icon: "🔥", desc: "30 傷害" },
             'card_shield': { name: "護盾卡", icon: "🛡️", desc: "獲得護盾" }
         };
 
-        // 動態生成 CARD_CONFIG
         const CARD_CONFIG = {};
         
-        // 1. 加入怪物卡
+        // 1. 加入怪物卡 (設定為 image 類型)
         Object.keys(MONSTER_LIST).forEach(key => {
             const mon = MONSTER_LIST[key];
             const cardId = `card_${key}`;
             CARD_CONFIG[cardId] = {
                 name: mon.name + "卡",
-                icon: mon.icon,
+                src: mon.img, // 圖片檔名
                 type: 'unit',
-                rarity: 1, // 預設 1，顯示時會根據 Server 資料調整
+                rarity: 1, 
                 desc: `${mon.name} 的靈魂`
             };
         });
 
-        // 2. 加入功能卡
+        // 2. 加入功能卡 (設定為 icon 類型)
         Object.keys(SPELL_LIST).forEach(key => {
             CARD_CONFIG[key] = {
                 name: SPELL_LIST[key].name,
-                icon: SPELL_LIST[key].icon,
+                icon: SPELL_LIST[key].icon, // Emoji
                 type: 'spell',
                 rarity: 2,
                 desc: SPELL_LIST[key].desc
@@ -190,7 +197,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
 
         socket.on('playerStatsUpdate', (p) => {
-            // 🟢 [重點修改] 改為讀取 inventory (背包)
             myInventory = p.inventory || {}; 
             myDeck = p.cardDeck || []; 
             renderCards();
@@ -205,18 +211,25 @@ const socket = io('https://mmo.ttctv-105.cc', {
             
             Object.keys(CARD_CONFIG).forEach(id => {
                 const cardData = CARD_CONFIG[id];
-                
-                // 🟢 檢查背包裡有沒有這個 ID (key 必須包含 'card_')
                 const ownedCount = myInventory[id] || 0;
                 const isOwned = ownedCount > 0;
                 const isInDeck = myDeck.includes(id);
 
                 const div = document.createElement('div');
                 div.className = `card ${isOwned ? 'owned' : 'not-owned'} ${isInDeck ? 'in-deck' : ''}`;
-                
-                // 這裡簡單根據卡片種類給個稀有度顏色 (功能卡=2, 怪物卡=1)
-                // 如果想更精細，需要後端傳 rarity 給前端，目前先簡單處理
                 div.setAttribute('data-rarity', cardData.rarity);
+
+                // 🟢 [判斷] 顯示圖片 還是 Emoji
+                let visualHtml = '';
+                if (cardData.type === 'unit') {
+                    // 怪物卡：使用 <img>
+                    // 預設路徑: /img/monster/ + 檔名
+                    // 如果圖片載入失敗 (onerror)，自動變回 Emoji "👾"
+                    visualHtml = `<img src="/img/monster/${cardData.src}" class="monster-pic" onerror="this.style.display='none';this.parentNode.innerHTML='👾'">`;
+                } else {
+                    // 功能卡：使用 Emoji
+                    visualHtml = `<span class="spell-icon">${cardData.icon}</span>`;
+                }
 
                 // 數值顯示
                 let statsHtml = '';
@@ -229,7 +242,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 div.innerHTML = `
                     ${isOwned ? `<div class="card-count">${ownedCount}</div>` : ''}
                     <div class="card-name">${cardData.name}</div>
-                    <div class="card-img">${cardData.icon}</div>
+                    <div class="card-img-box">${visualHtml}</div>
                     <div class="card-stats">${statsHtml}</div>
                 `;
 
