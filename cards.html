@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>卡片圖鑑1</title>
+    <title>卡片圖鑑</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -101,10 +101,9 @@
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], secure: true });
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -112,7 +111,9 @@
         let myInventory = {}; 
         let myDeck = [];
         
-        // 🟢 怪物列表 (Icon 改為圖片檔名)
+        // 🟢 [設定] GitHub 圖片路徑前綴
+        const IMG_BASE_URL = "https://ericleung001.github.io/rpg/img/monsters/";
+
         const MONSTER_LIST = {
             'slime': { name: "史萊姆", img: "slime.png" },
             'rat': { name: "大老鼠", img: "rat.png" },
@@ -161,7 +162,6 @@
             'entropy_god': { name: "終焉·熱寂之神", img: "entropy_god.png" }
         };
 
-        // 功能卡 (保持 Emoji)
         const SPELL_LIST = {
             'card_potion': { name: "回復卡", icon: "💊", desc: "回復 50 HP" },
             'card_fire': { name: "火球卡", icon: "🔥", desc: "30 傷害" },
@@ -170,24 +170,22 @@
 
         const CARD_CONFIG = {};
         
-        // 1. 加入怪物卡 (設定為 image 類型)
         Object.keys(MONSTER_LIST).forEach(key => {
             const mon = MONSTER_LIST[key];
             const cardId = `card_${key}`;
             CARD_CONFIG[cardId] = {
                 name: mon.name + "卡",
-                src: mon.img, // 圖片檔名
+                src: mon.img, 
                 type: 'unit',
                 rarity: 1, 
                 desc: `${mon.name} 的靈魂`
             };
         });
 
-        // 2. 加入功能卡 (設定為 icon 類型)
         Object.keys(SPELL_LIST).forEach(key => {
             CARD_CONFIG[key] = {
                 name: SPELL_LIST[key].name,
-                icon: SPELL_LIST[key].icon, // Emoji
+                icon: SPELL_LIST[key].icon, 
                 type: 'spell',
                 rarity: 2,
                 desc: SPELL_LIST[key].desc
@@ -219,15 +217,16 @@
                 div.className = `card ${isOwned ? 'owned' : 'not-owned'} ${isInDeck ? 'in-deck' : ''}`;
                 div.setAttribute('data-rarity', cardData.rarity);
 
-                // 🟢 [修改] 圖片路徑更新為 /img/monsters/
+                // 🟢 [修改] 使用 GitHub 連結
                 let visualHtml = '';
                 if (cardData.type === 'unit') {
-                    visualHtml = `<img src="/img/monsters/${cardData.src}" class="monster-pic" onerror="this.style.display='none';this.parentNode.innerHTML='👾'">`;
+                    // 這裡拼湊出 GitHub 的完整網址
+                    const imgUrl = IMG_BASE_URL + cardData.src;
+                    visualHtml = `<img src="${imgUrl}" class="monster-pic" onerror="this.style.display='none';this.parentNode.innerHTML='👾'">`;
                 } else {
                     visualHtml = `<span class="spell-icon">${cardData.icon}</span>`;
                 }
 
-                // 數值顯示
                 let statsHtml = '';
                 if(cardData.type === 'unit') {
                     statsHtml = `召喚單位<br>${cardData.desc}`;
