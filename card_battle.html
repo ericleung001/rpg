@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>卡片對戰</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body { 
+            background-color: #2c3e50; color: #fff; 
+            font-family: 'Press Start 2P', monospace; 
+            margin: 0; padding: 0; overflow: hidden;
+            display: flex; flex-direction: column; height: 100vh;
+        }
+
+        /* 區域劃分 */
+        .opponent-area { flex: 1; background: #34495e; display: flex; flex-direction: column; border-bottom: 2px solid #000; }
+        .my-area { flex: 1; background: #2c3e50; display: flex; flex-direction: column-reverse; }
+
+        /* 手牌區 */
+        .hand-zone { height: 90px; display: flex; justify-content: center; align-items: center; gap: 5px; padding: 5px; background: rgba(0,0,0,0.2); }
+        .opponent-hand .card-back { background: #95a5a6; width: 50px; height: 70px; border-radius: 5px; border: 2px solid #fff; }
+
+        /* 戰場區 (放怪物的) */
+        .field-zone { flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px; position: relative; }
+        
+        /* 玩家資訊 (HP/AP) */
+        .player-info { 
+            position: absolute; padding: 5px 10px; background: rgba(0,0,0,0.8); 
+            border-radius: 10px; border: 1px solid #f1c40f; font-size: 10px;
+            z-index: 10;
+        }
+        .opp-info { top: 10px; left: 10px; }
+        .my-info { bottom: 10px; left: 10px; }
+
+        /* 卡片樣式 (場上/手牌) */
+        .battle-card {
+            width: 60px; height: 80px; background: #34495e; border: 1px solid #fff;
+            border-radius: 5px; display: flex; flex-direction: column; align-items: center;
+            font-size: 8px; position: relative; cursor: pointer;
+        }
+        .battle-card img { width: 40px; height: 40px; object-fit: contain; margin-top: 2px; }
+        .battle-card .stats { font-size: 7px; margin-top: 2px; color: #f1c40f; }
+        .battle-card.unit { border-color: #2ecc71; }
+        .battle-card.spell { border-color: #9b59b6; }
+
+        /* 狀態提示 */
+        #turn-indicator {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9); padding: 10px 20px; border: 2px solid #e74c3c;
+            font-size: 12px; display: none; z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="turn-indicator">回合開始</div>
+
+    <div class="opponent-area">
+        <div class="hand-zone opponent-hand" id="opp-hand"></div>
+        <div class="field-zone" id="opp-field">
+            <div class="player-info opp-info">
+                <span id="opp-name">對手</span><br>
+                HP: <span id="opp-hp" style="color:#e74c3c">50</span>
+                AP: <span id="opp-ap" style="color:#3498db">3</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="my-area">
+        <div class="hand-zone" id="my-hand"></div>
+        <div class="field-zone" id="my-field">
+            <div class="player-info my-info">
+                <span id="my-name">我</span><br>
+                HP: <span id="my-hp" style="color:#e74c3c">50</span>
+                AP: <span id="my-ap" style="color:#3498db">3</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script>
+        const socket = io('https://mmo.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+        
+        let myToken = localStorage.getItem('rpg_token');
+        if (!myToken) window.location.href = 'index.html';
+
+        // 圖片路徑
+        const IMG_BASE_URL = "https://ericleung001.github.io/rpg/img/monsters/";
+        
+        // 需與 Server CARD_CONFIG 同步 (建議之後做成 API 讀取，現在先複製)
+        // 這裡只需要名字和圖片，數值會由 Server 傳過來
+        const CARD_META = {
+            'card_slime': { name: "史萊姆", img: "slime.png" },
+            'card_wolf': { name: "狼王", img: "wolf_king.png" },
+            'card_potion': { name: "回復卡", icon: "💊" },
+            'card_fire': { name: "火球卡", icon: "🔥" },
+            // ... (其他卡片請自行補上，或用通用邏輯處理)
+        };
+
+        function getCardImg(cardId) {
+            // 簡單處理：如果是 card_ 開頭，去 monster list 找，或直接用 ID 拆字串
+            const key = cardId.replace('card_', '');
+            return IMG_BASE_URL + key + ".png";
+        }
+
+        socket.on('connect', () => { 
+            // 這裡不發送 joinGame，因為我們已經在 server 端被分配到房間了
+            // 但為了驗證身份，還是發一下比較保險
+            socket.emit('joinGame', myToken); 
+        });
+
+        // 🟢 接收戰況更新
+        socket.on('cardGameUpdate', (data) => {
+            renderGame(data);
+        });
+
+        function renderGame(data) {
+            const me = data.me;
+            const opp = data.opponent;
+
+            // 1. 更新數值
+            document.getElementById('my-hp').innerText = me.hp;
+            document.getElementById('my-ap').innerText = me.ap;
+            document.getElementById('opp-name').innerText = opp.name;
+            document.getElementById('opp-hp').innerText = opp.hp;
+            document.getElementById('opp-ap').innerText = opp.ap;
+
+            // 2. 顯示回合
+            const indicator = document.getElementById('turn-indicator');
+            if (data.turn === socket.id) {
+                indicator.innerText = "👉 你的回合 👈";
+                indicator.style.display = 'block';
+                setTimeout(() => indicator.style.display = 'none', 1500);
+            } else {
+                indicator.innerText = "⏳ 對手回合";
+            }
+
+            // 3. 渲染我方手牌
+            const myHandDiv = document.getElementById('my-hand');
+            myHandDiv.innerHTML = '';
+            me.hand.forEach((cardId, index) => {
+                const el = createCardElement(cardId);
+                el.onclick = () => useCard(cardId, index); // 下階段實作
+                myHandDiv.appendChild(el);
+            });
+
+            // 4. 渲染對手手牌 (只顯示卡背)
+            const oppHandDiv = document.getElementById('opp-hand');
+            oppHandDiv.innerHTML = '';
+            for(let i=0; i<opp.handCount; i++) {
+                const back = document.createElement('div');
+                back.className = 'card-back';
+                oppHandDiv.appendChild(back);
+            }
+
+            // 5. 渲染戰場 (暫時是空的，下階段實作)
+            // renderField(me.field, 'my-field');
+            // renderField(opp.field, 'opp-field');
+        }
+
+        function createCardElement(cardId) {
+            const div = document.createElement('div');
+            div.className = 'battle-card';
+            
+            // 簡單判斷圖片
+            const key = cardId.replace('card_', '');
+            const imgUrl = IMG_BASE_URL + key + ".png";
+            
+            // 如果是魔法卡 (potion/fire/shield)，用 Emoji
+            let visual = `<img src="${imgUrl}" onerror="this.style.display='none'">`;
+            if (['potion','fire','shield'].some(x => cardId.includes(x))) {
+                visual = `<div style="font-size:20px; margin-top:10px;">✨</div>`;
+            }
+
+            div.innerHTML = `
+                ${visual}
+                <div style="font-size:6px; overflow:hidden; height:10px;">${key}</div>
+                <div class="stats"></div>
+            `;
+            return div;
+        }
+
+        function useCard(cardId, index) {
+            console.log("嘗試使用卡片:", cardId);
+            // 這裡之後會發送 socket.emit('cardAction', { type: 'play', index: index });
+        }
+
+    </script>
+</body>
+</html>
