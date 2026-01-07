@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>卡片圖鑑</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body { 
+            background-color: #2c3e50; color: #fff; 
+            font-family: 'Press Start 2P', monospace; 
+            text-align: center; padding: 10px; margin: 0;
+        }
+        h1 { color: #f1c40f; font-size: 16px; margin: 15px 0; }
+
+        /* 卡片容器 */
+        .card-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+            max-width: 600px; margin: 0 auto; padding-bottom: 60px;
+        }
+
+        .card {
+            background: #34495e; border: 2px solid #7f8c8d; border-radius: 8px;
+            padding: 10px 5px; position: relative; cursor: pointer;
+            transition: transform 0.1s;
+            min-height: 120px; display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .card:active { transform: scale(0.95); }
+        .card.owned { border-color: #f1c40f; background: #2c3e50; }
+        .card.not-owned { opacity: 0.4; filter: grayscale(100%); }
+        .card.in-deck { border: 2px solid #2ecc71; box-shadow: 0 0 10px #2ecc71; }
+
+        .card-name { font-size: 10px; color: #fff; margin-bottom: 5px; font-weight: bold; }
+        .card-img { font-size: 24px; margin: 5px 0; }
+        .card-stats { font-size: 8px; color: #bdc3c7; }
+        .card-count { 
+            position: absolute; top: -5px; right: -5px; 
+            background: #e74c3c; color: white; 
+            border-radius: 50%; width: 20px; height: 20px; 
+            font-size: 8px; line-height: 20px;
+        }
+
+        /* 牌組區域 */
+        .deck-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(0,0,0,0.9); border-top: 2px solid #f1c40f;
+            padding: 10px; box-sizing: border-box; display: flex; 
+            justify-content: space-between; align-items: center;
+        }
+        .deck-info { font-size: 10px; text-align: left; }
+        .save-btn {
+            background: #27ae60; color: white; border: none; padding: 8px 15px;
+            font-family: inherit; font-size: 10px; border-radius: 5px; cursor: pointer;
+        }
+
+        .back-btn {
+            position: fixed; top: 10px; left: 10px;
+            background: #7f8c8d; color: white; padding: 5px 10px; text-decoration: none;
+            border-radius: 5px; font-size: 10px; border: 1px solid #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="hub.html" class="back-btn">◀ 返回</a>
+    <h1>🎴 卡片收藏</h1>
+
+    <div id="card-list" class="card-grid">載入中...</div>
+
+    <div class="deck-bar">
+        <div class="deck-info">
+            出戰牌組: <span id="deck-count" style="color:#f1c40f">0</span> / 5<br>
+            <span style="color:#aaa; font-size:8px;">點擊卡片以放入/移除</span>
+        </div>
+        <button class="save-btn" onclick="saveDeck()">💾 儲存牌組</button>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script>
+        const socket = io('https://mmo.ttctv-105.cc', { transports: ['websocket', 'polling'], secure: true });
+        let myToken = localStorage.getItem('rpg_token');
+        if (!myToken) window.location.href = 'index.html';
+
+        let myCards = {};
+        let myDeck = [];
+        
+        // 🟢 這裡複製 Server 的 CARD_CONFIG，讓前端能顯示資料
+        const CARD_CONFIG = {
+            'card_slime':   { name: "史萊姆卡", type: 'unit', atk: 5, hp: 20, desc: "普通的史萊姆" },
+            'card_wolf':    { name: "狼王卡",   type: 'unit', atk: 15, hp: 50, desc: "兇猛的狼王" },
+            'card_demon':   { name: "惡魔卡",   type: 'unit', atk: 50, hp: 200, desc: "強大的惡魔" },
+            'card_potion':  { name: "回復卡",   type: 'spell', desc: "回復 50 HP" },
+            'card_fire':    { name: "火球卡",   type: 'spell', desc: "造成 30 傷害" },
+            'card_shield':  { name: "護盾卡",   type: 'spell', desc: "獲得護盾" }
+        };
+
+        socket.on('connect', () => { socket.emit('joinGame', myToken); });
+
+        socket.on('playerStatsUpdate', (p) => {
+            myCards = p.cards || {};
+            myDeck = p.cardDeck || []; // 確保 Server 有存這個欄位
+            renderCards();
+        });
+
+        socket.on('errorMessage', (msg) => alert(msg));
+        socket.on('marketResult', (res) => alert(res.msg)); // 借用這個顯示儲存成功
+
+        function renderCards() {
+            const list = document.getElementById('card-list');
+            list.innerHTML = '';
+            
+            // 遍歷所有已知的卡片 (不論有無擁有，顯示圖鑑感)
+            Object.keys(CARD_CONFIG).forEach(id => {
+                const cardData = CARD_CONFIG[id];
+                const ownedCount = myCards[id] || 0;
+                const isOwned = ownedCount > 0;
+                const isInDeck = myDeck.includes(id);
+
+                const div = document.createElement('div');
+                div.className = `card ${isOwned ? 'owned' : 'not-owned'} ${isInDeck ? 'in-deck' : ''}`;
+                
+                // 卡片圖示 (簡單用 Emoji)
+                let icon = '🃏';
+                if(id.includes('slime')) icon = '💧';
+                if(id.includes('wolf')) icon = '🐺';
+                if(id.includes('demon')) icon = '👿';
+                if(id.includes('potion')) icon = '💊';
+                if(id.includes('fire')) icon = '🔥';
+                if(id.includes('shield')) icon = '🛡️';
+
+                // 數值顯示
+                let statsHtml = '';
+                if(cardData.type === 'unit') statsHtml = `⚔️${cardData.atk} ❤️${cardData.hp}`;
+                else statsHtml = `✨${cardData.desc}`;
+
+                div.innerHTML = `
+                    ${isOwned ? `<div class="card-count">${ownedCount}</div>` : ''}
+                    <div class="card-name">${cardData.name}</div>
+                    <div class="card-img">${icon}</div>
+                    <div class="card-stats">${statsHtml}</div>
+                `;
+
+                div.onclick = () => toggleDeck(id, isOwned);
+                list.appendChild(div);
+            });
+
+            document.getElementById('deck-count').innerText = myDeck.length;
+        }
+
+        function toggleDeck(id, isOwned) {
+            if (!isOwned) return; // 沒擁有不能放
+
+            const idx = myDeck.indexOf(id);
+            if (idx > -1) {
+                // 移除
+                myDeck.splice(idx, 1);
+            } else {
+                // 加入
+                if (myDeck.length >= 5) {
+                    alert("牌組最多只能放 5 張卡！");
+                    return;
+                }
+                myDeck.push(id);
+            }
+            renderCards();
+        }
+
+        function saveDeck() {
+            if (myDeck.length === 0) {
+                alert("牌組不能為空！");
+                return;
+            }
+            socket.emit('updateDeck', myDeck);
+        }
+    </script>
+</body>
+</html>
