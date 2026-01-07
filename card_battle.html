@@ -17,65 +17,34 @@
         .opponent-area { flex: 1; background: #34495e; display: flex; flex-direction: column; border-bottom: 2px solid #000; position: relative; }
         .my-area { flex: 1; background: #2c3e50; display: flex; flex-direction: column-reverse; position: relative; }
 
-        .hand-zone { 
-            height: 120px; display: flex; justify-content: center; align-items: center; 
-            gap: 5px; padding: 5px; background: rgba(0,0,0,0.3); overflow-x: auto;
-        }
-        
-        .card-back { 
-            background: linear-gradient(135deg, #e67e22 25%, #d35400 25%, #d35400 50%, #e67e22 50%, #e67e22 75%, #d35400 75%, #d35400 100%);
-            background-size: 20px 20px; width: 60px; height: 85px; border-radius: 5px; border: 2px solid #fff; 
-        }
-
+        .hand-zone { height: 120px; display: flex; justify-content: center; align-items: center; gap: 5px; padding: 5px; background: rgba(0,0,0,0.3); overflow-x: auto; }
+        .card-back { background: linear-gradient(135deg, #e67e22 25%, #d35400 25%, #d35400 50%, #e67e22 50%, #e67e22 75%, #d35400 75%, #d35400 100%); width: 60px; height: 85px; border-radius: 5px; border: 2px solid #fff; }
         .field-zone { flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 10px; }
         
-        .player-info { 
-            position: absolute; padding: 8px 12px; background: rgba(0,0,0,0.85); 
-            border-radius: 8px; border: 1px solid #f1c40f; font-size: 12px; z-index: 10;
-        }
-        .opp-info { top: 10px; left: 10px; text-align: left; }
-        .my-info { bottom: 10px; left: 10px; text-align: left; }
+        .player-info { position: absolute; padding: 8px 12px; background: rgba(0,0,0,0.85); border-radius: 8px; border: 1px solid #f1c40f; font-size: 12px; z-index: 10; }
+        .opp-info { top: 10px; left: 10px; }
+        .my-info { bottom: 10px; left: 10px; }
 
-        .battle-card {
-            width: 70px; height: 100px; background: #2c3e50; border: 2px solid #fff;
-            border-radius: 6px; display: flex; flex-direction: column; align-items: center;
-            font-size: 8px; position: relative; cursor: pointer;
-            transition: 0.1s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
+        .battle-card { width: 70px; height: 100px; background: #2c3e50; border: 2px solid #fff; border-radius: 6px; display: flex; flex-direction: column; align-items: center; font-size: 8px; position: relative; cursor: pointer; transition: 0.1s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .battle-card:active { transform: scale(0.95); }
         .battle-card img { width: 50px; height: 50px; object-fit: contain; margin-top: 5px; background: rgba(0,0,0,0.2); border-radius: 4px; }
-        .battle-card .name { font-size: 8px; margin-top: 2px; white-space: nowrap; overflow: hidden; max-width: 90%; }
-        .battle-card .cost { 
-            position: absolute; top: -5px; right: -5px; background: #3498db; color: white; 
-            width: 18px; height: 18px; border-radius: 50%; font-size: 8px; 
-            line-height: 18px; text-align: center; border: 1px solid #fff;
-        }
+        .battle-card .cost { position: absolute; top: -5px; right: -5px; background: #3498db; color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 8px; line-height: 18px; text-align: center; border: 1px solid #fff; }
 
-        /* 🟢 狀態樣式 */
         .field-unit { border-color: #f1c40f; }
         
-        /* 選中怪物 (發動攻擊) */
-        .field-unit.selected { border-color: #e74c3c; box-shadow: 0 0 15px #e74c3c; transform: scale(1.1); }
+        /* 🔴 物理攻擊選中 */
+        .field-unit.selected { border-color: #e74c3c; box-shadow: 0 0 15px #e74c3c; transform: scale(1.1); z-index: 5; }
         
-        /* 選中魔法卡 (準備施法) */
+        /* 🔵 魔法卡選中 */
         .battle-card.spell-selected { border-color: #3498db; box-shadow: 0 0 15px #3498db; transform: translateY(-10px); }
+        
+        /* 🟣 魔法祭品選中 (火球來源) */
+        .field-unit.source-selected { border-color: #9b59b6; box-shadow: 0 0 15px #9b59b6; transform: scale(1.1); z-index: 5; }
 
         .field-unit.sleeping { opacity: 0.6; filter: grayscale(80%); cursor: not-allowed; }
 
-        #turn-indicator {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.95); padding: 15px 30px; border: 3px solid #e74c3c;
-            color: #fff; font-size: 16px; display: none; z-index: 200; border-radius: 10px; pointer-events: none;
-        }
-
-        #end-turn-btn {
-            position: fixed; right: 10px; top: 50%; transform: translateY(-50%);
-            padding: 15px; background: #f39c12; border: none; color: white;
-            border-radius: 50%; width: 70px; height: 70px; font-weight: bold;
-            cursor: pointer; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            display: none; align-items: center; justify-content: center; text-align: center;
-            font-family: inherit; font-size: 10px;
-        }
+        #turn-indicator { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); padding: 15px 30px; border: 3px solid #e74c3c; color: #fff; font-size: 16px; display: none; z-index: 200; border-radius: 10px; pointer-events: none; }
+        #end-turn-btn { position: fixed; right: 10px; top: 50%; transform: translateY(-50%); padding: 15px; background: #f39c12; border: none; color: white; border-radius: 50%; width: 70px; height: 70px; font-weight: bold; cursor: pointer; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; text-align: center; font-family: inherit; font-size: 10px; }
     </style>
 </head>
 <body>
@@ -86,24 +55,18 @@
     <div class="opponent-area">
         <div class="hand-zone" id="opp-hand"></div>
         <div class="field-zone" id="opp-field"></div>
-        <div class="player-info opp-info">
-            <span id="opp-name" style="color:#e74c3c; font-weight:bold;">對手</span><br>
-            <div style="margin-top:5px;">AP: <span id="opp-ap" style="color:#3498db">10</span></div>
-        </div>
+        <div class="player-info opp-info"><span id="opp-name" style="color:#e74c3c">對手</span><br>AP: <span id="opp-ap" style="color:#3498db">10</span></div>
     </div>
 
     <div class="my-area">
         <div class="hand-zone" id="my-hand"></div>
         <div class="field-zone" id="my-field"></div>
-        <div class="player-info my-info">
-            <span id="my-name" style="color:#2ecc71; font-weight:bold;">我</span><br>
-            <div style="margin-top:5px;">AP: <span id="my-ap" style="color:#3498db">10</span></div>
-        </div>
+        <div class="player-info my-info"><span id="my-name" style="color:#2ecc71">我</span><br>AP: <span id="my-ap" style="color:#3498db">10</span></div>
     </div>
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        const socket = io('https://mmo.ttctv-105.cc', { 
+const socket = io('https://mmo.ttctv-105.cc', { 
     transports: ['websocket', 'polling'],
     secure: true // 因為你用 https，建議加呢個
 });
@@ -116,10 +79,11 @@
         const MONSTER_LIST = {
             'slime': { name: "史萊姆", img: "slime.png" },
             'rat': { name: "大老鼠", img: "rat.png" },
+            'wolf_king': { name: "狼王", img: "wolf_king.png" },
+            'demon_king': { name: "魔王撒旦", img: "demon_king.png" },
             'bee': { name: "殺人蜂", img: "bee.png" },
             'boar': { name: "野豬", img: "boar.png" },
             'thief': { name: "盜賊", img: "thief.png" },
-            'wolf_king': { name: "狼王", img: "wolf_king.png" },
             'snake': { name: "毒蛇", img: "snake.png" },
             'zombie': { name: "腐屍", img: "zombie.png" },
             'skeleton': { name: "骷髏兵", img: "skeleton.png" },
@@ -146,7 +110,6 @@
             'void_lord': { name: "虛空領主", img: "void_lord.png" },
             'chaos_beast': { name: "混沌巨獸", img: "chaos_beast.png" },
             'fallen_angel': { name: "墮天使", img: "fallen_angel.png" },
-            'demon_king': { name: "魔王撒旦", img: "demon_king.png" },
             'void_walker': { name: "虛空行者", img: "void_walker.png" },
             'chaos_knight': { name: "混沌騎士", img: "chaos_knight.png" },
             'abyss_dragon': { name: "深淵魔龍", img: "abyss_dragon.png" },
@@ -162,9 +125,9 @@
         };
 
         const SPELL_LIST = {
-            'card_potion': { name: "回復卡", icon: "💊", type: 'heal' },
-            'card_fire': { name: "攻擊卡", icon: "🔥", type: 'damage' },
-            'card_shield': { name: "護盾卡", icon: "🛡️", type: 'buff' }
+            'card_potion': { name: "回復卡", icon: "💊" },
+            'card_fire': { name: "攻擊卡", icon: "🔥" },
+            'card_shield': { name: "護盾卡", icon: "🛡️" }
         };
 
         const CARD_DB = {};
@@ -172,9 +135,10 @@
         Object.keys(SPELL_LIST).forEach(k => { CARD_DB[k] = { ...SPELL_LIST[k], type: 'spell', cost: 1 }; });
 
         // 🟢 狀態變數
-        let selectedAttackerIndex = null; // 選中的我方怪物 (進行物理攻擊)
-        let selectedSpellIndex = null;    // 選中的魔法卡手牌索引
-        let selectedSpellId = null;       // 選中的魔法卡 ID (用來判斷是補血還是攻擊)
+        let selectedAttackerIndex = null; // 物理攻擊者
+        let selectedSpellIndex = null;    // 魔法卡索引
+        let selectedSpellId = null;       // 魔法卡 ID
+        let selectedSourceIndex = null;   // 魔法祭品索引 (新功能)
         
         let isMyTurn = false;
         let lastTurnOwner = null;
@@ -189,40 +153,30 @@
             const opp = data.opponent;
             isMyTurn = (data.turn === socket.id);
 
-            // 更新 UI
             document.getElementById('my-ap').innerText = me.ap;
             document.getElementById('opp-name').innerText = opp.name;
             document.getElementById('opp-ap').innerText = opp.ap;
 
             // 回合提示
-            const indicator = document.getElementById('turn-indicator');
-            const endBtn = document.getElementById('end-turn-btn');
-
             if (data.turn !== lastTurnOwner) {
                 lastTurnOwner = data.turn;
+                const indicator = document.getElementById('turn-indicator');
                 indicator.innerText = isMyTurn ? "👉 你的回合 👈" : "⏳ 對手回合";
                 indicator.style.borderColor = isMyTurn ? "#2ecc71" : "#e74c3c";
                 indicator.style.display = 'block';
                 setTimeout(() => indicator.style.display = 'none', 1500);
             }
 
-            if (isMyTurn) {
-                endBtn.style.display = 'flex';
-            } else {
-                endBtn.style.display = 'none';
-                resetSelection(); // 對手回合，重置所有選擇
-            }
+            document.getElementById('end-turn-btn').style.display = isMyTurn ? 'flex' : 'none';
+            if (!isMyTurn) resetSelection();
 
-            // 渲染手牌
             renderHand(me.hand);
-            // 渲染手牌背
             renderOppHand(opp.handCount);
-            // 渲染戰場
             renderMyField(me.field);
             renderOppField(opp.field);
         }
 
-        // 🟢 渲染手牌 (處理魔法卡選取)
+        // 🟢 渲染手牌
         function renderHand(hand) {
             const container = document.getElementById('my-hand');
             container.innerHTML = '';
@@ -231,27 +185,24 @@
                 const el = createCardElement(cardId);
                 const cardInfo = CARD_DB[cardId];
 
-                // 樣式：如果這張卡被選中 (魔法卡)
-                if (index === selectedSpellIndex) {
-                    el.classList.add('spell-selected');
-                }
+                if (index === selectedSpellIndex) el.classList.add('spell-selected');
 
                 el.onclick = () => {
                     if (!isMyTurn) { alert("現在是對手的回合！"); return; }
 
                     if (cardInfo.type === 'unit') {
-                        // 怪物卡：直接打出 (召喚)
+                        // 怪物卡：直接出牌
                         socket.emit('cardAction', { type: 'play', index: index });
                         resetSelection();
                     } else if (cardInfo.type === 'spell') {
-                        // 魔法卡：進入「選取目標模式」
+                        // 魔法卡：選取/取消
                         if (selectedSpellIndex === index) {
-                            resetSelection(); // 取消選取
+                            resetSelection();
                         } else {
+                            resetSelection(); // 清除其他選取
                             selectedSpellIndex = index;
                             selectedSpellId = cardId;
-                            selectedAttackerIndex = null; // 取消怪物攻擊選取
-                            renderHand(hand); // 重繪以顯示藍色框框
+                            renderHand(hand); // 重繪以顯示選取框
                         }
                     }
                 };
@@ -259,18 +210,13 @@
             });
         }
 
-        // 渲染對手手牌
         function renderOppHand(count) {
             const container = document.getElementById('opp-hand');
             container.innerHTML = '';
-            for(let i=0; i<count; i++) {
-                const d = document.createElement('div');
-                d.className = 'card-back';
-                container.appendChild(d);
-            }
+            for(let i=0; i<count; i++) container.appendChild(Object.assign(document.createElement('div'), {className:'card-back'}));
         }
 
-        // 🟢 渲染我方戰場 (處理補血/護盾目標 or 發動攻擊)
+        // 🟢 渲染我方戰場 (處理 物理攻擊 / 補血 / 魔法祭品)
         function renderMyField(fieldData) {
             const container = document.getElementById('my-field');
             container.innerHTML = '';
@@ -278,49 +224,48 @@
             fieldData.forEach((monster, index) => {
                 const el = createUnitElement(monster);
                 
-                // 狀態：剛召喚
                 if (!monster.canAttack) el.classList.add('sleeping');
-                // 狀態：選中攻擊
-                if (index === selectedAttackerIndex) el.classList.add('selected');
+                if (index === selectedAttackerIndex) el.classList.add('selected'); // 物理攻擊選中
+                if (index === selectedSourceIndex) el.classList.add('source-selected'); // 魔法祭品選中
 
                 el.onclick = () => {
                     if (!isMyTurn) return;
 
-                    // 情況 1: 正在施放「對自己有益」的魔法 (補血/護盾)
+                    // 1. 施法模式
                     if (selectedSpellIndex !== null) {
+                        // 回血 / 護盾 (對自己)
                         if (selectedSpellId.includes('potion') || selectedSpellId.includes('shield')) {
-                            // 發送施法指令
-                            socket.emit('cardAction', { 
-                                type: 'play', 
-                                index: selectedSpellIndex, 
-                                targetIdx: index 
-                            });
+                            socket.emit('cardAction', { type: 'play', index: selectedSpellIndex, targetIdx: index });
                             resetSelection();
-                        } else {
-                            alert("這張魔法卡不能對自己使用！(請點擊對手怪物)");
+                        } 
+                        // 攻擊卡 (需要先選祭品)
+                        else if (selectedSpellId.includes('fire')) {
+                            if (selectedSourceIndex === index) {
+                                selectedSourceIndex = null; // 取消
+                            } else {
+                                selectedSourceIndex = index; // 選為祭品
+                            }
+                            // 重新渲染以顯示紫色框
+                            renderMyField(fieldData);
                         }
                         return;
                     }
 
-                    // 情況 2: 選擇怪物進行物理攻擊
+                    // 2. 物理攻擊模式
                     if (!monster.canAttack) { alert("這隻怪物剛召喚，還不能攻擊！"); return; }
                     
                     if (selectedAttackerIndex === index) {
                         selectedAttackerIndex = null;
                     } else {
                         selectedAttackerIndex = index;
-                        selectedSpellIndex = null; // 取消魔法選取
                     }
-                    // 重繪更新樣式
-                    socket.emit('requestUpdate'); // 簡單觸發重繪技巧，或直接呼叫 render
                     renderMyField(fieldData);
-                    renderHand(lastHandData()); // 清除魔法卡選取樣式
                 };
                 container.appendChild(el);
             });
         }
 
-        // 🟢 渲染對手戰場 (處理被攻擊 or 被火球打)
+        // 🟢 渲染對手戰場 (處理 被打)
         function renderOppField(fieldData) {
             const container = document.getElementById('opp-field');
             container.innerHTML = '';
@@ -330,22 +275,23 @@
                 el.onclick = () => {
                     if (!isMyTurn) return;
 
-                    // 情況 1: 正在施放「攻擊型」魔法 (火球)
-                    if (selectedSpellIndex !== null) {
-                        if (selectedSpellId.includes('fire')) {
-                            socket.emit('cardAction', { 
-                                type: 'play', 
-                                index: selectedSpellIndex, 
-                                targetIdx: index 
-                            });
-                            resetSelection();
-                        } else {
-                            alert("這張魔法卡不能對敵人使用！(請點擊自己怪物)");
+                    // 1. 魔法攻擊 (火球)
+                    if (selectedSpellIndex !== null && selectedSpellId.includes('fire')) {
+                        if (selectedSourceIndex === null) {
+                            alert("請先點擊「我方怪物」作為力量來源 (祭品)！");
+                            return;
                         }
+                        socket.emit('cardAction', { 
+                            type: 'play', 
+                            index: selectedSpellIndex, 
+                            sourceIdx: selectedSourceIndex, // 祭品
+                            targetIdx: index                // 目標
+                        });
+                        resetSelection();
                         return;
                     }
 
-                    // 情況 2: 物理攻擊
+                    // 2. 物理攻擊
                     if (selectedAttackerIndex !== null) {
                         socket.emit('cardAction', { 
                             type: 'attack', 
@@ -356,7 +302,12 @@
                         return;
                     }
 
-                    alert("請先選擇我方怪物(攻擊) 或 魔法卡(施法)！");
+                    // 防呆
+                    if (selectedSpellIndex !== null) {
+                        alert("這張魔法卡 (回血/護盾) 只能對自己使用！");
+                    } else {
+                        alert("請先選擇我方怪物(攻擊) 或 魔法卡(施法)！");
+                    }
                 };
                 container.appendChild(el);
             });
@@ -394,16 +345,12 @@
             selectedAttackerIndex = null;
             selectedSpellIndex = null;
             selectedSpellId = null;
-            // 觸發一次重繪來清除 UI 上的紅色/藍色框框
-            // 這裡簡單從 DOM 移除 class 即可，或等待下一次 Server update
-            document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
-            document.querySelectorAll('.spell-selected').forEach(el => el.classList.remove('spell-selected'));
-        }
-
-        function lastHandData() {
-            // 獲取當前手牌數據的小 helper (因為 renderHand 需要)
-            // 實際專案建議把 data 存成全域變數 dataStore
-            return []; 
+            selectedSourceIndex = null;
+            
+            // 簡單清除樣式，或者等待 render 重繪
+            document.querySelectorAll('.selected, .spell-selected, .source-selected').forEach(el => {
+                el.classList.remove('selected', 'spell-selected', 'source-selected');
+            });
         }
 
         function endTurn() {
