@@ -14,9 +14,9 @@
         }
         h1 { color: #f1c40f; font-size: 16px; margin: 15px 0; flex-shrink: 0; }
 
-        /* 上方卡片庫容器 (可捲動) */
+        /* 上方卡片庫 (可捲動) */
         .card-pool-container {
-            flex: 1; overflow-y: auto; padding-bottom: 120px; /* 留位給下方 deck bar */
+            flex: 1; overflow-y: auto; padding-bottom: 120px; 
         }
 
         .card-grid {
@@ -24,7 +24,7 @@
             max-width: 600px; margin: 0 auto; padding: 10px;
         }
 
-        /* 卡片樣式 */
+        /* 卡片本體 */
         .card {
             background: #34495e; border: 2px solid #7f8c8d; border-radius: 8px;
             padding: 5px; position: relative; cursor: pointer;
@@ -34,18 +34,11 @@
         }
         .card:active { transform: scale(0.95); }
         
-        /* 狀態樣式 */
+        /* 狀態 */
         .card.owned { border-color: #f1c40f; background: #2c3e50; }
-        
-        /* 變灰 (沒有庫存或已用完) */
-        .card.disabled { 
-            opacity: 0.4; filter: grayscale(100%); cursor: not-allowed; pointer-events: none; 
-        }
-        
-        /* 在牌組中 (高亮邊框) - 這裡改為只要有選就亮，但主要靠數量控制 */
-        .card.in-deck { border: 2px solid #2ecc71; box-shadow: 0 0 5px #2ecc71; }
+        .card.disabled { opacity: 0.4; filter: grayscale(100%); cursor: not-allowed; pointer-events: none; }
 
-        /* 稀有度邊框 */
+        /* 稀有度 */
         .card[data-rarity="1"] { border-color: #bdc3c7; } 
         .card[data-rarity="2"] { border-color: #2ecc71; } 
         .card[data-rarity="3"] { border-color: #3498db; } 
@@ -61,15 +54,13 @@
         }
         .monster-pic { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5)); }
         .spell-icon { font-size: 24px; }
-        
         .card-stats { font-size: 7px; color: #bdc3c7; line-height: 1.2; margin-top: 2px; }
         
-        /* 剩餘數量標記 */
+        /* 剩餘數量標記 (右上角) */
         .card-count-badge { 
             position: absolute; top: 2px; right: 2px; 
-            background: #e74c3c; color: white; 
-            border-radius: 4px; padding: 2px 4px; 
-            font-size: 7px; z-index: 10; border: 1px solid #fff;
+            background: #e74c3c; color: white; border: 1px solid #fff;
+            border-radius: 4px; padding: 2px 4px; font-size: 7px; z-index: 10; 
         }
 
         /* 下方固定 Deck Bar */
@@ -84,7 +75,6 @@
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 5px; padding: 0 5px;
         }
-        
         .deck-info { font-size: 10px; text-align: left; }
         
         /* 橫向捲動的牌組區 */
@@ -107,7 +97,6 @@
             background: #27ae60; color: white; border: none; padding: 5px 10px;
             font-family: inherit; font-size: 10px; border-radius: 5px; cursor: pointer;
         }
-
         .back-btn {
             position: fixed; top: 10px; left: 10px;
             background: #7f8c8d; color: white; padding: 5px 10px; text-decoration: none;
@@ -146,8 +135,7 @@
                 <button class="save-btn" onclick="saveDeck()">💾 儲存</button>
             </div>
         </div>
-        <div class="deck-slots" id="deck-container">
-            </div>
+        <div class="deck-slots" id="deck-container"></div>
     </div>
 
     <div id="queue-msg">
@@ -159,9 +147,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -222,7 +210,7 @@
 
         const SPELL_LIST = {
             'card_potion': { name: "回復卡", icon: "💊", desc: "回復 50% HP" },
-            'card_fire': { name: "攻擊卡", icon: "🔥", desc: "ATK * 2" },
+            'card_fire': { name: "攻擊卡", icon: "🔥", desc: "傷害 = ATK * 2" },
             'card_shield': { name: "護盾卡", icon: "🛡️", desc: "+20 HP上限" }
         };
 
@@ -237,11 +225,12 @@
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
 
-        // 🟢 接收玩家資料
+        // 🟢 [修正] 讀取 Inventory (相容舊資料庫)
         socket.on('playerStatsUpdate', (p) => {
-            myInventory = p.cardPool || {}; // 讀取庫存 (注意 Server 欄位名)
-            myDeck = p.cardDeck || [];      // 讀取牌組
-            refreshUI();                    // 刷新介面
+            // 這裡優先使用你提供的資料格式: p.inventory 是物件 {card_id: count, ...}
+            myInventory = p.inventory || {}; 
+            myDeck = p.cardDeck || []; 
+            refreshUI();
         });
 
         socket.on('errorMessage', (msg) => alert(msg));
@@ -256,7 +245,6 @@
             if (msg === '已取消配對') document.getElementById('queue-msg').style.display = 'none';
         });
 
-        // 🟢 刷新所有介面 (上方卡池 + 下方牌組)
         function refreshUI() {
             renderPool();
             renderDeck();
@@ -268,37 +256,37 @@
             const list = document.getElementById('card-list');
             list.innerHTML = '';
             
-            // 這裡顯示所有 CARD_CONFIG 裡的卡，但會根據 Inventory 判斷是否擁有
+            // 遍歷我們知道的所有卡片定義
             Object.keys(CARD_CONFIG).forEach(id => {
                 const cardData = CARD_CONFIG[id];
                 
-                // 邏輯核心：計算剩餘數量
+                // 🟢 計算剩餘數量 = 庫存總數 - 牌組已用數量
                 const totalOwned = myInventory[id] || 0;
                 const usedInDeck = myDeck.filter(c => c === id).length;
                 const remaining = totalOwned - usedInDeck;
-                const isOwned = totalOwned > 0;
-
-                // 沒擁有且沒在牌組裡的就不顯示 (隱藏未收集卡片)
-                // 這裡改為: 只要有庫存或者牌組裡有的都顯示
-                if (totalOwned === 0 && usedInDeck === 0) return;
+                
+                // 如果完全沒擁有，就不顯示 (未收集)
+                if (totalOwned === 0) return;
 
                 const div = document.createElement('div');
-                // 如果剩餘數量 <= 0，就變灰禁止點擊
-                div.className = `card ${cardData.type} ${remaining <= 0 ? 'disabled' : ''} ${isOwned ? 'owned' : ''}`;
+                // 如果剩餘數量 <= 0，變灰
+                div.className = `card ${cardData.type} ${remaining <= 0 ? 'disabled' : 'owned'}`;
                 div.setAttribute('data-rarity', cardData.rarity);
 
                 let visualHtml = cardData.type === 'unit' ? 
                     `<img src="${IMG_BASE_URL + cardData.src}" class="monster-pic" onerror="this.style.display='none'">` : 
                     `<span class="spell-icon">${cardData.icon}</span>`;
 
+                let statsHtml = cardData.type === 'unit' ? `召喚單位<br>${cardData.desc}` : `魔法卡<br>${cardData.desc}`;
+
                 div.innerHTML = `
                     <div class="card-count-badge">剩: ${remaining}</div>
                     <div class="card-name">${cardData.name}</div>
                     <div class="card-img-box">${visualHtml}</div>
-                    <div class="card-stats">${cardData.desc}</div>
+                    <div class="card-stats">${statsHtml}</div>
                 `;
 
-                // 點擊事件：加入牌組
+                // 點擊事件：加入牌組 (複數選取)
                 div.onclick = () => addToDeck(id, remaining);
                 list.appendChild(div);
             });
@@ -325,24 +313,22 @@
                     el.style.borderColor = info.type === 'unit' ? '#e67e22' : '#9b59b6';
                 }
 
-                // 點擊事件：從牌組移除 (會自動歸還到剩餘數量)
+                // 點擊事件：從牌組移除 (會釋放回卡片庫)
                 el.onclick = () => removeFromDeck(index);
                 container.appendChild(el);
             });
         }
 
-        // 加入牌組
         function addToDeck(id, remaining) {
             if (myDeck.length >= 10) { alert("牌組最多只能放 10 張卡！"); return; }
             if (remaining <= 0) return; // 防呆
             myDeck.push(id);
-            refreshUI(); // 重新計算剩餘數量並渲染
+            refreshUI(); // 刷新
         }
 
-        // 移除牌組
         function removeFromDeck(index) {
             myDeck.splice(index, 1);
-            refreshUI(); // 重新計算剩餘數量並渲染
+            refreshUI(); // 刷新
         }
 
         function updateDeckInfo() {
@@ -361,7 +347,7 @@
 
         function startMatch() {
             if (!validateDeck()) return;
-            socket.emit('updateDeck', myDeck); // 強制儲存
+            socket.emit('updateDeck', myDeck); 
             setTimeout(() => {
                 socket.emit('joinCardQueue');
                 document.getElementById('queue-msg').style.display = 'block';
