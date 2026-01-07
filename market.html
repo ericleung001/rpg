@@ -97,6 +97,9 @@ const socket = io('https://mmo.ttctv-105.cc', {
         const SHOP_ITEMS = [
             // === 🧧 特殊商品 ===
             { id: 'lucky_bag', name: "🧧 奇蹟福袋", cost: 1000000000, desc: "隨機開出價值連城的稀有材料！", type: 'consumable', isLimited: true },
+            
+            // 🟢 [新增] 強化石 (放在消耗品類)
+            { id: 'enhance_stone', name: "強化石", cost: 500000, desc: "用於強化裝備 (成功率+)", type: 'consumable' },
 
             // === 消耗品 ===
             { id: 'potion_hp', name: "小紅藥水", cost: 50, desc: "恢復 50 HP", type: 'consumable' },
