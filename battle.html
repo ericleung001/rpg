@@ -176,7 +176,7 @@
         </div>
     </div>
     
-    <script src="socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
 // 指定連接到你的 https 網址
 const socket = io('https://mmo.ttctv-105.cc', { 
@@ -236,7 +236,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             socket.emit('joinGame', myToken); 
             
             setTimeout(() => {
-                // 🟢 [修正] 如果是世界 BOSS，直接隱藏等待大廳，直接開打
                 if (roomId === 'world_boss') {
                     socket.emit('connectToBossRoom');
                     
@@ -246,9 +245,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     document.getElementById('lobby-overlay').style.display = 'none';
                     
                     document.getElementById('countdown-timer').style.display = 'block'; 
-                    // Note: We don't need to call startCountdown here because the 'worldBossSync' event will trigger it.
-                    // This avoids race conditions where the timer resets to 540s before receiving server time.
-
                 } else {
                     socket.emit('connectToRoom', roomId);
                 }
@@ -278,7 +274,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             const nameSpan = document.createElement('span');
             nameSpan.style.color = '#f1c40f'; nameSpan.style.fontWeight = 'bold';
             nameSpan.textContent = `[${name}]: `;
-            // 允許 HTML 渲染 (因為 Server 傳過來的 Log 有 span style)
             div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${name}]:</span> ${msg}`;
             history.appendChild(div); history.scrollTop = history.scrollHeight;
         }
@@ -296,7 +291,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             document.getElementById('chat-header').innerText = chat.classList.contains('chat-open') ? " 收起" : " 聊天室 (點擊展開)";
         }
 
-        // 🟢 [新增] 接收世界 BOSS 數據同步
         socket.on('worldBossSync', (data) => {
             if (!data.active) {
                 showMsg("BOSS 已被擊敗！");
@@ -304,22 +298,17 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 return;
             }
 
-            // 更新 BOSS 血量 UI
             document.getElementById('monster-name').innerText = data.name;
             const hpPct = (data.hp / data.maxHp) * 100;
             document.getElementById('mhp').style.width = hpPct + '%';
             document.getElementById('mhp-txt').innerText = `${(data.hp/100000000).toFixed(2)}億`;
             
             const img = document.getElementById('monster-img');
-            // 世界BOSS圖片
             const bossSrc = "img/monsters/entropy_god.png"; 
             if (!img.src.includes(bossSrc)) { img.src = bossSrc; img.style.display = 'block'; }
 
-            // 🟢 [新增] 同步 Server 的倒數時間
             if (data.remainingTime !== undefined) {
                 const serverTimeSec = Math.floor(data.remainingTime / 1000);
-                
-                // 誤差修正：只有當本地時間跟伺服器差超過 2 秒，才強制更新
                 if (Math.abs(timeLeft - serverTimeSec) > 2 || !battleTimer) {
                     timeLeft = serverTimeSec;
                     if (!battleTimer) startCountdown(); 
@@ -399,7 +388,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             const timerDiv = document.getElementById('countdown-timer');
             timerDiv.style.display = 'block';
             
-            // 防止重複啟動
             if (battleTimer) clearInterval(battleTimer);
             
             updateTimerDisplay();
@@ -461,7 +449,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             log(`<span style="color:#e74c3c">受到 ${d.damage} 傷害！</span>`); 
         });
 
-        // 🟢 [修正] 移除 GIF 彈窗，只保留按鈕變化和簡單提示
+        // 🟢 [修正] 處理戰鬥勝利及顯示獎勵
         socket.on('battleWon', (data) => {
             console.log("收到勝利數據:", data); 
 
@@ -473,12 +461,18 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
             if (roomId === 'world_boss') {
                 showMsg(`👑 討伐成功！獲得 ${data.gold} G`);
-                showNormalVictoryBtn(); // 顯示離開按鈕
-                // 排名已由 Server 透過 battleLog 廣播，這裡不再顯示
+                showNormalVictoryBtn(); 
             }
             else {
                 showMsg(`勝利！獲得 ${data.gold} G`);
                 showNormalVictoryBtn();
+            }
+
+            // 🟢 [關鍵] 檢查並顯示掉落的卡片/物品
+            if (data.rewards && data.rewards.length > 0) {
+                data.rewards.forEach(reward => {
+                    log(`<span style="color:#9b59b6; font-weight:bold; border:1px solid #9b59b6; padding:2px; background:rgba(155, 89, 182, 0.2);">🎁 獲得戰利品: [${reward}]</span>`);
+                });
             }
         });
 
@@ -497,7 +491,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
         
-        // 🟢 [關鍵] battleLog 負責顯示 Server 傳來的所有戰鬥資訊 (包含排名 HTML)
         socket.on('battleLog', (msg) => log(msg));
         
         socket.on('roomLeft', () => {
@@ -575,7 +568,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 setTimeout(() => toggle(false), 500);
             } else {
                 if(!isMyTurn) return; 
-                toggle(true);
+                toggle(true); 
                 socket.emit('combatAction', { roomId, type: 'skill', skillId: skillId });
                 const img = document.getElementById('monster-img');
                 img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
@@ -616,7 +609,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                resetButtons();
             } else {
                 if(!isMyTurn) return; 
-                toggle(true);
+                toggle(true); 
                 socket.emit('combatAction', { roomId, type: 'item', itemId: itemId }); 
                 resetButtons();
             }
@@ -651,10 +644,9 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         function log(m) { 
             const box = document.getElementById('log');
-            // 🟢 [修正] 支援 HTML (讓排名榜的 div/span 樣式能顯示出來)
             const div = document.createElement('div');
             div.innerHTML = `> ${m}`;
-            box.insertBefore(div, box.firstChild); // 插入最上方
+            box.insertBefore(div, box.firstChild); 
             
             const lines = box.querySelectorAll('div');
             if (lines.length > 20) for(let i=20; i<lines.length; i++) lines[i].remove();
