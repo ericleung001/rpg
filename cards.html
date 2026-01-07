@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>卡片圖鑑5</title>
+    <title>卡片圖鑑</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -40,7 +40,7 @@
 
         .card-name { font-size: 8px; color: #fff; margin-bottom: 5px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* 🟢 [修改] 圖片容器樣式 */
+        /* 圖片容器樣式 */
         .card-img-box { 
             margin: 5px 0; height: 60px; display: flex; 
             align-items: center; justify-content: center; 
@@ -50,7 +50,7 @@
         /* 怪物圖片 */
         .monster-pic {
             max-width: 100%; max-height: 100%; 
-            object-fit: contain; /* 保持比例 */
+            object-fit: contain; 
             filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));
         }
         /* 魔法卡 Emoji */
@@ -101,10 +101,9 @@
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], secure: true });
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -113,7 +112,6 @@
         let myDeck = [];
         
         // 🟢 怪物列表 (Icon 改為圖片檔名)
-        // 假設你的圖片是 png，如果你的檔案是 jpg，請自行修改
         const MONSTER_LIST = {
             'slime': { name: "史萊姆", img: "slime.png" },
             'rat': { name: "大老鼠", img: "rat.png" },
@@ -220,15 +218,11 @@
                 div.className = `card ${isOwned ? 'owned' : 'not-owned'} ${isInDeck ? 'in-deck' : ''}`;
                 div.setAttribute('data-rarity', cardData.rarity);
 
-                // 🟢 [判斷] 顯示圖片 還是 Emoji
+                // 🟢 [修改] 圖片路徑更新為 /img/monsters/
                 let visualHtml = '';
                 if (cardData.type === 'unit') {
-                    // 怪物卡：使用 <img>
-                    // 預設路徑: /img/monster/ + 檔名
-                    // 如果圖片載入失敗 (onerror)，自動變回 Emoji "👾"
                     visualHtml = `<img src="/img/monsters/${cardData.src}" class="monster-pic" onerror="this.style.display='none';this.parentNode.innerHTML='👾'">`;
                 } else {
-                    // 功能卡：使用 Emoji
                     visualHtml = `<span class="spell-icon">${cardData.icon}</span>`;
                 }
 
