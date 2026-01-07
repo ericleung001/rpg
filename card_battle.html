@@ -189,18 +189,24 @@
         };
 
         const SPELL_LIST = {
-            'card_potion': { name: "回復卡", icon: "💊" },
-            'card_fire': { name: "火球卡", icon: "🔥" },
-            'card_shield': { name: "護盾卡", icon: "🛡️" }
+            'card_potion': { name: "回復卡", icon: "💊", desc: "回復 50 HP" },
+            'card_fire': { name: "火球卡", icon: "🔥", desc: "30 傷害" },
+            'card_shield': { name: "護盾卡", icon: "🛡️", desc: "獲得護盾" }
         };
 
+        // 🟢 [修改] 建立快速查詢表 (統一 Cost 為 1)
         const CARD_DB = {};
-        Object.keys(MONSTER_LIST).forEach(k => { CARD_DB[`card_${k}`] = { ...MONSTER_LIST[k], type: 'unit', cost: 2 }; });
-        Object.keys(SPELL_LIST).forEach(k => { CARD_DB[k] = { ...SPELL_LIST[k], type: 'spell', cost: 1 }; });
+        Object.keys(MONSTER_LIST).forEach(k => {
+            CARD_DB[`card_${k}`] = { ...MONSTER_LIST[k], type: 'unit', cost: 1 }; 
+        });
+        Object.keys(SPELL_LIST).forEach(k => {
+            CARD_DB[k] = { ...SPELL_LIST[k], type: 'spell', cost: 1 };
+        });
 
         // 🟢 [狀態變數] 用於攻擊流程
         let selectedAttackerIndex = null; // 當前選中的己方怪物索引
         let isMyTurn = false;
+        let lastTurnOwner = null; // 記錄上一回合是誰
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
 
@@ -221,21 +227,36 @@
             document.getElementById('opp-name').innerText = opp.name;
             document.getElementById('opp-ap').innerText = opp.ap;
 
-            // 2. 回合提示與按鈕
+            // 2. 🟢 [修改] 智能回合提示 (只有回合切換時才顯示)
             const indicator = document.getElementById('turn-indicator');
             const endBtn = document.getElementById('end-turn-btn');
+
+            // 判斷回合是否剛剛切換
+            if (data.turn !== lastTurnOwner) {
+                lastTurnOwner = data.turn; // 更新記錄
+                
+                if (isMyTurn) {
+                    indicator.innerText = "👉 你的回合 👈";
+                    indicator.style.borderColor = "#2ecc71";
+                    indicator.style.boxShadow = "0 0 20px #2ecc71";
+                } else {
+                    indicator.innerText = "⏳ 對手回合";
+                    indicator.style.borderColor = "#e74c3c";
+                    indicator.style.boxShadow = "0 0 20px #e74c3c";
+                }
+                
+                // 顯示動畫
+                indicator.style.display = 'block';
+                setTimeout(() => indicator.style.display = 'none', 1500);
+            }
+
+            // 按鈕狀態 (這個要一直保持)
             if (isMyTurn) {
-                indicator.innerText = "👉 你的回合";
-                indicator.style.borderColor = "#2ecc71";
                 endBtn.style.display = 'flex';
             } else {
-                indicator.innerText = "⏳ 對手回合";
-                indicator.style.borderColor = "#e74c3c";
                 endBtn.style.display = 'none';
-                selectedAttackerIndex = null; // 對手回合取消選擇
+                selectedAttackerIndex = null; 
             }
-            indicator.style.display = 'block';
-            setTimeout(() => indicator.style.display = 'none', 1500);
 
             // 3. 渲染我方手牌
             const myHandDiv = document.getElementById('my-hand');
