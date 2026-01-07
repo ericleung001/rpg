@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>卡片圖鑑3</title>
+    <title>卡片圖鑑</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -93,18 +93,17 @@
 
     <div class="deck-bar">
         <div class="deck-info">
-            出戰牌組: <span id="deck-count" style="color:#f1c40f">0</span> / 5<br>
-            <span style="color:#aaa; font-size:8px;">點擊卡片以放入/移除</span>
+            出戰牌組: <span id="deck-count" style="color:#f1c40f">0</span> / 10<br>
+            <span style="color:#aaa; font-size:8px;">(需 3 張怪物卡)</span>
         </div>
         <button class="save-btn" onclick="saveDeck()">💾 儲存牌組</button>
     </div>
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], secure: true });
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -218,10 +217,9 @@
                 div.className = `card ${isOwned ? 'owned' : 'not-owned'} ${isInDeck ? 'in-deck' : ''}`;
                 div.setAttribute('data-rarity', cardData.rarity);
 
-                // 🟢 [修改] 使用 GitHub 連結
+                // 使用 GitHub 連結
                 let visualHtml = '';
                 if (cardData.type === 'unit') {
-                    // 這裡拼湊出 GitHub 的完整網址
                     const imgUrl = IMG_BASE_URL + cardData.src;
                     visualHtml = `<img src="${imgUrl}" class="monster-pic" onerror="this.style.display='none';this.parentNode.innerHTML='👾'">`;
                 } else {
@@ -246,9 +244,11 @@
                 list.appendChild(div);
             });
 
-            document.getElementById('deck-count').innerText = myDeck.length;
+            // 🟢 更新下方狀態文字
+            updateDeckInfo();
         }
 
+        // 🟢 [修改] 牌組選擇邏輯 (上限 10 張)
         function toggleDeck(id, isOwned) {
             if (!isOwned) return; 
 
@@ -256,20 +256,56 @@
             if (idx > -1) {
                 myDeck.splice(idx, 1);
             } else {
-                if (myDeck.length >= 5) {
-                    alert("牌組最多只能放 5 張卡！");
+                if (myDeck.length >= 10) { // 限制 10 張
+                    alert("牌組最多只能放 10 張卡！");
                     return;
                 }
                 myDeck.push(id);
             }
-            renderCards();
+            renderCards(); // renderCards 裡面會呼叫 updateDeckInfo
         }
 
+        // 🟢 [新增] 更新牌組資訊顯示
+        function updateDeckInfo() {
+            let monsterCount = 0;
+            myDeck.forEach(cardId => {
+                if (CARD_CONFIG[cardId] && CARD_CONFIG[cardId].type === 'unit') {
+                    monsterCount++;
+                }
+            });
+            
+            // 更新下方 UI
+            const infoDiv = document.querySelector('.deck-info');
+            if (infoDiv) {
+                const countColor = myDeck.length === 10 ? '#2ecc71' : '#f1c40f';
+                const monColor = monsterCount >= 3 ? '#2ecc71' : '#e74c3c';
+                
+                infoDiv.innerHTML = 
+                    `出戰牌組: <span style="color:${countColor}">${myDeck.length}</span> / 10 <br>` + 
+                    `<span style="font-size:8px; color:#aaa;">(怪物卡: <span style="color:${monColor}">${monsterCount}</span> / 最少 3)</span>`;
+            }
+        }
+
+        // 🟢 [修改] 儲存檢查 (10張 + 3怪)
         function saveDeck() {
-            if (myDeck.length === 0) {
-                alert("牌組不能為空！");
+            if (myDeck.length !== 10) {
+                alert(`你的牌組目前有 ${myDeck.length} 張卡。\n必須剛好湊滿 10 張卡才能儲存！`);
                 return;
             }
+
+            // 計算怪物卡數量
+            let monsterCount = 0;
+            myDeck.forEach(cardId => {
+                if (CARD_CONFIG[cardId] && CARD_CONFIG[cardId].type === 'unit') {
+                    monsterCount++;
+                }
+            });
+
+            if (monsterCount < 3) {
+                alert(`你的牌組只有 ${monsterCount} 張怪物卡。\n最少需要 3 張怪物卡 (召喚單位)！`);
+                return;
+            }
+
             socket.emit('updateDeck', myDeck);
         }
     </script>
