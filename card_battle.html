@@ -11,6 +11,7 @@
             font-family: 'Press Start 2P', monospace; 
             margin: 0; padding: 0; overflow: hidden;
             display: flex; flex-direction: column; height: 100vh;
+            user-select: none; /* 防止點擊時選取文字 */
         }
 
         /* 區域劃分 */
@@ -31,27 +32,28 @@
             width: 60px; height: 85px; border-radius: 5px; border: 2px solid #fff; box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
         }
 
-        /* 戰場區 (放怪物的) */
+        /* 戰場區 */
         .field-zone { 
             flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px; 
             padding: 10px; 
         }
         
-        /* 玩家資訊 (HP/AP) */
+        /* 玩家資訊 (只顯示 AP) */
         .player-info { 
             position: absolute; padding: 8px 12px; background: rgba(0,0,0,0.85); 
-            border-radius: 8px; border: 1px solid #f1c40f; font-size: 10px;
-            z-index: 10; width: 120px;
+            border-radius: 8px; border: 1px solid #f1c40f; font-size: 12px;
+            z-index: 10;
         }
         .opp-info { top: 10px; left: 10px; text-align: left; }
         .my-info { bottom: 10px; left: 10px; text-align: left; }
 
-        /* 卡片樣式 (戰鬥版) */
+        /* 卡片通用樣式 */
         .battle-card {
             width: 70px; height: 100px; background: #2c3e50; border: 2px solid #fff;
             border-radius: 6px; display: flex; flex-direction: column; align-items: center;
             font-size: 8px; position: relative; cursor: pointer;
-            transition: transform 0.1s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s, border-color 0.2s, box-shadow 0.2s; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
         .battle-card:active { transform: scale(0.95); }
         .battle-card img { width: 50px; height: 50px; object-fit: contain; margin-top: 5px; background: rgba(0,0,0,0.2); border-radius: 4px; }
@@ -60,20 +62,33 @@
         .battle-card .cost { 
             position: absolute; top: -5px; right: -5px; 
             background: #3498db; color: white; width: 18px; height: 18px; 
-            border-radius: 50%; font-size: 8px; line-height: 18px; text-align: center;
-            border: 1px solid #fff;
+            border-radius: 50%; font-size: 8px; line-height: 18px; text-align: center; border: 1px solid #fff;
         }
 
-        /* 卡片類型顏色 */
-        .battle-card.unit { border-color: #f1c40f; }
-        .battle-card.spell { border-color: #9b59b6; }
+        /* 戰場單位樣式 */
+        .field-unit { border-color: #f1c40f; }
+        
+        /* 選中狀態 (攻擊發起者) */
+        .field-unit.selected {
+            border-color: #e74c3c;
+            box-shadow: 0 0 15px #e74c3c;
+            transform: scale(1.1);
+            z-index: 5;
+        }
+        
+        /* 剛召喚不可攻擊 */
+        .field-unit.sleeping {
+            opacity: 0.6;
+            filter: grayscale(80%);
+            cursor: not-allowed;
+        }
 
-        /* 狀態提示 */
+        /* 提示字 */
         #turn-indicator {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(0,0,0,0.95); padding: 15px 30px; border: 3px solid #e74c3c;
             color: #fff; font-size: 16px; display: none; z-index: 200; pointer-events: none;
-            border-radius: 10px; box-shadow: 0 0 20px #e74c3c;
+            border-radius: 10px;
         }
 
         /* 結束回合按鈕 */
@@ -82,7 +97,8 @@
             padding: 15px; background: #f39c12; border: none; color: white;
             border-radius: 50%; width: 70px; height: 70px; font-weight: bold;
             cursor: pointer; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center; text-align: center;
+            display: none; /* 輪到自己才顯示 */
+            align-items: center; justify-content: center; text-align: center;
             font-family: inherit; font-size: 10px;
         }
         #end-turn-btn:active { transform: translateY(-50%) scale(0.95); }
@@ -91,7 +107,6 @@
 <body>
 
     <div id="turn-indicator">戰鬥開始</div>
-
     <button id="end-turn-btn" onclick="endTurn()">結束<br>回合</button>
 
     <div class="opponent-area">
@@ -99,8 +114,7 @@
         <div class="field-zone" id="opp-field"></div>
         <div class="player-info opp-info">
             <span id="opp-name" style="color:#e74c3c; font-weight:bold;">對手</span><br>
-            <div style="margin-top:5px;">HP: <span id="opp-hp">50</span></div>
-            <div>AP: <span id="opp-ap" style="color:#3498db">3</span></div>
+            <div style="margin-top:5px;">AP: <span id="opp-ap" style="color:#3498db">20</span></div>
         </div>
     </div>
 
@@ -109,14 +123,13 @@
         <div class="field-zone" id="my-field"></div>
         <div class="player-info my-info">
             <span id="my-name" style="color:#2ecc71; font-weight:bold;">我</span><br>
-            <div style="margin-top:5px;">HP: <span id="my-hp">50</span></div>
-            <div>AP: <span id="my-ap" style="color:#3498db">3</span></div>
+            <div style="margin-top:5px;">AP: <span id="my-ap" style="color:#3498db">20</span></div>
         </div>
     </div>
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
+        const socket = io('https://mmo.ttctv-105.cc', { 
     transports: ['websocket', 'polling'],
     secure: true // 因為你用 https，建議加呢個
 });
@@ -124,10 +137,9 @@ const socket = io('https://mmo.ttctv-105.cc', {
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // 圖片路徑
         const IMG_BASE_URL = "https://ericleung001.github.io/rpg/img/monsters/";
         
-        // 怪物列表 (需與 cards.html 一致)
+        // 🟢 怪物/卡片資料庫 (需與 Server 保持一致)
         const MONSTER_LIST = {
             'slime': { name: "史萊姆", img: "slime.png" },
             'rat': { name: "大老鼠", img: "rat.png" },
@@ -177,65 +189,50 @@ const socket = io('https://mmo.ttctv-105.cc', {
         };
 
         const SPELL_LIST = {
-            'card_potion': { name: "回復卡", icon: "💊", desc: "回復 50 HP" },
-            'card_fire': { name: "火球卡", icon: "🔥", desc: "30 傷害" },
-            'card_shield': { name: "護盾卡", icon: "🛡️", desc: "獲得護盾" }
+            'card_potion': { name: "回復卡", icon: "💊" },
+            'card_fire': { name: "火球卡", icon: "🔥" },
+            'card_shield': { name: "護盾卡", icon: "🛡️" }
         };
 
-        // 建立快速查詢表
         const CARD_DB = {};
-        Object.keys(MONSTER_LIST).forEach(k => {
-            CARD_DB[`card_${k}`] = { ...MONSTER_LIST[k], type: 'unit', cost: 2 };
-        });
-        Object.keys(SPELL_LIST).forEach(k => {
-            CARD_DB[k] = { ...SPELL_LIST[k], type: 'spell', cost: 1 };
-        });
+        Object.keys(MONSTER_LIST).forEach(k => { CARD_DB[`card_${k}`] = { ...MONSTER_LIST[k], type: 'unit', cost: 2 }; });
+        Object.keys(SPELL_LIST).forEach(k => { CARD_DB[k] = { ...SPELL_LIST[k], type: 'spell', cost: 1 }; });
 
-        // ============================================
+        // 🟢 [狀態變數] 用於攻擊流程
+        let selectedAttackerIndex = null; // 當前選中的己方怪物索引
+        let isMyTurn = false;
 
-        socket.on('connect', () => { 
-            console.log("Connected to battle server");
-            socket.emit('joinGame', myToken); 
-        });
+        socket.on('connect', () => { socket.emit('joinGame', myToken); });
 
-        // 接收戰況更新
         socket.on('cardGameUpdate', (data) => {
-            console.log("收到戰況:", data);
             renderGame(data);
         });
 
-        // 接收錯誤訊息
         socket.on('errorMessage', (msg) => alert(msg));
-
-        // 接收遊戲結束
-        socket.on('cardGameEnd', (res) => {
-            alert(`遊戲結束！勝利者: ${res.winner}`);
-            window.location.href = 'hub.html';
-        });
+        socket.on('cardGameEnd', (res) => { alert(`遊戲結束！勝利者: ${res.winner}`); window.location.href = 'hub.html'; });
 
         function renderGame(data) {
             const me = data.me;
             const opp = data.opponent;
+            isMyTurn = (data.turn === socket.id);
 
-            // 1. 更新數值
-            document.getElementById('my-hp').innerText = me.hp;
+            // 1. 更新 UI (隱藏 HP)
             document.getElementById('my-ap').innerText = me.ap;
             document.getElementById('opp-name').innerText = opp.name;
-            document.getElementById('opp-hp').innerText = opp.hp;
             document.getElementById('opp-ap').innerText = opp.ap;
 
-            // 2. 顯示回合提示
+            // 2. 回合提示與按鈕
             const indicator = document.getElementById('turn-indicator');
-            if (data.turn === socket.id) {
-                indicator.innerText = "👉 你的回合 👈";
+            const endBtn = document.getElementById('end-turn-btn');
+            if (isMyTurn) {
+                indicator.innerText = "👉 你的回合";
                 indicator.style.borderColor = "#2ecc71";
-                indicator.style.boxShadow = "0 0 20px #2ecc71";
-                document.getElementById('end-turn-btn').style.display = 'flex'; // 顯示結束按鈕
+                endBtn.style.display = 'flex';
             } else {
                 indicator.innerText = "⏳ 對手回合";
                 indicator.style.borderColor = "#e74c3c";
-                indicator.style.boxShadow = "0 0 20px #e74c3c";
-                document.getElementById('end-turn-btn').style.display = 'none'; // 隱藏結束按鈕
+                endBtn.style.display = 'none';
+                selectedAttackerIndex = null; // 對手回合取消選擇
             }
             indicator.style.display = 'block';
             setTimeout(() => indicator.style.display = 'none', 1500);
@@ -243,25 +240,18 @@ const socket = io('https://mmo.ttctv-105.cc', {
             // 3. 渲染我方手牌
             const myHandDiv = document.getElementById('my-hand');
             myHandDiv.innerHTML = '';
-            
             if (me.hand && me.hand.length > 0) {
                 me.hand.forEach((cardId, index) => {
                     const el = createCardElement(cardId);
-                    // 點擊出牌
                     el.onclick = () => {
-                        if (data.turn !== socket.id) {
-                            alert("還沒輪到你！");
-                            return;
-                        }
+                        if (!isMyTurn) { alert("現在是對手的回合！"); return; }
                         socket.emit('cardAction', { type: 'play', index: index });
                     };
                     myHandDiv.appendChild(el);
                 });
-            } else {
-                myHandDiv.innerHTML = '<span style="font-size:10px; color:#aaa;">無手牌</span>';
             }
 
-            // 4. 渲染對手手牌 (卡背)
+            // 4. 渲染對手手牌
             const oppHandDiv = document.getElementById('opp-hand');
             oppHandDiv.innerHTML = '';
             for(let i=0; i < opp.handCount; i++) {
@@ -270,11 +260,98 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 oppHandDiv.appendChild(back);
             }
 
-            // 5. 渲染戰場
-            renderField(me.field, 'my-field', true);
-            renderField(opp.field, 'opp-field', false);
+            // 5. 渲染戰場 (重點！)
+            renderMyField(me.field);
+            renderOppField(opp.field);
         }
 
+        // 🟢 渲染我方戰場 (點擊=選擇攻擊者)
+        function renderMyField(fieldData) {
+            const container = document.getElementById('my-field');
+            container.innerHTML = '';
+            
+            fieldData.forEach((monster, index) => {
+                const el = createUnitElement(monster);
+                
+                // 如果剛召喚 (canAttack=false)，加上半透明
+                if (!monster.canAttack) {
+                    el.classList.add('sleeping');
+                }
+
+                // 如果被選中，加上紅框
+                if (index === selectedAttackerIndex) {
+                    el.classList.add('selected');
+                }
+
+                el.onclick = () => {
+                    if (!isMyTurn) return;
+                    if (!monster.canAttack) { alert("這隻怪物剛召喚，還不能攻擊！"); return; }
+
+                    // 切換選擇狀態
+                    if (selectedAttackerIndex === index) {
+                        selectedAttackerIndex = null; // 取消選擇
+                    } else {
+                        selectedAttackerIndex = index; // 選中
+                    }
+                    // 重新渲染以更新樣式 (不用等 Server)
+                    renderMyField(fieldData); 
+                };
+                container.appendChild(el);
+            });
+        }
+
+        // 🟢 渲染對手戰場 (點擊=確認攻擊)
+        function renderOppField(fieldData) {
+            const container = document.getElementById('opp-field');
+            container.innerHTML = '';
+
+            fieldData.forEach((monster, index) => {
+                const el = createUnitElement(monster);
+                el.onclick = () => {
+                    if (!isMyTurn) return;
+                    
+                    // 檢查是否有選中我方怪物
+                    if (selectedAttackerIndex === null) {
+                        alert("請先點擊「我方怪物」來發動攻擊！");
+                        return;
+                    }
+
+                    // 發送攻擊指令
+                    socket.emit('cardAction', { 
+                        type: 'attack', 
+                        attackerIdx: selectedAttackerIndex, 
+                        targetIdx: index 
+                    });
+                    
+                    // 重置選擇
+                    selectedAttackerIndex = null;
+                };
+                container.appendChild(el);
+            });
+        }
+
+        // 建立戰場單位的 HTML (共用)
+        function createUnitElement(monster) {
+            const div = document.createElement('div');
+            div.className = 'battle-card field-unit';
+            
+            let imgUrl = '👾';
+            const cardInfo = CARD_DB[monster.id];
+            if (cardInfo) {
+                imgUrl = `<img src="${IMG_BASE_URL + cardInfo.img}" onerror="this.style.display='none'">`;
+            }
+
+            div.innerHTML = `
+                ${imgUrl}
+                <div style="font-size:8px; margin-top:2px;">${cardInfo ? cardInfo.name : '怪物'}</div>
+                <div style="color:#e74c3c; font-weight:bold; font-size:9px;">
+                    ⚔️${monster.atk} ❤️${monster.hp}
+                </div>
+            `;
+            return div;
+        }
+
+        // 建立手牌 HTML
         function createCardElement(cardId) {
             const div = document.createElement('div');
             const cardInfo = CARD_DB[cardId];
@@ -305,45 +382,14 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 <div class="cost">${cost}</div>
                 ${visual}
                 <div class="name">${name}</div>
-                <div class="stats">${type==='unit'?'':''}</div> 
             `;
             return div;
         }
 
-        // 渲染戰場上的怪物
-        function renderField(fieldData, elementId, isMine) {
-            const container = document.getElementById(elementId);
-            container.innerHTML = '';
-
-            fieldData.forEach(monster => {
-                const div = document.createElement('div');
-                div.className = 'battle-card unit';
-                
-                let imgUrl = '👾';
-                const cardInfo = CARD_DB[monster.id];
-                if (cardInfo) {
-                    imgUrl = `<img src="${IMG_BASE_URL + cardInfo.img}" onerror="this.style.display='none'">`;
-                }
-
-                div.innerHTML = `
-                    ${imgUrl}
-                    <div style="font-size:8px; margin-top:2px;">${cardInfo ? cardInfo.name : '怪物'}</div>
-                    <div style="color:#e74c3c; font-weight:bold; font-size:9px;">
-                        ⚔️${monster.atk} ❤️${monster.hp}
-                    </div>
-                `;
-                
-                // 如果是剛召喚 (不能攻擊)，變半透明
-                if (isMine && !monster.canAttack) {
-                    div.style.opacity = "0.6";
-                }
-
-                container.appendChild(div);
-            });
-        }
-
         function endTurn() {
-            socket.emit('cardAction', { type: 'endTurn' });
+            if(confirm("確定要結束回合嗎？")) {
+                socket.emit('cardAction', { type: 'endTurn' });
+            }
         }
 
     </script>
