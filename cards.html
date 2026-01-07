@@ -226,7 +226,7 @@
                     // 怪物卡：使用 <img>
                     // 預設路徑: /img/monster/ + 檔名
                     // 如果圖片載入失敗 (onerror)，自動變回 Emoji "👾"
-                    visualHtml = `<img src="/img/monster/${cardData.src}" class="monster-pic" onerror="this.style.display='none';this.parentNode.innerHTML='👾'">`;
+                    visualHtml = `<img src="/img/monsters/${cardData.src}" class="monster-pic" onerror="this.style.display='none';this.parentNode.innerHTML='👾'">`;
                 } else {
                     // 功能卡：使用 Emoji
                     visualHtml = `<span class="spell-icon">${cardData.icon}</span>`;
