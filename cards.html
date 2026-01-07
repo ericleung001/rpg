@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>卡片圖鑑</title>
+    <title>卡片圖鑑2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -31,7 +31,7 @@
         .card.not-owned { opacity: 0.4; filter: grayscale(100%); }
         .card.in-deck { border: 2px solid #2ecc71; box-shadow: 0 0 10px #2ecc71; }
 
-        /* 稀有度顏色 */
+        /* 稀有度顏色 (對應 CARD_CONFIG 的 rarity) */
         .card[data-rarity="1"] { border-color: #bdc3c7; } /* 白 */
         .card[data-rarity="2"] { border-color: #2ecc71; } /* 綠 */
         .card[data-rarity="3"] { border-color: #3498db; } /* 藍 */
@@ -92,19 +92,17 @@
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], secure: true });
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        let myCards = {};
+        let myInventory = {}; // 改用背包
         let myDeck = [];
         
         // 🟢 完整的怪物資料 (需與 Server 同步)
-        // 這裡我們只列出名稱與屬性，讓前端能顯示
         const MONSTER_LIST = {
             'slime': { name: "史萊姆", icon: "💧" },
             'rat': { name: "大老鼠", icon: "🐀" },
@@ -171,7 +169,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 name: mon.name + "卡",
                 icon: mon.icon,
                 type: 'unit',
-                rarity: 1, // 暫時預設，顯示時可調整
+                rarity: 1, // 預設 1，顯示時會根據 Server 資料調整
                 desc: `${mon.name} 的靈魂`
             };
         });
@@ -190,7 +188,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
 
         socket.on('playerStatsUpdate', (p) => {
-            myCards = p.cards || {};
+            // 🟢 [重點修改] 改為讀取 inventory (背包)
+            myInventory = p.inventory || {}; 
             myDeck = p.cardDeck || []; 
             renderCards();
         });
@@ -204,22 +203,22 @@ const socket = io('https://mmo.ttctv-105.cc', {
             
             Object.keys(CARD_CONFIG).forEach(id => {
                 const cardData = CARD_CONFIG[id];
-                const ownedCount = myCards[id] || 0;
+                
+                // 🟢 檢查背包裡有沒有這個 ID (key 必須包含 'card_')
+                const ownedCount = myInventory[id] || 0;
                 const isOwned = ownedCount > 0;
                 const isInDeck = myDeck.includes(id);
 
-                // 如果未擁有且不是功能卡，可能選擇不顯示 (或顯示為未知)
-                // 這裡選擇全部顯示，未擁有的變灰
-                
                 const div = document.createElement('div');
                 div.className = `card ${isOwned ? 'owned' : 'not-owned'} ${isInDeck ? 'in-deck' : ''}`;
-                // 設定稀有度屬性 (用於邊框顏色)
+                
+                // 這裡簡單根據卡片種類給個稀有度顏色 (功能卡=2, 怪物卡=1)
+                // 如果想更精細，需要後端傳 rarity 給前端，目前先簡單處理
                 div.setAttribute('data-rarity', cardData.rarity);
 
                 // 數值顯示
                 let statsHtml = '';
                 if(cardData.type === 'unit') {
-                    // 這裡數值只是示意，實際上 Server 會算
                     statsHtml = `召喚單位<br>${cardData.desc}`;
                 } else {
                     statsHtml = `魔法卡<br>${cardData.desc}`;
