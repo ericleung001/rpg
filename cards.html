@@ -2,104 +2,158 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>組建牌組</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>卡片圖鑑2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
             background-color: #2c3e50; color: #fff; 
             font-family: 'Press Start 2P', monospace; 
-            margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh;
+            text-align: center; padding: 10px; margin: 0;
+            display: flex; flex-direction: column; height: 100vh;
         }
-        
-        /* 上方：卡片庫 */
-        .card-pool {
-            flex: 1; overflow-y: auto; padding: 20px;
-            display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;
-            padding-bottom: 160px; align-content: flex-start;
+        h1 { color: #f1c40f; font-size: 16px; margin: 15px 0; flex-shrink: 0; }
+
+        /* 上方卡片庫容器 (可捲動) */
+        .card-pool-container {
+            flex: 1; overflow-y: auto; padding-bottom: 120px; /* 留位給下方 deck bar */
         }
 
-        /* 下方：我的牌組 */
-        .my-deck-bar {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            height: 140px; background: rgba(0,0,0,0.95);
-            border-top: 3px solid #f1c40f;
-            display: flex; flex-direction: column; align-items: center;
-            padding: 10px; z-index: 100;
-        }
-
-        .deck-info { margin-bottom: 5px; font-size: 12px; color: #f1c40f; }
-        
-        .deck-slots {
-            display: flex; gap: 5px; overflow-x: auto; width: 100%; 
-            justify-content: flex-start; padding-bottom: 5px;
+        .card-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+            max-width: 600px; margin: 0 auto; padding: 10px;
         }
 
         /* 卡片樣式 */
         .card {
-            width: 80px; height: 120px; background: #34495e; border: 2px solid #fff;
-            border-radius: 8px; display: flex; flex-direction: column; align-items: center;
-            cursor: pointer; position: relative; font-size: 10px;
+            background: #34495e; border: 2px solid #7f8c8d; border-radius: 8px;
+            padding: 5px; position: relative; cursor: pointer;
             transition: transform 0.1s;
+            min-height: 140px; display: flex; flex-direction: column; justify-content: space-between;
+            overflow: hidden;
         }
         .card:active { transform: scale(0.95); }
+        
+        /* 狀態樣式 */
+        .card.owned { border-color: #f1c40f; background: #2c3e50; }
+        
+        /* 變灰 (沒有庫存或已用完) */
         .card.disabled { 
-            filter: grayscale(100%); opacity: 0.5; cursor: not-allowed; 
-            pointer-events: none; /* 禁止點擊 */
+            opacity: 0.4; filter: grayscale(100%); cursor: not-allowed; pointer-events: none; 
         }
         
-        .card.unit { border-color: #e67e22; }
-        .card.spell { border-color: #9b59b6; }
+        /* 在牌組中 (高亮邊框) - 這裡改為只要有選就亮，但主要靠數量控制 */
+        .card.in-deck { border: 2px solid #2ecc71; box-shadow: 0 0 5px #2ecc71; }
 
-        .card img { width: 50px; height: 50px; object-fit: contain; margin-top: 5px; }
-        .card .name { margin-top: 5px; text-align: center; font-size: 8px; overflow: hidden; white-space: nowrap; width: 90%; }
-        .card .stats { color: #f1c40f; font-size: 7px; margin-top: 2px; }
+        /* 稀有度邊框 */
+        .card[data-rarity="1"] { border-color: #bdc3c7; } 
+        .card[data-rarity="2"] { border-color: #2ecc71; } 
+        .card[data-rarity="3"] { border-color: #3498db; } 
+        .card[data-rarity="4"] { border-color: #9b59b6; } 
+        .card[data-rarity="5"] { border-color: #f1c40f; box-shadow: 0 0 8px #f1c40f; } 
+
+        .card-name { font-size: 8px; color: #fff; margin-bottom: 5px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* 數量標記 */
-        .count-badge {
-            background: #e74c3c; color: white; padding: 2px 6px; border-radius: 4px;
-            font-size: 8px; margin-top: 5px; border: 1px solid white;
+        .card-img-box { 
+            margin: 2px 0; height: 50px; display: flex; 
+            align-items: center; justify-content: center; 
+            background: rgba(0,0,0,0.3); border-radius: 5px; padding: 2px;
         }
-
-        /* 按鈕區 */
-        .action-btn {
-            position: absolute; top: -50px; right: 20px;
-            padding: 10px 20px; background: #2ecc71; border: none; color: white;
-            font-family: inherit; border-radius: 5px; cursor: pointer;
-            box-shadow: 0 4px 0 #27ae60;
-        }
-        .action-btn:active { transform: translateY(4px); box-shadow: none; }
+        .monster-pic { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5)); }
+        .spell-icon { font-size: 24px; }
         
-        .back-btn {
-            position: fixed; top: 10px; left: 10px; z-index: 200;
-            padding: 8px; background: #e74c3c; border: none; color: white;
-            border-radius: 5px; cursor: pointer; font-family: inherit;
+        .card-stats { font-size: 7px; color: #bdc3c7; line-height: 1.2; margin-top: 2px; }
+        
+        /* 剩餘數量標記 */
+        .card-count-badge { 
+            position: absolute; top: 2px; right: 2px; 
+            background: #e74c3c; color: white; 
+            border-radius: 4px; padding: 2px 4px; 
+            font-size: 7px; z-index: 10; border: 1px solid #fff;
         }
 
-        /* 牌組小卡 */
+        /* 下方固定 Deck Bar */
+        .deck-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 110px;
+            background: rgba(0,0,0,0.95); border-top: 2px solid #f1c40f;
+            padding: 5px; box-sizing: border-box; display: flex; flex-direction: column;
+            z-index: 100;
+        }
+        
+        .deck-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 5px; padding: 0 5px;
+        }
+        
+        .deck-info { font-size: 10px; text-align: left; }
+        
+        /* 橫向捲動的牌組區 */
+        .deck-slots {
+            display: flex; gap: 5px; overflow-x: auto; width: 100%; height: 70px;
+            align-items: center; padding-bottom: 5px;
+        }
+        
+        /* 牌組內的小卡 */
         .mini-card {
-            min-width: 60px; height: 80px; background: #34495e; border: 1px solid #fff;
-            border-radius: 5px; display: flex; flex-direction: column; align-items: center;
-            font-size: 8px; cursor: pointer; position: relative; flex-shrink: 0;
+            min-width: 45px; height: 60px; background: #34495e; border: 1px solid #fff;
+            border-radius: 4px; display: flex; flex-direction: column; align-items: center;
+            font-size: 6px; cursor: pointer; position: relative; flex-shrink: 0;
         }
-        .mini-card:hover { background: #c0392b; border-color: #e74c3c; }
-        .mini-card img { width: 40px; height: 40px; margin-top: 5px; }
-        .mini-card .remove-icon { position: absolute; top: 2px; right: 2px; color: red; font-weight: bold; }
+        .mini-card:hover { border-color: #e74c3c; background: #442222; }
+        .mini-card img { width: 30px; height: 30px; margin-top: 2px; }
+        .mini-card .remove-icon { position: absolute; top: 0; right: 0; color: #e74c3c; font-weight: bold; font-size: 10px; line-height: 8px; }
 
+        .save-btn {
+            background: #27ae60; color: white; border: none; padding: 5px 10px;
+            font-family: inherit; font-size: 10px; border-radius: 5px; cursor: pointer;
+        }
+
+        .back-btn {
+            position: fixed; top: 10px; left: 10px;
+            background: #7f8c8d; color: white; padding: 5px 10px; text-decoration: none;
+            border-radius: 5px; font-size: 10px; border: 1px solid #fff; z-index: 100;
+        }
+        
+        .status-ok { color: #2ecc71; }
+        .status-warn { color: #f1c40f; }
+        .status-err { color: #e74c3c; }
+
+        #queue-msg {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95); padding: 20px; border: 2px solid #f1c40f;
+            color: #fff; border-radius: 10px; text-align: center; z-index: 200;
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-    <button class="back-btn" onclick="window.location.href='hub.html'">回大廳</button>
+    <a href="hub.html" class="back-btn">◀ 返回</a>
+    <h1>🎴 編輯牌組</h1>
 
-    <div class="card-pool" id="pool-container">
-        <div style="margin-top: 50px;">載入卡片中...</div>
+    <div class="card-pool-container">
+        <div id="card-list" class="card-grid">載入中...</div>
     </div>
 
-    <div class="my-deck-bar">
-        <button class="action-btn" onclick="startMatch()">開始對戰</button>
-        <div class="deck-info">牌組: <span id="deck-count">0</span> / 10</div>
-        <div class="deck-slots" id="deck-container"></div>
+    <div class="deck-bar">
+        <div class="deck-header">
+            <div class="deck-info">
+                牌組: <span id="deck-count" class="status-warn">0</span>/10 
+                <span style="color:#aaa; font-size:8px;">(怪≥3)</span>
+            </div>
+            <div>
+                <button class="save-btn" onclick="startMatch()" style="background:#e74c3c; margin-right:5px;">⚔️ 對戰</button>
+                <button class="save-btn" onclick="saveDeck()">💾 儲存</button>
+            </div>
+        </div>
+        <div class="deck-slots" id="deck-container">
+            </div>
+    </div>
+
+    <div id="queue-msg">
+        <div style="font-size:14px; margin-bottom:10px;">🔍 正在尋找對手...</div>
+        <div style="font-size:10px; color:#aaa;">請稍候，配對成功將自動跳轉</div>
+        <button onclick="cancelMatch()" style="margin-top:15px; padding:5px 10px; background:#c0392b; border:none; color:white; border-radius:5px;">取消</button>
     </div>
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
@@ -112,9 +166,12 @@
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
+        let myInventory = {}; 
+        let myDeck = [];
+        
         const IMG_BASE_URL = "https://ericleung001.github.io/rpg/img/monsters/";
 
-        // 🟢 完整的資料定義 (純顯示用)
+        // [資料定義]
         const MONSTER_LIST = {
             'slime': { name: "史萊姆", img: "slime.png", atk: 5, hp: 20 },
             'rat': { name: "大老鼠", img: "rat.png", atk: 8, hp: 15 },
@@ -165,170 +222,169 @@
 
         const SPELL_LIST = {
             'card_potion': { name: "回復卡", icon: "💊", desc: "回復 50% HP" },
-            'card_fire': { name: "攻擊卡", icon: "🔥", desc: "傷害 = ATK * 2" },
+            'card_fire': { name: "攻擊卡", icon: "🔥", desc: "ATK * 2" },
             'card_shield': { name: "護盾卡", icon: "🛡️", desc: "+20 HP上限" }
         };
 
         const CARD_CONFIG = {};
-        Object.keys(MONSTER_LIST).forEach(k => CARD_CONFIG[`card_${k}`] = { ...MONSTER_LIST[k], type: 'unit' });
-        Object.keys(SPELL_LIST).forEach(k => CARD_CONFIG[k] = { ...SPELL_LIST[k], type: 'spell' });
-
-        let myDeck = [];        // 目前選中的牌
-        let myInventory = {};   // 玩家擁有的牌庫 (從Server取得)
-
-        socket.on('connect', () => { 
-            socket.emit('joinGame', myToken); 
+        Object.keys(MONSTER_LIST).forEach(key => {
+            const mon = MONSTER_LIST[key];
+            CARD_CONFIG[`card_${key}`] = { name: mon.name, src: mon.img, type: 'unit', rarity: 1, desc: `⚔️${mon.atk} ❤️${mon.hp}` };
+        });
+        Object.keys(SPELL_LIST).forEach(key => {
+            CARD_CONFIG[key] = { name: SPELL_LIST[key].name, icon: SPELL_LIST[key].icon, type: 'spell', rarity: 2, desc: SPELL_LIST[key].desc };
         });
 
-        // 🟢 接收玩家資料 (包含牌組 & 庫存)
-        socket.on('playerStatsUpdate', (player) => {
-            // 1. 讀取庫存 (如果沒有就給空物件)
-            myInventory = player.cardPool || {};
-            
-            // 2. 讀取已選牌組
-            if (player.cardDeck && Array.isArray(player.cardDeck)) {
-                myDeck = player.cardDeck;
-            } else {
-                myDeck = [];
-            }
+        socket.on('connect', () => { socket.emit('joinGame', myToken); });
 
-            // 3. 刷新介面
-            refreshUI();
+        // 🟢 接收玩家資料
+        socket.on('playerStatsUpdate', (p) => {
+            myInventory = p.cardPool || {}; // 讀取庫存 (注意 Server 欄位名)
+            myDeck = p.cardDeck || [];      // 讀取牌組
+            refreshUI();                    // 刷新介面
         });
 
+        socket.on('errorMessage', (msg) => alert(msg));
+        socket.on('marketResult', (res) => alert(res.msg)); 
+
+        socket.on('matchFound', (data) => {
+            document.getElementById('queue-msg').innerHTML = `<div style="font-size:14px; color:#2ecc71;">✅ 配對成功！</div><div style="margin-top:10px;">對手: ${data.opponent}</div>`;
+            setTimeout(() => { window.location.href = 'card_battle.html'; }, 1000);
+        });
+
+        socket.on('queueStatus', (msg) => {
+            if (msg === '已取消配對') document.getElementById('queue-msg').style.display = 'none';
+        });
+
+        // 🟢 刷新所有介面 (上方卡池 + 下方牌組)
         function refreshUI() {
             renderPool();
             renderDeck();
+            updateDeckInfo();
         }
 
-        // 🟢 渲染上方卡片庫 (根據庫存顯示)
+        // 1. 渲染上方卡片庫
         function renderPool() {
-            const container = document.getElementById('pool-container');
-            container.innerHTML = '';
-
-            // 如果庫存是空的
-            if (Object.keys(myInventory).length === 0) {
-                container.innerHTML = '<div style="margin-top:50px;">你還沒有任何卡片！</div>';
-                return;
-            }
-
-            Object.keys(myInventory).forEach(id => {
-                const info = CARD_CONFIG[id];
-                if (!info) return; // 跳過未知卡片
-
-                // 計算剩餘數量
-                const ownedCount = myInventory[id];
-                const usedCount = myDeck.filter(card => card === id).length;
-                const remaining = ownedCount - usedCount;
-
-                const el = document.createElement('div');
+            const list = document.getElementById('card-list');
+            list.innerHTML = '';
+            
+            // 這裡顯示所有 CARD_CONFIG 裡的卡，但會根據 Inventory 判斷是否擁有
+            Object.keys(CARD_CONFIG).forEach(id => {
+                const cardData = CARD_CONFIG[id];
                 
-                let visual = info.type === 'unit' ? 
-                    `<img src="${IMG_BASE_URL + info.img}" onerror="this.style.display='none'">` : 
-                    `<div style="font-size:30px; margin-top:10px;">${info.icon}</div>`;
+                // 邏輯核心：計算剩餘數量
+                const totalOwned = myInventory[id] || 0;
+                const usedInDeck = myDeck.filter(c => c === id).length;
+                const remaining = totalOwned - usedInDeck;
+                const isOwned = totalOwned > 0;
 
-                let stats = info.type === 'unit' ? `⚔️${info.atk} ❤️${info.hp}` : info.desc;
+                // 沒擁有且沒在牌組裡的就不顯示 (隱藏未收集卡片)
+                // 這裡改為: 只要有庫存或者牌組裡有的都顯示
+                if (totalOwned === 0 && usedInDeck === 0) return;
 
-                el.className = `card ${info.type}`;
-                
-                // 🟢 [關鍵] 如果用光了，變灰並禁止點擊
-                if (remaining <= 0) {
-                    el.classList.add('disabled');
-                }
+                const div = document.createElement('div');
+                // 如果剩餘數量 <= 0，就變灰禁止點擊
+                div.className = `card ${cardData.type} ${remaining <= 0 ? 'disabled' : ''} ${isOwned ? 'owned' : ''}`;
+                div.setAttribute('data-rarity', cardData.rarity);
 
-                el.innerHTML = `
-                    ${visual}
-                    <div class="name">${info.name}</div>
-                    <div class="stats">${stats}</div>
-                    <div class="count-badge">剩餘: ${remaining}</div>
+                let visualHtml = cardData.type === 'unit' ? 
+                    `<img src="${IMG_BASE_URL + cardData.src}" class="monster-pic" onerror="this.style.display='none'">` : 
+                    `<span class="spell-icon">${cardData.icon}</span>`;
+
+                div.innerHTML = `
+                    <div class="card-count-badge">剩: ${remaining}</div>
+                    <div class="card-name">${cardData.name}</div>
+                    <div class="card-img-box">${visualHtml}</div>
+                    <div class="card-stats">${cardData.desc}</div>
                 `;
-                
-                el.onclick = () => addToDeck(id, remaining);
-                
-                container.appendChild(el);
+
+                // 點擊事件：加入牌組
+                div.onclick = () => addToDeck(id, remaining);
+                list.appendChild(div);
             });
         }
 
-        // 🟢 渲染下方牌組
+        // 2. 渲染下方牌組
         function renderDeck() {
             const container = document.getElementById('deck-container');
-            const countEl = document.getElementById('deck-count');
-            
             container.innerHTML = '';
-            countEl.innerText = myDeck.length;
-            countEl.style.color = myDeck.length === 10 ? '#2ecc71' : '#f1c40f';
 
             myDeck.forEach((id, index) => {
                 const info = CARD_CONFIG[id];
                 const el = document.createElement('div');
                 el.className = 'mini-card';
-                el.title = "點擊移除";
                 
                 if(!info) {
                     el.innerText = "?";
                 } else {
                     let visual = info.type === 'unit' ? 
-                        `<img src="${IMG_BASE_URL + info.img}">` : 
-                        `<div style="font-size:20px; margin-top:10px;">${info.icon}</div>`;
+                        `<img src="${IMG_BASE_URL + info.src}">` : 
+                        `<div style="font-size:20px; margin-top:5px;">${info.icon}</div>`;
                     
                     el.innerHTML = `${visual}<div class="remove-icon">×</div>`;
-                    if(info.type === 'unit') el.style.borderColor = '#e67e22';
-                    else el.style.borderColor = '#9b59b6';
+                    el.style.borderColor = info.type === 'unit' ? '#e67e22' : '#9b59b6';
                 }
 
+                // 點擊事件：從牌組移除 (會自動歸還到剩餘數量)
                 el.onclick = () => removeFromDeck(index);
                 container.appendChild(el);
             });
         }
 
+        // 加入牌組
         function addToDeck(id, remaining) {
-            if (myDeck.length >= 10) {
-                alert("牌組已滿 (最多 10 張)！");
-                return;
-            }
-            if (remaining <= 0) {
-                // 理論上點不到，但防呆一下
-                return;
-            }
+            if (myDeck.length >= 10) { alert("牌組最多只能放 10 張卡！"); return; }
+            if (remaining <= 0) return; // 防呆
             myDeck.push(id);
-            refreshUI(); // 重新渲染以更新剩餘數量
+            refreshUI(); // 重新計算剩餘數量並渲染
         }
 
+        // 移除牌組
         function removeFromDeck(index) {
             myDeck.splice(index, 1);
-            refreshUI(); // 重新渲染以釋放庫存
+            refreshUI(); // 重新計算剩餘數量並渲染
+        }
+
+        function updateDeckInfo() {
+            let monsterCount = 0;
+            myDeck.forEach(id => { if (CARD_CONFIG[id]?.type === 'unit') monsterCount++; });
+            
+            const countSpan = document.getElementById('deck-count');
+            countSpan.innerText = myDeck.length;
+            countSpan.className = myDeck.length === 10 ? 'status-ok' : 'status-warn';
+        }
+
+        function saveDeck() {
+            if (!validateDeck()) return;
+            socket.emit('updateDeck', myDeck);
         }
 
         function startMatch() {
-            if (myDeck.length !== 10) {
-                alert(`牌組必須剛好 10 張！(目前 ${myDeck.length} 張)`);
-                return;
-            }
-            let monsterCount = 0;
-            myDeck.forEach(id => {
-                if (CARD_CONFIG[id] && CARD_CONFIG[id].type === 'unit') monsterCount++;
-            });
-            if (monsterCount < 3) {
-                alert(`牌組至少需要 3 張怪物卡！(目前 ${monsterCount} 張)`);
-                return;
-            }
-
-            socket.emit('updateDeck', myDeck);
-
-            const btn = document.querySelector('.action-btn');
-            btn.innerText = "正在尋找對手...";
-            btn.disabled = true;
-            btn.style.background = '#7f8c8d';
-
+            if (!validateDeck()) return;
+            socket.emit('updateDeck', myDeck); // 強制儲存
             setTimeout(() => {
                 socket.emit('joinCardQueue');
+                document.getElementById('queue-msg').style.display = 'block';
             }, 500);
         }
 
-        socket.on('matchFound', (data) => {
-            window.location.href = 'card_battle.html';
-        });
+        function validateDeck() {
+            if (myDeck.length !== 10) {
+                alert(`牌組必須剛好 10 張！(目前 ${myDeck.length})`);
+                return false;
+            }
+            let monsterCount = 0;
+            myDeck.forEach(id => { if (CARD_CONFIG[id]?.type === 'unit') monsterCount++; });
+            if (monsterCount < 3) {
+                alert(`牌組至少需要 3 張怪物卡！(目前 ${monsterCount})`);
+                return false;
+            }
+            return true;
+        }
 
+        function cancelMatch() {
+            socket.emit('leaveCardQueue');
+        }
     </script>
 </body>
 </html>
