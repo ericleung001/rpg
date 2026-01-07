@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>卡片圖鑑2</title>
+    <title>卡片圖鑑</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -82,6 +82,11 @@
             background: #7f8c8d; color: white; padding: 5px 10px; text-decoration: none;
             border-radius: 5px; font-size: 10px; border: 1px solid #fff; z-index: 100;
         }
+        
+        /* 🟢 [新增] 狀態文字顏色 */
+        .status-ok { color: #2ecc71; }
+        .status-warn { color: #f1c40f; }
+        .status-err { color: #e74c3c; }
     </style>
 </head>
 <body>
@@ -93,7 +98,7 @@
 
     <div class="deck-bar">
         <div class="deck-info">
-            出戰牌組: <span id="deck-count" style="color:#f1c40f">0</span> / 10<br>
+            出戰牌組: <span id="deck-count" class="status-warn">0</span> / 10<br>
             <span style="color:#aaa; font-size:8px;">(需 3 張怪物卡)</span>
         </div>
         <button class="save-btn" onclick="saveDeck()">💾 儲存牌組</button>
@@ -103,8 +108,6 @@
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
     transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -278,12 +281,12 @@
             // 更新下方 UI
             const infoDiv = document.querySelector('.deck-info');
             if (infoDiv) {
-                const countColor = myDeck.length === 10 ? '#2ecc71' : '#f1c40f';
-                const monColor = monsterCount >= 3 ? '#2ecc71' : '#e74c3c';
+                const countClass = myDeck.length === 10 ? 'status-ok' : 'status-warn';
+                const monClass = monsterCount >= 3 ? 'status-ok' : 'status-err';
                 
                 infoDiv.innerHTML = 
-                    `出戰牌組: <span style="color:${countColor}">${myDeck.length}</span> / 10 <br>` + 
-                    `<span style="font-size:8px; color:#aaa;">(怪物卡: <span style="color:${monColor}">${monsterCount}</span> / 最少 3)</span>`;
+                    `出戰牌組: <span class="${countClass}">${myDeck.length}</span> / 10 <br>` + 
+                    `<span style="font-size:8px; color:#aaa;">(怪物卡: <span class="${monClass}">${monsterCount}</span> / 最少 3)</span>`;
             }
         }
 
