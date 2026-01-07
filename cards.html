@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>卡片圖鑑</title>
+    <title>卡片圖鑑2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -344,12 +344,36 @@ const socket = io('https://mmo.ttctv-105.cc', {
         }
 
         // 🟢 [新增] 配對相關函式
+        // 🟢 [修正] 對戰前強制儲存
         function startMatch() {
-            // 先儲存 (觸發檢查)
-            if (myDeck.length !== 10) { saveDeck(); return; }
+            // 1. 前端基本檢查
+            if (myDeck.length !== 10) {
+                alert("牌組必須剛好 10 張卡才能對戰！");
+                return;
+            }
+
+            // 檢查怪物數量 (前端先擋一次，體驗較好)
+            let monsterCount = 0;
+            myDeck.forEach(cardId => {
+                if (CARD_CONFIG[cardId] && CARD_CONFIG[cardId].type === 'unit') {
+                    monsterCount++;
+                }
+            });
+            if (monsterCount < 3) {
+                alert(`你的牌組只有 ${monsterCount} 張怪物卡，最少需要 3 張！`);
+                return;
+            }
             
-            socket.emit('joinCardQueue');
-            document.getElementById('queue-msg').style.display = 'block';
+            // 2. 強制發送儲存指令
+            // 這一步很重要！確保伺服器知道你最新的牌組
+            socket.emit('updateDeck', myDeck);
+            
+            // 3. 稍微延遲一下，再發送配對請求
+            // (給伺服器 0.5 秒時間去處理儲存，防止「儲存」跟「配對」順序錯亂)
+            setTimeout(() => {
+                socket.emit('joinCardQueue');
+                document.getElementById('queue-msg').style.display = 'block';
+            }, 500);
         }
 
         function cancelMatch() {
