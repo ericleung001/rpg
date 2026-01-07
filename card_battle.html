@@ -14,6 +14,7 @@
             user-select: none;
         }
 
+        /* 區域 */
         .opponent-area { flex: 1; background: #34495e; display: flex; flex-direction: column; border-bottom: 2px solid #000; position: relative; }
         .my-area { flex: 1; background: #2c3e50; display: flex; flex-direction: column-reverse; position: relative; }
 
@@ -25,30 +26,31 @@
         .opp-info { top: 10px; left: 10px; }
         .my-info { bottom: 10px; left: 10px; }
 
+        /* 卡片 */
         .battle-card { width: 70px; height: 100px; background: #2c3e50; border: 2px solid #fff; border-radius: 6px; display: flex; flex-direction: column; align-items: center; font-size: 8px; position: relative; cursor: pointer; transition: 0.1s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .battle-card:active { transform: scale(0.95); }
         .battle-card img { width: 50px; height: 50px; object-fit: contain; margin-top: 5px; background: rgba(0,0,0,0.2); border-radius: 4px; }
         .battle-card .cost { position: absolute; top: -5px; right: -5px; background: #3498db; color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 8px; line-height: 18px; text-align: center; border: 1px solid #fff; }
 
+        /* 狀態 */
         .field-unit { border-color: #f1c40f; }
-        
-        /* 🔴 物理攻擊選中 */
         .field-unit.selected { border-color: #e74c3c; box-shadow: 0 0 15px #e74c3c; transform: scale(1.1); z-index: 5; }
-        
-        /* 🔵 魔法卡選中 */
         .battle-card.spell-selected { border-color: #3498db; box-shadow: 0 0 15px #3498db; transform: translateY(-10px); }
-        
-        /* 🟣 魔法祭品選中 (火球來源) */
         .field-unit.source-selected { border-color: #9b59b6; box-shadow: 0 0 15px #9b59b6; transform: scale(1.1); z-index: 5; }
-
         .field-unit.sleeping { opacity: 0.6; filter: grayscale(80%); cursor: not-allowed; }
 
+        /* 介面元素 */
         #turn-indicator { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); padding: 15px 30px; border: 3px solid #e74c3c; color: #fff; font-size: 16px; display: none; z-index: 200; border-radius: 10px; pointer-events: none; }
+        
         #end-turn-btn { position: fixed; right: 10px; top: 50%; transform: translateY(-50%); padding: 15px; background: #f39c12; border: none; color: white; border-radius: 50%; width: 70px; height: 70px; font-weight: bold; cursor: pointer; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; text-align: center; font-family: inherit; font-size: 10px; }
+        
+        /* 離開按鈕 */
+        #leave-btn { position: fixed; top: 10px; left: 10px; padding: 8px 12px; background: #c0392b; border: 2px solid #fff; color: white; border-radius: 5px; font-weight: bold; cursor: pointer; z-index: 200; font-family: inherit; font-size: 10px; }
     </style>
 </head>
 <body>
 
+    <button id="leave-btn" onclick="surrender()">🏳️ 離開/投降</button>
     <div id="turn-indicator">戰鬥開始</div>
     <button id="end-turn-btn" onclick="endTurn()">結束<br>回合</button>
 
@@ -66,7 +68,7 @@
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
+        const socket = io('https://mmo.ttctv-105.cc', { 
     transports: ['websocket', 'polling'],
     secure: true // 因為你用 https，建議加呢個
 });
@@ -76,6 +78,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         const IMG_BASE_URL = "https://ericleung001.github.io/rpg/img/monsters/";
         
+        // 需與 Server 保持一致
         const MONSTER_LIST = {
             'slime': { name: "史萊姆", img: "slime.png" },
             'rat': { name: "大老鼠", img: "rat.png" },
@@ -131,22 +134,26 @@ const socket = io('https://mmo.ttctv-105.cc', {
         };
 
         const CARD_DB = {};
-        Object.keys(MONSTER_LIST).forEach(k => { CARD_DB[`card_${k}`] = { ...MONSTER_LIST[k], type: 'unit', cost: 1 }; });
-        Object.keys(SPELL_LIST).forEach(k => { CARD_DB[k] = { ...SPELL_LIST[k], type: 'spell', cost: 1 }; });
+        Object.keys(MONSTER_LIST).forEach(k => CARD_DB[`card_${k}`] = { ...MONSTER_LIST[k], type: 'unit', cost: 1 });
+        Object.keys(SPELL_LIST).forEach(k => CARD_DB[k] = { ...SPELL_LIST[k], type: 'spell', cost: 1 });
 
-        // 🟢 狀態變數
-        let selectedAttackerIndex = null; // 物理攻擊者
-        let selectedSpellIndex = null;    // 魔法卡索引
-        let selectedSpellId = null;       // 魔法卡 ID
-        let selectedSourceIndex = null;   // 魔法祭品索引 (新功能)
-        
+        let selectedAttackerIndex = null;
+        let selectedSpellIndex = null;
+        let selectedSpellId = null;
+        let selectedSourceIndex = null;
         let isMyTurn = false;
         let lastTurnOwner = null;
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
         socket.on('cardGameUpdate', (data) => renderGame(data));
         socket.on('errorMessage', (msg) => alert(msg));
-        socket.on('cardGameEnd', (res) => { alert(`遊戲結束！勝利者: ${res.winner}`); window.location.href = 'hub.html'; });
+        
+        socket.on('cardGameEnd', (res) => { 
+            let msg = `遊戲結束！\n獲勝者: ${res.winner}`;
+            if (res.reason) msg += `\n(${res.reason})`;
+            alert(msg); 
+            window.location.href = 'hub.html'; 
+        });
 
         function renderGame(data) {
             const me = data.me;
@@ -157,7 +164,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             document.getElementById('opp-name').innerText = opp.name;
             document.getElementById('opp-ap').innerText = opp.ap;
 
-            // 回合提示
             if (data.turn !== lastTurnOwner) {
                 lastTurnOwner = data.turn;
                 const indicator = document.getElementById('turn-indicator');
@@ -176,7 +182,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             renderOppField(opp.field);
         }
 
-        // 🟢 渲染手牌
         function renderHand(hand) {
             const container = document.getElementById('my-hand');
             container.innerHTML = '';
@@ -191,18 +196,16 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     if (!isMyTurn) { alert("現在是對手的回合！"); return; }
 
                     if (cardInfo.type === 'unit') {
-                        // 怪物卡：直接出牌
                         socket.emit('cardAction', { type: 'play', index: index });
                         resetSelection();
                     } else if (cardInfo.type === 'spell') {
-                        // 魔法卡：選取/取消
                         if (selectedSpellIndex === index) {
                             resetSelection();
                         } else {
-                            resetSelection(); // 清除其他選取
+                            resetSelection();
                             selectedSpellIndex = index;
                             selectedSpellId = cardId;
-                            renderHand(hand); // 重繪以顯示選取框
+                            renderHand(hand);
                         }
                     }
                 };
@@ -216,7 +219,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             for(let i=0; i<count; i++) container.appendChild(Object.assign(document.createElement('div'), {className:'card-back'}));
         }
 
-        // 🟢 渲染我方戰場 (處理 物理攻擊 / 補血 / 魔法祭品)
         function renderMyField(fieldData) {
             const container = document.getElementById('my-field');
             container.innerHTML = '';
@@ -225,47 +227,37 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 const el = createUnitElement(monster);
                 
                 if (!monster.canAttack) el.classList.add('sleeping');
-                if (index === selectedAttackerIndex) el.classList.add('selected'); // 物理攻擊選中
-                if (index === selectedSourceIndex) el.classList.add('source-selected'); // 魔法祭品選中
+                if (index === selectedAttackerIndex) el.classList.add('selected');
+                if (index === selectedSourceIndex) el.classList.add('source-selected');
 
                 el.onclick = () => {
                     if (!isMyTurn) return;
 
-                    // 1. 施法模式
+                    // 施法模式
                     if (selectedSpellIndex !== null) {
-                        // 回血 / 護盾 (對自己)
                         if (selectedSpellId.includes('potion') || selectedSpellId.includes('shield')) {
                             socket.emit('cardAction', { type: 'play', index: selectedSpellIndex, targetIdx: index });
                             resetSelection();
                         } 
-                        // 攻擊卡 (需要先選祭品)
                         else if (selectedSpellId.includes('fire')) {
-                            if (selectedSourceIndex === index) {
-                                selectedSourceIndex = null; // 取消
-                            } else {
-                                selectedSourceIndex = index; // 選為祭品
-                            }
-                            // 重新渲染以顯示紫色框
+                            if (selectedSourceIndex === index) selectedSourceIndex = null;
+                            else selectedSourceIndex = index;
                             renderMyField(fieldData);
                         }
                         return;
                     }
 
-                    // 2. 物理攻擊模式
+                    // 攻擊模式
                     if (!monster.canAttack) { alert("這隻怪物剛召喚，還不能攻擊！"); return; }
                     
-                    if (selectedAttackerIndex === index) {
-                        selectedAttackerIndex = null;
-                    } else {
-                        selectedAttackerIndex = index;
-                    }
+                    if (selectedAttackerIndex === index) selectedAttackerIndex = null;
+                    else selectedAttackerIndex = index;
                     renderMyField(fieldData);
                 };
                 container.appendChild(el);
             });
         }
 
-        // 🟢 渲染對手戰場 (處理 被打)
         function renderOppField(fieldData) {
             const container = document.getElementById('opp-field');
             container.innerHTML = '';
@@ -275,39 +267,29 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 el.onclick = () => {
                     if (!isMyTurn) return;
 
-                    // 1. 魔法攻擊 (火球)
                     if (selectedSpellIndex !== null && selectedSpellId.includes('fire')) {
                         if (selectedSourceIndex === null) {
                             alert("請先點擊「我方怪物」作為力量來源 (祭品)！");
                             return;
                         }
                         socket.emit('cardAction', { 
-                            type: 'play', 
-                            index: selectedSpellIndex, 
-                            sourceIdx: selectedSourceIndex, // 祭品
-                            targetIdx: index                // 目標
+                            type: 'play', index: selectedSpellIndex, 
+                            sourceIdx: selectedSourceIndex, targetIdx: index 
                         });
                         resetSelection();
                         return;
                     }
 
-                    // 2. 物理攻擊
                     if (selectedAttackerIndex !== null) {
                         socket.emit('cardAction', { 
-                            type: 'attack', 
-                            attackerIdx: selectedAttackerIndex, 
-                            targetIdx: index 
+                            type: 'attack', attackerIdx: selectedAttackerIndex, targetIdx: index 
                         });
                         resetSelection();
                         return;
                     }
 
-                    // 防呆
-                    if (selectedSpellIndex !== null) {
-                        alert("這張魔法卡 (回血/護盾) 只能對自己使用！");
-                    } else {
-                        alert("請先選擇我方怪物(攻擊) 或 魔法卡(施法)！");
-                    }
+                    if (selectedSpellIndex !== null) alert("這張魔法卡只能對自己使用！");
+                    else alert("請先選擇我方怪物(攻擊) 或 魔法卡(施法)！");
                 };
                 container.appendChild(el);
             });
@@ -346,17 +328,20 @@ const socket = io('https://mmo.ttctv-105.cc', {
             selectedSpellIndex = null;
             selectedSpellId = null;
             selectedSourceIndex = null;
-            
-            // 簡單清除樣式，或者等待 render 重繪
-            document.querySelectorAll('.selected, .spell-selected, .source-selected').forEach(el => {
-                el.classList.remove('selected', 'spell-selected', 'source-selected');
-            });
+            // 等待重繪或手動重繪
+            // 這裡不需手動 remove class，因為 render 會處理
         }
 
         function endTurn() {
             if(confirm("確定要結束回合嗎？")) {
                 socket.emit('cardAction', { type: 'endTurn' });
                 resetSelection();
+            }
+        }
+
+        function surrender() {
+            if(confirm("確定要投降並離開戰鬥嗎？(視為戰敗)")) {
+                socket.emit('cardAction', { type: 'surrender' });
             }
         }
     </script>
