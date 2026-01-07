@@ -2,66 +2,95 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>卡片對戰</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>組建牌組</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
             background-color: #2c3e50; color: #fff; 
             font-family: 'Press Start 2P', monospace; 
-            margin: 0; padding: 0; overflow: hidden;
-            display: flex; flex-direction: column; height: 100vh;
-            user-select: none;
+            margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh;
+        }
+        
+        /* 上方：卡片庫 (可捲動) */
+        .card-pool {
+            flex: 1; overflow-y: auto; padding: 20px;
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;
+            padding-bottom: 160px; /* 留位給下方牌組區 */
         }
 
-        .opponent-area { flex: 1; background: #34495e; display: flex; flex-direction: column; border-bottom: 2px solid #000; position: relative; }
-        .my-area { flex: 1; background: #2c3e50; display: flex; flex-direction: column-reverse; position: relative; }
+        /* 下方：我的牌組 (固定) */
+        .my-deck-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: 140px; background: rgba(0,0,0,0.9);
+            border-top: 3px solid #f1c40f;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 10px; z-index: 100;
+        }
 
-        .hand-zone { height: 120px; display: flex; justify-content: center; align-items: center; gap: 5px; padding: 5px; background: rgba(0,0,0,0.3); overflow-x: auto; }
-        .card-back { background: linear-gradient(135deg, #e67e22 25%, #d35400 25%, #d35400 50%, #e67e22 50%, #e67e22 75%, #d35400 75%, #d35400 100%); width: 60px; height: 85px; border-radius: 5px; border: 2px solid #fff; }
-        .field-zone { flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 10px; }
+        .deck-info { margin-bottom: 5px; font-size: 12px; color: #f1c40f; }
         
-        .player-info { position: absolute; padding: 8px 12px; background: rgba(0,0,0,0.85); border-radius: 8px; border: 1px solid #f1c40f; font-size: 12px; z-index: 10; }
-        .opp-info { top: 10px; left: 10px; }
-        .my-info { bottom: 10px; left: 10px; }
+        .deck-slots {
+            display: flex; gap: 5px; overflow-x: auto; width: 100%; 
+            justify-content: flex-start; padding-bottom: 5px;
+        }
 
-        .battle-card { width: 70px; height: 100px; background: #2c3e50; border: 2px solid #fff; border-radius: 6px; display: flex; flex-direction: column; align-items: center; font-size: 8px; position: relative; cursor: pointer; transition: 0.1s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .battle-card:active { transform: scale(0.95); }
-        .battle-card img { width: 50px; height: 50px; object-fit: contain; margin-top: 5px; background: rgba(0,0,0,0.2); border-radius: 4px; }
-        .battle-card .cost { position: absolute; top: -5px; right: -5px; background: #3498db; color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 8px; line-height: 18px; text-align: center; border: 1px solid #fff; }
-
-        .field-unit { border-color: #f1c40f; }
+        /* 卡片樣式 */
+        .card {
+            width: 80px; height: 110px; background: #34495e; border: 2px solid #fff;
+            border-radius: 8px; display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; position: relative; font-size: 10px;
+            transition: transform 0.1s;
+        }
+        .card:active { transform: scale(0.95); }
         
-        /* 🔴 物理攻擊選中 */
-        .field-unit.selected { border-color: #e74c3c; box-shadow: 0 0 15px #e74c3c; transform: scale(1.1); z-index: 5; }
-        
-        /* 🔵 魔法卡選中 */
-        .battle-card.spell-selected { border-color: #3498db; box-shadow: 0 0 15px #3498db; transform: translateY(-10px); }
-        
-        /* 🟣 魔法祭品選中 (火球來源) */
-        .field-unit.source-selected { border-color: #9b59b6; box-shadow: 0 0 15px #9b59b6; transform: scale(1.1); z-index: 5; }
+        /* 卡片類型顏色 */
+        .card.unit { border-color: #e67e22; }
+        .card.spell { border-color: #9b59b6; }
 
-        .field-unit.sleeping { opacity: 0.6; filter: grayscale(80%); cursor: not-allowed; }
+        .card img { width: 60px; height: 60px; object-fit: contain; margin-top: 5px; }
+        .card .name { margin-top: 5px; text-align: center; font-size: 8px; overflow: hidden; white-space: nowrap; width: 90%; }
+        .card .stats { color: #f1c40f; font-size: 8px; margin-top: 2px; }
 
-        #turn-indicator { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); padding: 15px 30px; border: 3px solid #e74c3c; color: #fff; font-size: 16px; display: none; z-index: 200; border-radius: 10px; pointer-events: none; }
-        #end-turn-btn { position: fixed; right: 10px; top: 50%; transform: translateY(-50%); padding: 15px; background: #f39c12; border: none; color: white; border-radius: 50%; width: 70px; height: 70px; font-weight: bold; cursor: pointer; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; text-align: center; font-family: inherit; font-size: 10px; }
+        /* 按鈕區 */
+        .action-btn {
+            position: absolute; top: -50px; right: 20px;
+            padding: 10px 20px; background: #2ecc71; border: none; color: white;
+            font-family: inherit; border-radius: 5px; cursor: pointer;
+            box-shadow: 0 4px 0 #27ae60;
+        }
+        .action-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        .back-btn {
+            position: fixed; top: 10px; left: 10px; z-index: 200;
+            padding: 8px; background: #e74c3c; border: none; color: white;
+            border-radius: 5px; cursor: pointer; font-family: inherit;
+        }
+
+        /* 牌組裡面的小卡片 */
+        .mini-card {
+            min-width: 60px; height: 80px; background: #34495e; border: 1px solid #fff;
+            border-radius: 5px; display: flex; flex-direction: column; align-items: center;
+            font-size: 8px; cursor: pointer; position: relative;
+        }
+        .mini-card:hover { background: #c0392b; border-color: #e74c3c; } /* 刪除提示 */
+        .mini-card img { width: 40px; height: 40px; margin-top: 5px; }
+        .mini-card .remove-icon { position: absolute; top: 2px; right: 2px; color: red; font-weight: bold; }
+
     </style>
 </head>
 <body>
 
-    <div id="turn-indicator">戰鬥開始</div>
-    <button id="end-turn-btn" onclick="endTurn()">結束<br>回合</button>
+    <button class="back-btn" onclick="window.location.href='hub.html'">回大廳</button>
 
-    <div class="opponent-area">
-        <div class="hand-zone" id="opp-hand"></div>
-        <div class="field-zone" id="opp-field"></div>
-        <div class="player-info opp-info"><span id="opp-name" style="color:#e74c3c">對手</span><br>AP: <span id="opp-ap" style="color:#3498db">10</span></div>
-    </div>
+    <div class="card-pool" id="pool-container">
+        </div>
 
-    <div class="my-area">
-        <div class="hand-zone" id="my-hand"></div>
-        <div class="field-zone" id="my-field"></div>
-        <div class="player-info my-info"><span id="my-name" style="color:#2ecc71">我</span><br>AP: <span id="my-ap" style="color:#3498db">10</span></div>
+    <div class="my-deck-bar">
+        <button class="action-btn" onclick="startMatch()">開始對戰</button>
+        <div class="deck-info">牌組數量: <span id="deck-count">0</span> / 10</div>
+        <div class="deck-slots" id="deck-container">
+            </div>
     </div>
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
@@ -75,290 +104,211 @@ const socket = io('https://mmo.ttctv-105.cc', {
         if (!myToken) window.location.href = 'index.html';
 
         const IMG_BASE_URL = "https://ericleung001.github.io/rpg/img/monsters/";
-        
+
+        // 🟢 完整的資料列表 (與 Battle 一致)
         const MONSTER_LIST = {
-            'slime': { name: "史萊姆", img: "slime.png" },
-            'rat': { name: "大老鼠", img: "rat.png" },
-            'wolf_king': { name: "狼王", img: "wolf_king.png" },
-            'demon_king': { name: "魔王撒旦", img: "demon_king.png" },
-            'bee': { name: "殺人蜂", img: "bee.png" },
-            'boar': { name: "野豬", img: "boar.png" },
-            'thief': { name: "盜賊", img: "thief.png" },
-            'snake': { name: "毒蛇", img: "snake.png" },
-            'zombie': { name: "腐屍", img: "zombie.png" },
-            'skeleton': { name: "骷髏兵", img: "skeleton.png" },
-            'ghoul': { name: "食屍鬼", img: "ghoul.png" },
-            'witch': { name: "沼澤女巫", img: "witch.png" },
-            'hydra': { name: "九頭蛇", img: "hydra.png" },
-            'fire_imp': { name: "火焰小鬼", img: "fire_imp.png" },
-            'lava_golem': { name: "熔岩戈侖", img: "lava_golem.png" },
-            'salamander': { name: "火蜥蜴", img: "salamander.png" },
-            'fire_mage': { name: "烈焰法師", img: "fire_mage.png" },
-            'dragon_hatchling': { name: "幼龍", img: "dragon_hatchling.png" },
-            'balrog': { name: "炎魔", img: "balrog.png" },
-            'snow_wolf': { name: "雪原狼", img: "snow_wolf.png" },
-            'yeti': { name: "雪人", img: "yeti.png" },
-            'ice_spirit': { name: "冰精靈", img: "ice_spirit.png" },
-            'frost_knight': { name: "寒霜騎士", img: "frost_knight.png" },
-            'ice_dragon': { name: "冰霜龍", img: "ice_dragon.png" },
-            'lich_king': { name: "巫妖王", img: "lich_king.png" },
-            'void_eye': { name: "虛空之眼", img: "void_eye.png" },
-            'shadow_assassin': { name: "暗影刺客", img: "shadow_assassin.png" },
-            'dark_paladin': { name: "墮落聖騎", img: "dark_paladin.png" },
-            'demon_guard': { name: "惡魔守衛", img: "demon_guard.png" },
-            'succubus': { name: "魅魔", img: "succubus.png" },
-            'void_lord': { name: "虛空領主", img: "void_lord.png" },
-            'chaos_beast': { name: "混沌巨獸", img: "chaos_beast.png" },
-            'fallen_angel': { name: "墮天使", img: "fallen_angel.png" },
-            'void_walker': { name: "虛空行者", img: "void_walker.png" },
-            'chaos_knight': { name: "混沌騎士", img: "chaos_knight.png" },
-            'abyss_dragon': { name: "深淵魔龍", img: "abyss_dragon.png" },
-            'fallen_titan': { name: "墮落泰坦", img: "fallen_titan.png" },
-            'genesis_god': { name: "創世破壞神", img: "genesis_god.png" },
-            'void_worm': { name: "虛空吞噬蟲", img: "void_worm.png" },
-            'shadow_phantom': { name: "虚影夢魘", img: "shadow_phantom.png" },
-            'star_eater': { name: "吞星巨獸", img: "star_eater.png" },
-            'nebula_dragon': { name: "星雲幻龍", img: "nebula_dragon.png" },
-            'time_keeper': { name: "時空裁決者", img: "time_keeper.png" },
-            'dimension_breaker': { name: "維度粉碎者", img: "dimension_breaker.png" },
-            'entropy_god': { name: "終焉·熱寂之神", img: "entropy_god.png" }
+            'slime': { name: "史萊姆", img: "slime.png", atk: 5, hp: 20 },
+            'rat': { name: "大老鼠", img: "rat.png", atk: 8, hp: 15 },
+            'bee': { name: "殺人蜂", img: "bee.png", atk: 12, hp: 10 },
+            'boar': { name: "野豬", img: "boar.png", atk: 10, hp: 30 },
+            'thief': { name: "盜賊", img: "thief.png", atk: 15, hp: 25 },
+            'wolf_king': { name: "狼王", img: "wolf_king.png", atk: 18, hp: 40 },
+            'snake': { name: "毒蛇", img: "snake.png", atk: 14, hp: 20 },
+            'zombie': { name: "腐屍", img: "zombie.png", atk: 10, hp: 50 },
+            'skeleton': { name: "骷髏兵", img: "skeleton.png", atk: 12, hp: 35 },
+            'ghoul': { name: "食屍鬼", img: "ghoul.png", atk: 16, hp: 45 },
+            'witch': { name: "沼澤女巫", img: "witch.png", atk: 25, hp: 30 },
+            'hydra': { name: "九頭蛇", img: "hydra.png", atk: 30, hp: 80 },
+            'fire_imp': { name: "火焰小鬼", img: "fire_imp.png", atk: 15, hp: 20 },
+            'lava_golem': { name: "熔岩戈侖", img: "lava_golem.png", atk: 20, hp: 60 },
+            'salamander': { name: "火蜥蜴", img: "salamander.png", atk: 18, hp: 40 },
+            'fire_mage': { name: "烈焰法師", img: "fire_mage.png", atk: 35, hp: 30 },
+            'dragon_hatchling': { name: "幼龍", img: "dragon_hatchling.png", atk: 25, hp: 50 },
+            'balrog': { name: "炎魔", img: "balrog.png", atk: 45, hp: 70 },
+            'snow_wolf': { name: "雪原狼", img: "snow_wolf.png", atk: 15, hp: 35 },
+            'yeti': { name: "雪人", img: "yeti.png", atk: 25, hp: 60 },
+            'ice_spirit': { name: "冰精靈", img: "ice_spirit.png", atk: 20, hp: 25 },
+            'frost_knight': { name: "寒霜騎士", img: "frost_knight.png", atk: 30, hp: 55 },
+            'ice_dragon': { name: "冰霜龍", img: "ice_dragon.png", atk: 40, hp: 90 },
+            'lich_king': { name: "巫妖王", img: "lich_king.png", atk: 50, hp: 80 },
+            'void_eye': { name: "虛空之眼", img: "void_eye.png", atk: 35, hp: 40 },
+            'shadow_assassin': { name: "暗影刺客", img: "shadow_assassin.png", atk: 45, hp: 30 },
+            'dark_paladin': { name: "墮落聖騎", img: "dark_paladin.png", atk: 40, hp: 70 },
+            'demon_guard': { name: "惡魔守衛", img: "demon_guard.png", atk: 35, hp: 65 },
+            'succubus': { name: "魅魔", img: "succubus.png", atk: 30, hp: 40 },
+            'void_lord': { name: "虛空領主", img: "void_lord.png", atk: 55, hp: 90 },
+            'chaos_beast': { name: "混沌巨獸", img: "chaos_beast.png", atk: 60, hp: 100 },
+            'fallen_angel': { name: "墮天使", img: "fallen_angel.png", atk: 65, hp: 85 },
+            'demon_king': { name: "魔王撒旦", img: "demon_king.png", atk: 80, hp: 150 },
+            'void_walker': { name: "虛空行者", img: "void_walker.png", atk: 70, hp: 120 },
+            'chaos_knight': { name: "混沌騎士", img: "chaos_knight.png", atk: 75, hp: 130 },
+            'abyss_dragon': { name: "深淵魔龍", img: "abyss_dragon.png", atk: 90, hp: 200 },
+            'fallen_titan': { name: "墮落泰坦", img: "fallen_titan.png", atk: 100, hp: 250 },
+            'genesis_god': { name: "創世破壞神", img: "genesis_god.png", atk: 999, hp: 999 },
+            'void_worm': { name: "虛空吞噬蟲", img: "void_worm.png", atk: 120, hp: 300 },
+            'shadow_phantom': { name: "虚影夢魘", img: "shadow_phantom.png", atk: 110, hp: 200 },
+            'star_eater': { name: "吞星巨獸", img: "star_eater.png", atk: 200, hp: 500 },
+            'nebula_dragon': { name: "星雲幻龍", img: "nebula_dragon.png", atk: 150, hp: 400 },
+            'time_keeper': { name: "時空裁決者", img: "time_keeper.png", atk: 180, hp: 450 },
+            'dimension_breaker': { name: "維度粉碎者", img: "dimension_breaker.png", atk: 250, hp: 600 },
+            'entropy_god': { name: "終焉·熱寂之神", img: "entropy_god.png", atk: 9999, hp: 9999 }
         };
 
         const SPELL_LIST = {
-            'card_potion': { name: "回復卡", icon: "💊" },
-            'card_fire': { name: "攻擊卡", icon: "🔥" },
-            'card_shield': { name: "護盾卡", icon: "🛡️" }
+            'card_potion': { name: "回復卡", icon: "💊", desc: "回復 50% HP" },
+            'card_fire': { name: "攻擊卡", icon: "🔥", desc: "傷害 = ATK * 2" },
+            'card_shield': { name: "護盾卡", icon: "🛡️", desc: "+20 HP上限" }
         };
 
-        const CARD_DB = {};
-        Object.keys(MONSTER_LIST).forEach(k => { CARD_DB[`card_${k}`] = { ...MONSTER_LIST[k], type: 'unit', cost: 1 }; });
-        Object.keys(SPELL_LIST).forEach(k => { CARD_DB[k] = { ...SPELL_LIST[k], type: 'spell', cost: 1 }; });
+        const CARD_CONFIG = {};
+        Object.keys(MONSTER_LIST).forEach(k => CARD_CONFIG[`card_${k}`] = { ...MONSTER_LIST[k], type: 'unit' });
+        Object.keys(SPELL_LIST).forEach(k => CARD_CONFIG[k] = { ...SPELL_LIST[k], type: 'spell' });
 
-        // 🟢 狀態變數
-        let selectedAttackerIndex = null; // 物理攻擊者
-        let selectedSpellIndex = null;    // 魔法卡索引
-        let selectedSpellId = null;       // 魔法卡 ID
-        let selectedSourceIndex = null;   // 魔法祭品索引 (新功能)
-        
-        let isMyTurn = false;
-        let lastTurnOwner = null;
+        // 玩家目前的牌組
+        let myDeck = [];
 
-        socket.on('connect', () => { socket.emit('joinGame', myToken); });
-        socket.on('cardGameUpdate', (data) => renderGame(data));
-        socket.on('errorMessage', (msg) => alert(msg));
-        socket.on('cardGameEnd', (res) => { alert(`遊戲結束！勝利者: ${res.winner}`); window.location.href = 'hub.html'; });
+        // 初始化
+        socket.on('connect', () => { 
+            socket.emit('joinGame', myToken); 
+        });
 
-        function renderGame(data) {
-            const me = data.me;
-            const opp = data.opponent;
-            isMyTurn = (data.turn === socket.id);
-
-            document.getElementById('my-ap').innerText = me.ap;
-            document.getElementById('opp-name').innerText = opp.name;
-            document.getElementById('opp-ap').innerText = opp.ap;
-
-            // 回合提示
-            if (data.turn !== lastTurnOwner) {
-                lastTurnOwner = data.turn;
-                const indicator = document.getElementById('turn-indicator');
-                indicator.innerText = isMyTurn ? "👉 你的回合 👈" : "⏳ 對手回合";
-                indicator.style.borderColor = isMyTurn ? "#2ecc71" : "#e74c3c";
-                indicator.style.display = 'block';
-                setTimeout(() => indicator.style.display = 'none', 1500);
+        // 接收伺服器存的牌組
+        socket.on('playerStatsUpdate', (player) => {
+            if (player.cardDeck && Array.isArray(player.cardDeck)) {
+                myDeck = player.cardDeck;
+            } else {
+                myDeck = [];
             }
+            renderDeck();
+        });
 
-            document.getElementById('end-turn-btn').style.display = isMyTurn ? 'flex' : 'none';
-            if (!isMyTurn) resetSelection();
+        renderPool();
 
-            renderHand(me.hand);
-            renderOppHand(opp.handCount);
-            renderMyField(me.field);
-            renderOppField(opp.field);
-        }
-
-        // 🟢 渲染手牌
-        function renderHand(hand) {
-            const container = document.getElementById('my-hand');
+        // 🟢 渲染上方卡片庫 (點擊加入)
+        function renderPool() {
+            const container = document.getElementById('pool-container');
             container.innerHTML = '';
-            
-            hand.forEach((cardId, index) => {
-                const el = createCardElement(cardId);
-                const cardInfo = CARD_DB[cardId];
 
-                if (index === selectedSpellIndex) el.classList.add('spell-selected');
-
-                el.onclick = () => {
-                    if (!isMyTurn) { alert("現在是對手的回合！"); return; }
-
-                    if (cardInfo.type === 'unit') {
-                        // 怪物卡：直接出牌
-                        socket.emit('cardAction', { type: 'play', index: index });
-                        resetSelection();
-                    } else if (cardInfo.type === 'spell') {
-                        // 魔法卡：選取/取消
-                        if (selectedSpellIndex === index) {
-                            resetSelection();
-                        } else {
-                            resetSelection(); // 清除其他選取
-                            selectedSpellIndex = index;
-                            selectedSpellId = cardId;
-                            renderHand(hand); // 重繪以顯示選取框
-                        }
-                    }
-                };
-                container.appendChild(el);
-            });
-        }
-
-        function renderOppHand(count) {
-            const container = document.getElementById('opp-hand');
-            container.innerHTML = '';
-            for(let i=0; i<count; i++) container.appendChild(Object.assign(document.createElement('div'), {className:'card-back'}));
-        }
-
-        // 🟢 渲染我方戰場 (處理 物理攻擊 / 補血 / 魔法祭品)
-        function renderMyField(fieldData) {
-            const container = document.getElementById('my-field');
-            container.innerHTML = '';
-            
-            fieldData.forEach((monster, index) => {
-                const el = createUnitElement(monster);
+            Object.keys(CARD_CONFIG).forEach(id => {
+                const info = CARD_CONFIG[id];
+                const el = document.createElement('div');
                 
-                if (!monster.canAttack) el.classList.add('sleeping');
-                if (index === selectedAttackerIndex) el.classList.add('selected'); // 物理攻擊選中
-                if (index === selectedSourceIndex) el.classList.add('source-selected'); // 魔法祭品選中
+                let visual = info.type === 'unit' ? 
+                    `<img src="${IMG_BASE_URL + info.img}" onerror="this.style.display='none'">` : 
+                    `<div style="font-size:30px; margin-top:10px;">${info.icon}</div>`;
 
-                el.onclick = () => {
-                    if (!isMyTurn) return;
+                let stats = info.type === 'unit' ? `⚔️${info.atk} ❤️${info.hp}` : info.desc;
 
-                    // 1. 施法模式
-                    if (selectedSpellIndex !== null) {
-                        // 回血 / 護盾 (對自己)
-                        if (selectedSpellId.includes('potion') || selectedSpellId.includes('shield')) {
-                            socket.emit('cardAction', { type: 'play', index: selectedSpellIndex, targetIdx: index });
-                            resetSelection();
-                        } 
-                        // 攻擊卡 (需要先選祭品)
-                        else if (selectedSpellId.includes('fire')) {
-                            if (selectedSourceIndex === index) {
-                                selectedSourceIndex = null; // 取消
-                            } else {
-                                selectedSourceIndex = index; // 選為祭品
-                            }
-                            // 重新渲染以顯示紫色框
-                            renderMyField(fieldData);
-                        }
-                        return;
-                    }
-
-                    // 2. 物理攻擊模式
-                    if (!monster.canAttack) { alert("這隻怪物剛召喚，還不能攻擊！"); return; }
-                    
-                    if (selectedAttackerIndex === index) {
-                        selectedAttackerIndex = null;
-                    } else {
-                        selectedAttackerIndex = index;
-                    }
-                    renderMyField(fieldData);
-                };
+                el.className = `card ${info.type}`;
+                el.innerHTML = `
+                    ${visual}
+                    <div class="name">${info.name}</div>
+                    <div class="stats">${stats}</div>
+                `;
+                
+                // 點擊事件：加入牌組
+                el.onclick = () => addToDeck(id);
+                
                 container.appendChild(el);
             });
         }
 
-        // 🟢 渲染對手戰場 (處理 被打)
-        function renderOppField(fieldData) {
-            const container = document.getElementById('opp-field');
-            container.innerHTML = '';
-
-            fieldData.forEach((monster, index) => {
-                const el = createUnitElement(monster);
-                el.onclick = () => {
-                    if (!isMyTurn) return;
-
-                    // 1. 魔法攻擊 (火球)
-                    if (selectedSpellIndex !== null && selectedSpellId.includes('fire')) {
-                        if (selectedSourceIndex === null) {
-                            alert("請先點擊「我方怪物」作為力量來源 (祭品)！");
-                            return;
-                        }
-                        socket.emit('cardAction', { 
-                            type: 'play', 
-                            index: selectedSpellIndex, 
-                            sourceIdx: selectedSourceIndex, // 祭品
-                            targetIdx: index                // 目標
-                        });
-                        resetSelection();
-                        return;
-                    }
-
-                    // 2. 物理攻擊
-                    if (selectedAttackerIndex !== null) {
-                        socket.emit('cardAction', { 
-                            type: 'attack', 
-                            attackerIdx: selectedAttackerIndex, 
-                            targetIdx: index 
-                        });
-                        resetSelection();
-                        return;
-                    }
-
-                    // 防呆
-                    if (selectedSpellIndex !== null) {
-                        alert("這張魔法卡 (回血/護盾) 只能對自己使用！");
-                    } else {
-                        alert("請先選擇我方怪物(攻擊) 或 魔法卡(施法)！");
-                    }
-                };
-                container.appendChild(el);
-            });
-        }
-
-        function createUnitElement(monster) {
-            const div = document.createElement('div');
-            div.className = 'battle-card field-unit';
-            let imgUrl = '👾';
-            const cardInfo = CARD_DB[monster.id];
-            if (cardInfo) imgUrl = `<img src="${IMG_BASE_URL + cardInfo.img}" onerror="this.style.display='none'">`;
-            div.innerHTML = `${imgUrl}<div style="font-size:8px; margin-top:2px;">${cardInfo ? cardInfo.name : '怪物'}</div><div style="color:#e74c3c; font-weight:bold; font-size:9px;">⚔️${monster.atk} ❤️${monster.hp}</div>`;
-            return div;
-        }
-
-        function createCardElement(cardId) {
-            const div = document.createElement('div');
-            const cardInfo = CARD_DB[cardId];
-            let name = "未知", visual = "❓", type = "spell";
-            if (cardInfo) {
-                name = cardInfo.name; type = cardInfo.type;
-                if (type === 'unit') {
-                    div.className = 'battle-card unit';
-                    visual = `<img src="${IMG_BASE_URL + cardInfo.img}" onerror="this.style.display='none';this.parentNode.innerHTML='👾'">`;
-                } else {
-                    div.className = 'battle-card spell';
-                    visual = `<div style="font-size:24px; margin-top:10px;">${cardInfo.icon}</div>`;
-                }
-            } else { div.className = 'battle-card'; }
-            div.innerHTML = `<div class="cost">1</div>${visual}<div class="name">${name}</div>`;
-            return div;
-        }
-
-        function resetSelection() {
-            selectedAttackerIndex = null;
-            selectedSpellIndex = null;
-            selectedSpellId = null;
-            selectedSourceIndex = null;
+        // 🟢 渲染下方牌組 (點擊移除)
+        function renderDeck() {
+            const container = document.getElementById('deck-container');
+            const countEl = document.getElementById('deck-count');
             
-            // 簡單清除樣式，或者等待 render 重繪
-            document.querySelectorAll('.selected, .spell-selected, .source-selected').forEach(el => {
-                el.classList.remove('selected', 'spell-selected', 'source-selected');
+            container.innerHTML = '';
+            countEl.innerText = myDeck.length;
+            countEl.style.color = myDeck.length === 10 ? '#2ecc71' : '#f1c40f';
+
+            myDeck.forEach((id, index) => {
+                const info = CARD_CONFIG[id];
+                const el = document.createElement('div');
+                el.className = 'mini-card';
+                el.title = "點擊移除";
+                
+                // 防呆：如果卡片資料不存在
+                if(!info) {
+                    el.innerText = "?";
+                } else {
+                    let visual = info.type === 'unit' ? 
+                        `<img src="${IMG_BASE_URL + info.img}">` : 
+                        `<div style="font-size:20px; margin-top:10px;">${info.icon}</div>`;
+                    
+                    el.innerHTML = `${visual}<div class="remove-icon">×</div>`;
+                    if(info.type === 'unit') el.style.borderColor = '#e67e22';
+                    else el.style.borderColor = '#9b59b6';
+                }
+
+                // 點擊事件：移除這張卡
+                el.onclick = () => removeFromDeck(index);
+
+                container.appendChild(el);
             });
         }
 
-        function endTurn() {
-            if(confirm("確定要結束回合嗎？")) {
-                socket.emit('cardAction', { type: 'endTurn' });
-                resetSelection();
+        // 加入牌組
+        function addToDeck(id) {
+            if (myDeck.length >= 10) {
+                alert("牌組已滿 (最多 10 張)！");
+                return;
             }
+            myDeck.push(id);
+            renderDeck();
         }
+
+        // 移除牌組
+        function removeFromDeck(index) {
+            myDeck.splice(index, 1);
+            renderDeck();
+        }
+
+        // 開始對戰 (儲存並配對)
+        function startMatch() {
+            // 檢查牌組
+            if (myDeck.length !== 10) {
+                alert(`牌組必須剛好 10 張！(目前 ${myDeck.length} 張)`);
+                return;
+            }
+
+            // 檢查至少 3 張怪物 (避免全法術無法出戰)
+            let monsterCount = 0;
+            myDeck.forEach(id => {
+                if (CARD_CONFIG[id] && CARD_CONFIG[id].type === 'unit') monsterCount++;
+            });
+
+            if (monsterCount < 3) {
+                alert(`牌組至少需要 3 張怪物卡！(目前 ${monsterCount} 張)`);
+                return;
+            }
+
+            // 1. 儲存
+            socket.emit('updateDeck', myDeck);
+
+            // 2. 配對 (顯示等待視窗)
+            // 這裡簡單用 alert 提示，或者你可以自己做一個美美的 Modal
+            const btn = document.querySelector('.action-btn');
+            btn.innerText = "正在尋找對手...";
+            btn.disabled = true;
+            btn.style.background = '#7f8c8d';
+
+            setTimeout(() => {
+                socket.emit('joinCardQueue');
+            }, 500);
+        }
+
+        // 監聽配對成功
+        socket.on('matchFound', (data) => {
+            console.log("配對成功:", data);
+            window.location.href = 'card_battle.html';
+        });
+
+        // 監聽佇列狀態
+        socket.on('queueStatus', (msg) => {
+            console.log(msg); // 可以在 UI 顯示
+        });
+
     </script>
 </body>
 </html>
