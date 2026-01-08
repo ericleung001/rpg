@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>卡片對戰</title>
+    <title>卡片對戰2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -46,11 +46,20 @@
         
         /* 離開按鈕 */
         #leave-btn { position: fixed; top: 10px; left: 10px; padding: 8px 12px; background: #c0392b; border: 2px solid #fff; color: white; border-radius: 5px; font-weight: bold; cursor: pointer; z-index: 200; font-family: inherit; font-size: 10px; }
+
+        /* 🟢 [新增] 提示框樣式 */
+        #game-toast {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f;
+            color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999;
+            font-size: 12px; font-weight: bold; transition: top 0.5s ease-in-out;
+            pointer-events: none; width: 80%; max-width: 300px; text-align: center;
+        }
     </style>
 </head>
 <body>
 
-    <button id="leave-btn" onclick="surrender()">🏳️ 離開/投降</button>
+    <div id="game-toast"></div> <button id="leave-btn" onclick="surrender()">🏳️ 離開/投降</button>
     <div id="turn-indicator">戰鬥開始</div>
     <button id="end-turn-btn" onclick="endTurn()">結束<br>回合</button>
 
@@ -69,16 +78,15 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
         const IMG_BASE_URL = "https://ericleung001.github.io/rpg/img/monsters/";
         
-        // 需與 Server 保持一致
         const MONSTER_LIST = {
             'slime': { name: "史萊姆", img: "slime.png" },
             'rat': { name: "大老鼠", img: "rat.png" },
@@ -146,14 +154,25 @@
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
         socket.on('cardGameUpdate', (data) => renderGame(data));
-        socket.on('errorMessage', (msg) => alert(msg));
+        socket.on('errorMessage', (msg) => showMsg("❌ " + msg)); // 🟢 [修改] alert -> showMsg
         
         socket.on('cardGameEnd', (res) => { 
             let msg = `遊戲結束！\n獲勝者: ${res.winner}`;
             if (res.reason) msg += `\n(${res.reason})`;
-            alert(msg); 
-            window.location.href = 'hub.html'; 
+            
+            // 遊戲結束可以用 confirm 或保留 alert，或者用 showMsg 然後延遲跳轉
+            // 這裡用 showMsg 然後延遲跳轉比較一致
+            showMsg(msg);
+            setTimeout(() => { window.location.href = 'hub.html'; }, 2000);
         });
+
+        // 🟢 [新增] 提示框函數
+        function showMsg(text) {
+            const t = document.getElementById('game-toast');
+            t.innerText = text;
+            t.style.top = "30px";
+            setTimeout(() => { t.style.top = "-100px"; }, 3000);
+        }
 
         function renderGame(data) {
             const me = data.me;
@@ -193,7 +212,7 @@
                 if (index === selectedSpellIndex) el.classList.add('spell-selected');
 
                 el.onclick = () => {
-                    if (!isMyTurn) { alert("現在是對手的回合！"); return; }
+                    if (!isMyTurn) { showMsg("⏳ 現在是對手的回合！"); return; } // 🟢 [修改] alert -> showMsg
 
                     if (cardInfo.type === 'unit') {
                         socket.emit('cardAction', { type: 'play', index: index });
@@ -248,7 +267,7 @@
                     }
 
                     // 攻擊模式
-                    if (!monster.canAttack) { alert("這隻怪物剛召喚，還不能攻擊！"); return; }
+                    if (!monster.canAttack) { showMsg("💤 這隻怪物剛召喚，還不能攻擊！"); return; } // 🟢 [修改] alert -> showMsg
                     
                     if (selectedAttackerIndex === index) selectedAttackerIndex = null;
                     else selectedAttackerIndex = index;
@@ -269,7 +288,7 @@
 
                     if (selectedSpellIndex !== null && selectedSpellId.includes('fire')) {
                         if (selectedSourceIndex === null) {
-                            alert("請先點擊「我方怪物」作為力量來源 (祭品)！");
+                            showMsg("⚠️ 請先點擊「我方怪物」作為力量來源 (祭品)！"); // 🟢 [修改] alert -> showMsg
                             return;
                         }
                         socket.emit('cardAction', { 
@@ -288,8 +307,8 @@
                         return;
                     }
 
-                    if (selectedSpellIndex !== null) alert("這張魔法卡只能對自己使用！");
-                    else alert("請先選擇我方怪物(攻擊) 或 魔法卡(施法)！");
+                    if (selectedSpellIndex !== null) showMsg("⛔ 這張魔法卡只能對自己使用！"); // 🟢 [修改] alert -> showMsg
+                    else showMsg("ℹ️ 請先選擇我方怪物(攻擊) 或 魔法卡(施法)！"); // 🟢 [修改] alert -> showMsg
                 };
                 container.appendChild(el);
             });
@@ -328,8 +347,6 @@
             selectedSpellIndex = null;
             selectedSpellId = null;
             selectedSourceIndex = null;
-            // 等待重繪或手動重繪
-            // 這裡不需手動 remove class，因為 render 會處理
         }
 
         function endTurn() {
