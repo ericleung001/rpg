@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的背包2</title>
+    <title>我的背包</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -24,7 +24,8 @@
             display: grid; gap: 5px; 
             margin-bottom: 5px;
         }
-        .category-bar { grid-template-columns: repeat(4, 1fr); } 
+        /* [Modified] Increased columns to 5 to fit 'Card' button */
+        .category-bar { grid-template-columns: repeat(5, 1fr); } 
         .category-bar-2 { grid-template-columns: repeat(3, 1fr); margin-bottom: 15px; } 
 
         .cat-btn {
@@ -118,6 +119,7 @@
         <button class="cat-btn" onclick="setFilter('consumable')">消耗品</button>
         <button class="cat-btn" onclick="setFilter('food')">料理</button>
         <button class="cat-btn" onclick="setFilter('material')">材料</button>
+        <button class="cat-btn" onclick="setFilter('card')">卡片</button>
     </div>
     <div class="category-bar-2">
         <button class="cat-btn" onclick="setFilter('weapon')">武器</button>
@@ -175,7 +177,7 @@
         if (!myToken) window.location.href = 'index.html';
 
         let myInventory = {};
-        let myEnhancements = {}; // 🔥 新增
+        let myEnhancements = {}; 
         let currentFilter = 'all'; 
         let currentItemId = null;
 
@@ -389,7 +391,10 @@
                     if (currentFilter === 'armor') return id.includes('armor') || id.includes('mail') || id.includes('vest') || id.includes('plate') || id.includes('robe') || id.includes('cloak');
                     if (currentFilter === 'accessory') return id.includes('ring') || id.includes('necklace') || id.includes('amulet') || id.includes('bracelet') || id.includes('boots') || id.includes('crown');
                     
-                    // 材料 (排除所有裝備和消耗品)
+                    // [Modified] New Filter for Cards
+                    if (currentFilter === 'card') return id.startsWith('card_'); 
+
+                    // 材料 (排除所有裝備和消耗品, 以及卡片)
                     if (currentFilter === 'material') {
                         return !id.includes('potion') && !id.includes('elixir') && !id.includes('enhance_stone') && 
                                !id.includes('grilled') && !id.includes('sushi') && !id.includes('steak') && !id.includes('rice') && !id.includes('soup') && !id.includes('plate') &&
@@ -399,7 +404,8 @@
                                !id.includes('reaper') && !id.includes('club') && !id.includes('tooth') && !id.includes('dag') && !id.includes('weapon') &&
                                !id.includes('armor') && !id.includes('mail') && !id.includes('vest') && !id.includes('robe') && !id.includes('cloak') && 
                                !id.includes('ring') && !id.includes('necklace') && !id.includes('amulet') && !id.includes('bracelet') && !id.includes('boots') && !id.includes('crown') &&
-                               !id.includes('plate') && true; 
+                               !id.includes('plate') && 
+                               !id.startsWith('card_') && true; 
                     }
                     return true;
                 });
@@ -411,7 +417,21 @@
             }
 
             keys.forEach(key => {
-                const item = ITEM_DB[key] || { name: key, cost: 10, desc: "未知物品" };
+                let item = ITEM_DB[key];
+                
+                // [Modified] Dynamic naming for unknown cards to avoid "Unknown Item"
+                if (!item) {
+                     if (key.startsWith('card_')) {
+                        // Assuming format card_slime, card_dragon etc.
+                        let cardName = key.replace('card_', '');
+                        // Capitalize first letter
+                        cardName = cardName.charAt(0).toUpperCase() + cardName.slice(1);
+                        item = { name: `卡片: ${cardName}`, cost: 100, desc: "可用於卡牌對戰" };
+                     } else {
+                        item = { name: key, cost: 10, desc: "未知物品" };
+                     }
+                }
+
                 let npcPrice = Math.floor((item.cost || 10) * 0.2);
                 if(npcPrice < 1) npcPrice = 1;
 
