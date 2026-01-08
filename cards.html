@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>卡片圖鑑3</title>
+    <title>卡片圖鑑</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -113,11 +113,20 @@
             color: #fff; border-radius: 10px; text-align: center; z-index: 200;
             display: none;
         }
+
+        /* 🟢 [新增] 提示框樣式 */
+        #game-toast {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f;
+            color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999;
+            font-size: 12px; font-weight: bold; transition: top 0.5s ease-in-out;
+            pointer-events: none; width: 80%; max-width: 300px;
+        }
     </style>
 </head>
 <body>
 
-    <a href="hub.html" class="back-btn">◀ 返回</a>
+    <div id="game-toast"></div> <a href="hub.html" class="back-btn">◀ 返回</a>
     <h1>🎴 編輯牌組</h1>
 
     <div class="card-pool-container">
@@ -226,8 +235,8 @@
         // 🟢 [微調] 魔法卡效果 (配合新的 HP 數值)
         const SPELL_LIST = {
             'card_potion': { name: "回復卡", icon: "💊", desc: "回復 50% HP" },
-            'card_fire':   { name: "攻擊卡", icon: "🔥", desc: "傷害 = ATK x 2" }, // 配合新數值，神卡(255攻)用這張會打 510，直接秒殺，符合神級強度
-            'card_shield': { name: "護盾卡", icon: "🛡️", desc: "+50 HP上限" }   // 從 +20 改為 +50，讓護盾在 500HP 環境下更有感
+            'card_fire':   { name: "攻擊卡", icon: "🔥", desc: "傷害 = ATK x 2" }, 
+            'card_shield': { name: "護盾卡", icon: "🛡️", desc: "+50 HP上限" }   
         };
 
         const CARD_CONFIG = {};
@@ -241,16 +250,15 @@
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
 
-        // 🟢 [修正] 讀取 Inventory (相容舊資料庫)
         socket.on('playerStatsUpdate', (p) => {
-            // 這裡優先使用你提供的資料格式: p.inventory 是物件 {card_id: count, ...}
             myInventory = p.inventory || {}; 
             myDeck = p.cardDeck || []; 
             refreshUI();
         });
 
-        socket.on('errorMessage', (msg) => alert(msg));
-        socket.on('marketResult', (res) => alert(res.msg)); 
+        // 🟢 [修改] 錯誤與結果提示改用 showMsg
+        socket.on('errorMessage', (msg) => showMsg("❌ " + msg));
+        socket.on('marketResult', (res) => showMsg(res.msg)); 
 
         socket.on('matchFound', (data) => {
             document.getElementById('queue-msg').innerHTML = `<div style="font-size:14px; color:#2ecc71;">✅ 配對成功！</div><div style="margin-top:10px;">對手: ${data.opponent}</div>`;
@@ -261,31 +269,33 @@
             if (msg === '已取消配對') document.getElementById('queue-msg').style.display = 'none';
         });
 
+        // 🟢 [新增] 提示框函數
+        function showMsg(text) {
+            const t = document.getElementById('game-toast');
+            t.innerText = text;
+            t.style.top = "30px";
+            setTimeout(() => { t.style.top = "-100px"; }, 3000);
+        }
+
         function refreshUI() {
             renderPool();
             renderDeck();
             updateDeckInfo();
         }
 
-        // 1. 渲染上方卡片庫
         function renderPool() {
             const list = document.getElementById('card-list');
             list.innerHTML = '';
             
-            // 遍歷我們知道的所有卡片定義
             Object.keys(CARD_CONFIG).forEach(id => {
                 const cardData = CARD_CONFIG[id];
-                
-                // 🟢 計算剩餘數量 = 庫存總數 - 牌組已用數量
                 const totalOwned = myInventory[id] || 0;
                 const usedInDeck = myDeck.filter(c => c === id).length;
                 const remaining = totalOwned - usedInDeck;
                 
-                // 如果完全沒擁有，就不顯示 (未收集)
                 if (totalOwned === 0) return;
 
                 const div = document.createElement('div');
-                // 如果剩餘數量 <= 0，變灰
                 div.className = `card ${cardData.type} ${remaining <= 0 ? 'disabled' : 'owned'}`;
                 div.setAttribute('data-rarity', cardData.rarity);
 
@@ -302,13 +312,11 @@
                     <div class="card-stats">${statsHtml}</div>
                 `;
 
-                // 點擊事件：加入牌組 (複數選取)
                 div.onclick = () => addToDeck(id, remaining);
                 list.appendChild(div);
             });
         }
 
-        // 2. 渲染下方牌組
         function renderDeck() {
             const container = document.getElementById('deck-container');
             container.innerHTML = '';
@@ -329,22 +337,24 @@
                     el.style.borderColor = info.type === 'unit' ? '#e67e22' : '#9b59b6';
                 }
 
-                // 點擊事件：從牌組移除 (會釋放回卡片庫)
                 el.onclick = () => removeFromDeck(index);
                 container.appendChild(el);
             });
         }
 
         function addToDeck(id, remaining) {
-            if (myDeck.length >= 10) { alert("牌組最多只能放 10 張卡！"); return; }
-            if (remaining <= 0) return; // 防呆
+            if (myDeck.length >= 10) { 
+                showMsg("⚠️ 牌組最多只能放 10 張卡！"); // 🟢 [修改] alert -> showMsg
+                return; 
+            }
+            if (remaining <= 0) return; 
             myDeck.push(id);
-            refreshUI(); // 刷新
+            refreshUI(); 
         }
 
         function removeFromDeck(index) {
             myDeck.splice(index, 1);
-            refreshUI(); // 刷新
+            refreshUI(); 
         }
 
         function updateDeckInfo() {
@@ -359,6 +369,7 @@
         function saveDeck() {
             if (!validateDeck()) return;
             socket.emit('updateDeck', myDeck);
+            showMsg("✅ 牌組已儲存！"); // 🟢 [新增] 儲存成功提示
         }
 
         function startMatch() {
@@ -372,13 +383,13 @@
 
         function validateDeck() {
             if (myDeck.length !== 10) {
-                alert(`牌組必須剛好 10 張！(目前 ${myDeck.length})`);
+                showMsg(`⚠️ 牌組必須剛好 10 張！(目前 ${myDeck.length})`); // 🟢 [修改] alert -> showMsg
                 return false;
             }
             let monsterCount = 0;
             myDeck.forEach(id => { if (CARD_CONFIG[id]?.type === 'unit') monsterCount++; });
             if (monsterCount < 3) {
-                alert(`牌組至少需要 3 張怪物卡！(目前 ${monsterCount})`);
+                showMsg(`⚠️ 牌組至少需要 3 張怪物卡！(目前 ${monsterCount})`); // 🟢 [修改] alert -> showMsg
                 return false;
             }
             return true;
