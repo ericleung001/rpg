@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>交易所2</title>
+    <title>交易所</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -280,7 +280,6 @@
         let currentSellId = null;
         let currentItemKey = ''; 
         let currentPage = 1;
-        
         let pendingBuyId = null; 
 
         const PROHIBITED_ITEMS = [
@@ -291,6 +290,26 @@
             'dimension_ring',
             'entropy_sword', 'entropy_god_armor'
         ];
+
+        // 🟢 [新增] 卡片名稱對照表 (從 bag.html 複製過來)
+        const CARD_NAME_MAP = {
+            'slime': '史萊姆', 'rat': '大老鼠', 'bee': '殺人蜂', 'boar': '野豬',
+            'thief': '盜賊', 'wolf_king': '狼王', 'snake': '毒蛇',
+            'zombie': '腐屍', 'skeleton': '骷髏兵', 'ghoul': '食屍鬼', 'witch': '沼澤女巫',
+            'hydra': '九頭蛇', 'fire_imp': '火焰小鬼', 'lava_golem': '熔岩戈侖', 'salamander': '火蜥蜴',
+            'fire_mage': '烈焰法師', 'dragon_hatchling': '幼龍', 'balrog': '炎魔',
+            'snow_wolf': '雪原狼', 'yeti': '雪人', 'ice_spirit': '冰精靈', 'frost_knight': '寒霜騎士',
+            'ice_dragon': '冰霜龍', 'lich_king': '巫妖王',
+            'void_eye': '虛空之眼', 'shadow_assassin': '暗影刺客', 'dark_paladin': '墮落聖騎', 'demon_guard': '惡魔守衛',
+            'succubus': '魅魔', 'void_lord': '虛空領主', 'chaos_beast': '混沌巨獸', 'fallen_angel': '墮天使',
+            'demon_king': '魔王撒旦', 'void_walker': '虛空行者', 'chaos_knight': '混沌騎士',
+            'abyss_dragon': '深淵魔龍', 'fallen_titan': '墮落泰坦', 'genesis_god': '創世破壞神',
+            'void_worm': '虛空吞噬蟲', 'shadow_phantom': '虚影夢魘', 'star_eater': '吞星巨獸',
+            'nebula_dragon': '星雲幻龍', 'time_keeper': '時空裁決者', 'dimension_breaker': '維度粉碎者',
+            'entropy_god': '終焉·熱寂之神',
+            // 魔法卡
+            'potion': '回復卡', 'fire': '攻擊卡', 'shield': '護盾卡'
+        };
 
         const ITEM_DB = {
             'copper_ore': { name: '銅礦石' }, 'soft_fur': { name: '柔軟皮毛' }, 'beast_fang': { name: '野獸尖牙' }, 'slime_gel': { name: '黏液' },
@@ -403,8 +422,17 @@
             allowedItems.forEach(item => {
                 const btn = document.createElement('div');
                 btn.className = 'item-btn';
-                btn.innerText = item.name;
-                btn.onclick = () => loadListings(item.id, item.name);
+                
+                // 🟢 [修正] 如果是卡片，顯示中文名
+                if (item.id.startsWith('card_')) {
+                    const cardKey = item.id.replace('card_', '');
+                    const cardName = CARD_NAME_MAP[cardKey] || cardKey;
+                    btn.innerText = `卡片: ${cardName}`;
+                } else {
+                    btn.innerText = item.name;
+                }
+                
+                btn.onclick = () => loadListings(item.id, btn.innerText); // 傳入處理過的中文名
                 area.appendChild(btn);
             });
         });
@@ -446,8 +474,22 @@
                     } else {
                         actionBtn = `<button class="btn-buy" onclick="buyItem(${row.id}, ${row.price})">購買</button>`;
                     }
+                    
+                    // 🟢 [修正] 列表顯示時也轉換卡片名稱
+                    let displayItemName = row.itemName;
+                    // 如果後端沒傳 itemName 或傳的是原始 ID，嘗試轉換
+                    // 但通常後端會傳 marketItemsList 裡的 name
+                    // 這裡做個保險：如果是 card_ 開頭，就轉中文
+                    // 注意：row.itemName 可能已經是 "卡片: Slime"，這取決於 Server 存什麼
+                    // 如果 Server 存的是 ID，這裡就要轉。如果 Server 存的是 Name，那就要看 Server 端有無改。
+                    // 假設 Server 存的是 ID 或 英文 Name，我們這裡再濾一次
+                    if (displayItemName.startsWith('card_')) {
+                         const k = displayItemName.replace('card_', '');
+                         displayItemName = `卡片: ${CARD_NAME_MAP[k] || k}`;
+                    }
+
                     div.innerHTML = `
-                        <div class="col-name">${row.itemName}</div>
+                        <div class="col-name">${displayItemName}</div>
                         <div class="col-price">$${row.price}</div>
                         <div class="col-seller">${row.seller}</div>
                         <div class="col-action">${actionBtn}</div>
@@ -512,11 +554,11 @@
                 keys.forEach(key => {
                     let itemData = ITEM_DB[key];
                     if (!itemData) {
+                        // 🟢 [修正] 上架清單顯示卡片中文名
                         if (key.startsWith('card_')) {
-                            // Simple formatting for card name if not in DB
-                            let cardName = key.replace('card_', '');
-                            cardName = cardName.charAt(0).toUpperCase() + cardName.slice(1);
-                            itemData = { name: `卡片: ${cardName}` };
+                            const k = key.replace('card_', '');
+                            const cName = CARD_NAME_MAP[k] || k;
+                            itemData = { name: `卡片: ${cName}` };
                         } else {
                             itemData = { name: key };
                         }
