@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的背包</title>
+    <title>我的背包2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -200,7 +200,7 @@
             'ring_str', 'bracelet_def', 'necklace_hp', 'necklace_mp'
         ];
 
-        // 🟢 [新增] 卡片名稱對照表 (從 MONSTER_LIST 複製過來)
+        // 卡片名稱對照表
         const CARD_NAME_MAP = {
             'slime': '史萊姆', 'rat': '大老鼠', 'bee': '殺人蜂', 'boar': '野豬',
             'thief': '盜賊', 'wolf_king': '狼王', 'snake': '毒蛇',
@@ -440,12 +440,8 @@
                 // 🟢 [修正] 讀取卡片中文名稱
                 if (!item) {
                      if (key.startsWith('card_')) {
-                        // 取得 card_ 後面的字串 (例如 slime)
                         const monsterKey = key.replace('card_', '');
-                        
-                        // 查表取得中文名，如果找不到就用英文
                         const cardName = CARD_NAME_MAP[monsterKey] || monsterKey;
-                        
                         item = { name: `卡片: ${cardName}`, cost: 100, desc: "可用於卡牌對戰" };
                      } else {
                         item = { name: key, cost: 10, desc: "未知物品" };
@@ -473,14 +469,23 @@
                 // 賣店與上架按鈕
                 let sellBtns = '';
                 if (!PROHIBITED_ITEMS.includes(key)) {
-                    sellBtns = `
-                        <button class="btn btn-npc" onclick="openNPCModal('${key}', '${item.name}', ${npcPrice})">
-                            賣店 (${npcPrice}G)
-                        </button>
-                        <button class="btn btn-market" onclick="openMarketModal('${key}', '${item.name}', ${myInventory[key]})">
-                            上架市集
-                        </button>
-                    `;
+                    // [Modified] Logic to prevent cards from being sold to NPC
+                    if (key.startsWith('card_')) {
+                        sellBtns = `
+                            <button class="btn btn-market" onclick="openMarketModal('${key}', '${item.name}', ${myInventory[key]})">
+                                上架市集
+                            </button>
+                        `;
+                    } else {
+                        sellBtns = `
+                            <button class="btn btn-npc" onclick="openNPCModal('${key}', '${item.name}', ${npcPrice})">
+                                賣店 (${npcPrice}G)
+                            </button>
+                            <button class="btn btn-market" onclick="openMarketModal('${key}', '${item.name}', ${myInventory[key]})">
+                                上架市集
+                            </button>
+                        `;
+                    }
                 }
 
                 const lv = myEnhancements[key] || 0;
