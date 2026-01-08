@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>交易所2</title>
+    <title>交易所</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -292,7 +292,6 @@
             'entropy_sword', 'entropy_god_armor'
         ];
 
-        // 卡片名稱對照表
         const CARD_NAME_MAP = {
             'slime': '史萊姆', 'rat': '大老鼠', 'bee': '殺人蜂', 'boar': '野豬',
             'thief': '盜賊', 'wolf_king': '狼王', 'snake': '毒蛇',
@@ -360,7 +359,7 @@
             myInventory = p.inventory;
         });
 
-        // 聊天室 (略)
+        // 聊天室
         socket.on('chatHistory', (history) => {
             const box = document.getElementById('chat-history');
             box.innerHTML = ''; 
@@ -406,9 +405,9 @@
                 document.getElementById('listings-area').style.display = 'flex';
                 socket.emit('getMyListings');
             } else if (cat === 'card') {
-                document.getElementById('status-msg').innerText = "讀取卡片清單...";
-                // 🟢 請求 material 類別，因為卡片通常被存在材料類
-                socket.emit('getMarketItems', 'material'); 
+                // 🟢 [關鍵修改] 點選卡片時，改為發送 'all' 請求
+                document.getElementById('status-msg').innerText = "搜尋市場卡片...";
+                socket.emit('getMarketItems', 'all'); 
             } else {
                 document.getElementById('status-msg').innerText = "讀取物品清單...";
                 socket.emit('getMarketItems', cat);
@@ -419,18 +418,17 @@
             const area = document.getElementById('item-select-area');
             area.innerHTML = '';
             
-            // 🟢 [過濾核心]
-            // 如果當前選的是 "card"，只顯示 card_ 開頭的 ID  或者  名稱包含 "卡片"
-            // 如果當前選的是 "material"，過濾掉所有 card_ 開頭 和 名稱包含 "卡片" 的東西
-            // 其他分類照常顯示
+            // 🟢 [過濾核心] 強力篩選器
             let filteredItems = items.filter(item => !PROHIBITED_ITEMS.includes(item.id));
 
             if (currentCategory === 'card') {
+                // 只保留 ID 是 card_ 開頭，或者名稱包含 "卡片" 的物品
                 filteredItems = filteredItems.filter(item => 
                     item.id.startsWith('card_') || 
                     (item.name && item.name.indexOf('卡片') !== -1)
                 );
-            } else if (currentCategory === 'material') {
+            } else if (currentCategory !== 'mine' && currentCategory !== 'all') {
+                // 如果是其他分類，過濾掉卡片 (避免在材料區看到卡片)
                 filteredItems = filteredItems.filter(item => 
                     !item.id.startsWith('card_') && 
                     (!item.name || item.name.indexOf('卡片') === -1)
@@ -449,7 +447,7 @@
                 const btn = document.createElement('div');
                 btn.className = 'item-btn';
                 
-                // 顯示名稱優化
+                // 顯示名稱優化 (把 card_slime 轉成 卡片: 史萊姆)
                 if (item.id.startsWith('card_')) {
                     const cardKey = item.id.replace('card_', '');
                     const cardName = CARD_NAME_MAP[cardKey] || cardKey;
