@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的背包2</title>
+    <title>我的背包</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -24,7 +24,6 @@
             display: grid; gap: 5px; 
             margin-bottom: 5px;
         }
-        /* [Modified] Increased columns to 5 to fit 'Card' button */
         .category-bar { grid-template-columns: repeat(5, 1fr); } 
         .category-bar-2 { grid-template-columns: repeat(3, 1fr); margin-bottom: 15px; } 
 
@@ -201,6 +200,26 @@
             'ring_str', 'bracelet_def', 'necklace_hp', 'necklace_mp'
         ];
 
+        // 🟢 [新增] 卡片名稱對照表 (從 MONSTER_LIST 複製過來)
+        const CARD_NAME_MAP = {
+            'slime': '史萊姆', 'rat': '大老鼠', 'bee': '殺人蜂', 'boar': '野豬',
+            'thief': '盜賊', 'wolf_king': '狼王', 'snake': '毒蛇',
+            'zombie': '腐屍', 'skeleton': '骷髏兵', 'ghoul': '食屍鬼', 'witch': '沼澤女巫',
+            'hydra': '九頭蛇', 'fire_imp': '火焰小鬼', 'lava_golem': '熔岩戈侖', 'salamander': '火蜥蜴',
+            'fire_mage': '烈焰法師', 'dragon_hatchling': '幼龍', 'balrog': '炎魔',
+            'snow_wolf': '雪原狼', 'yeti': '雪人', 'ice_spirit': '冰精靈', 'frost_knight': '寒霜騎士',
+            'ice_dragon': '冰霜龍', 'lich_king': '巫妖王',
+            'void_eye': '虛空之眼', 'shadow_assassin': '暗影刺客', 'dark_paladin': '墮落聖騎', 'demon_guard': '惡魔守衛',
+            'succubus': '魅魔', 'void_lord': '虛空領主', 'chaos_beast': '混沌巨獸', 'fallen_angel': '墮天使',
+            'demon_king': '魔王撒旦', 'void_walker': '虛空行者', 'chaos_knight': '混沌騎士',
+            'abyss_dragon': '深淵魔龍', 'fallen_titan': '墮落泰坦', 'genesis_god': '創世破壞神',
+            'void_worm': '虛空吞噬蟲', 'shadow_phantom': '虚影夢魘', 'star_eater': '吞星巨獸',
+            'nebula_dragon': '星雲幻龍', 'time_keeper': '時空裁決者', 'dimension_breaker': '維度粉碎者',
+            'entropy_god': '終焉·熱寂之神',
+            // 魔法卡
+            'potion': '回復卡', 'fire': '攻擊卡', 'shield': '護盾卡'
+        };
+
         const ITEM_DB = {
             'lucky_bag': { name: "🧧 奇蹟福袋(節日限定)", cost: 1000000000, desc: "隨機獲得巨量稀有材料！" },
             'enhance_stone': { name: "強化石", cost: 5000, desc: "蘊含神祕力量，用於強化裝備 (鐵匠鋪)" },
@@ -342,7 +361,6 @@
         socket.on('playerStatsUpdate', (p) => {
             document.getElementById('my-gold').innerText = p.gold;
             myInventory = p.inventory;
-            // 🔥 [關鍵修改] 接收強化數據
             myEnhancements = p.enhancements || {}; 
             renderBag(); 
         });
@@ -419,13 +437,15 @@
             keys.forEach(key => {
                 let item = ITEM_DB[key];
                 
-                // [Modified] Dynamic naming for unknown cards to avoid "Unknown Item"
+                // 🟢 [修正] 讀取卡片中文名稱
                 if (!item) {
                      if (key.startsWith('card_')) {
-                        // Assuming format card_slime, card_dragon etc.
-                        let cardName = key.replace('card_', '');
-                        // Capitalize first letter
-                        cardName = cardName.charAt(0).toUpperCase() + cardName.slice(1);
+                        // 取得 card_ 後面的字串 (例如 slime)
+                        const monsterKey = key.replace('card_', '');
+                        
+                        // 查表取得中文名，如果找不到就用英文
+                        const cardName = CARD_NAME_MAP[monsterKey] || monsterKey;
+                        
                         item = { name: `卡片: ${cardName}`, cost: 100, desc: "可用於卡牌對戰" };
                      } else {
                         item = { name: key, cost: 10, desc: "未知物品" };
@@ -463,11 +483,9 @@
                     `;
                 }
 
-                // 🔥 [核心修正] 讀取強化等級
                 const lv = myEnhancements[key] || 0;
                 let displayName = item.name;
                 
-                // 如果有強化，加上金色 +N
                 if (lv > 0) {
                     displayName += `<span class="plus-tag">+${lv}</span>`;
                 }
