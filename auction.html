@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>交易所</title>
+    <title>交易所2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -281,7 +281,7 @@
         let currentItemKey = ''; 
         let currentPage = 1;
         let pendingBuyId = null; 
-        let currentCategory = ''; // 🟢 [新增] 追蹤當前分類
+        let currentCategory = ''; 
 
         const PROHIBITED_ITEMS = [
             'lucky_bag',
@@ -394,7 +394,7 @@
 
         function selectCategory(cat) {
             currentItemKey = ''; currentPage = 1;
-            currentCategory = cat; // 🟢 記錄當前分類
+            currentCategory = cat; 
             document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
             document.getElementById('item-select-area').style.display = 'none';
@@ -406,9 +406,8 @@
                 document.getElementById('listings-area').style.display = 'flex';
                 socket.emit('getMyListings');
             } else if (cat === 'card') {
-                // 🟢 [修改] 點選 "卡片" 時，請求 "material" 分類 (假設卡片在材料類)
-                // 收到列表後，我們會用 client-side filter 只顯示卡片
                 document.getElementById('status-msg').innerText = "讀取卡片清單...";
+                // 🟢 請求 material 類別，因為卡片通常被存在材料類
                 socket.emit('getMarketItems', 'material'); 
             } else {
                 document.getElementById('status-msg').innerText = "讀取物品清單...";
@@ -421,15 +420,21 @@
             area.innerHTML = '';
             
             // 🟢 [過濾核心]
-            // 如果當前選的是 "card"，只顯示 card_ 開頭的物品
-            // 如果當前選的是 "material"，只顯示 非 card_ 開頭的物品
+            // 如果當前選的是 "card"，只顯示 card_ 開頭的 ID  或者  名稱包含 "卡片"
+            // 如果當前選的是 "material"，過濾掉所有 card_ 開頭 和 名稱包含 "卡片" 的東西
             // 其他分類照常顯示
             let filteredItems = items.filter(item => !PROHIBITED_ITEMS.includes(item.id));
 
             if (currentCategory === 'card') {
-                filteredItems = filteredItems.filter(item => item.id.startsWith('card_'));
+                filteredItems = filteredItems.filter(item => 
+                    item.id.startsWith('card_') || 
+                    (item.name && item.name.indexOf('卡片') !== -1)
+                );
             } else if (currentCategory === 'material') {
-                filteredItems = filteredItems.filter(item => !item.id.startsWith('card_'));
+                filteredItems = filteredItems.filter(item => 
+                    !item.id.startsWith('card_') && 
+                    (!item.name || item.name.indexOf('卡片') === -1)
+                );
             }
 
             if (filteredItems.length === 0) { 
@@ -527,7 +532,6 @@
             }
         });
 
-        // 購買流程
         function buyItem(id, price) {
             if(confirm(`確定要花費 ${price} G 購買嗎？`)) {
                 pendingBuyId = id; 
