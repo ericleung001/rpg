@@ -18,7 +18,7 @@
         .opponent-area { flex: 1; background: #34495e; display: flex; flex-direction: column; border-bottom: 2px solid #000; position: relative; }
         .my-area { flex: 1; background: #2c3e50; display: flex; flex-direction: column-reverse; position: relative; }
 
-        .hand-zone { height: 120px; display: flex; justify-content: center; align-items: center; gap: 5px; padding: 5px; background: rgba(0,0,0,0.3); overflow-x: auto; }
+        .hand-zone { height: 130px; /* 🟢 [修改] 稍微加高手牌區 */ display: flex; justify-content: center; align-items: center; gap: 5px; padding: 5px; background: rgba(0,0,0,0.3); overflow-x: auto; }
         .card-back { background: linear-gradient(135deg, #e67e22 25%, #d35400 25%, #d35400 50%, #e67e22 50%, #e67e22 75%, #d35400 75%, #d35400 100%); width: 60px; height: 85px; border-radius: 5px; border: 2px solid #fff; }
         .field-zone { flex: 1; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 10px; }
         
@@ -27,13 +27,23 @@
         .my-info { bottom: 10px; left: 10px; }
 
         /* 卡片 */
-        .battle-card { width: 70px; height: 100px; background: #2c3e50; border: 2px solid #fff; border-radius: 6px; display: flex; flex-direction: column; align-items: center; font-size: 8px; position: relative; cursor: pointer; transition: 0.1s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .battle-card { 
+            width: 75px; height: 110px; /* 🟢 [修改] 加大卡片尺寸以容納數值 */
+            background: #2c3e50; border: 2px solid #fff; border-radius: 6px; 
+            display: flex; flex-direction: column; align-items: center; 
+            font-size: 8px; position: relative; cursor: pointer; 
+            transition: 0.1s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
+            padding-top: 15px; /* 留給 Cost 的空間 */
+        }
         .battle-card:active { transform: scale(0.95); }
-        .battle-card img { width: 50px; height: 50px; object-fit: contain; margin-top: 5px; background: rgba(0,0,0,0.2); border-radius: 4px; }
+        .battle-card img { width: 50px; height: 50px; object-fit: contain; background: rgba(0,0,0,0.2); border-radius: 4px; margin-bottom: 2px; }
         .battle-card .cost { position: absolute; top: -5px; right: -5px; background: #3498db; color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 8px; line-height: 18px; text-align: center; border: 1px solid #fff; }
+        
+        /* 🟢 [新增] 卡片數值顯示 */
+        .card-stats-row { font-size: 7px; color: #f1c40f; margin-top: 2px; white-space: nowrap; }
 
         /* 狀態 */
-        .field-unit { border-color: #f1c40f; }
+        .field-unit { border-color: #f1c40f; height: 100px; width: 70px; padding-top: 5px; } /* 場上的卡維持原樣 */
         .field-unit.selected { border-color: #e74c3c; box-shadow: 0 0 15px #e74c3c; transform: scale(1.1); z-index: 5; }
         .battle-card.spell-selected { border-color: #3498db; box-shadow: 0 0 15px #3498db; transform: translateY(-10px); }
         .field-unit.source-selected { border-color: #9b59b6; box-shadow: 0 0 15px #9b59b6; transform: scale(1.1); z-index: 5; }
@@ -47,7 +57,7 @@
         /* 離開按鈕 */
         #leave-btn { position: fixed; top: 10px; left: 10px; padding: 8px 12px; background: #c0392b; border: 2px solid #fff; color: white; border-radius: 5px; font-weight: bold; cursor: pointer; z-index: 200; font-family: inherit; font-size: 10px; }
 
-        /* 🟢 [新增] 提示框樣式 */
+        /* 提示框樣式 */
         #game-toast {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f;
@@ -59,7 +69,9 @@
 </head>
 <body>
 
-    <div id="game-toast"></div> <button id="leave-btn" onclick="surrender()">🏳️ 離開/投降</button>
+    <div id="game-toast"></div> 
+
+    <button id="leave-btn" onclick="surrender()">🏳️ 離開/投降</button>
     <div id="turn-indicator">戰鬥開始</div>
     <button id="end-turn-btn" onclick="endTurn()">結束<br>回合</button>
 
@@ -87,52 +99,53 @@
 
         const IMG_BASE_URL = "https://ericleung001.github.io/rpg/img/monsters/";
         
+        // 🟢 [完整數值表]
         const MONSTER_LIST = {
-            'slime': { name: "史萊姆", img: "slime.png" },
-            'rat': { name: "大老鼠", img: "rat.png" },
-            'wolf_king': { name: "狼王", img: "wolf_king.png" },
-            'demon_king': { name: "魔王撒旦", img: "demon_king.png" },
-            'bee': { name: "殺人蜂", img: "bee.png" },
-            'boar': { name: "野豬", img: "boar.png" },
-            'thief': { name: "盜賊", img: "thief.png" },
-            'snake': { name: "毒蛇", img: "snake.png" },
-            'zombie': { name: "腐屍", img: "zombie.png" },
-            'skeleton': { name: "骷髏兵", img: "skeleton.png" },
-            'ghoul': { name: "食屍鬼", img: "ghoul.png" },
-            'witch': { name: "沼澤女巫", img: "witch.png" },
-            'hydra': { name: "九頭蛇", img: "hydra.png" },
-            'fire_imp': { name: "火焰小鬼", img: "fire_imp.png" },
-            'lava_golem': { name: "熔岩戈侖", img: "lava_golem.png" },
-            'salamander': { name: "火蜥蜴", img: "salamander.png" },
-            'fire_mage': { name: "烈焰法師", img: "fire_mage.png" },
-            'dragon_hatchling': { name: "幼龍", img: "dragon_hatchling.png" },
-            'balrog': { name: "炎魔", img: "balrog.png" },
-            'snow_wolf': { name: "雪原狼", img: "snow_wolf.png" },
-            'yeti': { name: "雪人", img: "yeti.png" },
-            'ice_spirit': { name: "冰精靈", img: "ice_spirit.png" },
-            'frost_knight': { name: "寒霜騎士", img: "frost_knight.png" },
-            'ice_dragon': { name: "冰霜龍", img: "ice_dragon.png" },
-            'lich_king': { name: "巫妖王", img: "lich_king.png" },
-            'void_eye': { name: "虛空之眼", img: "void_eye.png" },
-            'shadow_assassin': { name: "暗影刺客", img: "shadow_assassin.png" },
-            'dark_paladin': { name: "墮落聖騎", img: "dark_paladin.png" },
-            'demon_guard': { name: "惡魔守衛", img: "demon_guard.png" },
-            'succubus': { name: "魅魔", img: "succubus.png" },
-            'void_lord': { name: "虛空領主", img: "void_lord.png" },
-            'chaos_beast': { name: "混沌巨獸", img: "chaos_beast.png" },
-            'fallen_angel': { name: "墮天使", img: "fallen_angel.png" },
-            'void_walker': { name: "虛空行者", img: "void_walker.png" },
-            'chaos_knight': { name: "混沌騎士", img: "chaos_knight.png" },
-            'abyss_dragon': { name: "深淵魔龍", img: "abyss_dragon.png" },
-            'fallen_titan': { name: "墮落泰坦", img: "fallen_titan.png" },
-            'genesis_god': { name: "創世破壞神", img: "genesis_god.png" },
-            'void_worm': { name: "虛空吞噬蟲", img: "void_worm.png" },
-            'shadow_phantom': { name: "虚影夢魘", img: "shadow_phantom.png" },
-            'star_eater': { name: "吞星巨獸", img: "star_eater.png" },
-            'nebula_dragon': { name: "星雲幻龍", img: "nebula_dragon.png" },
-            'time_keeper': { name: "時空裁決者", img: "time_keeper.png" },
-            'dimension_breaker': { name: "維度粉碎者", img: "dimension_breaker.png" },
-            'entropy_god': { name: "終焉·熱寂之神", img: "entropy_god.png" }
+            'slime':            { name: "史萊姆",       img: "slime.png",            atk: 5,   hp: 20  },
+            'rat':              { name: "大老鼠",       img: "rat.png",              atk: 8,   hp: 25  },
+            'bee':              { name: "殺人蜂",       img: "bee.png",              atk: 12,  hp: 15  },
+            'boar':             { name: "野豬",         img: "boar.png",             atk: 10,  hp: 40  },
+            'snake':            { name: "毒蛇",         img: "snake.png",            atk: 14,  hp: 30  },
+            'thief':            { name: "盜賊",         img: "thief.png",            atk: 15,  hp: 45  },
+            'wolf_king':        { name: "狼王",         img: "wolf_king.png",        atk: 20,  hp: 60  },
+            'zombie':           { name: "腐屍",         img: "zombie.png",           atk: 12,  hp: 80  },
+            'skeleton':         { name: "骷髏兵",       img: "skeleton.png",         atk: 18,  hp: 50  },
+            'ghoul':            { name: "食屍鬼",       img: "ghoul.png",            atk: 20,  hp: 70  },
+            'witch':            { name: "沼澤女巫",     img: "witch.png",            atk: 30,  hp: 50  },
+            'hydra':            { name: "九頭蛇",       img: "hydra.png",            atk: 35,  hp: 120 },
+            'fire_imp':         { name: "火焰小鬼",     img: "fire_imp.png",         atk: 25,  hp: 60  },
+            'lava_golem':       { name: "熔岩戈侖",     img: "lava_golem.png",       atk: 30,  hp: 140 },
+            'salamander':       { name: "火蜥蜴",       img: "salamander.png",       atk: 28,  hp: 90  },
+            'fire_mage':        { name: "烈焰法師",     img: "fire_mage.png",        atk: 45,  hp: 70  },
+            'dragon_hatchling': { name: "幼龍",         img: "dragon_hatchling.png", atk: 40,  hp: 100 },
+            'balrog':           { name: "炎魔",         img: "balrog.png",           atk: 60,  hp: 150 },
+            'snow_wolf':        { name: "雪原狼",       img: "snow_wolf.png",        atk: 25,  hp: 80  },
+            'yeti':             { name: "雪人",         img: "yeti.png",             atk: 40,  hp: 160 },
+            'ice_spirit':       { name: "冰精靈",       img: "ice_spirit.png",       atk: 35,  hp: 60  },
+            'frost_knight':     { name: "寒霜騎士",     img: "frost_knight.png",     atk: 50,  hp: 130 },
+            'ice_dragon':       { name: "冰霜龍",       img: "ice_dragon.png",       atk: 70,  hp: 200 },
+            'lich_king':        { name: "巫妖王",       img: "lich_king.png",        atk: 80,  hp: 180 },
+            'void_eye':         { name: "虛空之眼",     img: "void_eye.png",         atk: 60,  hp: 90  },
+            'shadow_assassin':  { name: "暗影刺客",     img: "shadow_assassin.png",  atk: 90,  hp: 80  },
+            'dark_paladin':     { name: "墮落聖騎",     img: "dark_paladin.png",     atk: 70,  hp: 220 },
+            'demon_guard':      { name: "惡魔守衛",     img: "demon_guard.png",      atk: 65,  hp: 200 },
+            'succubus':         { name: "魅魔",         img: "succubus.png",         atk: 55,  hp: 120 },
+            'void_lord':        { name: "虛空領主",     img: "void_lord.png",        atk: 100, hp: 250 },
+            'chaos_beast':      { name: "混沌巨獸",     img: "chaos_beast.png",      atk: 110, hp: 300 },
+            'fallen_angel':     { name: "墮天使",       img: "fallen_angel.png",     atk: 120, hp: 280 },
+            'demon_king':       { name: "魔王撒旦",     img: "demon_king.png",       atk: 150, hp: 350 },
+            'void_walker':      { name: "虛空行者",     img: "void_walker.png",      atk: 130, hp: 260 },
+            'chaos_knight':     { name: "混沌騎士",     img: "chaos_knight.png",     atk: 140, hp: 320 },
+            'abyss_dragon':     { name: "深淵魔龍",     img: "abyss_dragon.png",     atk: 160, hp: 380 },
+            'fallen_titan':     { name: "墮落泰坦",     img: "fallen_titan.png",     atk: 180, hp: 420 },
+            'genesis_god':      { name: "創世破壞神",   img: "genesis_god.png",      atk: 200, hp: 450 },
+            'void_worm':        { name: "虛空吞噬蟲",   img: "void_worm.png",        atk: 190, hp: 400 },
+            'shadow_phantom':   { name: "虚影夢魘",     img: "shadow_phantom.png",   atk: 210, hp: 380 },
+            'star_eater':       { name: "吞星巨獸",     img: "star_eater.png",       atk: 220, hp: 480 },
+            'nebula_dragon':    { name: "星雲幻龍",     img: "nebula_dragon.png",    atk: 230, hp: 440 },
+            'time_keeper':      { name: "時空裁決者",   img: "time_keeper.png",      atk: 240, hp: 460 },
+            'dimension_breaker':{ name: "維度粉碎者",   img: "dimension_breaker.png",atk: 250, hp: 490 },
+            'entropy_god':      { name: "終焉·熱寂之神",img: "entropy_god.png",      atk: 255, hp: 500 }
         };
 
         const SPELL_LIST = {
@@ -154,19 +167,15 @@
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
         socket.on('cardGameUpdate', (data) => renderGame(data));
-        socket.on('errorMessage', (msg) => showMsg("❌ " + msg)); // 🟢 [修改] alert -> showMsg
+        socket.on('errorMessage', (msg) => showMsg("❌ " + msg));
         
         socket.on('cardGameEnd', (res) => { 
             let msg = `遊戲結束！\n獲勝者: ${res.winner}`;
             if (res.reason) msg += `\n(${res.reason})`;
-            
-            // 遊戲結束可以用 confirm 或保留 alert，或者用 showMsg 然後延遲跳轉
-            // 這裡用 showMsg 然後延遲跳轉比較一致
             showMsg(msg);
             setTimeout(() => { window.location.href = 'hub.html'; }, 2000);
         });
 
-        // 🟢 [新增] 提示框函數
         function showMsg(text) {
             const t = document.getElementById('game-toast');
             t.innerText = text;
@@ -212,7 +221,7 @@
                 if (index === selectedSpellIndex) el.classList.add('spell-selected');
 
                 el.onclick = () => {
-                    if (!isMyTurn) { showMsg("⏳ 現在是對手的回合！"); return; } // 🟢 [修改] alert -> showMsg
+                    if (!isMyTurn) { showMsg("⏳ 現在是對手的回合！"); return; } 
 
                     if (cardInfo.type === 'unit') {
                         socket.emit('cardAction', { type: 'play', index: index });
@@ -267,7 +276,7 @@
                     }
 
                     // 攻擊模式
-                    if (!monster.canAttack) { showMsg("💤 這隻怪物剛召喚，還不能攻擊！"); return; } // 🟢 [修改] alert -> showMsg
+                    if (!monster.canAttack) { showMsg("💤 這隻怪物剛召喚，還不能攻擊！"); return; } 
                     
                     if (selectedAttackerIndex === index) selectedAttackerIndex = null;
                     else selectedAttackerIndex = index;
@@ -288,7 +297,7 @@
 
                     if (selectedSpellIndex !== null && selectedSpellId.includes('fire')) {
                         if (selectedSourceIndex === null) {
-                            showMsg("⚠️ 請先點擊「我方怪物」作為力量來源 (祭品)！"); // 🟢 [修改] alert -> showMsg
+                            showMsg("⚠️ 請先點擊「我方怪物」作為力量來源 (祭品)！"); 
                             return;
                         }
                         socket.emit('cardAction', { 
@@ -307,8 +316,8 @@
                         return;
                     }
 
-                    if (selectedSpellIndex !== null) showMsg("⛔ 這張魔法卡只能對自己使用！"); // 🟢 [修改] alert -> showMsg
-                    else showMsg("ℹ️ 請先選擇我方怪物(攻擊) 或 魔法卡(施法)！"); // 🟢 [修改] alert -> showMsg
+                    if (selectedSpellIndex !== null) showMsg("⛔ 這張魔法卡只能對自己使用！"); 
+                    else showMsg("ℹ️ 請先選擇我方怪物(攻擊) 或 魔法卡(施法)！"); 
                 };
                 container.appendChild(el);
             });
@@ -324,21 +333,31 @@
             return div;
         }
 
+        // 🟢 [修改] 手牌顯示：加入 ATK 和 HP 數值
         function createCardElement(cardId) {
             const div = document.createElement('div');
             const cardInfo = CARD_DB[cardId];
-            let name = "未知", visual = "❓", type = "spell";
+            let name = "未知", visual = "❓", type = "spell", stats = "";
+            
             if (cardInfo) {
-                name = cardInfo.name; type = cardInfo.type;
+                name = cardInfo.name; 
+                type = cardInfo.type;
+                
                 if (type === 'unit') {
                     div.className = 'battle-card unit';
                     visual = `<img src="${IMG_BASE_URL + cardInfo.img}" onerror="this.style.display='none';this.parentNode.innerHTML='👾'">`;
+                    // 顯示攻擊力和血量
+                    stats = `<div class="card-stats-row">⚔️${cardInfo.atk} ❤️${cardInfo.hp}</div>`;
                 } else {
                     div.className = 'battle-card spell';
                     visual = `<div style="font-size:24px; margin-top:10px;">${cardInfo.icon}</div>`;
+                    stats = `<div class="card-stats-row" style="color:#3498db;">魔法卡</div>`;
                 }
-            } else { div.className = 'battle-card'; }
-            div.innerHTML = `<div class="cost">1</div>${visual}<div class="name">${name}</div>`;
+            } else { 
+                div.className = 'battle-card'; 
+            }
+            
+            div.innerHTML = `<div class="cost">1</div>${visual}<div class="name">${name}</div>${stats}`;
             return div;
         }
 
