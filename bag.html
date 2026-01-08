@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的背包2</title>
+    <title>我的背包</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -216,7 +216,6 @@
             'void_worm': '虛空吞噬蟲', 'shadow_phantom': '虚影夢魘', 'star_eater': '吞星巨獸',
             'nebula_dragon': '星雲幻龍', 'time_keeper': '時空裁決者', 'dimension_breaker': '維度粉碎者',
             'entropy_god': '終焉·熱寂之神',
-            // 魔法卡
             'potion': '回復卡', 'fire': '攻擊卡', 'shield': '護盾卡'
         };
 
@@ -361,6 +360,7 @@
         socket.on('playerStatsUpdate', (p) => {
             document.getElementById('my-gold').innerText = p.gold;
             myInventory = p.inventory;
+            // 🔥 [關鍵修改] 接收強化數據
             myEnhancements = p.enhancements || {}; 
             renderBag(); 
         });
@@ -469,13 +469,9 @@
                 // 賣店與上架按鈕
                 let sellBtns = '';
                 if (!PROHIBITED_ITEMS.includes(key)) {
-                    // [Modified] Logic to prevent cards from being sold to NPC
+                    // 🟢 [關鍵修改] 針對卡片，隱藏賣店和上架按鈕
                     if (key.startsWith('card_')) {
-                        sellBtns = `
-                            <button class="btn btn-market" onclick="openMarketModal('${key}', '${item.name}', ${myInventory[key]})">
-                                上架市集
-                            </button>
-                        `;
+                        sellBtns = ''; // 不顯示任何賣出按鈕
                     } else {
                         sellBtns = `
                             <button class="btn btn-npc" onclick="openNPCModal('${key}', '${item.name}', ${npcPrice})">
