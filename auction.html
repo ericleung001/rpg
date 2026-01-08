@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>交易所</title>
+    <title>交易所2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -198,6 +198,7 @@
                 <button class="cat-btn" onclick="selectCategory('armor')">🛡️防具/飾品</button>
                 <button class="cat-btn" onclick="selectCategory('consumable')">🧪消耗</button>
                 <button class="cat-btn" onclick="selectCategory('material')">🪵材料</button>
+                <button class="cat-btn" onclick="selectCategory('card')">🃏卡片</button>
                 <button class="cat-btn" onclick="selectCategory('mine')">📦我的</button>
             </div>
 
@@ -257,7 +258,7 @@
         </div>
     </div>
 
-    <script src="socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         window.addEventListener('load', () => {
             setTimeout(() => {
@@ -280,9 +281,8 @@
         let currentItemKey = ''; 
         let currentPage = 1;
         
-        let pendingBuyId = null; // 暫存要買的物品 ID
+        let pendingBuyId = null; 
 
-        // 🟢 [修改] 禁止上架清單 (包含福袋及神裝)
         const PROHIBITED_ITEMS = [
             'lucky_bag',
             'genesis_weapon', 'genesis_armor', 'void_reaper_dark', 'ring_galaxy', 
@@ -395,7 +395,6 @@
             const area = document.getElementById('item-select-area');
             area.innerHTML = '';
             
-            // 🟢 [過濾] 前端隱藏禁售物品
             const allowedItems = items.filter(item => !PROHIBITED_ITEMS.includes(item.id));
 
             if (allowedItems.length === 0) { document.getElementById('status-msg').innerText = "此分類暫無可交易物品"; return; }
@@ -505,13 +504,23 @@
         function openInventoryModal() {
             const list = document.getElementById('sell-inventory-list');
             list.innerHTML = '';
-            // 🟢 [修改] 過濾不可上架的物品 (福袋 + 神裝)
+            
             const keys = Object.keys(myInventory).filter(k => myInventory[k] > 0 && !PROHIBITED_ITEMS.includes(k));
             
             if (keys.length === 0) { list.innerHTML = '<div style="padding:20px; color:#aaa; text-align:center;">沒有可上架的物品</div>'; } 
             else {
                 keys.forEach(key => {
-                    const itemData = ITEM_DB[key] || { name: key };
+                    let itemData = ITEM_DB[key];
+                    if (!itemData) {
+                        if (key.startsWith('card_')) {
+                            // Simple formatting for card name if not in DB
+                            let cardName = key.replace('card_', '');
+                            cardName = cardName.charAt(0).toUpperCase() + cardName.slice(1);
+                            itemData = { name: `卡片: ${cardName}` };
+                        } else {
+                            itemData = { name: key };
+                        }
+                    }
                     const div = document.createElement('div');
                     div.className = 'sell-list-item';
                     div.innerHTML = `
