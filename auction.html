@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>交易所2</title>
+    <title>交易所</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -527,6 +527,7 @@
             }
         });
 
+        // 購買流程
         function buyItem(id, price) {
             if(confirm(`確定要花費 ${price} G 購買嗎？`)) {
                 pendingBuyId = id; 
