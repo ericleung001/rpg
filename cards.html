@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>卡片圖鑑</title>
+    <title>卡片圖鑑3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -114,7 +114,7 @@
             display: none;
         }
 
-        /* 🟢 [新增] 提示框樣式 */
+        /* 提示框樣式 */
         #game-toast {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f;
@@ -126,7 +126,9 @@
 </head>
 <body>
 
-    <div id="game-toast"></div> <a href="hub.html" class="back-btn">◀ 返回</a>
+    <div id="game-toast"></div> 
+
+    <a href="hub.html" class="back-btn">◀ 返回</a>
     <h1>🎴 編輯牌組</h1>
 
     <div class="card-pool-container">
@@ -140,8 +142,7 @@
                 <span style="color:#aaa; font-size:8px;">(怪≥3)</span>
             </div>
             <div>
-                <button class="save-btn" onclick="startMatch()" style="background:#e74c3c; margin-right:5px;">⚔️ 對戰</button>
-                <button class="save-btn" onclick="saveDeck()">💾 儲存</button>
+                <button class="save-btn" onclick="startMatch()" style="background:#e74c3c; margin-right:5px;">⚔️ 開始對戰</button>
             </div>
         </div>
         <div class="deck-slots" id="deck-container"></div>
@@ -168,49 +169,37 @@
         
         const IMG_BASE_URL = "https://ericleung001.github.io/rpg/img/monsters/";
 
-        // 🟢 [已平衡] 卡牌對戰專用數值 (Max HP 500)
         const MONSTER_LIST = {
-            // === Lv1 - Lv10 (新手區) ===
             'slime':            { name: "史萊姆",       img: "slime.png",            atk: 5,   hp: 20  },
             'rat':              { name: "大老鼠",       img: "rat.png",              atk: 8,   hp: 25  },
             'bee':              { name: "殺人蜂",       img: "bee.png",              atk: 12,  hp: 15  },
             'boar':             { name: "野豬",         img: "boar.png",             atk: 10,  hp: 40  },
             'snake':            { name: "毒蛇",         img: "snake.png",            atk: 14,  hp: 30  },
-            
-            // === Lv11 - Lv30 (進階區) ===
             'thief':            { name: "盜賊",         img: "thief.png",            atk: 15,  hp: 45  },
             'wolf_king':        { name: "狼王",         img: "wolf_king.png",        atk: 20,  hp: 60  },
-            'zombie':           { name: "腐屍",         img: "zombie.png",           atk: 12,  hp: 80  }, // 血厚攻低
+            'zombie':           { name: "腐屍",         img: "zombie.png",           atk: 12,  hp: 80  }, 
             'skeleton':         { name: "骷髏兵",       img: "skeleton.png",         atk: 18,  hp: 50  },
             'ghoul':            { name: "食屍鬼",       img: "ghoul.png",            atk: 20,  hp: 70  },
-            'witch':            { name: "沼澤女巫",     img: "witch.png",            atk: 30,  hp: 50  }, // 攻高血薄
-            
-            // === Lv31 - Lv60 (高手區) ===
+            'witch':            { name: "沼澤女巫",     img: "witch.png",            atk: 30,  hp: 50  }, 
             'hydra':            { name: "九頭蛇",       img: "hydra.png",            atk: 35,  hp: 120 },
             'fire_imp':         { name: "火焰小鬼",     img: "fire_imp.png",         atk: 25,  hp: 60  },
-            'lava_golem':       { name: "熔岩戈侖",     img: "lava_golem.png",       atk: 30,  hp: 140 }, // 坦克
+            'lava_golem':       { name: "熔岩戈侖",     img: "lava_golem.png",       atk: 30,  hp: 140 }, 
             'salamander':       { name: "火蜥蜴",       img: "salamander.png",       atk: 28,  hp: 90  },
             'fire_mage':        { name: "烈焰法師",     img: "fire_mage.png",        atk: 45,  hp: 70  },
             'dragon_hatchling': { name: "幼龍",         img: "dragon_hatchling.png", atk: 40,  hp: 100 },
-            'balrog':           { name: "炎魔",         img: "balrog.png",           atk: 60,  hp: 150 }, // 小Boss
-            
-            // === Lv61 - Lv90 (冰雪與惡魔) ===
+            'balrog':           { name: "炎魔",         img: "balrog.png",           atk: 60,  hp: 150 }, 
             'snow_wolf':        { name: "雪原狼",       img: "snow_wolf.png",        atk: 25,  hp: 80  },
             'yeti':             { name: "雪人",         img: "yeti.png",             atk: 40,  hp: 160 },
             'ice_spirit':       { name: "冰精靈",       img: "ice_spirit.png",       atk: 35,  hp: 60  },
             'frost_knight':     { name: "寒霜騎士",     img: "frost_knight.png",     atk: 50,  hp: 130 },
             'ice_dragon':       { name: "冰霜龍",       img: "ice_dragon.png",       atk: 70,  hp: 200 },
             'lich_king':        { name: "巫妖王",       img: "lich_king.png",        atk: 80,  hp: 180 },
-            
-            // === Lv91 - Lv120 (深淵與虛空) ===
             'void_eye':         { name: "虛空之眼",     img: "void_eye.png",         atk: 60,  hp: 90  },
-            'shadow_assassin':  { name: "暗影刺客",     img: "shadow_assassin.png",  atk: 90,  hp: 80  }, // 極高攻
+            'shadow_assassin':  { name: "暗影刺客",     img: "shadow_assassin.png",  atk: 90,  hp: 80  }, 
             'dark_paladin':     { name: "墮落聖騎",     img: "dark_paladin.png",     atk: 70,  hp: 220 },
             'demon_guard':      { name: "惡魔守衛",     img: "demon_guard.png",      atk: 65,  hp: 200 },
             'succubus':         { name: "魅魔",         img: "succubus.png",         atk: 55,  hp: 120 },
             'void_lord':        { name: "虛空領主",     img: "void_lord.png",        atk: 100, hp: 250 },
-            
-            // === Lv121+ (神話生物) ===
             'chaos_beast':      { name: "混沌巨獸",     img: "chaos_beast.png",      atk: 110, hp: 300 },
             'fallen_angel':     { name: "墮天使",       img: "fallen_angel.png",     atk: 120, hp: 280 },
             'demon_king':       { name: "魔王撒旦",     img: "demon_king.png",       atk: 150, hp: 350 },
@@ -218,8 +207,6 @@
             'chaos_knight':     { name: "混沌騎士",     img: "chaos_knight.png",     atk: 140, hp: 320 },
             'abyss_dragon':     { name: "深淵魔龍",     img: "abyss_dragon.png",     atk: 160, hp: 380 },
             'fallen_titan':     { name: "墮落泰坦",     img: "fallen_titan.png",     atk: 180, hp: 420 },
-            
-            // === 頂級 Boss (Max HP 500) ===
             'genesis_god':      { name: "創世破壞神",   img: "genesis_god.png",      atk: 200, hp: 450 },
             'void_worm':        { name: "虛空吞噬蟲",   img: "void_worm.png",        atk: 190, hp: 400 },
             'shadow_phantom':   { name: "虚影夢魘",     img: "shadow_phantom.png",   atk: 210, hp: 380 },
@@ -227,12 +214,9 @@
             'nebula_dragon':    { name: "星雲幻龍",     img: "nebula_dragon.png",    atk: 230, hp: 440 },
             'time_keeper':      { name: "時空裁決者",   img: "time_keeper.png",      atk: 240, hp: 460 },
             'dimension_breaker':{ name: "維度粉碎者",   img: "dimension_breaker.png",atk: 250, hp: 490 },
-            
-            // 最強卡片
             'entropy_god':      { name: "終焉·熱寂之神",img: "entropy_god.png",      atk: 255, hp: 500 }
         };
 
-        // 🟢 [微調] 魔法卡效果 (配合新的 HP 數值)
         const SPELL_LIST = {
             'card_potion': { name: "回復卡", icon: "💊", desc: "回復 50% HP" },
             'card_fire':   { name: "攻擊卡", icon: "🔥", desc: "傷害 = ATK x 2" }, 
@@ -256,7 +240,6 @@
             refreshUI();
         });
 
-        // 🟢 [修改] 錯誤與結果提示改用 showMsg
         socket.on('errorMessage', (msg) => showMsg("❌ " + msg));
         socket.on('marketResult', (res) => showMsg(res.msg)); 
 
@@ -269,7 +252,6 @@
             if (msg === '已取消配對') document.getElementById('queue-msg').style.display = 'none';
         });
 
-        // 🟢 [新增] 提示框函數
         function showMsg(text) {
             const t = document.getElementById('game-toast');
             t.innerText = text;
@@ -344,7 +326,7 @@
 
         function addToDeck(id, remaining) {
             if (myDeck.length >= 10) { 
-                showMsg("⚠️ 牌組最多只能放 10 張卡！"); // 🟢 [修改] alert -> showMsg
+                showMsg("⚠️ 牌組最多只能放 10 張卡！"); 
                 return; 
             }
             if (remaining <= 0) return; 
@@ -366,14 +348,9 @@
             countSpan.className = myDeck.length === 10 ? 'status-ok' : 'status-warn';
         }
 
-        function saveDeck() {
-            if (!validateDeck()) return;
-            socket.emit('updateDeck', myDeck);
-            showMsg("✅ 牌組已儲存！"); // 🟢 [新增] 儲存成功提示
-        }
-
         function startMatch() {
             if (!validateDeck()) return;
+            // 🟢 [自動儲存] 點擊對戰時自動儲存
             socket.emit('updateDeck', myDeck); 
             setTimeout(() => {
                 socket.emit('joinCardQueue');
@@ -383,13 +360,13 @@
 
         function validateDeck() {
             if (myDeck.length !== 10) {
-                showMsg(`⚠️ 牌組必須剛好 10 張！(目前 ${myDeck.length})`); // 🟢 [修改] alert -> showMsg
+                showMsg(`⚠️ 牌組必須剛好 10 張！(目前 ${myDeck.length})`); 
                 return false;
             }
             let monsterCount = 0;
             myDeck.forEach(id => { if (CARD_CONFIG[id]?.type === 'unit') monsterCount++; });
             if (monsterCount < 3) {
-                showMsg(`⚠️ 牌組至少需要 3 張怪物卡！(目前 ${monsterCount})`); // 🟢 [修改] alert -> showMsg
+                showMsg(`⚠️ 牌組至少需要 3 張怪物卡！(目前 ${monsterCount})`); 
                 return false;
             }
             return true;
