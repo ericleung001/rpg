@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -444,8 +444,8 @@
                 <div style="margin-bottom: 15px; padding: 10px; border: 2px solid #9b59b6; background: rgba(0,0,0,0.3); border-radius: 8px; text-align: center; flex-shrink: 0;">
                     <h3 style="color: #9b59b6; margin: 5px 0; font-size: 12px;">🔮 混沌裂縫 (Lv.350-500)</h3>
                     <p style="font-size: 10px; color: #ccc; margin-bottom: 8px;">每次進入，敵人的強度都會隨機變化！</p>
-                    <button class="btn" onclick="challengeChaosBoss()" style="background: #8e44ad; color: #fff; width: 100%; text-align: center;">
-                        挑戰隨機 BOSS
+                    <button class="btn" onclick="triggerCreateRoom('chaos_boss')" style="background: #8e44ad; color: #fff; width: 100%; text-align: center;">
+                        建立討伐隊伍
                     </button>
                 </div>
 
@@ -861,13 +861,6 @@
             if (mob) { selectedMonster = mob; currentView = 'rooms'; refreshUI(); }
         };
         window.goBack = function(view) { currentView = view; refreshUI(); };
-
-        // 🟢 [新增] 挑戰隨機 BOSS 的前端邏輯
-        function challengeChaosBoss() {
-            if(confirm("這隻怪物的數值是隨機的 (Lv.350-500)，確定要挑戰嗎？")) {
-                socket.emit('startBattle', 'chaos_boss');
-            }
-        }
 
         function refreshUI() {
             const container = document.getElementById('map-list');
