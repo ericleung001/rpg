@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -432,13 +432,21 @@
                     <a href="market.html" class="facility-btn" style="background:#f39c12; border-color:#d35400;">🏪 道具</a>
                     <a href="auction.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">⚖️ 市集</a>
                     <a href="smithy.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔨 鍛造</a>
-					<a href="enhance.html" class="facility-btn" style="background:#d35400; border-color:#e67e22;">🔥 強化</a>
+                    <a href="enhance.html" class="facility-btn" style="background:#d35400; border-color:#e67e22;">🔥 強化</a>
                     <a href="gathering.html" class="facility-btn" style="background:#27ae60; border-color:#2ecc71;">🌲 採集</a>
                     <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;">🏨 旅館</a>
                     <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🍳 廚房</a>
-		<a href="lottery.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🎱 彩票</a>
-					<a href="cards.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">🎴 卡冊</a>
-		<a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;">📜 圖鑑</a>
+                    <a href="lottery.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🎱 彩票</a>
+                    <a href="cards.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">🎴 卡冊</a>
+                    <a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;">📜 圖鑑</a>
+                </div>
+
+                <div style="margin-bottom: 15px; padding: 10px; border: 2px solid #9b59b6; background: rgba(0,0,0,0.3); border-radius: 8px; text-align: center; flex-shrink: 0;">
+                    <h3 style="color: #9b59b6; margin: 5px 0; font-size: 12px;">🔮 混沌裂縫 (Lv.350-500)</h3>
+                    <p style="font-size: 10px; color: #ccc; margin-bottom: 8px;">每次進入，敵人的強度都會隨機變化！</p>
+                    <button class="btn" onclick="challengeChaosBoss()" style="background: #8e44ad; color: #fff; width: 100%; text-align: center;">
+                        挑戰隨機 BOSS
+                    </button>
                 </div>
 
                 <div id="list-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px; flex-shrink: 0;">世界地圖</div>
@@ -459,7 +467,9 @@
             </div>
         </div>
 
-    </div> <script src="socket.io.js"></script>
+    </div> 
+    
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         // Loading 控制 (2秒強制冷卻)
         window.addEventListener('load', () => {
@@ -471,10 +481,11 @@
         });
 
         // 指定連接到你的 https 網址
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const socket = io('https://mmo.ttctv-105.cc', { 
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
+        
         let myLevel = 1;
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) { window.location.href = 'index.html'; }
@@ -850,6 +861,13 @@ const socket = io('https://mmo.ttctv-105.cc', {
             if (mob) { selectedMonster = mob; currentView = 'rooms'; refreshUI(); }
         };
         window.goBack = function(view) { currentView = view; refreshUI(); };
+
+        // 🟢 [新增] 挑戰隨機 BOSS 的前端邏輯
+        function challengeChaosBoss() {
+            if(confirm("這隻怪物的數值是隨機的 (Lv.350-500)，確定要挑戰嗎？")) {
+                socket.emit('startBattle', 'chaos_boss');
+            }
+        }
 
         function refreshUI() {
             const container = document.getElementById('map-list');
