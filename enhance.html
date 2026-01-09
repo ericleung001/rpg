@@ -143,9 +143,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -176,17 +176,30 @@
             'ring_life': '生命護符', 'ring_magic': '魔力耳環', 'dimension_ring': '維度指環'
         };
 
+        // 🟢 [更新] 強化機率表 (支援到 +20)
         const ENHANCE_RATES = {
-            1: { rate: 100, cost: 1000, risk: 'safe' },
-            2: { rate: 100, cost: 2000, risk: 'safe' },
-            3: { rate: 100, cost: 5000, risk: 'safe' },
+            1: { rate: 100, cost: 1000,  risk: 'safe' },
+            2: { rate: 100, cost: 2000,  risk: 'safe' },
+            3: { rate: 100, cost: 5000,  risk: 'safe' },
             4: { rate: 80,  cost: 10000, risk: 'drop' },
             5: { rate: 70,  cost: 20000, risk: 'drop' },
             6: { rate: 60,  cost: 40000, risk: 'drop' },
             7: { rate: 50,  cost: 80000, risk: 'break' },
             8: { rate: 40,  cost: 150000,risk: 'break' },
             9: { rate: 30,  cost: 300000,risk: 'break' },
-            10:{ rate: 20,  cost: 1000000,risk: 'break'}
+            10:{ rate: 20,  cost: 1000000,risk: 'break'},
+            
+            // --- 新增 +11 ~ +20 ---
+            11:{ rate: 15, cost: 2000000, risk: 'break'},
+            12:{ rate: 12, cost: 3000000, risk: 'break'},
+            13:{ rate: 10, cost: 5000000, risk: 'break'},
+            14:{ rate: 8,  cost: 8000000, risk: 'break'},
+            15:{ rate: 5,  cost: 10000000,risk: 'break'},
+            16:{ rate: 3,  cost: 20000000,risk: 'break'},
+            17:{ rate: 2,  cost: 30000000,risk: 'break'},
+            18:{ rate: 1,  cost: 50000000,risk: 'break'},
+            19:{ rate: 0.5,cost: 80000000,risk: 'break'},
+            20:{ rate: 0.1,cost: 100000000,risk: 'break'}
         };
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
@@ -263,7 +276,8 @@
             const currentLv = (myData.enhancements && myData.enhancements[itemId]) || 0;
             const nextLv = currentLv + 1;
 
-            if (nextLv > 10) {
+            // 🟢 [更新] 上限改為 20
+            if (nextLv > 20) {
                 document.getElementById('enhance-info').style.display = 'block';
                 document.getElementById('target-name').innerText = (ITEM_MAP[itemId] || itemId) + " (MAX)";
                 document.getElementById('enhance-btn').style.display = 'none';
