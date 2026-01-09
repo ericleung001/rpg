@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -444,8 +444,8 @@
                 <div style="margin-bottom: 15px; padding: 10px; border: 2px solid #9b59b6; background: rgba(0,0,0,0.3); border-radius: 8px; text-align: center; flex-shrink: 0;">
                     <h3 style="color: #9b59b6; margin: 5px 0; font-size: 12px;">🔮 混沌裂縫 (Lv.350-500)</h3>
                     <p style="font-size: 10px; color: #ccc; margin-bottom: 8px;">每次進入，敵人的強度都會隨機變化！</p>
-                    <button class="btn" onclick="triggerCreateRoom('chaos_boss')" style="background: #8e44ad; color: #fff; width: 100%; text-align: center;">
-                        建立討伐隊伍
+                    <button class="btn" onclick="triggerSelectChaosBoss()" style="background: #8e44ad; color: #fff; width: 100%; text-align: center;">
+                        查看討伐隊伍
                     </button>
                 </div>
 
@@ -862,6 +862,20 @@
         };
         window.goBack = function(view) { currentView = view; refreshUI(); };
 
+        // 🟢 [新增] 進入混沌 Boss 的房間列表模式
+        function triggerSelectChaosBoss() {
+            // 我們手動建立一個「假」的怪物物件，讓系統以為有點選怪物
+            selectedMonster = {
+                id: 'chaos_boss',       // 這就是 Server 認得的 Key
+                name: '🔮 混沌裂縫',     // 顯示名稱
+                lv: '350-500'           // 顯示等級
+            };
+            
+            // 切換視圖到房間列表
+            currentView = 'rooms'; 
+            refreshUI();
+        }
+
         function refreshUI() {
             const container = document.getElementById('map-list');
             let html = '';
@@ -893,9 +907,13 @@
                 });
                 html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('cities')">◀ 返回地圖</div>`;
             } else if (currentView === 'rooms') {
+                // 🟢 [修改] 這裡會自動適配 chaos_boss
                 document.getElementById('list-title').innerText = `${selectedMonster.name} - 房間`;
+                
+                // 開房按鈕：這裡的 selectedMonster.id 如果是 'chaos_boss'，就會傳給 Server 觸發隨機生成
                 html += `<div class="btn" style="background:#27ae60; text-align:center; font-weight:bold; font-size:12px;" onclick="triggerCreateRoom('${selectedMonster.id}')">➕ 開新房間</div>`;
                 
+                // 篩選房間：找出所有 key 是 'chaos_boss' 的房間
                 const myRooms = activeRooms.filter(r => r.monsterKey === selectedMonster.id);
                 
                 if (myRooms.length === 0) html += `<div style="font-size:10px; color:#aaa; margin:10px;">目前沒有房間...</div>`;
@@ -910,10 +928,11 @@
                     if (isFighting) {
                         statusTag = '<span class="room-tag status-fighting">戰鬥中</span>';
                         lockClass = 'locked'; 
-                    } else if (room.playerCount >= 5) { 
+                    } else if (room.playerCount >= 6) { 
                         statusTag = '<span class="room-tag" style="background:#e67e22; color:white">已滿員</span>';
                     }
 
+                    // 顯示房主與人數
                     html += `<div class="btn ${lockClass}" ${clickAction}>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:12px; font-weight:bold; color:#f1c40f;">
@@ -925,9 +944,17 @@
                             ${statusTag}
                             <span class="info-tag">${room.playerCount}/5 人</span>
                         </div>
+                        ${room.monsterKey === 'chaos_boss' ? `<div style="font-size:9px; color:#aaa; margin-top:2px;">目標: ${room.monsterName}</div>` : ''}
                     </div>`;
                 });
-                html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('monsters')">◀ 返回列表</div>`;
+
+                // 🟢 [關鍵修改] 返回按鈕邏輯
+                // 如果是 chaos_boss，按返回應該回到 'cities' (大廳)，否則回到 'monsters' (該區怪物列表)
+                if (selectedMonster.id === 'chaos_boss') {
+                    html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('cities')">◀ 返回大廳</div>`;
+                } else {
+                    html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('monsters')">◀ 返回列表</div>`;
+                }
             }
             container.innerHTML = html;
         }
