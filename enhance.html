@@ -6,13 +6,35 @@
     <title>裝備強化</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
         body { 
             background-color: #2c3e50; color: #fff; 
             font-family: 'Press Start 2P', monospace; 
-            text-align: center; padding: 15px; 
-            display:flex; flex-direction:column; align-items:center; 
-            height: 100dvh; margin:0; box-sizing:border-box; 
-            overflow: scroll;
+            text-align: center; margin: 0; padding: 0;
+            display: flex; justify-content: center;
+            height: 100dvh; overflow: hidden; 
+        }
+
+        #app-layout {
+            display: flex;
+            flex-direction: column; 
+            width: 100%;
+            height: 100%;
+            max-width: 600px; 
+            position: relative;
+        }
+
+        /* 主內容區塊 (左側/手機全螢幕) */
+        #main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+            padding: 15px;
+            padding-bottom: 40px; /* 留空間給手機版聊天室 */
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .header { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
@@ -72,73 +94,137 @@
         #game-toast {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f; color: #fff;
-            padding: 15px 30px; border-radius: 30px; z-index: 9999; font-size: 14px;
+            padding: 15px 30px; border-radius: 30px; z-index: 20000; font-size: 14px;
             font-weight: bold; white-space: nowrap; transition: top 0.5s ease-in-out; 
             pointer-events: none; 
         }
 
-        /* 強化動畫 */
+        /* 強化動畫 (層級要最高，蓋過聊天室) */
         #hammer-anim { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.85); z-index: 999; display: none; 
+            background: rgba(0,0,0,0.85); z-index: 30000; display: none; 
             flex-direction: column; justify-content: center; align-items: center;
         }
         .hammer { font-size: 80px; animation: hit 0.5s infinite; }
         @keyframes hit { 0% { transform: rotate(0deg); } 50% { transform: rotate(-45deg); } 100% { transform: rotate(0deg); } }
+
+        /* --- 聊天室樣式 --- */
+        #chat-container {
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7;
+            display: flex; flex-direction: column; font-size: 10px; 
+            z-index: 12000; 
+            padding-bottom: env(safe-area-inset-bottom);
+            transition: height 0.3s ease-in-out;
+            height: 30px; 
+        }
+        #chat-header {
+            height: 30px; background: #34495e; color: #fff; line-height: 30px; 
+            cursor: pointer; font-weight: bold; border-bottom: 1px solid #555;
+            display: flex; justify-content: center; align-items: center;
+            touch-action: manipulation; flex-shrink: 0; 
+        }
+        #chat-header:hover { background: #2c3e50; }
+        .chat-open { height: 40vh !important; }
+        #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+        .chat-open #chat-body { display: flex; } 
+        #chat-history { flex: 1; overflow-y: auto; padding: 8px; text-align: left; color: white; }
+        #chat-input-area { display: flex; border-top: 1px solid #555; height: 40px; flex-shrink: 0; }
+        #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 10px; font-family: inherit; font-size: 12px; outline: none; }
+        #chat-send { background: #2980b9; color: white; border: none; padding: 0 15px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; touch-action: manipulation; }
+
+        @media (min-width: 1024px) {
+            body { background-color: #222; }
+            #app-layout {
+                flex-direction: row; 
+                max-width: 1000px; 
+                background-color: #2c3e50;
+                box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            }
+            #main-content {
+                width: 600px; 
+                border-right: 4px solid #bdc3c7;
+            }
+            #chat-container {
+                position: relative; 
+                width: 400px;
+                height: 100% !important; 
+                border-top: none;
+                background: #34495e;
+            }
+            #chat-header { cursor: default; background: #2c3e50; }
+            #chat-header:active { pointer-events: none; }
+            #chat-body { display: flex !important; height: calc(100% - 30px); }
+        }
     </style>
 </head>
 <body>
     <div id="game-toast"></div>
     
     <div id="hammer-anim">
-        <div class="hammer"></div>
+        <div class="hammer">🔨</div>
         <div style="color:white; margin-top:20px; font-size:14px;">強化進行中...</div>
     </div>
 
-    <div class="header">
-        <h1> 裝備強化</h1>
-        <div class="gold-display"> <span id="my-gold">0</span> G</div>
-    </div>
-
-    <div class="container">
-        <div style="font-size: 10px; color: #bdc3c7; margin-bottom: 5px;">
-            消耗金幣與強化石提升裝備能力<br>
-            擁有強化石: <span id="stone-count" style="color:#2ecc71; font-size:12px;">0</span>
-        </div>
-
-        <div class="enhance-card">
-            <button id="btn-weapon" class="slot-btn" onclick="selectEnhanceSlot('weapon')">
-                <span>⚔️ 武器</span>
-                <span id="weapon-display">無</span>
-            </button>
-            <button id="btn-armor" class="slot-btn" onclick="selectEnhanceSlot('armor')">
-                <span>️ 防具</span>
-                <span id="armor-display">無</span>
-            </button>
-            <button id="btn-acc" class="slot-btn" onclick="selectEnhanceSlot('acc')">
-                <span> 飾品</span>
-                <span id="acc-display">無</span>
-            </button>
-        </div>
-
-        <div id="enhance-info" class="enhance-info">
-            <div id="target-name" style="color: #f1c40f; margin-bottom: 15px; font-size: 14px; font-weight: bold; text-align:center; border-bottom:1px solid #555; padding-bottom:10px;"></div>
-            
-            <div class="info-row"><span>當前等級:</span> <span id="cur-lv" style="color:#fff">0</span></div>
-            <div class="info-row"><span>強化目標:</span> <span id="next-lv" style="color:#f1c40f; font-weight:bold;">+1</span></div>
-            <div class="info-row"><span>成功機率:</span> <span id="rate-txt">100%</span></div>
-            <div class="info-row"><span>消耗金幣:</span> <span id="cost-txt" style="color:#f1c40f">1000</span></div>
-            <div class="info-row"><span>消耗材料:</span> <span>強化石 x1</span></div>
-            
-            <div style="margin-top: 10px; border-top: 1px dashed #555; padding-top: 10px; text-align:center;">
-                失敗風險: <span id="risk-txt" class="risk-safe">無</span>
+    <div id="app-layout">
+        <div id="main-content">
+            <div class="header">
+                <h1> 裝備強化</h1>
+                <div class="gold-display"> <span id="my-gold">0</span> G</div>
             </div>
-            
-            <button id="enhance-btn" class="btn" style="animation: pulse 2s infinite;" onclick="doEnhance()"> 開始強化 </button>
+
+            <div class="container">
+                <div style="font-size: 10px; color: #bdc3c7; margin-bottom: 5px;">
+                    消耗金幣與強化石提升裝備能力<br>
+                    擁有強化石: <span id="stone-count" style="color:#2ecc71; font-size:12px;">0</span>
+                </div>
+
+                <div class="enhance-card">
+                    <button id="btn-weapon" class="slot-btn" onclick="selectEnhanceSlot('weapon')">
+                        <span>⚔️ 武器</span>
+                        <span id="weapon-display">無</span>
+                    </button>
+                    <button id="btn-armor" class="slot-btn" onclick="selectEnhanceSlot('armor')">
+                        <span>️ 防具</span>
+                        <span id="armor-display">無</span>
+                    </button>
+                    <button id="btn-acc" class="slot-btn" onclick="selectEnhanceSlot('acc')">
+                        <span> 飾品</span>
+                        <span id="acc-display">無</span>
+                    </button>
+                </div>
+
+                <div id="enhance-info" class="enhance-info">
+                    <div id="target-name" style="color: #f1c40f; margin-bottom: 15px; font-size: 14px; font-weight: bold; text-align:center; border-bottom:1px solid #555; padding-bottom:10px;"></div>
+                    
+                    <div class="info-row"><span>當前等級:</span> <span id="cur-lv" style="color:#fff">0</span></div>
+                    <div class="info-row"><span>強化目標:</span> <span id="next-lv" style="color:#f1c40f; font-weight:bold;">+1</span></div>
+                    <div class="info-row"><span>成功機率:</span> <span id="rate-txt">100%</span></div>
+                    <div class="info-row"><span>消耗金幣:</span> <span id="cost-txt" style="color:#f1c40f">1000</span></div>
+                    <div class="info-row"><span>消耗材料:</span> <span>強化石 x1</span></div>
+                    
+                    <div style="margin-top: 10px; border-top: 1px dashed #555; padding-top: 10px; text-align:center;">
+                        失敗風險: <span id="risk-txt" class="risk-safe">無</span>
+                    </div>
+                    
+                    <button id="enhance-btn" class="btn" style="animation: pulse 2s infinite;" onclick="doEnhance()"> 開始強化 </button>
+                </div>
+            </div>
+
+            <a href="hub.html" class="back-btn">◀ 返回大廳</a>
+        </div>
+
+        <div id="chat-container">
+            <div id="chat-header" onclick="toggleChat()"> 公頻聊天室 (點擊展開)</div>
+            <div id="chat-body">
+                <div id="chat-history"></div>
+                <div id="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="輸入訊息..." maxlength="50">
+                    <button id="chat-send">發送</button>
+                </div>
+            </div>
         </div>
     </div>
-
-    <a href="hub.html" class="back-btn">◀ 返回大廳</a>
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
@@ -184,10 +270,10 @@
             4: { rate: 80,  cost: 10000, risk: 'drop' },
             5: { rate: 70,  cost: 20000, risk: 'drop' },
             6: { rate: 60,  cost: 40000, risk: 'drop' },
-            7: { rate: 50,  cost: 80000, risk: 'break' },
-            8: { rate: 40,  cost: 150000,risk: 'break' },
-            9: { rate: 30,  cost: 300000,risk: 'break' },
-            10:{ rate: 20,  cost: 1000000,risk: 'break'},
+            7: { rate: 50,  cost: 80000, risk: 'drop' },
+            8: { rate: 40,  cost: 150000,risk: 'drop' },
+            9: { rate: 30,  cost: 300000,risk: 'drop' },
+            10:{ rate: 20,  cost: 1000000,risk: 'drop'},
             
             // --- 新增 +11 ~ +20 ---
             11:{ rate: 15, cost: 2000000, risk: 'break'},
@@ -228,6 +314,39 @@
             document.getElementById('hammer-anim').style.display = 'none';
             alert("❌ " + msg); 
         });
+
+        // --- 聊天功能 ---
+        socket.on('chatHistory', (history) => {
+            const box = document.getElementById('chat-history');
+            box.innerHTML = ''; 
+            history.forEach(data => appendChat(data.name, data.msg));
+        });
+        socket.on('chatMessage', (data) => { appendChat(data.name, data.msg); });
+        
+        function appendChat(name, msg) {
+            const history = document.getElementById('chat-history');
+            const div = document.createElement('div');
+            const nameSpan = document.createElement('span');
+            nameSpan.style.color = '#f1c40f'; nameSpan.style.fontWeight = 'bold';
+            nameSpan.textContent = `[${name}]: `;
+            div.appendChild(nameSpan); div.appendChild(document.createTextNode(msg));
+            history.appendChild(div); history.scrollTop = history.scrollHeight;
+        }
+
+        document.getElementById('chat-send').onclick = sendChat;
+        document.getElementById('chat-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChat(); });
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (msg) { socket.emit('sendChat', msg); input.value = ''; }
+        }
+        function toggleChat() {
+            const chat = document.getElementById('chat-container');
+            const header = document.getElementById('chat-header');
+            if (window.innerWidth >= 1024) return;
+            chat.classList.toggle('chat-open');
+            header.innerText = chat.classList.contains('chat-open') ? " 點擊收起" : " 公頻聊天室 (點擊展開)";
+        }
 
         function updateUI() {
             if(!myData) return;
