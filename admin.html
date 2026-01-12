@@ -16,13 +16,19 @@
         optgroup { color: #f1c40f; background: #333; font-weight: bold; }
         option { color: #fff; background: #222; }
 
-        /* 福袋專屬按鈕顏色 */
+        /* 按鈕顏色 */
         .btn-open { background: #27ae60; }
         .btn-close { background: #c0392b; }
         .btn-reset { background: #f39c12; }
-        
-        /* BOSS 專屬按鈕顏色 */
         .btn-boss { background: #8e44ad; box-shadow: 0 0 10px #8e44ad; }
+
+        /* 🚨 可疑名單列表樣式 */
+        #suspicious-table { width: 100%; max-width: 800px; margin: 0 auto; border-collapse: collapse; background: #111; }
+        #suspicious-table th, #suspicious-table td { border: 1px solid #444; padding: 8px; text-align: left; font-size: 12px; }
+        #suspicious-table th { background: #c0392b; color: white; }
+        #suspicious-table tr:nth-child(even) { background: #1a1a1a; }
+        #suspicious-table tr:hover { background: #333; }
+        .sus-reason { color: #f39c12; }
     </style>
 </head>
 <body>
@@ -32,6 +38,27 @@
     <input type="password" id="admin-pass" placeholder="輸入管理員密碼">
     <input type="text" id="target-name" placeholder="目標玩家名稱 (Username)">
     
+    <hr>
+
+    <h3 style="color: #ff4757; text-shadow: 0 0 5px red;">🚨 可疑帳號監控 (Bot 偵測)</h3>
+    <div style="display:flex; justify-content:center; gap:10px; margin-bottom: 10px;">
+        <button onclick="fetchSuspiciousLogs()" style="background:#2f3542;">🔄 刷新列表</button>
+        <button onclick="downloadLogs()" style="background:#2ed573; color:#000;">💾 下載 Log (Save)</button>
+    </div>
+    
+    <table id="suspicious-table">
+        <thead>
+            <tr>
+                <th style="width: 180px;">時間</th>
+                <th style="width: 150px;">玩家名稱</th>
+                <th>可疑原因</th>
+            </tr>
+        </thead>
+        <tbody id="suspicious-list">
+            <tr><td colspan="3" style="text-align:center; color:#aaa;">暫無資料，請點擊刷新</td></tr>
+        </tbody>
+    </table>
+
     <hr>
 
     <h3 style="color: #e74c3c;">🚧 系統維護</h3>
@@ -271,114 +298,116 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const socket = io({ 
+            transports: ['websocket', 'polling']
+        });
 
         socket.on('connect', () => {
             log("✅ 連線成功，請輸入密碼與玩家名稱。");
         });
 
-        socket.on('connect_error', (err) => {
-            console.error(err);
-            log("❌ 無法連線到伺服器");
+        // 🟢 [新增] 接收後端傳來的 Log 資料
+        let currentLogs = []; // 暫存 logs 用於下載
+
+        socket.on('adminSuspiciousLogsData', (logs) => {
+            currentLogs = logs;
+            const tbody = document.getElementById('suspicious-list');
+            tbody.innerHTML = '';
+
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">目前無可疑紀錄</td></tr>';
+                return;
+            }
+
+            logs.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${log.time}</td>
+                    <td style="font-weight:bold; color:#fff;">${log.name}</td>
+                    <td class="sus-reason">${log.reason}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            log(`已更新 ${logs.length} 筆可疑紀錄`);
         });
 
-        // 🟢 [新增] 召喚世界 BOSS
+        // 🟢 [新增] 請求 Log
+        function fetchSuspiciousLogs() {
+            const pass = document.getElementById('admin-pass').value;
+            if(!pass) { alert("請輸入管理員密碼"); return; }
+            socket.emit('adminGetSuspiciousLogs', { adminPass: pass });
+        }
+
+        // 🟢 [新增] 下載 Log 功能 (存成 .txt)
+        function downloadLogs() {
+            if (currentLogs.length === 0) {
+                alert("沒有資料可下載，請先刷新列表！");
+                return;
+            }
+
+            let content = "=== RPG Game Suspicious Activity Log ===\n";
+            content += `Export Date: ${new Date().toLocaleString()}\n\n`;
+            
+            currentLogs.forEach(log => {
+                content += `[${log.time}] Player: ${log.name} | Reason: ${log.reason}\n`;
+            });
+
+            const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `sus_logs_${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // --- 原有功能 ---
+
         function spawnBoss() {
             const pass = document.getElementById('admin-pass').value;
             if(!pass) { alert("請輸入管理員密碼"); return; }
-            
             if(!confirm("⚠️ 確定要召喚 [虛空滅世者] 嗎？\n這會向全服發送通知！")) return;
-
             log("[請求] 正在召喚世界 BOSS...");
             socket.emit('adminSpawnWorldBoss', { password: pass });
         }
 
-        // 福袋活動控制
         function controlLuckyBag(action) {
             const pass = document.getElementById('admin-pass').value;
             if(!pass) { alert("請輸入管理員密碼"); return; }
-            
-            let actionText = "";
-            if(action === 'open') actionText = "開啟福袋活動";
-            if(action === 'close') actionText = "關閉福袋活動";
-            if(action === 'reset') actionText = "重置福袋庫存";
-
-            if(!confirm(`確定要 ${actionText} 嗎？`)) return;
-
-            log(`[請求] ${actionText}...`);
-            socket.emit('adminSetLuckyBag', {
-                password: pass,
-                action: action
-            });
+            socket.emit('adminSetLuckyBag', { password: pass, action: action });
         }
 
         function setMaintenance(mode) {
             const pass = document.getElementById('admin-pass').value;
             if(!pass) { alert("請輸入管理員密碼"); return; }
-            
-            const action = mode ? "開啟維護並踢出所有玩家" : "關閉維護並開放登入";
+            const action = mode ? "開啟維護" : "關閉維護";
             if(!confirm(`確定要 ${action} 嗎？`)) return;
-
             log(`[請求] 正在 ${action}...`);
-            socket.emit('adminSetMaintenance', {
-                adminPass: pass,
-                mode: mode
-            });
+            socket.emit('adminSetMaintenance', { adminPass: pass, mode: mode });
         }
 
         function resetPassword() {
             const pass = document.getElementById('admin-pass').value;
             const name = document.getElementById('target-name').value;
             const newPass = document.getElementById('new-pass').value;
-
-            if(!pass || !name || !newPass) { alert("請輸入密碼、玩家名稱與新密碼"); return; }
-            if(newPass.length < 5) { alert("新密碼至少需 5 字元"); return; }
-
-            log(`[請求] 重置玩家 ${name} 的密碼...`);
-            socket.emit('adminResetPass', {
-                adminPass: pass,
-                targetName: name,
-                newPass: newPass
-            });
+            if(!pass || !name || !newPass) { alert("請輸入完整資訊"); return; }
+            socket.emit('adminResetPass', { adminPass: pass, targetName: name, newPass: newPass });
         }
 
-        // 設定戰鬥等級函式
         function setLevel() {
             const pass = document.getElementById('admin-pass').value;
             const name = document.getElementById('target-name').value;
             const level = document.getElementById('level-amount').value;
-
             if(!pass || !name || !level) { alert("請填寫所有欄位"); return; }
-            if(level < 1) { alert("等級至少為 1"); return; }
-
-            log(`[請求] 將 ${name} 的戰鬥等級設定為 Lv.${level}...`);
-
-            socket.emit('adminSetLevel', {
-                adminPass: pass,
-                targetName: name,
-                level: level
-            });
+            socket.emit('adminSetLevel', { adminPass: pass, targetName: name, level: level });
         }
 
-        // 設定採集等級函式
         function setGatherLevel() {
             const pass = document.getElementById('admin-pass').value;
             const name = document.getElementById('target-name').value;
             const level = document.getElementById('gather-level-amount').value;
-
             if(!pass || !name || !level) { alert("請填寫所有欄位"); return; }
-            if(level < 1) { alert("等級至少為 1"); return; }
-
-            log(`[請求] 將 ${name} 的採集等級設定為 Lv.${level}...`);
-
-            socket.emit('adminSetGatherLevel', {
-                adminPass: pass,
-                targetName: name,
-                level: level
-            });
+            socket.emit('adminSetGatherLevel', { adminPass: pass, targetName: name, level: level });
         }
 
         function modifyGold() {
@@ -386,18 +415,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
             const name = document.getElementById('target-name').value;
             const mode = document.getElementById('gold-mode').value;
             const amount = document.getElementById('gold-amount').value;
-
             if(!pass || !name || !amount) { alert("請填寫所有欄位"); return; }
-
-            const actionText = mode === 'add' ? '增加/扣除' : '設定為';
-            log(`[請求] 將 ${name} 的金錢 ${actionText} ${amount}...`);
-
-            socket.emit('adminSetGold', {
-                adminPass: pass,
-                targetName: name,
-                amount: amount,
-                mode: mode
-            });
+            socket.emit('adminSetGold', { adminPass: pass, targetName: name, amount: amount, mode: mode });
         }
 
         function sendItem() {
@@ -405,26 +424,13 @@ const socket = io('https://mmo.ttctv-105.cc', {
             const name = document.getElementById('target-name').value;
             const item = document.getElementById('item-id').value;
             const count = document.getElementById('item-count').value;
-
             if(!pass || !name || !item || !count) { alert("請填寫所有欄位"); return; }
-
             log(`[請求] 發送 ${count} 個 [${item}] 給 ${name}...`);
-            
-            socket.emit('adminGiveItem', {
-                adminPass: pass,
-                targetName: name,
-                itemId: item,
-                count: count
-            });
+            socket.emit('adminGiveItem', { adminPass: pass, targetName: name, itemId: item, count: count });
         }
 
-        socket.on('adminResult', (res) => {
-            log(res.msg);
-        });
-        
-        socket.on('errorMessage', (msg) => {
-            log("❌ " + msg);
-        });
+        socket.on('adminResult', (res) => { log(res.msg); });
+        socket.on('errorMessage', (msg) => { log("❌ " + msg); });
 
         function log(msg) {
             const area = document.getElementById('log-area');
