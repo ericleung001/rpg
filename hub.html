@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -109,6 +109,7 @@
         }
         
         .facility-btn {
+            position: relative; /* 🟢 為紅點定位 */
             padding: 0; 
             font-family: inherit; font-size: 10px; font-weight: bold;
             cursor: pointer; border: 2px solid #bdc3c7; color: white; text-decoration: none; 
@@ -183,32 +184,13 @@
             50% { transform: translateY(-5px); }
         }
 
-        #notice-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none;
-            flex-direction: column; justify-content: center; align-items: center;
-            z-index: 9999;
-        }
-        .notice-box {
-            background: #fff; color: #2c3e50; width: 85%; max-width: 400px;
-            border: 4px solid #f1c40f; border-radius: 10px; padding: 20px; text-align: left;
-            font-family: 'Press Start 2P', monospace; max-height: 70vh; overflow-y: auto;
-        }
-        .notice-title { font-size: 16px; color: #d35400; margin-bottom: 15px; text-align: center; font-weight: bold; }
-        .notice-content { font-size: 10px; line-height: 1.8; white-space: pre-wrap; }
-        .close-notice-btn {
-            margin-top: 20px; width: 100%; padding: 10px; background: #34495e; 
-            color: white; border: none; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 12px;
-        }
-
-        /* 🟢 Modal 通用設定 (確保預設隱藏與置中) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); 
-            display: none; /* 預設不顯示 */
+            display: none;
             flex-direction: column; 
-            justify-content: center; /* 垂直置中 */
-            align-items: center;     /* 水平置中 */
+            justify-content: center; 
+            align-items: center;     
             z-index: 9999;
         }
         
@@ -217,10 +199,22 @@
             border: 4px solid #f1c40f; border-radius: 10px; padding: 20px; text-align: left;
             font-family: 'Press Start 2P', monospace; max-height: 70vh; overflow-y: auto;
             position: relative;
-            /* 移除 auto margin，依賴 flexbox 置中 */
             margin: auto; 
         }
+        .close-btn-x {
+            position: absolute; top: 10px; right: 10px;
+            background: #e74c3c; color: white; border: none;
+            width: 25px; height: 25px; border-radius: 50%;
+            cursor: pointer; font-weight: bold;
+        }
         
+        .notice-title { font-size: 16px; color: #d35400; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        .notice-content { font-size: 10px; line-height: 1.8; white-space: pre-wrap; }
+        .close-notice-btn {
+            margin-top: 20px; width: 100%; padding: 10px; background: #34495e; 
+            color: white; border: none; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 12px;
+        }
+
         /* 英雄榜樣式 */
         .ranking-box {
             width: 100%; max-width: 600px;
@@ -263,6 +257,22 @@
         .pm-other { align-self: flex-start; background: #eec5a9; color: #2c3e50; border-bottom-left-radius: 0; }
         .pm-time { font-size: 8px; opacity: 0.7; margin-top: 2px; text-align: right; }
 
+        /* 🟢 未讀紅點樣式 */
+        .unread-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: #e74c3c; color: white;
+            border-radius: 50%; width: 18px; height: 18px;
+            font-size: 9px; display: flex; justify-content: center; align-items: center;
+            border: 2px solid white; font-weight: bold;
+            display: none; /* 預設隱藏 */
+            z-index: 10;
+        }
+        .friend-badge {
+            background: #e74c3c; color: white;
+            border-radius: 10px; padding: 2px 6px;
+            font-size: 8px; margin-left: 5px;
+        }
+
         @media (min-width: 1024px) {
             body { background-color: #222; }
             #app-layout { flex-direction: row; max-width: 1000px; background-color: #2c3e50; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
@@ -287,36 +297,18 @@
     <div id="toast-notification"> 訊息提示</div>
     <div id="notice-btn" onclick="openNotice()">📢</div>
 
-    <div id="notice-modal" class="modal-overlay">
-        <div class="modal-box">
+    <div id="notice-modal">
+        <div class="notice-box">
             <div class="notice-title">📜 公會公告</div>
             <div class="notice-content">
 <b style="color:#c0392b;">【v2.8 更新公告：社交時代】</b>
+1. 👥 好友系統上線：可發送好友申請，需對方確認。
+2. 💌 獨立私訊視窗：私訊將有獨立的聊天記錄，不再與公頻混雜，且永久保存。
+3. 🔴 未讀提示：收到私訊時，好友列表將顯示紅點提示。
 
-<b style="color:#2ecc71;">1. 👥 社交功能上線</b>
-- <b>好友系統：</b> 可發送好友申請，需對方確認。
-- <b>獨立私訊：</b> 私訊將有獨立的視窗，紀錄永久保存，不再被公頻洗版。
-
-<b style="color:#9b59b6;">2. 🔮 混沌裂縫 (Chaos Rift)</b>
-時空發生了劇烈震盪，未知的強敵出現了！
-- <b>等級範圍：</b> Lv.350 - Lv.500 (隨機生成)
-- <b>機制優化：</b> 新增「討伐列表」，現在可以開設房間等待隊友，不再強制單人開打！
-- <b>極品掉落：</b> 有機率掉落 <span style="color:#e67e22">虛空碎片、暗物質、宇宙鋼</span>，甚至傳說中的 <span style="color:#e74c3c">神秘禮物</span>！
-
-<b style="color:#e67e22;">3. 🔥 裝備強化上限解鎖 (+20)</b>
-鐵匠突破了工藝極限，現在裝備可強化至 <b>+20</b>！
-- <b>+11 ~ +15：</b> 成功率大幅降低，失敗可能導致強化等級倒退。
-- <b>+16 ~ +20：</b> 神話領域。極低成功率，<span style="color:red">失敗將導致裝備破碎消失</span>。
-
-<b style="color:#3498db;">4. ⚔️ 戰鬥系統優化</b>
-- <b>記憶技能：</b> 戰鬥介面新增 4 個「記憶技能」按鈕，自動記錄你最後使用的招式，操作更便捷！
-- <b>流暢度提升：</b> 修復了 MP 不足或死亡時，按鈕可能卡住無法操作的 Bug。
-
-<b style="color:#f1c40f;">【其他通知】</b>
-🔥 歡迎加入<a href="https://discord.com/invite/7kKwf5yb" style="color:#f1c40f;">DC Group</a>
-
-<b style="color:#e74c3c;">【維護提醒】</b>
-2026/01/09 22:05-23:00 更新Server。
+<b style="color:#e67e22;">【其他優化】</b>
+- 修復了公會大廳的一些顯示問題。
+- 伺服器效能優化。
             </div>
             <button class="close-notice-btn" onclick="closeNotice()">我知道了</button>
         </div>
@@ -447,7 +439,10 @@
                     <a href="cards.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">🎴 卡冊</a>
                     <a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;">📜 圖鑑</a>
                     
-                    <div class="facility-btn" style="background:#3498db; border-color:#2980b9;" onclick="openFriends()">👥 好友</div>
+                    <div class="facility-btn" style="background:#3498db; border-color:#2980b9;" onclick="openFriends()">
+                        👥 好友
+                        <div id="main-unread-badge" class="unread-badge">0</div>
+                    </div>
                 </div>
 
                 <div style="margin-bottom: 15px; padding: 10px; border: 2px solid #9b59b6; background: rgba(0,0,0,0.3); border-radius: 8px; text-align: center; flex-shrink: 0;">
@@ -486,7 +481,7 @@
                 overlay.style.opacity = '0';
                 setTimeout(() => { 
                     overlay.style.display = 'none'; 
-                    // 🟢 [已確認] 移除所有自動彈出代碼
+                    // 🟢 不自動彈出，等待手動點擊
                 }, 500);
             }, 2000); 
         });
@@ -542,6 +537,10 @@
             document.getElementById('pm-history').innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">載入記錄中...</div>';
             
             socket.emit('getPrivateHistory', name); 
+            // 🟢 打開後標記為已讀
+            socket.emit('markAsRead', name);
+            // 🟢 本地扣除該好友的紅點 (簡單做法：刷新一次好友列表)
+            socket.emit('getFriends');
         }
 
         function closePM() {
@@ -582,36 +581,53 @@
         socket.on('privateMessageUpdate', (data) => {
             if (currentChatTarget && (data.sender === currentChatTarget || data.receiver === currentChatTarget)) {
                 appendPM(data.sender, data.msg);
+                // 🟢 如果視窗開著，收到訊息順便標記已讀
+                if (!data.isSelf) {
+                    socket.emit('markAsRead', data.sender);
+                }
             } else if (!data.isSelf) {
                 showToast(`📩 收到來自 [${data.sender}] 的私訊`);
+                // 🟢 收到私訊但沒開視窗 -> 刷新好友列表 (更新紅點)
+                socket.emit('getFriends'); 
             }
         });
 
-        // 收到私訊通知
+        // 收到私訊通知 (例如對方發送訊息時觸發)
         socket.on('pmNotification', (senderName) => {
             if (currentChatTarget !== senderName) {
                 showToast(`📩 ${senderName} 傳送了私訊給你！`);
+                // 🟢 收到通知 -> 刷新紅點
+                socket.emit('getFriends');
             }
         });
 
         function appendPM(sender, msg) {
             const historyDiv = document.getElementById('pm-history');
             const div = document.createElement('div');
-            
             const isMe = (sender === myName);
             div.className = `pm-msg ${isMe ? 'pm-mine' : 'pm-other'}`;
-            
             const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
             div.innerHTML = `<div>${msg}</div><div class="pm-time">${time}</div>`;
-            
             historyDiv.appendChild(div);
             historyDiv.scrollTop = historyDiv.scrollHeight;
         }
 
         socket.on('friendListUpdate', (data) => {
-            const friends = Array.isArray(data) ? data : data.friends;
-            const requests = Array.isArray(data) ? [] : data.requests;
+            // data.friends: [ { name, isOnline, unread }, ... ]
+            // data.totalUnread: number
+            
+            const friends = data.friends || [];
+            const requests = data.requests || [];
+            const totalUnread = data.totalUnread || 0;
+
+            // 🟢 更新主畫面按鈕紅點
+            const mainBadge = document.getElementById('main-unread-badge');
+            if (totalUnread > 0) {
+                mainBadge.innerText = totalUnread > 99 ? '99+' : totalUnread;
+                mainBadge.style.display = 'flex';
+            } else {
+                mainBadge.style.display = 'none';
+            }
 
             // 1. 渲染申請列表
             const reqSection = document.getElementById('request-section');
@@ -636,7 +652,7 @@
                 reqSection.style.display = 'none';
             }
 
-            // 2. 渲染好友列表
+            // 2. 渲染好友列表 (含個別紅點)
             const friendContainer = document.getElementById('friend-list-content');
             friendContainer.innerHTML = '';
             
@@ -648,13 +664,19 @@
                     const div = document.createElement('div');
                     div.className = 'friend-row';
                     const statusClass = f.isOnline ? 'status-on' : 'status-off';
-                    const statusText = f.isOnline ? '在線' : '離線';
                     const color = f.isOnline ? '#2c3e50' : '#aaa';
+                    
+                    // 🟢 個別紅點
+                    let badgeHtml = '';
+                    if (f.unread > 0) {
+                        badgeHtml = `<span class="friend-badge">${f.unread}</span>`;
+                    }
 
                     div.innerHTML = `
                         <div style="display:flex; align-items:center; color:${color}">
-                            <div class="friend-status ${statusClass}" title="${statusText}"></div>
+                            <div class="friend-status ${statusClass}"></div>
                             <span class="friend-name">${f.name}</span>
+                            ${badgeHtml}
                         </div>
                         <div class="friend-actions">
                             <button class="btn-pm" onclick="startPM('${f.name}')">私訊</button>
@@ -667,11 +689,10 @@
         });
 
         socket.on('updateFriendListRequest', () => {
-            if (document.getElementById('friends-modal').style.display === 'flex') {
-                socket.emit('getFriends');
-            }
+            socket.emit('getFriends'); // 隨時保持資料最新
         });
 
+        // ... (以下為其他 socket 事件，保持原樣)
         const WORLD_MAP = [
             { id: 'city_1', name: '曙光平原', reqLv: 1, desc: '冒險的起點 (Lv.1-20)', monsters: [{ id: 'slime', name: '史萊姆', lv: 1 }, { id: 'rat', name: '大老鼠', lv: 3 }, { id: 'bee', name: '殺人蜂', lv: 5 }, { id: 'boar', name: '野豬', lv: 8 }, { id: 'thief', name: '盜賊', lv: 12 }, { id: 'wolf_king', name: '🐺 狼王 (BOSS)', lv: 15 }] },
             { id: 'city_2', name: '迷霧沼澤', reqLv: 1, desc: '充滿毒氣與亡靈 (Lv.20-40)', monsters: [{ id: 'snake', name: '毒蛇', lv: 22 }, { id: 'zombie', name: '腐屍', lv: 25 }, { id: 'skeleton', name: '骷髏兵', lv: 28 }, { id: 'ghoul', name: '食屍鬼', lv: 32 }, { id: 'witch', name: '沼澤女巫', lv: 35 }, { id: 'hydra', name: '🐍 九頭蛇 (BOSS)', lv: 40 }] },
@@ -714,25 +735,20 @@
         
         socket.on('playerStatsUpdate', (p) => {
             myLevel = p.level;
-            myName = p.name; // 🟢 儲存自己名字
+            myName = p.name;
             document.getElementById('pid').innerText = p.name || "Unknown";
             document.getElementById('lvl').innerText = p.level;
             document.getElementById('gold').innerText = (p.gold || 0).toLocaleString();
-
             let hpPct = (p.hp / p.maxHp) * 100;
             document.getElementById('hp').innerText = `${p.hp}/${p.maxHp}`;
             document.getElementById('hp-bar-fill').style.width = Math.max(0, Math.min(100, hpPct)) + '%';
-
             let mpPct = (p.mp / p.maxMp) * 100;
             document.getElementById('mp').innerText = `${p.mp}/${p.maxMp}`;
             document.getElementById('mp-bar-fill').style.width = Math.max(0, Math.min(100, mpPct)) + '%';
-
             document.getElementById('atk').innerText = (p.atk || 0).toLocaleString();
             document.getElementById('def').innerText = (p.def || 0).toLocaleString();
-
             document.getElementById('exp-txt').innerText = `${p.exp}/${p.maxExp}`;
             document.getElementById('exp-fill').style.width = Math.min(100, (p.exp / p.maxExp * 100)) + '%';
-            
             refreshUI();
         });
 
@@ -749,7 +765,6 @@
                 const pct = (data.hp / data.maxHp) * 100;
                 document.getElementById('boss-hp-bar').style.width = pct + "%";
                 document.getElementById('boss-hp-text').innerText = `${(data.hp/100000000).toFixed(1)}億 / ${(data.maxHp/100000000).toFixed(1)}億`;
-
                 if (data.remainingTime !== undefined) {
                     let timeLeft = Math.floor(data.remainingTime / 1000);
                     const timerSpan = document.getElementById('boss-timer');
@@ -829,17 +844,13 @@
 
         function appendChat(name, msg) {
             if (name === '系統') return; 
-
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
-            
             const nameSpan = document.createElement('span');
             nameSpan.style.color = '#f1c40f';
             nameSpan.style.fontWeight = 'bold';
             nameSpan.textContent = `[${name}]: `;
-
             div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${name}]:</span> ${msg}`;
-            
             history.appendChild(div);
             history.scrollTop = history.scrollHeight;
         }
