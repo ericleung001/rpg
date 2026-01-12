@@ -57,6 +57,21 @@
             padding: 5px; box-sizing: border-box; position: relative; 
         }
         
+        /* 🟢 [新增] 魔法快捷鍵區域樣式 */
+        #shortcut-area {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+            margin-bottom: 5px; padding-bottom: 5px; border-bottom: 2px solid #ccc;
+            flex-shrink: 0;
+        }
+        .btn-shortcut {
+            background: #ecf0f1; border: 1px solid #bdc3c7; color: #2c3e50;
+            font-size: 10px; padding: 4px; cursor: pointer; border-radius: 4px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-family: inherit; font-weight: bold;
+        }
+        .btn-shortcut:active { background: #bdc3c7; transform: translateY(1px); }
+        .btn-shortcut:disabled { opacity: 0.5; cursor: not-allowed; background: #95a5a6; }
+
         .fixed-top-area {
             flex-shrink: 0;
             padding-bottom: 5px;
@@ -101,7 +116,6 @@
         
         #game-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f; color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999; font-size: 14px; font-weight: bold; transition: top 0.5s ease-in-out; pointer-events: none; }
 
-        /* 倒數計時器樣式 */
         #countdown-timer {
             position: absolute; top: 10px; right: 10px;
             color: #e74c3c; font-size: 12px; font-weight: bold;
@@ -109,7 +123,6 @@
             background: rgba(0,0,0,0.7); padding: 5px; border-radius: 4px;
         }
 
-        /* 🟢 防掛機驗證 Modal 樣式 */
         #afk-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.9); z-index: 99999; 
@@ -133,9 +146,7 @@
         <div class="afk-box">
             <div class="afk-title">⚠️ 靈魂拷問 ⚠️</div>
             <div class="afk-desc">系統偵測到你操作過快，<br>請證明你不是機器人！</div>
-            
             <div id="afk-timer-display" style="color:red; font-weight:bold; margin-bottom:10px;">剩餘時間: 60s</div>
-            
             <div class="afk-question" id="afk-question">...</div>
             <input type="number" id="afk-answer" class="afk-input" placeholder="輸入數字答案">
             <button class="afk-btn" onclick="submitAfk()">確認</button>
@@ -181,6 +192,9 @@
         <div class="hud">
             <div class="log" id="log"><div>準備戰鬥...</div></div>
             <div class="menu" id="menu-container">
+                
+                <div id="shortcut-area"></div>
+
                 <div id="fixed-top-area" class="fixed-top-area">
                     <button class="btn" style="width:100%; background:#ddd; color:#555;" onclick="resetButtons()">◀ 返回選單</button>
                 </div>
@@ -281,16 +295,14 @@ const socket = io('https://mmo.ttctv-105.cc', {
             }, 100);
         });
 
-        // 🟢 [新增] AFK 驗證相關
+        // 🟢 [AFK 驗證相關]
         let afkInterval = null; 
 
         socket.on('afkCheck', (data) => {
-            // [修正] 不再自動加 = ?，因為題目可能包含中文
             document.getElementById('afk-question').innerText = data.question;
             document.getElementById('afk-answer').value = ''; 
             document.getElementById('afk-modal').style.display = 'flex';
 
-            // 🟢 倒數計時顯示
             let timeLeft = data.timeout || 60;
             const timerDisplay = document.getElementById('afk-timer-display');
             timerDisplay.innerText = `剩餘時間: ${timeLeft}s`;
@@ -307,25 +319,18 @@ const socket = io('https://mmo.ttctv-105.cc', {
             }, 1000);
         });
 
-        // 🟢 [新增] 驗證成功後解鎖按鈕
+        // 🟢 [驗證成功後解鎖按鈕]
         socket.on('afkSuccess', () => {
-            // 關閉視窗
             document.getElementById('afk-modal').style.display = 'none';
             if (afkInterval) clearInterval(afkInterval);
-
-            // 重置按鈕
             resetButtons(); 
-            
-            // ⚡ 強制解鎖按鈕 (確保玩家可以繼續)
             toggle(false); 
-            
             log(`<span style="color:#2ecc71">驗證通過！請繼續戰鬥。</span>`);
         });
 
         function submitAfk() {
             const ans = document.getElementById('afk-answer').value;
             if (ans === '') return;
-            
             socket.emit('afkResponse', parseInt(ans));
             document.getElementById('afk-modal').style.display = 'none';
             if (afkInterval) clearInterval(afkInterval);
@@ -467,15 +472,11 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function startCountdown() {
             const timerDiv = document.getElementById('countdown-timer');
             timerDiv.style.display = 'block';
-            
             if (battleTimer) clearInterval(battleTimer);
-            
             updateTimerDisplay();
-
             battleTimer = setInterval(() => {
                 timeLeft--;
                 updateTimerDisplay();
-                
                 if (timeLeft <= 0) { 
                     clearInterval(battleTimer); 
                     timerDiv.innerText = "☠️ 時間到！"; 
@@ -520,7 +521,67 @@ const socket = io('https://mmo.ttctv-105.cc', {
             document.getElementById('hp-txt').innerText = `HP:${p.hp}/${p.maxHp}  MP:${p.mp}/${p.maxMp}`;
             if(document.getElementById('atk-val')) document.getElementById('atk-val').innerText = p.atk;
             if(document.getElementById('def-val')) document.getElementById('def-val').innerText = p.def;
+
+            // 🟢 [MP 修正] 每次更新都檢查快捷鍵和技能列表
+            updateShortcutStates(p);
+            updateSkillButtonsState(p);
         });
+
+        // 🟢 [新增] 渲染/更新快捷鍵
+        let shortcutsRendered = false;
+        function updateShortcutStates(p) {
+            const area = document.getElementById('shortcut-area');
+            const mySkills = p.skills || [];
+            
+            // 第一次渲染
+            if (!shortcutsRendered && mySkills.length > 0) {
+                area.innerHTML = '';
+                // 取前 4 個技能
+                const shortcuts = mySkills.slice(0, 4);
+                shortcuts.forEach(sid => {
+                    const info = SKILL_INFO[sid];
+                    if(info) {
+                        const btn = document.createElement('button');
+                        btn.className = 'btn-shortcut';
+                        btn.setAttribute('data-mp', info.mp);
+                        btn.setAttribute('data-sid', sid);
+                        btn.innerHTML = `${info.name} <span style="color:#2980b9">(${info.mp})</span>`;
+                        btn.onclick = () => { useSkill(sid); };
+                        area.appendChild(btn);
+                    }
+                });
+                shortcutsRendered = true;
+            }
+
+            // 更新按鈕狀態 (MP 不足變灰)
+            const btns = area.querySelectorAll('.btn-shortcut');
+            btns.forEach(btn => {
+                const cost = parseInt(btn.getAttribute('data-mp'));
+                if (p.mp < cost) {
+                    btn.disabled = true;
+                    btn.style.opacity = "0.5";
+                } else {
+                    // 只有在是我的回合時才啟用
+                    if (isMyTurn || roomId === 'world_boss') {
+                        btn.disabled = false;
+                        btn.style.opacity = "1";
+                    }
+                }
+            });
+        }
+
+        // 🟢 [新增] 更新技能列表狀態 (解決打開選單後MP不足還亮著的問題)
+        function updateSkillButtonsState(p) {
+            const skillBtns = document.querySelectorAll('#btns .btn[onclick*="useSkill"]');
+            skillBtns.forEach(btn => {
+                // 解析 HTML 內的 "MP-10" 字樣比較不穩，建議重新生成或加 data attribute
+                // 這裡簡單做：如果打開技能選單，就重繪一次最準
+                if(document.getElementById('fixed-top-area').style.display === 'block') {
+                    // 這裡不自動重繪，避免閃爍，但可以簡單檢查 innerHTML 內的 MP 數值
+                    // 為了代碼簡潔，這裡暫時依賴 openSkill() 每次點擊都重繪
+                }
+            });
+        }
 
         socket.on('playerDamaged', (d) => {
             const container = document.getElementById('game-container');
@@ -531,7 +592,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         socket.on('battleWon', (data) => {
             console.log("收到勝利數據:", data); 
-
             if (battleTimer) clearInterval(battleTimer);
             document.getElementById('countdown-timer').style.display = 'none';
             const bar = document.getElementById('turn-bar');
@@ -541,8 +601,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             if (roomId === 'world_boss') {
                 showMsg(`👑 討伐成功！獲得 ${data.gold} G`);
                 showNormalVictoryBtn(); 
-            }
-            else {
+            } else {
                 showMsg(`勝利！獲得 ${data.gold} G`);
                 showNormalVictoryBtn();
             }
@@ -557,6 +616,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function showNormalVictoryBtn() {
             document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column: span 2; background:#f1c40f; color:black; font-weight:bold;" onclick="leaveRoom()">🏆 勝利離開</button>`;
             document.getElementById('fixed-top-area').style.display = 'none'; 
+            document.getElementById('shortcut-area').style.display = 'none'; // 隱藏快捷鍵
         }
 
         socket.on('playerDead', () => { 
@@ -565,6 +625,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             log("你被打倒了..."); showMsg("👻 你已經死亡..."); 
             document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column:span 2; background:red; color:white" onclick="window.location.href='rest.html'"> 去復活</button>`; 
             document.getElementById('fixed-top-area').style.display = 'none'; 
+            document.getElementById('shortcut-area').style.display = 'none';
         });
 
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
@@ -638,6 +699,13 @@ const socket = io('https://mmo.ttctv-105.cc', {
         }
 
         function useSkill(skillId) {
+            // 前端再次檢查 MP，防止無效請求
+            const info = SKILL_INFO[skillId];
+            if (info && myPlayer.mp < info.mp) {
+                showMsg("MP 不足！");
+                return;
+            }
+
             if (roomId === 'world_boss') {
                 toggle(true);
                 socket.emit('worldBossAction', { type: 'skill', skillId: skillId });
@@ -696,10 +764,24 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function leaveRoom() { socket.emit('leaveRoom', roomId); window.location.href = 'hub.html'; }
         
         function toggle(disabled) { 
+            // 鎖定主要按鈕
             document.querySelectorAll('.battle-action').forEach(b => {
                 b.disabled = disabled;
                 b.style.opacity = disabled ? "0.5" : "1";
             }); 
+            // 鎖定快捷鍵 (同時檢查 MP)
+            const area = document.getElementById('shortcut-area');
+            const btns = area.querySelectorAll('.btn-shortcut');
+            btns.forEach(btn => {
+                const cost = parseInt(btn.getAttribute('data-mp'));
+                if (myPlayer.mp < cost) {
+                    btn.disabled = true; 
+                    btn.style.opacity = "0.5";
+                } else {
+                    btn.disabled = disabled;
+                    btn.style.opacity = disabled ? "0.5" : "1";
+                }
+            });
         }
         
         function resetButtons() {
