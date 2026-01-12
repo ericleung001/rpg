@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中2</title>
+    <title>戰鬥中3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -320,6 +320,44 @@ const socket = io('https://mmo.ttctv-105.cc', {
             document.getElementById('afk-modal').style.display = 'none';
             if (afkInterval) clearInterval(afkInterval);
         }
+
+        // 🟢 驗證回應 (修正版)
+    socket.on('afkResponse', (answer) => {
+        const player = gameState.players[socket.id];
+        // 必須確保玩家存在，且確實處於等待驗證狀態
+        if (!player || !player.isPendingAFK) return;
+
+        if (parseInt(answer) === player.afkAnswer) {
+            // ✅ 答對了
+            player.isPendingAFK = false;
+            player.actionCount = 0; // 重置計數器
+            
+            // 清除踢人計時器
+            if (player.afkTimer) {
+                clearTimeout(player.afkTimer);
+                delete player.afkTimer;
+            }
+            
+            // 獎勵
+            player.gold += 500;
+            
+            // 1. 更新玩家數據 (金幣)
+            socket.emit('playerStatsUpdate', player);
+            
+            // 2. 顯示成功訊息
+            socket.emit('battleLog', `<span style="color:#2ecc71">驗證成功！獲得 500 金幣獎勵。</span>`);
+            
+            // 3. 🟢 [關鍵] 通知前端解鎖
+            socket.emit('afkSuccess'); 
+            
+            saveMyData(socket.id);
+        } else {
+            // ❌ 答錯 -> 踢出
+            console.log(`[Bot偵測] ${player.name} 驗證失敗。`);
+            socket.emit('errorMessage', "驗證失敗！你被踢出了伺服器。");
+            socket.disconnect(true);
+        }
+    });
 
         setInterval(() => { if (socket.connected) socket.emit('heartbeat'); }, 20000);
         socket.on('disconnect', () => { showMsg("⚠️ 與伺服器連線中斷..."); });
