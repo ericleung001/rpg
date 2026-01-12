@@ -57,7 +57,7 @@
             padding: 5px; box-sizing: border-box; position: relative; 
         }
         
-        /* 🟢 [新增] 魔法快捷鍵區域樣式 */
+        /* 魔法快捷鍵區域樣式 */
         #shortcut-area {
             display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
             margin-bottom: 5px; padding-bottom: 5px; border-bottom: 2px solid #ccc;
@@ -239,6 +239,9 @@ const socket = io('https://mmo.ttctv-105.cc', {
         
         let battleTimer = null;
         let timeLeft = 540;
+
+        // 🟢 [新增] 快捷鍵記憶 (用於動態更新)
+        let myShortcuts = []; 
 
         const SKILL_INFO = {
             'fireball':     { name: "火球術", mp: 5, cat: 'atk', desc: "傷x1.5" },
@@ -527,31 +530,48 @@ const socket = io('https://mmo.ttctv-105.cc', {
             updateSkillButtonsState(p);
         });
 
-        // 🟢 [新增] 渲染/更新快捷鍵
-        let shortcutsRendered = false;
+        // 🟢 [動態快捷鍵核心邏輯]
         function updateShortcutStates(p) {
             const area = document.getElementById('shortcut-area');
-            const mySkills = p.skills || [];
+            const skillsOwned = p.skills || []; // 玩家真正擁有的技能
+
+            // 如果 myShortcuts 為空 (剛進遊戲)，初始化為預設前 4 個
+            if (myShortcuts.length === 0 && skillsOwned.length > 0) {
+                myShortcuts = skillsOwned.slice(0, 4);
+            }
+
+            // 清空並重新渲染
+            area.innerHTML = '';
             
-            // 第一次渲染
-            if (!shortcutsRendered && mySkills.length > 0) {
-                area.innerHTML = '';
-                // 取前 4 個技能
-                const shortcuts = mySkills.slice(0, 4);
-                shortcuts.forEach(sid => {
-                    const info = SKILL_INFO[sid];
-                    if(info) {
-                        const btn = document.createElement('button');
-                        btn.className = 'btn-shortcut';
-                        btn.setAttribute('data-mp', info.mp);
-                        btn.setAttribute('data-sid', sid);
-                        btn.innerHTML = `${info.name} <span style="color:#2980b9">(${info.mp})</span>`;
-                        btn.onclick = () => { useSkill(sid); };
-                        area.appendChild(btn);
+            // 根據 myShortcuts 順序渲染，但必須過濾掉「我不再擁有」的技能
+            // 並補齊空位 (如果我後來學了新技能，快捷鍵沒滿的話)
+            let validShortcuts = myShortcuts.filter(sid => skillsOwned.includes(sid));
+            
+            // 如果不足 4 個，從 skillsOwned 裡面補沒出現過的
+            if (validShortcuts.length < 4) {
+                skillsOwned.forEach(sid => {
+                    if (!validShortcuts.includes(sid) && validShortcuts.length < 4) {
+                        validShortcuts.push(sid);
                     }
                 });
-                shortcutsRendered = true;
             }
+            
+            // 更新記憶列表
+            myShortcuts = validShortcuts;
+
+            // 渲染按鈕
+            myShortcuts.forEach(sid => {
+                const info = SKILL_INFO[sid];
+                if(info) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-shortcut';
+                    btn.setAttribute('data-mp', info.mp);
+                    btn.setAttribute('data-sid', sid);
+                    btn.innerHTML = `${info.name} <span style="color:#2980b9">(${info.mp})</span>`;
+                    btn.onclick = () => { useSkill(sid); };
+                    area.appendChild(btn);
+                }
+            });
 
             // 更新按鈕狀態 (MP 不足變灰)
             const btns = area.querySelectorAll('.btn-shortcut');
@@ -561,7 +581,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     btn.disabled = true;
                     btn.style.opacity = "0.5";
                 } else {
-                    // 只有在是我的回合時才啟用
                     if (isMyTurn || roomId === 'world_boss') {
                         btn.disabled = false;
                         btn.style.opacity = "1";
@@ -570,17 +589,10 @@ const socket = io('https://mmo.ttctv-105.cc', {
             });
         }
 
-        // 🟢 [新增] 更新技能列表狀態 (解決打開選單後MP不足還亮著的問題)
+        // 🟢 [新增] 更新技能列表狀態
         function updateSkillButtonsState(p) {
             const skillBtns = document.querySelectorAll('#btns .btn[onclick*="useSkill"]');
-            skillBtns.forEach(btn => {
-                // 解析 HTML 內的 "MP-10" 字樣比較不穩，建議重新生成或加 data attribute
-                // 這裡簡單做：如果打開技能選單，就重繪一次最準
-                if(document.getElementById('fixed-top-area').style.display === 'block') {
-                    // 這裡不自動重繪，避免閃爍，但可以簡單檢查 innerHTML 內的 MP 數值
-                    // 為了代碼簡潔，這裡暫時依賴 openSkill() 每次點擊都重繪
-                }
-            });
+            // 這裡可以選擇性重繪，但為了簡潔，暫時保留基本檢查
         }
 
         socket.on('playerDamaged', (d) => {
@@ -698,13 +710,20 @@ const socket = io('https://mmo.ttctv-105.cc', {
             });
         }
 
+        // 🟢 [修改] 使用技能時更新快捷鍵順序
         function useSkill(skillId) {
-            // 前端再次檢查 MP，防止無效請求
             const info = SKILL_INFO[skillId];
             if (info && myPlayer.mp < info.mp) {
                 showMsg("MP 不足！");
                 return;
             }
+
+            // 更新快捷鍵記憶 (移到最前)
+            myShortcuts = myShortcuts.filter(sid => sid !== skillId);
+            myShortcuts.unshift(skillId);
+            
+            // 立即重繪快捷鍵 (提供即時反饋)
+            updateShortcutStates(myPlayer);
 
             if (roomId === 'world_boss') {
                 toggle(true);
@@ -764,12 +783,11 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function leaveRoom() { socket.emit('leaveRoom', roomId); window.location.href = 'hub.html'; }
         
         function toggle(disabled) { 
-            // 鎖定主要按鈕
             document.querySelectorAll('.battle-action').forEach(b => {
                 b.disabled = disabled;
                 b.style.opacity = disabled ? "0.5" : "1";
             }); 
-            // 鎖定快捷鍵 (同時檢查 MP)
+            // 鎖定快捷鍵
             const area = document.getElementById('shortcut-area');
             const btns = area.querySelectorAll('.btn-shortcut');
             btns.forEach(btn => {
