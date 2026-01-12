@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中</title>
+    <title>戰鬥中2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -304,6 +304,12 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     timerDisplay.innerText = "時間到！";
                 }
             }, 1000);
+        });
+
+        // 🟢 [新增] 驗證成功後解鎖按鈕
+        socket.on('afkSuccess', () => {
+            // 重新判定按鈕狀態
+            resetButtons(); 
         });
 
         function submitAfk() {
