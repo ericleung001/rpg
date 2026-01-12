@@ -240,8 +240,17 @@ const socket = io('https://mmo.ttctv-105.cc', {
         let battleTimer = null;
         let timeLeft = 540;
 
-        // 🟢 [新增] 快捷鍵記憶 (用於動態更新)
+        // 🟢 [新增] 讀取 LocalStorage 快捷鍵
         let myShortcuts = []; 
+        try {
+            const saved = localStorage.getItem('rpg_shortcuts');
+            if (saved) {
+                myShortcuts = JSON.parse(saved);
+            }
+        } catch(e) {
+            console.error("讀取快捷鍵失敗", e);
+            myShortcuts = [];
+        }
 
         const SKILL_INFO = {
             'fireball':     { name: "火球術", mp: 5, cat: 'atk', desc: "傷x1.5" },
@@ -322,7 +331,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             }, 1000);
         });
 
-        // 🟢 [驗證成功後解鎖按鈕]
         socket.on('afkSuccess', () => {
             document.getElementById('afk-modal').style.display = 'none';
             if (afkInterval) clearInterval(afkInterval);
@@ -525,29 +533,27 @@ const socket = io('https://mmo.ttctv-105.cc', {
             if(document.getElementById('atk-val')) document.getElementById('atk-val').innerText = p.atk;
             if(document.getElementById('def-val')) document.getElementById('def-val').innerText = p.def;
 
-            // 🟢 [MP 修正] 每次更新都檢查快捷鍵和技能列表
             updateShortcutStates(p);
-            updateSkillButtonsState(p);
         });
 
-        // 🟢 [動態快捷鍵核心邏輯]
+        // 🟢 [核心] 快捷鍵更新邏輯 (含 LocalStorage 保存 + 自動取代)
         function updateShortcutStates(p) {
             const area = document.getElementById('shortcut-area');
-            const skillsOwned = p.skills || []; // 玩家真正擁有的技能
+            const skillsOwned = p.skills || []; 
 
-            // 如果 myShortcuts 為空 (剛進遊戲)，初始化為預設前 4 個
+            // 1. 如果是第一次進遊戲 (Local Storage 空的)，預設拿前 4 個
             if (myShortcuts.length === 0 && skillsOwned.length > 0) {
                 myShortcuts = skillsOwned.slice(0, 4);
+                localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts)); // 即時存檔
             }
 
-            // 清空並重新渲染
+            // 2. 清除畫面，重新渲染
             area.innerHTML = '';
             
-            // 根據 myShortcuts 順序渲染，但必須過濾掉「我不再擁有」的技能
-            // 並補齊空位 (如果我後來學了新技能，快捷鍵沒滿的話)
+            // 3. 過濾掉已經不擁有的技能 (例如重置過角色)
             let validShortcuts = myShortcuts.filter(sid => skillsOwned.includes(sid));
             
-            // 如果不足 4 個，從 skillsOwned 裡面補沒出現過的
+            // 4. 如果過濾後不夠 4 個，嘗試從擁有列表補齊
             if (validShortcuts.length < 4) {
                 skillsOwned.forEach(sid => {
                     if (!validShortcuts.includes(sid) && validShortcuts.length < 4) {
@@ -556,10 +562,11 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 });
             }
             
-            // 更新記憶列表
+            // 5. 更新全域變數 & 存檔
             myShortcuts = validShortcuts;
+            localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
 
-            // 渲染按鈕
+            // 6. 渲染按鈕
             myShortcuts.forEach(sid => {
                 const info = SKILL_INFO[sid];
                 if(info) {
@@ -573,7 +580,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 }
             });
 
-            // 更新按鈕狀態 (MP 不足變灰)
+            // 7. 更新按鈕 MP 狀態 (變灰)
             const btns = area.querySelectorAll('.btn-shortcut');
             btns.forEach(btn => {
                 const cost = parseInt(btn.getAttribute('data-mp'));
@@ -587,12 +594,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     }
                 }
             });
-        }
-
-        // 🟢 [新增] 更新技能列表狀態
-        function updateSkillButtonsState(p) {
-            const skillBtns = document.querySelectorAll('#btns .btn[onclick*="useSkill"]');
-            // 這裡可以選擇性重繪，但為了簡潔，暫時保留基本檢查
         }
 
         socket.on('playerDamaged', (d) => {
@@ -628,7 +629,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function showNormalVictoryBtn() {
             document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column: span 2; background:#f1c40f; color:black; font-weight:bold;" onclick="leaveRoom()">🏆 勝利離開</button>`;
             document.getElementById('fixed-top-area').style.display = 'none'; 
-            document.getElementById('shortcut-area').style.display = 'none'; // 隱藏快捷鍵
+            document.getElementById('shortcut-area').style.display = 'none'; 
         }
 
         socket.on('playerDead', () => { 
@@ -710,7 +711,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             });
         }
 
-        // 🟢 [修改] 使用技能時更新快捷鍵順序
+        // 🟢 [核心] 使用技能時：自動取代並更新 LocalStorage
         function useSkill(skillId) {
             const info = SKILL_INFO[skillId];
             if (info && myPlayer.mp < info.mp) {
@@ -718,11 +719,18 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 return;
             }
 
-            // 更新快捷鍵記憶 (移到最前)
+            // 更新順序：
+            // 1. 如果已經在列表裡，先拿掉
             myShortcuts = myShortcuts.filter(sid => sid !== skillId);
+            // 2. 加到最前面
             myShortcuts.unshift(skillId);
+            // 3. 如果超過 4 個，刪掉最後一個 (擠掉最舊的)
+            if (myShortcuts.length > 4) {
+                myShortcuts.pop();
+            }
             
-            // 立即重繪快捷鍵 (提供即時反饋)
+            // 4. 存檔 & 即時更新介面
+            localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
             updateShortcutStates(myPlayer);
 
             if (roomId === 'world_boss') {
@@ -783,6 +791,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function leaveRoom() { socket.emit('leaveRoom', roomId); window.location.href = 'hub.html'; }
         
         function toggle(disabled) { 
+            // 鎖定主要按鈕
             document.querySelectorAll('.battle-action').forEach(b => {
                 b.disabled = disabled;
                 b.style.opacity = disabled ? "0.5" : "1";
