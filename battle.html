@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中3</title>
+    <title>戰鬥中</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -121,7 +121,7 @@
         }
         .afk-title { color: #c0392b; margin-top: 0; font-size: 16px; font-weight: bold; }
         .afk-desc { font-size: 10px; margin-bottom: 15px; color: #555; line-height: 1.5; }
-        .afk-question { font-size: 24px; font-weight: bold; margin: 20px 0; color: #2980b9; }
+        .afk-question { font-size: 20px; font-weight: bold; margin: 20px 0; color: #2980b9; word-break: break-all; }
         .afk-input { padding: 10px; font-size: 16px; width: 80%; text-align: center; margin-bottom: 10px; border: 2px solid #bdc3c7; border-radius: 5px; outline: none; }
         .afk-btn { background: #27ae60; color: white; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; width: 100%; border-radius: 5px; font-family: inherit; }
     </style>
@@ -132,12 +132,12 @@
     <div id="afk-modal">
         <div class="afk-box">
             <div class="afk-title">⚠️ 靈魂拷問 ⚠️</div>
-            <div class="afk-desc">系統偵測到你戰鬥很久了，<br>請證明你不是機器人！</div>
+            <div class="afk-desc">系統偵測到你操作過快，<br>請證明你不是機器人！</div>
             
             <div id="afk-timer-display" style="color:red; font-weight:bold; margin-bottom:10px;">剩餘時間: 60s</div>
             
-            <div class="afk-question" id="afk-question">1 + 1 = ?</div>
-            <input type="number" id="afk-answer" class="afk-input" placeholder="輸入答案">
+            <div class="afk-question" id="afk-question">...</div>
+            <input type="number" id="afk-answer" class="afk-input" placeholder="輸入數字答案">
             <button class="afk-btn" onclick="submitAfk()">確認</button>
         </div>
     </div>
@@ -285,7 +285,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
         let afkInterval = null; 
 
         socket.on('afkCheck', (data) => {
-            document.getElementById('afk-question').innerText = `${data.question} = ?`;
+            // [修正] 不再自動加 = ?，因為題目可能包含中文
+            document.getElementById('afk-question').innerText = data.question;
             document.getElementById('afk-answer').value = ''; 
             document.getElementById('afk-modal').style.display = 'flex';
 
@@ -308,8 +309,17 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         // 🟢 [新增] 驗證成功後解鎖按鈕
         socket.on('afkSuccess', () => {
-            // 重新判定按鈕狀態
+            // 關閉視窗
+            document.getElementById('afk-modal').style.display = 'none';
+            if (afkInterval) clearInterval(afkInterval);
+
+            // 重置按鈕
             resetButtons(); 
+            
+            // ⚡ 強制解鎖按鈕 (確保玩家可以繼續)
+            toggle(false); 
+            
+            log(`<span style="color:#2ecc71">驗證通過！請繼續戰鬥。</span>`);
         });
 
         function submitAfk() {
@@ -320,44 +330,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             document.getElementById('afk-modal').style.display = 'none';
             if (afkInterval) clearInterval(afkInterval);
         }
-
-        // 🟢 驗證回應 (修正版)
-    socket.on('afkResponse', (answer) => {
-        const player = gameState.players[socket.id];
-        // 必須確保玩家存在，且確實處於等待驗證狀態
-        if (!player || !player.isPendingAFK) return;
-
-        if (parseInt(answer) === player.afkAnswer) {
-            // ✅ 答對了
-            player.isPendingAFK = false;
-            player.actionCount = 0; // 重置計數器
-            
-            // 清除踢人計時器
-            if (player.afkTimer) {
-                clearTimeout(player.afkTimer);
-                delete player.afkTimer;
-            }
-            
-            // 獎勵
-            player.gold += 500;
-            
-            // 1. 更新玩家數據 (金幣)
-            socket.emit('playerStatsUpdate', player);
-            
-            // 2. 顯示成功訊息
-            socket.emit('battleLog', `<span style="color:#2ecc71">驗證成功！獲得 500 金幣獎勵。</span>`);
-            
-            // 3. 🟢 [關鍵] 通知前端解鎖
-            socket.emit('afkSuccess'); 
-            
-            saveMyData(socket.id);
-        } else {
-            // ❌ 答錯 -> 踢出
-            console.log(`[Bot偵測] ${player.name} 驗證失敗。`);
-            socket.emit('errorMessage', "驗證失敗！你被踢出了伺服器。");
-            socket.disconnect(true);
-        }
-    });
 
         setInterval(() => { if (socket.connected) socket.emit('heartbeat'); }, 20000);
         socket.on('disconnect', () => { showMsg("⚠️ 與伺服器連線中斷..."); });
