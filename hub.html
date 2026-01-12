@@ -183,20 +183,23 @@
             50% { transform: translateY(-5px); }
         }
 
-        /* 🟢 Modal 通用 (置中) */
+        /* 🟢 Modal 通用設定 (確保預設隱藏與置中) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); display: none;
-            flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.85); 
+            display: none; /* 預設不顯示 */
+            flex-direction: column; 
+            justify-content: center; /* 垂直置中 */
+            align-items: center;     /* 水平置中 */
             z-index: 9999;
         }
+        
         .modal-box {
             background: #fff; color: #2c3e50; width: 85%; max-width: 400px;
             border: 4px solid #f1c40f; border-radius: 10px; padding: 20px; text-align: left;
             font-family: 'Press Start 2P', monospace; max-height: 70vh; overflow-y: auto;
             position: relative;
-            /* 確保內容居中顯示 */
-            margin: auto; 
+            /* 移除 auto margin，依賴 flexbox 置中 */
         }
         .close-btn-x {
             position: absolute; top: 10px; right: 10px;
@@ -282,27 +285,26 @@
         <div class="notice-box">
             <div class="notice-title">📜 公會公告</div>
             <div class="notice-content">
-<b style="color:#c0392b;">【v2.8 更新公告：混沌與極限】</b>
+<b style="color:#c0392b;">【v2.8 更新公告：社交時代】</b>
 
-<b style="color:#9b59b6;">1. 🔮 全新挑戰：混沌裂縫 (Chaos Rift)</b>
+<b style="color:#2ecc71;">1. 👥 社交功能上線</b>
+- <b>好友系統：</b> 可發送好友申請，需對方確認。
+- <b>獨立私訊：</b> 私訊將有獨立的視窗，紀錄永久保存，不再被公頻洗版。
+
+<b style="color:#9b59b6;">2. 🔮 混沌裂縫 (Chaos Rift)</b>
 時空發生了劇烈震盪，未知的強敵出現了！
 - <b>等級範圍：</b> Lv.350 - Lv.500 (隨機生成)
 - <b>機制優化：</b> 新增「討伐列表」，現在可以開設房間等待隊友，不再強制單人開打！
 - <b>極品掉落：</b> 有機率掉落 <span style="color:#e67e22">虛空碎片、暗物質、宇宙鋼</span>，甚至傳說中的 <span style="color:#e74c3c">神秘禮物</span>！
 
-<b style="color:#e67e22;">2. 🔥 裝備強化上限解鎖 (+20)</b>
+<b style="color:#e67e22;">3. 🔥 裝備強化上限解鎖 (+20)</b>
 鐵匠突破了工藝極限，現在裝備可強化至 <b>+20</b>！
 - <b>+11 ~ +15：</b> 成功率大幅降低，失敗可能導致強化等級倒退。
 - <b>+16 ~ +20：</b> 神話領域。極低成功率，<span style="color:red">失敗將導致裝備破碎消失</span>。
-- 勇者們，準備好足夠的強化石與金幣了嗎？
 
-<b style="color:#3498db;">3. ⚔️ 戰鬥系統優化</b>
+<b style="color:#3498db;">4. ⚔️ 戰鬥系統優化</b>
 - <b>記憶技能：</b> 戰鬥介面新增 4 個「記憶技能」按鈕，自動記錄你最後使用的招式，操作更便捷！
 - <b>流暢度提升：</b> 修復了 MP 不足或死亡時，按鈕可能卡住無法操作的 Bug。
-
-<b style="color:#2ecc71;">4. 👥 社交功能上線</b>
-- <b>好友系統：</b> 可發送好友申請，需對方確認。
-- <b>獨立私訊：</b> 私訊將有獨立的視窗，紀錄永久保存，不再被公頻洗版。
 
 <b style="color:#f1c40f;">【其他通知】</b>
 🔥 歡迎加入<a href="https://discord.com/invite/7kKwf5yb" style="color:#f1c40f;">DC Group</a>
@@ -436,7 +438,7 @@
                     <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;">🏨 旅館</a>
                     <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🍳 廚房</a>
                     <a href="lottery.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🎱 彩票</a>
-                    
+                    <a href="cards.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">🎴 卡冊</a>
                     <a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;">📜 圖鑑</a>
                     
                     <div class="facility-btn" style="background:#3498db; border-color:#2980b9;" onclick="openFriends()">👥 好友</div>
@@ -444,7 +446,7 @@
 
                 <div style="margin-bottom: 15px; padding: 10px; border: 2px solid #9b59b6; background: rgba(0,0,0,0.3); border-radius: 8px; text-align: center; flex-shrink: 0;">
                     <h3 style="color: #9b59b6; margin: 5px 0; font-size: 12px;">🔮 混沌裂縫 (Lv.350-500)</h3>
-                    <p style="font-size: 10px; color: #ccc; margin-bottom: 8px;">每次進入，敵人的強度都會隨機變化！</p>
+                    <p style="font-size: 10px; color: #ccc; margin-bottom: 8px;">每次進入，敵人的強度都會隨機變化！(如要查看得到物品，請查閱圖鑑)</p>
                     <button class="btn" onclick="triggerSelectChaosBoss()" style="background: #8e44ad; color: #fff; width: 100%; text-align: center;">
                         查看討伐隊伍
                     </button>
@@ -478,8 +480,7 @@
                 overlay.style.opacity = '0';
                 setTimeout(() => { 
                     overlay.style.display = 'none'; 
-                    // 🟢 [回復] 移除自動彈出代碼，只透過按鈕觸發
-                    // document.getElementById('notice-modal').style.display = 'flex';
+                    // 🟢 [已確認] 這裡沒有自動開啟代碼，只會等待按鈕觸發
                 }, 500);
             }, 2000); 
         });
@@ -494,6 +495,15 @@
         let currentChatTarget = null;
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) { window.location.href = 'index.html'; }
+
+        // 🟢 [功能] 開啟/關閉公告
+        function openNotice() {
+            // 使用 flex 來確保 CSS 的置中效果生效
+            document.getElementById('notice-modal').style.display = 'flex'; 
+        }
+        function closeNotice() {
+            document.getElementById('notice-modal').style.display = 'none';
+        }
 
         // --- 好友系統邏輯 ---
         function openFriends() {
@@ -656,13 +666,6 @@
                 socket.emit('getFriends');
             }
         });
-
-        function openNotice() {
-            document.getElementById('notice-modal').style.display = 'flex';
-        }
-        function closeNotice() {
-            document.getElementById('notice-modal').style.display = 'none';
-        }
 
         const WORLD_MAP = [
             { id: 'city_1', name: '曙光平原', reqLv: 1, desc: '冒險的起點 (Lv.1-20)', monsters: [{ id: 'slime', name: '史萊姆', lv: 1 }, { id: 'rat', name: '大老鼠', lv: 3 }, { id: 'bee', name: '殺人蜂', lv: 5 }, { id: 'boar', name: '野豬', lv: 8 }, { id: 'thief', name: '盜賊', lv: 12 }, { id: 'wolf_king', name: '🐺 狼王 (BOSS)', lv: 15 }] },
