@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中</title>
+    <title>戰鬥中2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -108,10 +108,37 @@
             display: none;
             background: rgba(0,0,0,0.7); padding: 5px; border-radius: 4px;
         }
+
+        /* 🟢 防掛機驗證 Modal 樣式 */
+        #afk-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); z-index: 99999; 
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        .afk-box {
+            background: #fff; color: #2c3e50; padding: 20px; border-radius: 10px; 
+            border: 4px solid #e74c3c; text-align: center; max-width: 300px; width: 80%;
+        }
+        .afk-title { color: #c0392b; margin-top: 0; font-size: 16px; font-weight: bold; }
+        .afk-desc { font-size: 10px; margin-bottom: 15px; color: #555; line-height: 1.5; }
+        .afk-question { font-size: 24px; font-weight: bold; margin: 20px 0; color: #2980b9; }
+        .afk-input { padding: 10px; font-size: 16px; width: 80%; text-align: center; margin-bottom: 10px; border: 2px solid #bdc3c7; border-radius: 5px; outline: none; }
+        .afk-btn { background: #27ae60; color: white; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; width: 100%; border-radius: 5px; font-family: inherit; }
     </style>
 </head>
 <body>
     <div id="game-toast"></div>
+    
+    <div id="afk-modal">
+        <div class="afk-box">
+            <div class="afk-title">⚠️ 靈魂拷問 ⚠️</div>
+            <div class="afk-desc">系統偵測到你戰鬥很久了，<br>請證明你不是機器人！</div>
+            <div class="afk-question" id="afk-question">1 + 1 = ?</div>
+            <input type="number" id="afk-answer" class="afk-input" placeholder="輸入答案">
+            <button class="afk-btn" onclick="submitAfk()">確認</button>
+        </div>
+    </div>
+
     <div id="game-container">
         <div id="countdown-timer">⚠️ 滅團倒數: 09:00</div>
 
@@ -181,7 +208,7 @@
 // 指定連接到你的 https 網址
 const socket = io('https://mmo.ttctv-105.cc', { 
     transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
+    secure: true 
 });
 
         let isMyTurn = false; 
@@ -250,6 +277,21 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 }
             }, 100);
         });
+
+        // 🟢 [新增] AFK 驗證相關
+        socket.on('afkCheck', (data) => {
+            document.getElementById('afk-question').innerText = `${data.question} = ?`;
+            document.getElementById('afk-answer').value = ''; 
+            document.getElementById('afk-modal').style.display = 'flex';
+        });
+
+        function submitAfk() {
+            const ans = document.getElementById('afk-answer').value;
+            if (ans === '') return;
+            
+            socket.emit('afkResponse', parseInt(ans));
+            document.getElementById('afk-modal').style.display = 'none';
+        }
 
         setInterval(() => { if (socket.connected) socket.emit('heartbeat'); }, 20000);
         socket.on('disconnect', () => { showMsg("⚠️ 與伺服器連線中斷..."); });
@@ -449,7 +491,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             log(`<span style="color:#e74c3c">受到 ${d.damage} 傷害！</span>`); 
         });
 
-        // 🟢 [修正] 處理戰鬥勝利及顯示獎勵
         socket.on('battleWon', (data) => {
             console.log("收到勝利數據:", data); 
 
@@ -468,7 +509,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 showNormalVictoryBtn();
             }
 
-            // 🟢 [關鍵] 檢查並顯示掉落的卡片/物品
             if (data.rewards && data.rewards.length > 0) {
                 data.rewards.forEach(reward => {
                     log(`<span style="color:#9b59b6; font-weight:bold; border:1px solid #9b59b6; padding:2px; background:rgba(155, 89, 182, 0.2);">🎁 獲得戰利品: [${reward}]</span>`);
