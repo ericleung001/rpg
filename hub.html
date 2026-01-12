@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -240,7 +240,7 @@
         .btn-pm { background: #3498db; color: white; border-color: #2980b9; }
         .btn-del { background: #e74c3c; color: white; border-color: #c0392b; }
 
-        /* 🟢 私訊專用視窗樣式 */
+        /* 私訊專用視窗樣式 */
         #pm-modal { z-index: 10000; }
         #pm-history {
             background: #f9f9f9; border: 1px solid #ddd; height: 250px; 
@@ -280,21 +280,33 @@
         <div class="notice-box">
             <div class="notice-title">📜 公會公告</div>
             <div class="notice-content">
-<b style="color:#c0392b;">【最新更新 v2.8 社交時代】</b>
-1. 👥 好友系統上線：可發送好友申請，需對方確認。
-2. 💌 獨立私訊視窗：私訊將有獨立的聊天記錄，不再與公頻混雜，且永久保存。
+<b style="color:#c0392b;">【v2.8 更新公告：混沌與極限】</b>
 
-<b style="color:#c0392b;">【最新更新 v2.7 幸運與榮耀】</b>
-為著遊戲公平性及之後發展，
-已更新怪物數值及跌落物，採集也修正得到物品。
+<b style="color:#9b59b6;">1. 🔮 全新挑戰：混沌裂縫 (Chaos Rift)</b>
+時空發生了劇烈震盪，未知的強敵出現了！
+- <b>等級範圍：</b> Lv.350 - Lv.500 (隨機生成)
+- <b>機制優化：</b> 新增「討伐列表」，現在可以開設房間等待隊友，不再強制單人開打！
+- <b>極品掉落：</b> 有機率掉落 <span style="color:#e67e22">虛空碎片、暗物質、宇宙鋼</span>，甚至傳說中的 <span style="color:#e74c3c">神秘禮物</span>！
 
-1. 🎱 全新功能：彩票 (Lottery)
-開獎時間： 每日晚上 22:00 (HKT) 自動攪珠。
-玩法： 每注 10,000 G，自選 6 個號碼 (1-49)。
-獎勵： 頭獎獨得 80% 累積獎金池！
+<b style="color:#e67e22;">2. 🔥 裝備強化上限解鎖 (+20)</b>
+鐵匠突破了工藝極限，現在裝備可強化至 <b>+20</b>！
+- <b>+11 ~ +15：</b> 成功率大幅降低，失敗可能導致強化等級倒退。
+- <b>+16 ~ +20：</b> 神話領域。極低成功率，<span style="color:red">失敗將導致裝備破碎消失</span>。
+- 勇者們，準備好足夠的強化石與金幣了嗎？
 
-2. ☠️ 世界 BOSS 優化
-固定排程： 虛空滅世者將於每晚 21:00 (HKT) 準時降臨，限時 9 分鐘！
+<b style="color:#3498db;">3. ⚔️ 戰鬥系統優化</b>
+- <b>記憶技能：</b> 戰鬥介面新增 4 個「記憶技能」按鈕，自動記錄你最後使用的招式，操作更便捷！
+- <b>流暢度提升：</b> 修復了 MP 不足或死亡時，按鈕可能卡住無法操作的 Bug。
+
+<b style="color:#2ecc71;">4. 👥 社交功能上線</b>
+- <b>好友系統：</b> 可發送好友申請，需對方確認。
+- <b>獨立私訊：</b> 私訊將有獨立的視窗，紀錄永久保存，不再被公頻洗版。
+
+<b style="color:#f1c40f;">【其他通知】</b>
+🔥 歡迎加入<a href="https://discord.com/invite/7kKwf5yb" style="color:#f1c40f;">DC Group</a>
+
+<b style="color:#e74c3c;">【維護提醒】</b>
+2026/01/09 22:05-23:00 更新Server。
             </div>
             <button class="close-notice-btn" onclick="closeNotice()">我知道了</button>
         </div>
@@ -430,7 +442,7 @@
 
                 <div style="margin-bottom: 15px; padding: 10px; border: 2px solid #9b59b6; background: rgba(0,0,0,0.3); border-radius: 8px; text-align: center; flex-shrink: 0;">
                     <h3 style="color: #9b59b6; margin: 5px 0; font-size: 12px;">🔮 混沌裂縫 (Lv.350-500)</h3>
-                    <p style="font-size: 10px; color: #ccc; margin-bottom: 8px;">每次進入，敵人的強度都會隨機變化！</p>
+                    <p style="font-size: 10px; color: #ccc; margin-bottom: 8px;">每次進入，敵人的強度都會隨機變化！(如要查看得到物品，請查閱圖鑑)</p>
                     <button class="btn" onclick="triggerSelectChaosBoss()" style="background: #8e44ad; color: #fff; width: 100%; text-align: center;">
                         查看討伐隊伍
                     </button>
@@ -462,18 +474,22 @@
             setTimeout(() => {
                 const overlay = document.getElementById('loading-overlay');
                 overlay.style.opacity = '0';
-                setTimeout(() => { overlay.style.display = 'none'; }, 500);
+                setTimeout(() => { 
+                    overlay.style.display = 'none'; 
+                    // 🟢 載入後自動彈出公告
+                    document.getElementById('notice-modal').style.display = 'flex';
+                }, 500);
             }, 2000); 
         });
 
         const socket = io('https://mmo.ttctv-105.cc', { 
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         
         let myLevel = 1;
-        let myName = ""; // 🟢 儲存自己名字，用於判斷私訊發送者
-        let currentChatTarget = null; // 🟢 當前私訊對象
+        let myName = ""; 
+        let currentChatTarget = null;
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) { window.location.href = 'index.html'; }
 
@@ -500,7 +516,7 @@
             }
         }
 
-        // --- 🟢 私訊視窗邏輯 ---
+        // --- 私訊視窗邏輯 ---
         function startPM(name) {
             currentChatTarget = name;
             document.getElementById('friends-modal').style.display = 'none';
@@ -508,7 +524,7 @@
             document.getElementById('pm-target-name').innerText = name;
             document.getElementById('pm-history').innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">載入記錄中...</div>';
             
-            socket.emit('getPrivateHistory', name); // 請求歷史訊息
+            socket.emit('getPrivateHistory', name); 
         }
 
         function closePM() {
@@ -802,6 +818,9 @@
         });
 
         function appendChat(name, msg) {
+            // 🟢 [新增] 過濾系統訊息
+            if (name === '系統') return; 
+
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
             
