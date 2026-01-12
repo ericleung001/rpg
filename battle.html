@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中2</title>
+    <title>戰鬥中</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -133,6 +133,9 @@
         <div class="afk-box">
             <div class="afk-title">⚠️ 靈魂拷問 ⚠️</div>
             <div class="afk-desc">系統偵測到你戰鬥很久了，<br>請證明你不是機器人！</div>
+            
+            <div id="afk-timer-display" style="color:red; font-weight:bold; margin-bottom:10px;">剩餘時間: 60s</div>
+            
             <div class="afk-question" id="afk-question">1 + 1 = ?</div>
             <input type="number" id="afk-answer" class="afk-input" placeholder="輸入答案">
             <button class="afk-btn" onclick="submitAfk()">確認</button>
@@ -279,10 +282,28 @@ const socket = io('https://mmo.ttctv-105.cc', {
         });
 
         // 🟢 [新增] AFK 驗證相關
+        let afkInterval = null; 
+
         socket.on('afkCheck', (data) => {
             document.getElementById('afk-question').innerText = `${data.question} = ?`;
             document.getElementById('afk-answer').value = ''; 
             document.getElementById('afk-modal').style.display = 'flex';
+
+            // 🟢 倒數計時顯示
+            let timeLeft = data.timeout || 60;
+            const timerDisplay = document.getElementById('afk-timer-display');
+            timerDisplay.innerText = `剩餘時間: ${timeLeft}s`;
+
+            if (afkInterval) clearInterval(afkInterval);
+
+            afkInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.innerText = `剩餘時間: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(afkInterval);
+                    timerDisplay.innerText = "時間到！";
+                }
+            }, 1000);
         });
 
         function submitAfk() {
@@ -291,6 +312,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             
             socket.emit('afkResponse', parseInt(ans));
             document.getElementById('afk-modal').style.display = 'none';
+            if (afkInterval) clearInterval(afkInterval);
         }
 
         setInterval(() => { if (socket.connected) socket.emit('heartbeat'); }, 20000);
