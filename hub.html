@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -14,6 +14,8 @@
             margin: 0; padding: 0; 
             height: 100dvh; 
             overflow: hidden; 
+            overscroll-behavior: none;
+            user-select: none; -webkit-user-select: none;
             display: flex; justify-content: center; 
         }
 
@@ -37,7 +39,22 @@
             width: 100%;
         }
 
-        /* ... 保留原本的 CSS ... */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #2c3e50; 
+            z-index: 99999; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease-out;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid #fff; border-top: 4px solid #f1c40f;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
         .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: 30px;}
         .logout-btn { font-size: 10px; color: #e74c3c; cursor: pointer; text-decoration: underline; white-space: nowrap; padding: 5px; }
         h1 { font-size: 16px; margin: 0; white-space: nowrap; }
@@ -50,15 +67,27 @@
             font-size: 10px; box-sizing: border-box; text-align: left;
             flex-shrink: 0; 
         }
-        .status-row-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #555; padding-bottom: 6px; }
+
+        .status-row-top {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #555; padding-bottom: 6px;
+        }
         .status-item { display: flex; gap: 5px; align-items: center; }
         .label { color: #f1c40f; font-weight: bold; }
         .val { color: white; font-weight: bold; }
-        .status-row-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        .status-row-bars {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+        }
         .bar-container { display: flex; flex-direction: column; }
         .bar-label { font-size: 9px; margin-bottom: 4px; display: flex; justify-content: space-between; }
         .bar-bg { width:100%; height:6px; background:#555; border-radius:3px; overflow:hidden; }
-        .status-row-stats { display: flex; justify-content: space-around; background: rgba(0,0,0,0.2); padding: 6px; border-radius: 4px; }
+        
+        .status-row-stats {
+            display: flex; justify-content: space-around; background: rgba(0,0,0,0.2);
+            padding: 6px; border-radius: 4px; 
+        }
+
         .exp-container { margin-top: 2px; }
         .exp-bar { width: 100%; height: 6px; background: #555; border: 1px solid #fff; border-radius: 4px; overflow: hidden; }
         .exp-fill { height: 100%; background: #3498db; width: 0%; transition: width 0.3s; }
@@ -81,22 +110,36 @@
         
         .facility-btn {
             padding: 0; 
-            font-family: inherit; font-size: 10px; font-weight: bold;
-            cursor: pointer; border: 2px solid #bdc3c7; color: white; text-decoration: none; 
+            font-family: inherit; 
+            font-size: 10px; 
+            font-weight: bold;
+            cursor: pointer; 
+            border: 2px solid #bdc3c7; color: white; text-decoration: none; 
             display: flex; align-items: center; justify-content: center;
-            background: #34495e; border-radius: 6px; height: 38px; white-space: nowrap; 
+            background: #34495e; 
+            border-radius: 6px;
+            height: 38px; 
+            white-space: nowrap; 
             box-shadow: 2px 2px 0 rgba(0,0,0,0.3); 
-            touch-action: manipulation; transition: transform 0.05s;
+            touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent; 
+            transition: transform 0.05s;
         }
         .facility-btn:active { transform: scale(0.95); box-shadow: none; filter: brightness(0.9); }
         
-        .map-container { padding-right: 5px; padding-bottom: 60px; }
+        .map-container {
+            padding-right: 5px;
+            padding-bottom: 60px; 
+        }
+
         .btn { 
             padding: 12px 8px; font-family: inherit; font-size: 12px; cursor: pointer; 
             border: 2px solid #bdc3c7; color: white; text-decoration: none; 
             display: block; text-shadow: 1px 1px 0 #000; background: #34495e; 
             position: relative; text-align: left; margin-bottom: 8px; border-radius: 6px;
-            touch-action: manipulation; transition: transform 0.05s, background-color 0.1s; 
+            touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.05s, background-color 0.1s; 
         }
         .btn:active { transform: scale(0.98); filter: brightness(0.8); background: #2980b9; }
         .locked { background: #555; color: #888; border-color: #555; pointer-events: none; }
@@ -105,8 +148,102 @@
         .room-tag { font-size: 9px; padding: 2px 4px; border-radius: 4px; float: right; margin-left: 5px; }
         .status-waiting { background: #27ae60; color: white; }
         .status-fighting { background: #c0392b; color: white; }
+        
+        #chat-container {
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7;
+            display: flex; flex-direction: column; font-size: 10px; z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom);
+            transition: height 0.3s ease-in-out;
+            height: 30px; 
+        }
+        
+        #chat-header {
+            height: 30px; background: #34495e; color: #fff; line-height: 30px; 
+            cursor: pointer; font-weight: bold; border-bottom: 1px solid #555;
+            display: flex; justify-content: center; align-items: center;
+            touch-action: manipulation;
+            flex-shrink: 0; 
+        }
+        #chat-header:hover { background: #2c3e50; }
 
-        /* 公告/通用 Modal 樣式 */
+        .chat-open { height: 40vh !important; }
+        #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+        .chat-open #chat-body { display: flex; } 
+
+        #chat-history { flex: 1; overflow-y: auto; padding: 8px; text-align: left; color: white; }
+        #chat-input-area { display: flex; border-top: 1px solid #555; height: 40px; flex-shrink: 0; }
+        #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 10px; font-family: inherit; font-size: 12px; outline: none; }
+        #chat-send { background: #2980b9; color: white; border: none; padding: 0 15px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; touch-action: manipulation; }
+
+        #toast-notification {
+            position: fixed; top: -60px; left: 50%; transform: translateX(-50%);
+            background: #f1c40f; color: #000; border: 3px solid #fff;
+            padding: 10px 20px; border-radius: 30px; font-size: 12px; font-weight: bold;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.6); z-index: 1000;
+            transition: top 0.5s ease-in-out; white-space: nowrap;
+        }
+
+        #notice-btn {
+            position: fixed; top: 80px; left: 10px;
+            width: 40px; height: 40px;
+            background: #e67e22; border: 2px solid #fff;
+            border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; z-index: 90;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        #notice-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            z-index: 9999;
+        }
+        .notice-box {
+            background: #fff; color: #2c3e50; width: 85%; max-width: 400px;
+            border: 4px solid #f1c40f; border-radius: 10px; padding: 20px; text-align: left;
+            font-family: 'Press Start 2P', monospace; max-height: 70vh; overflow-y: auto;
+        }
+        .notice-title { font-size: 16px; color: #d35400; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        .notice-content { font-size: 10px; line-height: 1.8; white-space: pre-wrap; }
+        .close-notice-btn {
+            margin-top: 20px; width: 100%; padding: 10px; background: #34495e; 
+            color: white; border: none; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 12px;
+        }
+
+        /* 英雄榜樣式 */
+        .ranking-box {
+            width: 100%; max-width: 600px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #f1c40f;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            text-align: left;
+            box-sizing: border-box;
+            box-shadow: 0 0 10px rgba(241, 196, 15, 0.2);
+            flex-shrink: 0; 
+        }
+        .rank-title {
+            color: #f1c40f; font-size: 12px; font-weight: bold; 
+            text-align: center; margin-bottom: 8px; border-bottom: 1px dashed #555; padding-bottom: 5px;
+        }
+        .rank-row {
+            display: flex; justify-content: space-between; 
+            font-size: 10px; margin-bottom: 4px; padding: 4px 5px;
+        }
+        .rank-row:nth-child(odd) { background: rgba(255,255,255,0.05); }
+        .rank-1 { color: #ffd700; font-weight: bold; text-shadow: 0 0 5px #ffd700; }
+        .rank-2 { color: #c0c0c0; font-weight: bold; }
+        .rank-3 { color: #cd7f32; font-weight: bold; }
+
+        /* 公告/通用 Modal 樣式 (for Friends) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none;
@@ -140,37 +277,6 @@
         }
         .btn-pm { background: #3498db; color: white; border-color: #2980b9; }
         .btn-del { background: #e74c3c; color: white; border-color: #c0392b; }
-        
-        /* 聊天室 */
-        #chat-container {
-            position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7;
-            display: flex; flex-direction: column; font-size: 10px; z-index: 100;
-            padding-bottom: env(safe-area-inset-bottom);
-            transition: height 0.3s ease-in-out;
-            height: 30px; 
-        }
-        #chat-header {
-            height: 30px; background: #34495e; color: #fff; line-height: 30px; 
-            cursor: pointer; font-weight: bold; border-bottom: 1px solid #555;
-            display: flex; justify-content: center; align-items: center;
-            touch-action: manipulation; flex-shrink: 0; 
-        }
-        .chat-open { height: 40vh !important; }
-        #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
-        .chat-open #chat-body { display: flex; } 
-        #chat-history { flex: 1; overflow-y: auto; padding: 8px; text-align: left; color: white; }
-        #chat-input-area { display: flex; border-top: 1px solid #555; height: 40px; flex-shrink: 0; }
-        #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 10px; font-family: inherit; font-size: 12px; outline: none; }
-        #chat-send { background: #2980b9; color: white; border: none; padding: 0 15px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; touch-action: manipulation; }
-
-        #toast-notification {
-            position: fixed; top: -60px; left: 50%; transform: translateX(-50%);
-            background: #f1c40f; color: #000; border: 3px solid #fff;
-            padding: 10px 20px; border-radius: 30px; font-size: 12px; font-weight: bold;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.6); z-index: 1000;
-            transition: top 0.5s ease-in-out; white-space: nowrap;
-        }
 
         @media (min-width: 1024px) {
             body { background-color: #222; }
@@ -180,25 +286,92 @@
             #chat-header { cursor: default; background: #2c3e50; }
             #chat-header:active { pointer-events: none; }
             #chat-body { display: flex !important; height: calc(100% - 30px); }
+            .main-content { margin-bottom: 0; }
+            #notice-btn { left: calc(50% - 540px); }
         }
     </style>
 </head>
 <body>
     
-    <div id="loading-overlay" style="display:none;"></div>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div style="font-size:12px; margin-top:10px;">正在讀取玩家資料...</div>
+        <div style="font-size:10px; color:#95a5a6; margin-top:5px;">(請稍候)</div>
+    </div>
+
     <div id="toast-notification"> 訊息提示</div>
+    <div id="notice-btn" onclick="openNotice()">📢</div>
+
+    <div id="notice-modal">
+        <div class="notice-box">
+            <div class="notice-title">📜 公會公告</div>
+            <div class="notice-content">
+<b style="color:#c0392b;">【最新更新 v2.7 幸運與榮耀】</b>
+為著遊戲公平性及之後發展，
+已更新怪物數值及跌落物，採集也修正得到物品。
+
+注意：分解暫時有bug, 如身上有多件相同裝備，
+但該裝備有裝備上身的話，
+會分解不到，如需分解，請將裝備除下。
+
+1. 🎱 全新功能：彩票 (Lottery)
+開獎時間： 每日晚上 22:00 (HKT) 自動攪珠。
+玩法： 每注 10,000 G，自選 6 個號碼 (1-49)。
+獎勵： 頭獎獨得 80% 累積獎金池！
+優化： 購買後紀錄會永久保存，重整頁面 (F5) 亦可隨時查閱「我的彩票」。
+
+2. ☠️ 世界 BOSS 優化
+固定排程： 虛空滅世者將於每晚 21:00 (HKT) 準時降臨，限時 9 分鐘！
+英雄榜： 大廳 (Hub) 新增 「上屆討伐英雄榜」，隨時查看前 5 名輸出大神及傷害數據。
+修復： 修正結算時排名顯示異常及重複召喚的 Bug。
+
+<b style="color:#2980b9;">【其他通知】</b>
+🔥 歡迎加入<a href="https://discord.com/invite/7kKwf5yb" style="color:#f1c40f;">DC Group</a>
+
+<b style="color:#27ae60;">【維護提醒】</b>
+彩票2026/01/06下午6時正暫停，請留意。
+另外怪物血量會觀察一晚再作調整。
+2026/01/06 22:05再會更新Server。
+
+<b style="color:#8e44ad;">【🌌 神話技能指南 (Lv.200+)】</b>
+突破凡人極限，掌握宇宙真理的力量！
+
+🟣 <b>[Lv.200] 虛空碎擊 (1000 MP)</b>
+<span style="font-size:9px; color:#aaa;">"凝聚虛空之力，粉碎萬物。"</span>
+造成 <b>10倍</b> 傷害。
+這是踏入神話領域的入門磚，威力遠超次元斬。
+
+⚫ <b>[Lv.240] 熱寂·衰變 (2500 MP)</b>
+<span style="font-size:9px; color:#aaa;">"萬物終將歸於虛無，防禦毫無意義。"</span>
+<b>BOSS剋星！</b>造成目標最大生命 <b>5%</b> 的<span style="color:#e74c3c">真實傷害</span>。
+無視防禦力，專門對付百億血量的神級怪物。
+
+✨ <b>[Lv.280] 宇宙大爆炸 (5000 MP)</b>
+<span style="font-size:9px; color:#aaa;">"模擬宇宙誕生的奇異點，毀滅一切。"</span>
+造成 <b>25倍</b> 的極致毀滅傷害。
+耗魔巨大，但能瞬間蒸發敵人的最強奧義。
+            </div>
+            <button class="close-notice-btn" onclick="closeNotice()">我知道了</button>
+        </div>
+    </div>
 
     <div id="friends-modal" class="modal-overlay">
         <div class="modal-box">
             <button class="close-btn-x" onclick="document.getElementById('friends-modal').style.display='none'">×</button>
-            <div style="font-size:16px; font-weight:bold; color:#d35400; margin-bottom:15px; text-align:center;">👥 好友名單</div>
+            <div style="font-size:16px; font-weight:bold; color:#d35400; margin-bottom:15px; text-align:center;">👥 好友系統</div>
             
-            <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <div style="display:flex; gap:5px; margin-bottom:15px; border-bottom:1px dashed #ccc; padding-bottom:10px;">
                 <input type="text" id="friend-input" placeholder="輸入玩家名字" style="flex:1; padding:8px; font-size:10px;">
-                <button onclick="addFriend()" style="background:#27ae60; color:white; border:none; padding:8px; cursor:pointer; font-size:10px;">新增</button>
+                <button onclick="sendRequest()" style="background:#27ae60; color:white; border:none; padding:8px; cursor:pointer; font-size:10px; border-radius:4px;">申請</button>
             </div>
             
-            <div id="friend-list-content" style="min-height:100px; max-height:300px; overflow-y:auto; border:1px solid #eee; padding:5px;">
+            <div id="request-section" style="display:none; margin-bottom:10px;">
+                <div style="font-size:12px; color:#e67e22; margin-bottom:5px;">📩 好友申請</div>
+                <div id="request-list-content" style="max-height:100px; overflow-y:auto; border:1px solid #f39c12; padding:5px; background:#fffbf0; border-radius:4px;"></div>
+            </div>
+
+            <div style="font-size:12px; color:#3498db; margin-bottom:5px;">📋 好友名單</div>
+            <div id="friend-list-content" style="min-height:150px; max-height:250px; overflow-y:auto; border:1px solid #eee; padding:5px;">
                 <div style="text-align:center; color:#aaa; font-size:10px; margin-top:20px;">載入中...</div>
             </div>
         </div>
@@ -222,16 +395,57 @@
                 <div class="status-row-bars">
                     <div class="bar-container">
                         <div class="bar-label"><span style="color:#e74c3c">HP</span> <span id="hp">...</span></div>
-                        <div class="bar-bg"><div id="hp-bar-fill" style="width:100%; height:100%; background:#e74c3c;"></div></div>
+                        <div class="bar-bg">
+                            <div id="hp-bar-fill" style="width:100%; height:100%; background:#e74c3c; transition:width 0.3s;"></div>
+                        </div>
                     </div>
                     <div class="bar-container">
                         <div class="bar-label"><span style="color:#3498db">MP</span> <span id="mp">...</span></div>
-                        <div class="bar-bg"><div id="mp-bar-fill" style="width:100%; height:100%; background:#3498db;"></div></div>
+                        <div class="bar-bg">
+                            <div id="mp-bar-fill" style="width:100%; height:100%; background:#3498db; transition:width 0.3s;"></div>
+                        </div>
                     </div>
+                </div>
+
+                <div class="status-row-stats">
+                    <div class="status-item"><span class="label">⚔️ ATK</span> <span id="atk" class="val">0</span></div>
+                    <div class="status-item"><span class="label">🛡️ DEF</span> <span id="def" class="val">0</span></div>
+                </div>
+
+                <div class="exp-container">
+                    <div style="display:flex; justify-content:space-between; font-size:8px; color:#bdc3c7; margin-bottom:1px;">
+                        <span>EXP</span> <span id="exp-txt">0/100</span>
+                    </div>
+                    <div class="exp-bar"><div id="exp-fill" class="exp-fill"></div></div>
                 </div>
             </div>
 
             <div class="main-content">
+                
+                <div id="boss-banner" style="display:none; background: linear-gradient(90deg, #2c3e50, #c0392b); padding: 15px; border-radius: 8px; border: 2px solid #e74c3c; margin-bottom: 15px; text-align: left; box-shadow: 0 0 15px #c0392b; animation: pulse 2s infinite; flex-shrink: 0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="color:#f1c40f; font-weight:bold; font-size:14px; margin-bottom:5px;">☠️ 虛空滅世者 降臨！</div>
+                            <div style="color:#fff; font-size:10px;">
+                                <div style="margin-bottom:2px;">全服 HP: <span id="boss-hp-text">計算中...</span></div>
+                                <div style="color:#e74c3c; font-weight:bold;">⏱️ 剩餘時間: <span id="boss-timer">--:--</span></div>
+                            </div>
+                        </div>
+                        <button onclick="joinBoss()" style="background:#f1c40f; color:#000; border:none; padding:10px 20px; font-weight:bold; border-radius:5px; cursor:pointer;">
+                            ⚔️ 立即討伐
+                        </button>
+                    </div>
+                    <div style="width:100%; height:8px; background:#333; margin-top:10px; border-radius:4px;">
+                        <div id="boss-hp-bar" style="width:100%; height:100%; background:#e74c3c; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+
+                <div class="ranking-box" id="boss-ranking-area" style="display:none;">
+                    <div class="rank-title">🏆 上屆討伐英雄榜</div>
+                    <div id="ranking-list">
+                        </div>
+                </div>
+
                 <div class="section-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px; flex-shrink: 0;">城鎮設施</div>
                 
                 <div class="facility-grid">
@@ -246,12 +460,14 @@
                     <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🍳 廚房</a>
                     <a href="lottery.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🎱 彩票</a>
                     <a href="cards.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">🎴 卡冊</a>
+                    <a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;">📜 圖鑑</a>
                     
                     <div class="facility-btn" style="background:#3498db; border-color:#2980b9;" onclick="openFriends()">👥 好友</div>
                 </div>
 
                 <div style="margin-bottom: 15px; padding: 10px; border: 2px solid #9b59b6; background: rgba(0,0,0,0.3); border-radius: 8px; text-align: center; flex-shrink: 0;">
                     <h3 style="color: #9b59b6; margin: 5px 0; font-size: 12px;">🔮 混沌裂縫 (Lv.350-500)</h3>
+                    <p style="font-size: 10px; color: #ccc; margin-bottom: 8px;">每次進入，敵人的強度都會隨機變化！</p>
                     <button class="btn" onclick="triggerSelectChaosBoss()" style="background: #8e44ad; color: #fff; width: 100%; text-align: center;">
                         查看討伐隊伍
                     </button>
@@ -279,10 +495,18 @@
     
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const overlay = document.getElementById('loading-overlay');
+                overlay.style.opacity = '0';
+                setTimeout(() => { overlay.style.display = 'none'; }, 500);
+            }, 2000); 
+        });
+
         const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         
         let myLevel = 1;
         let myToken = localStorage.getItem('rpg_token');
@@ -291,14 +515,20 @@
         // --- 🟢 好友系統邏輯 ---
         function openFriends() {
             document.getElementById('friends-modal').style.display = 'flex';
-            socket.emit('getFriends'); // 請求好友列表
+            socket.emit('getFriends'); 
         }
 
-        function addFriend() {
+        // 發送申請
+        function sendRequest() {
             const name = document.getElementById('friend-input').value.trim();
             if(!name) return;
-            socket.emit('addFriend', name);
+            socket.emit('sendFriendRequest', name);
             document.getElementById('friend-input').value = '';
+        }
+
+        // 處理收到的申請 (接受/拒絕)
+        function answerRequest(name, action) {
+            socket.emit('handleFriendRequest', { requesterName: name, action: action });
         }
 
         function removeFriend(name) {
@@ -309,58 +539,75 @@
 
         function startPM(name) {
             document.getElementById('friends-modal').style.display = 'none';
-            // 打開聊天室並填入密語指令
             const chatContainer = document.getElementById('chat-container');
-            const chatInput = document.getElementById('chat-input');
-            
             if (window.innerWidth < 1024) {
                 chatContainer.classList.add('chat-open');
                 document.getElementById('chat-header').innerText = " 收起";
             }
-            
-            // 這裡我們用一個簡單的機制：發送時判斷是否為私訊
-            // 前端不需特殊指令，我們直接調用 socket.emit('privateMessage')
-            // 但為了簡單起見，我們將私訊直接帶入輸入框
-            
-            // 💡 替代方案：點擊後彈出 prompt 輸入訊息，直接發送
             const msg = prompt(`發送私訊給 [${name}]:`);
             if (msg) {
                 socket.emit('privateMessage', { targetName: name, msg: msg });
             }
         }
 
-        socket.on('friendListUpdate', (list) => {
-            const container = document.getElementById('friend-list-content');
-            container.innerHTML = '';
+        // 接收好友列表與申請列表
+        socket.on('friendListUpdate', (data) => {
+            // data 結構: { friends: [], requests: [] }
+            // 為了相容舊版代碼，如果 data 是陣列(舊版)，就當作沒有 request
+            const friends = Array.isArray(data) ? data : data.friends;
+            const requests = Array.isArray(data) ? [] : data.requests;
+
+            // 1. 渲染申請列表
+            const reqSection = document.getElementById('request-section');
+            const reqContainer = document.getElementById('request-list-content');
+            reqContainer.innerHTML = '';
             
-            if (list.length === 0) {
-                container.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">還沒有好友，快去加人吧！</div>';
-                return;
+            if (requests && requests.length > 0) {
+                reqSection.style.display = 'block';
+                requests.forEach(name => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px dashed #ccc; font-size:10px;";
+                    div.innerHTML = `
+                        <span style="font-weight:bold;">${name}</span>
+                        <div>
+                            <button onclick="answerRequest('${name}', 'accept')" style="background:#2ecc71; border:none; color:white; cursor:pointer; padding:2px 5px; border-radius:3px;">✔</button>
+                            <button onclick="answerRequest('${name}', 'reject')" style="background:#e74c3c; border:none; color:white; cursor:pointer; padding:2px 5px; border-radius:3px;">✘</button>
+                        </div>
+                    `;
+                    reqContainer.appendChild(div);
+                });
+            } else {
+                reqSection.style.display = 'none';
             }
 
-            // 排序：在線的排前面
-            list.sort((a, b) => (a.isOnline === b.isOnline) ? 0 : a.isOnline ? -1 : 1);
+            // 2. 渲染好友列表
+            const friendContainer = document.getElementById('friend-list-content');
+            friendContainer.innerHTML = '';
+            
+            if (friends.length === 0) {
+                friendContainer.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">還沒有好友，快去加人吧！</div>';
+            } else {
+                friends.sort((a, b) => (a.isOnline === b.isOnline) ? 0 : a.isOnline ? -1 : 1);
+                friends.forEach(f => {
+                    const div = document.createElement('div');
+                    div.className = 'friend-row';
+                    const statusClass = f.isOnline ? 'status-on' : 'status-off';
+                    const statusText = f.isOnline ? '在線' : '離線';
+                    const color = f.isOnline ? '#2c3e50' : '#aaa';
 
-            list.forEach(f => {
-                const div = document.createElement('div');
-                div.className = 'friend-row';
-                
-                const statusClass = f.isOnline ? 'status-on' : 'status-off';
-                const statusText = f.isOnline ? '在線' : '離線';
-                const color = f.isOnline ? '#2c3e50' : '#aaa';
-
-                div.innerHTML = `
-                    <div style="display:flex; align-items:center; color:${color}">
-                        <div class="friend-status ${statusClass}" title="${statusText}"></div>
-                        <span class="friend-name">${f.name}</span>
-                    </div>
-                    <div class="friend-actions">
-                        <button class="btn-pm" onclick="startPM('${f.name}')">私訊</button>
-                        <button class="btn-del" onclick="removeFriend('${f.name}')">刪除</button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
+                    div.innerHTML = `
+                        <div style="display:flex; align-items:center; color:${color}">
+                            <div class="friend-status ${statusClass}" title="${statusText}"></div>
+                            <span class="friend-name">${f.name}</span>
+                        </div>
+                        <div class="friend-actions">
+                            <button class="btn-pm" onclick="startPM('${f.name}')">私訊</button>
+                            <button class="btn-del" onclick="removeFriend('${f.name}')">刪除</button>
+                        </div>
+                    `;
+                    friendContainer.appendChild(div);
+                });
+            }
         });
 
         // 當需要刷新好友列表時 (例如新增/刪除成功後)
@@ -370,7 +617,13 @@
             }
         });
 
-        // 🟢 [更新] 完整的世界地圖
+        function openNotice() {
+            document.getElementById('notice-modal').style.display = 'flex';
+        }
+        function closeNotice() {
+            document.getElementById('notice-modal').style.display = 'none';
+        }
+
         const WORLD_MAP = [
             { id: 'city_1', name: '曙光平原', reqLv: 1, desc: '冒險的起點 (Lv.1-20)', monsters: [{ id: 'slime', name: '史萊姆', lv: 1 }, { id: 'rat', name: '大老鼠', lv: 3 }, { id: 'bee', name: '殺人蜂', lv: 5 }, { id: 'boar', name: '野豬', lv: 8 }, { id: 'thief', name: '盜賊', lv: 12 }, { id: 'wolf_king', name: '🐺 狼王 (BOSS)', lv: 15 }] },
             { id: 'city_2', name: '迷霧沼澤', reqLv: 1, desc: '充滿毒氣與亡靈 (Lv.20-40)', monsters: [{ id: 'snake', name: '毒蛇', lv: 22 }, { id: 'zombie', name: '腐屍', lv: 25 }, { id: 'skeleton', name: '骷髏兵', lv: 28 }, { id: 'ghoul', name: '食屍鬼', lv: 32 }, { id: 'witch', name: '沼澤女巫', lv: 35 }, { id: 'hydra', name: '🐍 九頭蛇 (BOSS)', lv: 40 }] },
@@ -512,12 +765,9 @@
         
         socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
         socket.on('battleLog', (msg) => {
-             // 處理後端回傳的 battleLog (含好友通知)
-             // 這裡我們只將它視為聊天室訊息插入
              appendChat('系統', msg);
         });
 
-        // --- 聊天邏輯 ---
         socket.on('chatHistory', (history) => {
             const box = document.getElementById('chat-history');
             box.innerHTML = ''; 
@@ -529,9 +779,6 @@
         });
 
         function appendChat(name, msg) {
-            // 🟢 [過濾] 這裡如果不想顯示某些系統訊息可擋掉，但現在保留
-            // if (name === '系統') return; 
-
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
             
@@ -540,7 +787,6 @@
             nameSpan.style.fontWeight = 'bold';
             nameSpan.textContent = `[${name}]: `;
 
-            // 使用 innerHTML 以支援顏色標籤
             div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${name}]:</span> ${msg}`;
             
             history.appendChild(div);
