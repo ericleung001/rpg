@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -183,7 +183,7 @@
             50% { transform: translateY(-5px); }
         }
 
-        /* Modal 通用 */
+        /* 🟢 Modal 通用 (置中) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: none;
@@ -195,6 +195,8 @@
             border: 4px solid #f1c40f; border-radius: 10px; padding: 20px; text-align: left;
             font-family: 'Press Start 2P', monospace; max-height: 70vh; overflow-y: auto;
             position: relative;
+            /* 確保內容居中顯示 */
+            margin: auto; 
         }
         .close-btn-x {
             position: absolute; top: 10px; right: 10px;
@@ -434,7 +436,7 @@
                     <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;">🏨 旅館</a>
                     <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🍳 廚房</a>
                     <a href="lottery.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🎱 彩票</a>
-                    <a href="cards.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">🎴 卡冊</a>
+                    
                     <a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;">📜 圖鑑</a>
                     
                     <div class="facility-btn" style="background:#3498db; border-color:#2980b9;" onclick="openFriends()">👥 好友</div>
@@ -442,7 +444,7 @@
 
                 <div style="margin-bottom: 15px; padding: 10px; border: 2px solid #9b59b6; background: rgba(0,0,0,0.3); border-radius: 8px; text-align: center; flex-shrink: 0;">
                     <h3 style="color: #9b59b6; margin: 5px 0; font-size: 12px;">🔮 混沌裂縫 (Lv.350-500)</h3>
-                    <p style="font-size: 10px; color: #ccc; margin-bottom: 8px;">每次進入，敵人的強度都會隨機變化！(如要查看得到物品，請查閱圖鑑)</p>
+                    <p style="font-size: 10px; color: #ccc; margin-bottom: 8px;">每次進入，敵人的強度都會隨機變化！</p>
                     <button class="btn" onclick="triggerSelectChaosBoss()" style="background: #8e44ad; color: #fff; width: 100%; text-align: center;">
                         查看討伐隊伍
                     </button>
@@ -476,8 +478,8 @@
                 overlay.style.opacity = '0';
                 setTimeout(() => { 
                     overlay.style.display = 'none'; 
-                    // 🟢 載入後自動彈出公告
-                    document.getElementById('notice-modal').style.display = 'flex';
+                    // 🟢 [回復] 移除自動彈出代碼，只透過按鈕觸發
+                    // document.getElementById('notice-modal').style.display = 'flex';
                 }, 500);
             }, 2000); 
         });
@@ -818,7 +820,6 @@
         });
 
         function appendChat(name, msg) {
-            // 🟢 [新增] 過濾系統訊息
             if (name === '系統') return; 
 
             const history = document.getElementById('chat-history');
