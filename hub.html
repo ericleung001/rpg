@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -609,6 +609,34 @@
             }
         });
 
+        // 🟢 [新增] 接收單條私訊 (即時顯示)
+        socket.on('receivePrivateChat', (data) => {
+            // data = { fromId, fromName, msg, time }
+            
+            const time = data.time ? new Date(data.time) : new Date();
+            const timeStr = time.toLocaleTimeString('en-GB', { hour12: false });
+
+            // 1. 如果私訊視窗正開著，且對象正確 -> 直接顯示
+            if (currentChatTarget && (data.fromName === currentChatTarget || data.fromName === myName)) {
+                
+                // 判斷是誰發的 (自己發的 or 對方發的)
+                const isSelf = (data.fromName === myName);
+                const senderName = isSelf ? myName : data.fromName;
+                
+                appendPM(senderName, data.msg, timeStr);
+
+                // 如果是對方發的，標記已讀
+                if (!isSelf) {
+                    socket.emit('markAsRead', data.fromName);
+                }
+            } 
+            // 2. 如果視窗沒開，或正在跟別人聊天 -> 彈出提示 + 刷新好友列表(紅點)
+            else if (data.fromName !== myName) {
+                showToast(`📩 收到來自 [${data.fromName}] 的私訊`);
+                socket.emit('getFriends'); // 刷新紅點
+            }
+        });
+
         // 收到私訊通知 (例如對方發送訊息時觸發)
         socket.on('pmNotification', (senderName) => {
             if (currentChatTarget !== senderName) {
@@ -620,34 +648,32 @@
 
         // 顯示私訊內容的函式
     function appendPM(sender, msg, time = "") {
-        const box = document.getElementById('pm-history'); // 你的對話框 ID
+        const box = document.getElementById('pm-history');
         if (!box) return;
 
         const div = document.createElement('div');
         div.style.marginBottom = "8px";
         
-        // 判斷是別人發的還是自己發的 (排版用)
-        const isMe = (sender === document.getElementById('my-name').innerText); // 或是用其他方式判斷自己
+        // 🟢 [修改] 使用全域變數 myName 判斷
+        const isMe = (sender === myName); 
         
         if (isMe) {
-            // 自己發的 (靠右)
             div.style.textAlign = "right";
             div.innerHTML = `
-                <span style="font-size:10px; color:#aaa;">${time}</span>
-                <span style="background:#2980b9; color:white; padding:5px 10px; border-radius:10px;">${msg}</span>
+                <span style="font-size:8px; color:#aaa; margin-right:5px;">${time}</span>
+                <span style="background:#3498db; color:white; padding:6px 10px; border-radius:10px; border-bottom-right-radius:0; font-size:12px;">${msg}</span>
             `;
         } else {
-            // 對方發的 (靠左)
             div.style.textAlign = "left";
             div.innerHTML = `
-                <span style="color:#f1c40f; font-weight:bold;">${sender}:</span>
-                <span style="background:#444; color:white; padding:5px 10px; border-radius:10px;">${msg}</span>
-                <span style="font-size:10px; color:#aaa;">${time}</span>
+                <div style="font-size:10px; color:#f1c40f; margin-bottom:2px;">${sender}</div>
+                <span style="background:#e67e22; color:white; padding:6px 10px; border-radius:10px; border-bottom-left-radius:0; font-size:12px;">${msg}</span>
+                <span style="font-size:8px; color:#aaa; margin-left:5px;">${time}</span>
             `;
         }
 
         box.appendChild(div);
-        box.scrollTop = box.scrollHeight; // 捲動到底部
+        box.scrollTop = box.scrollHeight;
     }
 
         socket.on('friendListUpdate', (data) => {
@@ -881,14 +907,18 @@
         });
 
         function appendChat(name, msg) {
-            if (name === '系統') return; 
+            // 🟢 [修改] 移除這行，讓系統訊息也能顯示
+            // if (name === '系統') return; 
+            
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
-            const nameSpan = document.createElement('span');
-            nameSpan.style.color = '#f1c40f';
-            nameSpan.style.fontWeight = 'bold';
-            nameSpan.textContent = `[${name}]: `;
-            div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${name}]:</span> ${msg}`;
+            
+            if (name === '系統') {
+                div.innerHTML = `<span style="color:#e74c3c; font-weight:bold;">[系統]:</span> <span style="color:#bdc3c7;">${msg}</span>`;
+            } else {
+                div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${name}]:</span> ${msg}`;
+            }
+            
             history.appendChild(div);
             history.scrollTop = history.scrollHeight;
         }
