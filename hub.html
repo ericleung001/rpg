@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -587,19 +587,24 @@
             }
         });
 
-        // 接收即時私訊
         socket.on('privateMessageUpdate', (data) => {
+            // 1. 計算時間
             const time = data.timestamp ? new Date(data.timestamp) : new Date();
-            const timeStr = time.toLocaleTimeString('en-GB', { hour12: false });
+            const timeStr = time.toLocaleTimeString('en-GB', { hour12: false }); // 例如 "14:30:05"
+
+            // 2. 判斷是否正在與該人對話
             if (currentChatTarget && (data.sender === currentChatTarget || data.receiver === currentChatTarget)) {
-                appendPM(data.sender, data.msg);
-                // 🟢 如果視窗開著，收到訊息順便標記已讀
+                
+                // 🟢 [修正] 這裡要傳入 timeStr
+                appendPM(data.sender, data.msg, timeStr); 
+                
+                // 如果視窗開著且不是自己發的，標記已讀
                 if (!data.isSelf) {
                     socket.emit('markAsRead', data.sender);
                 }
             } else if (!data.isSelf) {
+                // 沒開視窗 -> 彈提示 + 刷新好友列表(紅點)
                 showToast(`📩 收到來自 [${data.sender}] 的私訊`);
-                // 🟢 收到私訊但沒開視窗 -> 刷新好友列表 (更新紅點)
                 socket.emit('getFriends'); 
             }
         });
@@ -613,16 +618,37 @@
             }
         });
 
-        function appendPM(sender, msg) {
-            const historyDiv = document.getElementById('pm-history');
-            const div = document.createElement('div');
-            const isMe = (sender === myName);
-            div.className = `pm-msg ${isMe ? 'pm-mine' : 'pm-other'}`;
-            const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            div.innerHTML = `<div>${msg}</div><div class="pm-time">${time}</div>`;
-            historyDiv.appendChild(div);
-            historyDiv.scrollTop = historyDiv.scrollHeight;
+        // 顯示私訊內容的函式
+    function appendPM(sender, msg, time = "") {
+        const box = document.getElementById('pm-history'); // 你的對話框 ID
+        if (!box) return;
+
+        const div = document.createElement('div');
+        div.style.marginBottom = "8px";
+        
+        // 判斷是別人發的還是自己發的 (排版用)
+        const isMe = (sender === document.getElementById('my-name').innerText); // 或是用其他方式判斷自己
+        
+        if (isMe) {
+            // 自己發的 (靠右)
+            div.style.textAlign = "right";
+            div.innerHTML = `
+                <span style="font-size:10px; color:#aaa;">${time}</span>
+                <span style="background:#2980b9; color:white; padding:5px 10px; border-radius:10px;">${msg}</span>
+            `;
+        } else {
+            // 對方發的 (靠左)
+            div.style.textAlign = "left";
+            div.innerHTML = `
+                <span style="color:#f1c40f; font-weight:bold;">${sender}:</span>
+                <span style="background:#444; color:white; padding:5px 10px; border-radius:10px;">${msg}</span>
+                <span style="font-size:10px; color:#aaa;">${time}</span>
+            `;
         }
+
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight; // 捲動到底部
+    }
 
         socket.on('friendListUpdate', (data) => {
             // data.friends: [ { name, isOnline, unread }, ... ]
