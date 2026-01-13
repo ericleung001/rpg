@@ -589,6 +589,8 @@
 
         // 接收即時私訊
         socket.on('privateMessageUpdate', (data) => {
+            const time = data.timestamp ? new Date(data.timestamp) : new Date();
+            const timeStr = time.toLocaleTimeString('en-GB', { hour12: false });
             if (currentChatTarget && (data.sender === currentChatTarget || data.receiver === currentChatTarget)) {
                 appendPM(data.sender, data.msg);
                 // 🟢 如果視窗開著，收到訊息順便標記已讀
