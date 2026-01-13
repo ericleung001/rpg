@@ -8,7 +8,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
             background-color: #111; font-family: 'Press Start 2P', monospace; 
-            height: 100dvh; margin: 0; overflow: hidden; 
+            height: 100dvh; margin: 0; overflow: scroll; 
             display: flex; flex-direction: column; justify-content: flex-start; align-items: center; 
             padding: 10px 10px 50px 10px; box-sizing: border-box; overscroll-behavior: none;
         }
@@ -225,8 +225,9 @@
 // 指定連接到你的 https 網址
 const socket = io('https://mmo.ttctv-105.cc', { 
     transports: ['websocket', 'polling'],
-    secure: true 
+    secure: true // 因為你用 https，建議加呢個
 });
+
 
         let isMyTurn = false; 
         const params = new URLSearchParams(window.location.search);
@@ -712,6 +713,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         }
 
         // 🟢 [核心] 使用技能時：自動取代並更新 LocalStorage
+        // 🟢 [核心] 使用技能時：只在「新技能」時才更新順序
         function useSkill(skillId) {
             const info = SKILL_INFO[skillId];
             if (info && myPlayer.mp < info.mp) {
@@ -719,20 +721,24 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 return;
             }
 
-            // 更新順序：
-            // 1. 如果已經在列表裡，先拿掉
-            myShortcuts = myShortcuts.filter(sid => sid !== skillId);
-            // 2. 加到最前面
-            myShortcuts.unshift(skillId);
-            // 3. 如果超過 4 個，刪掉最後一個 (擠掉最舊的)
-            if (myShortcuts.length > 4) {
-                myShortcuts.pop();
-            }
-            
-            // 4. 存檔 & 即時更新介面
-            localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
-            updateShortcutStates(myPlayer);
+            // 檢查該技能是否已經在快捷列中
+            const existingIndex = myShortcuts.indexOf(skillId);
 
+            if (existingIndex !== -1) {
+                // ✅ 情況 A: 技能已經在快捷列 -> 保持原位，不做任何變動
+                // (如果你希望它即使在列表裡也要移到第一位，就保留原本邏輯，但你說不要亂跳，所以這裡留空)
+            } else {
+                // ✅ 情況 B: 技能不在快捷列 -> 插入到第一位，擠掉最後一個
+                myShortcuts.unshift(skillId);
+                if (myShortcuts.length > 4) {
+                    myShortcuts.pop();
+                }
+                // 只有在列表有變動時才存檔與重繪
+                localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
+                updateShortcutStates(myPlayer);
+            }
+
+            // --- 執行戰鬥動作 ---
             if (roomId === 'world_boss') {
                 toggle(true);
                 socket.emit('worldBossAction', { type: 'skill', skillId: skillId });
