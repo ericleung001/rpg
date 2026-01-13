@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -208,7 +208,7 @@
             display: none;
             flex-direction: column; 
             justify-content: center; 
-            align-items: center;     
+            align-items: center;      
             z-index: 9999;
         }
         
@@ -491,15 +491,14 @@
                 overlay.style.opacity = '0';
                 setTimeout(() => { 
                     overlay.style.display = 'none'; 
-                    // 🟢 不自動彈出，等待手動點擊
                 }, 500);
             }, 2000); 
         });
 
         const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         
         let myLevel = 1;
         let myName = ""; 
@@ -507,7 +506,6 @@
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) { window.location.href = 'index.html'; }
 
-        // 🟢 [功能] 開啟/關閉公告 (使用 flex 以確保 CSS 置中)
         function openNotice() {
             document.getElementById('notice-modal').style.display = 'flex'; 
         }
@@ -547,9 +545,9 @@
             document.getElementById('pm-history').innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">載入記錄中...</div>';
             
             socket.emit('getPrivateHistory', name); 
-            // 🟢 打開後標記為已讀
+            // 打開後標記為已讀
             socket.emit('markAsRead', name);
-            // 🟢 本地扣除該好友的紅點 (簡單做法：刷新一次好友列表)
+            // 本地扣除該好友的紅點
             socket.emit('getFriends');
         }
 
@@ -571,120 +569,106 @@
             if (e.key === 'Enter') sendPM();
         });
 
-        // 接收歷史訊息
+        // 📜 接收歷史訊息 (修正版：讀取 DB 時間)
         socket.on('privateHistoryUpdate', (data) => {
             if (currentChatTarget !== data.targetName) return;
             
             const historyDiv = document.getElementById('pm-history');
             historyDiv.innerHTML = '';
             
-            if (data.history.length === 0) {
+            if (!data.history || data.history.length === 0) {
                 historyDiv.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">無對話記錄</div>';
             } else {
                 data.history.forEach(row => {
-                    appendPM(row.sender, row.message);
+                    // 🟢 1. 讀取時間 (資料庫欄位通常叫 created_at)
+                    const rawTime = row.created_at || row.time || Date.now();
+                    const dateObj = new Date(rawTime);
+                    
+                    // 🟢 2. 格式化時間 (例如: 10:30:05)
+                    const timeStr = dateObj.toLocaleTimeString('en-GB', { hour12: false }); 
+
+                    // 🟢 3. 傳入 appendPM (記得第三個參數)
+                    appendPM(row.sender, row.message || row.msg, timeStr);
                 });
             }
+            
+            setTimeout(() => { historyDiv.scrollTop = historyDiv.scrollHeight; }, 100);
         });
 
-        socket.on('privateMessageUpdate', (data) => {
-            // 1. 計算時間
-            const time = data.timestamp ? new Date(data.timestamp) : new Date();
-            const timeStr = time.toLocaleTimeString('en-GB', { hour12: false }); // 例如 "14:30:05"
-
-            // 2. 判斷是否正在與該人對話
-            if (currentChatTarget && (data.sender === currentChatTarget || data.receiver === currentChatTarget)) {
-                
-                // 🟢 [修正] 這裡要傳入 timeStr
-                appendPM(data.sender, data.msg, timeStr); 
-                
-                // 如果視窗開著且不是自己發的，標記已讀
-                if (!data.isSelf) {
-                    socket.emit('markAsRead', data.sender);
-                }
-            } else if (!data.isSelf) {
-                // 沒開視窗 -> 彈提示 + 刷新好友列表(紅點)
-                showToast(`📩 收到來自 [${data.sender}] 的私訊`);
-                socket.emit('getFriends'); 
-            }
-        });
-
-        // 🟢 [新增] 接收單條私訊 (即時顯示)
+        // 🟢 接收單條私訊 (修正時間)
         socket.on('receivePrivateChat', (data) => {
             // data = { fromId, fromName, msg, time }
             
             const time = data.time ? new Date(data.time) : new Date();
             const timeStr = time.toLocaleTimeString('en-GB', { hour12: false });
 
-            // 1. 如果私訊視窗正開著，且對象正確 -> 直接顯示
+            // 1. 如果私訊視窗正開著
             if (currentChatTarget && (data.fromName === currentChatTarget || data.fromName === myName)) {
                 
-                // 判斷是誰發的 (自己發的 or 對方發的)
                 const isSelf = (data.fromName === myName);
                 const senderName = isSelf ? myName : data.fromName;
                 
                 appendPM(senderName, data.msg, timeStr);
 
-                // 如果是對方發的，標記已讀
                 if (!isSelf) {
                     socket.emit('markAsRead', data.fromName);
                 }
             } 
-            // 2. 如果視窗沒開，或正在跟別人聊天 -> 彈出提示 + 刷新好友列表(紅點)
+            // 2. 如果沒開視窗
             else if (data.fromName !== myName) {
                 showToast(`📩 收到來自 [${data.fromName}] 的私訊`);
                 socket.emit('getFriends'); // 刷新紅點
             }
         });
 
-        // 收到私訊通知 (例如對方發送訊息時觸發)
+        socket.on('privateMessageUpdate', (data) => {
+            // 這個如果是 server 傳回來的確認封包，也可以用同樣邏輯
+            // 但如果 server 已經用 receivePrivateChat 統一處理，這裡可能可以省略
+            // 視你的 server.js 實作而定
+        });
+
+        // 收到私訊通知 (刷新紅點)
         socket.on('pmNotification', (senderName) => {
             if (currentChatTarget !== senderName) {
                 showToast(`📩 ${senderName} 傳送了私訊給你！`);
-                // 🟢 收到通知 -> 刷新紅點
                 socket.emit('getFriends');
             }
         });
 
-        // 顯示私訊內容的函式
-    function appendPM(sender, msg, time = "") {
-        const box = document.getElementById('pm-history');
-        if (!box) return;
+        // 🟢 顯示私訊內容 (含時間)
+        function appendPM(sender, msg, time = "") {
+            const box = document.getElementById('pm-history');
+            if (!box) return;
 
-        const div = document.createElement('div');
-        div.style.marginBottom = "8px";
-        
-        // 🟢 [修改] 使用全域變數 myName 判斷
-        const isMe = (sender === myName); 
-        
-        if (isMe) {
-            div.style.textAlign = "right";
-            div.innerHTML = `
-                <span style="font-size:8px; color:#aaa; margin-right:5px;">${time}</span>
-                <span style="background:#3498db; color:white; padding:6px 10px; border-radius:10px; border-bottom-right-radius:0; font-size:12px;">${msg}</span>
-            `;
-        } else {
-            div.style.textAlign = "left";
-            div.innerHTML = `
-                <div style="font-size:10px; color:#f1c40f; margin-bottom:2px;">${sender}</div>
-                <span style="background:#e67e22; color:white; padding:6px 10px; border-radius:10px; border-bottom-left-radius:0; font-size:12px;">${msg}</span>
-                <span style="font-size:8px; color:#aaa; margin-left:5px;">${time}</span>
-            `;
+            const div = document.createElement('div');
+            div.style.marginBottom = "8px";
+            
+            const isMe = (sender === myName); 
+            
+            if (isMe) {
+                div.style.textAlign = "right";
+                div.innerHTML = `
+                    <span style="font-size:8px; color:#aaa; margin-right:5px;">${time}</span>
+                    <span style="background:#3498db; color:white; padding:6px 10px; border-radius:10px; border-bottom-right-radius:0; font-size:12px;">${msg}</span>
+                `;
+            } else {
+                div.style.textAlign = "left";
+                div.innerHTML = `
+                    <div style="font-size:10px; color:#f1c40f; margin-bottom:2px;">${sender}</div>
+                    <span style="background:#e67e22; color:white; padding:6px 10px; border-radius:10px; border-bottom-left-radius:0; font-size:12px;">${msg}</span>
+                    <span style="font-size:8px; color:#aaa; margin-left:5px;">${time}</span>
+                `;
+            }
+
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
         }
 
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
-    }
-
         socket.on('friendListUpdate', (data) => {
-            // data.friends: [ { name, isOnline, unread }, ... ]
-            // data.totalUnread: number
-            
             const friends = data.friends || [];
             const requests = data.requests || [];
             const totalUnread = data.totalUnread || 0;
 
-            // 🟢 更新主畫面按鈕紅點
             const mainBadge = document.getElementById('main-unread-badge');
             if (totalUnread > 0) {
                 mainBadge.innerText = totalUnread > 99 ? '99+' : totalUnread;
@@ -693,7 +677,6 @@
                 mainBadge.style.display = 'none';
             }
 
-            // 1. 渲染申請列表
             const reqSection = document.getElementById('request-section');
             const reqContainer = document.getElementById('request-list-content');
             reqContainer.innerHTML = '';
@@ -716,7 +699,6 @@
                 reqSection.style.display = 'none';
             }
 
-            // 2. 渲染好友列表 (含個別紅點)
             const friendContainer = document.getElementById('friend-list-content');
             friendContainer.innerHTML = '';
             
@@ -730,7 +712,6 @@
                     const statusClass = f.isOnline ? 'status-on' : 'status-off';
                     const color = f.isOnline ? '#2c3e50' : '#aaa';
                     
-                    // 🟢 個別紅點
                     let badgeHtml = '';
                     if (f.unread > 0) {
                         badgeHtml = `<span class="friend-badge">${f.unread}</span>`;
@@ -753,10 +734,9 @@
         });
 
         socket.on('updateFriendListRequest', () => {
-            socket.emit('getFriends'); // 隨時保持資料最新
+            socket.emit('getFriends'); 
         });
 
-        // ... (以下為其他 socket 事件，保持原樣)
         const WORLD_MAP = [
             { id: 'city_1', name: '曙光平原', reqLv: 1, desc: '冒險的起點 (Lv.1-20)', monsters: [{ id: 'slime', name: '史萊姆', lv: 1 }, { id: 'rat', name: '大老鼠', lv: 3 }, { id: 'bee', name: '殺人蜂', lv: 5 }, { id: 'boar', name: '野豬', lv: 8 }, { id: 'thief', name: '盜賊', lv: 12 }, { id: 'wolf_king', name: '🐺 狼王 (BOSS)', lv: 15 }] },
             { id: 'city_2', name: '迷霧沼澤', reqLv: 1, desc: '充滿毒氣與亡靈 (Lv.20-40)', monsters: [{ id: 'snake', name: '毒蛇', lv: 22 }, { id: 'zombie', name: '腐屍', lv: 25 }, { id: 'skeleton', name: '骷髏兵', lv: 28 }, { id: 'ghoul', name: '食屍鬼', lv: 32 }, { id: 'witch', name: '沼澤女巫', lv: 35 }, { id: 'hydra', name: '🐍 九頭蛇 (BOSS)', lv: 40 }] },
@@ -907,9 +887,6 @@
         });
 
         function appendChat(name, msg) {
-            // 🟢 [修改] 移除這行，讓系統訊息也能顯示
-            // if (name === '系統') return; 
-            
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
             
