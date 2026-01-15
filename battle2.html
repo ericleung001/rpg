@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中new7</title>
+    <title>戰鬥中new8</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -557,27 +557,73 @@
         }
 
         function useSkill(skillId) {
-            if (!isMyTurn) return;
-            // 判斷技能類型，如果是全體或自身Buff，不需要選目標
-            const skill = SKILL_INFO[skillId];
-            if (skill.cat === 'buff' || skill.cat === 'heal' || skill.name === '聖光普照') {
-                commitAction('skill', skillId, null); // null target
-                resetButtons();
-                return;
+            const info = SKILL_INFO[skillId];
+            
+            // 1. 檢查 MP
+            if (info && myPlayer.mp < info.mp) { 
+                showMsg("MP 不足！"); 
+                return; 
             }
 
-            // 攻擊技能 -> 選目標
-            const aliveMobs = currentMonsters.filter(m => m.hp > 0);
-            if (aliveMobs.length === 1) {
-                commitAction('skill', skillId, aliveMobs[0].id);
-                resetButtons();
-                return;
-            }
+            // 🟢 [新增] 自動儲存到快捷列 (Most Recently Used 邏輯)
+            // 先從列表中移除 (如果已存在)，再加到最前面
+            myShortcuts = myShortcuts.filter(id => id !== skillId);
+            myShortcuts.unshift(skillId);
+            
+            // 保持最多 4 個
+            if (myShortcuts.length > 4) { myShortcuts.pop(); }
+            
+            // 存入瀏覽器 & 即時更新介面
+            localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
+            updateShortcutStates(myPlayer);
 
-            pendingAction = { type: 'skill', skillId: skillId };
-            showTargetTip(true);
-            // 隱藏選單，讓玩家看清楚怪物
-            document.getElementById('menu-container').style.opacity = 0.3;
+            // 2. 執行技能
+            if (roomId === 'world_boss') {
+                toggle(true); 
+                socket.emit('worldBossAction', { type: 'skill', skillId: skillId });
+                const img = document.getElementById('monster-img');
+                img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
+                setTimeout(() => toggle(false), 500);
+            } else {
+                // 檢查是否輪到自己
+                if(!isMyTurn) return; 
+                
+                // 多怪物系統：如果不是全體/Buff技能，且有多隻怪，需要選目標
+                const skill = SKILL_INFO[skillId];
+                const aliveMobs = currentMonsters.filter(m => m.hp > 0);
+                
+                // 需要選目標的情況
+                if (skill.cat !== 'buff' && skill.cat !== 'heal' && skill.name !== '聖光普照' && aliveMobs.length > 1) {
+                    // 這裡不發送請求，而是進入選目標模式
+                    // 注意：這裡不 toggle(true)，因為還要選怪
+                    pendingAction = { type: 'skill', skillId: skillId };
+                    showTargetTip(true);
+                    document.getElementById('menu-container').style.opacity = 0.3;
+                    return; 
+                }
+
+                // 不需要選目標 (單隻怪 或 全體技) -> 直接發送
+                // 如果是單隻怪，自動填入 targetId
+                let targetId = null;
+                if (aliveMobs.length === 1) targetId = aliveMobs[0].id;
+
+                toggle(true); 
+                socket.emit('combatAction', { 
+                    roomId: roomId, 
+                    type: 'skill', 
+                    skillId: skillId,
+                    targetId: targetId 
+                });
+                
+                // 震動特效
+                if (aliveMobs.length > 0) {
+                   // 簡單震動第一隻 (視覺效果)
+                   const img = document.querySelector('.boss-sprite');
+                   if(img) {
+                       img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
+                   }
+                }
+            }
         }
 
         function selectTarget(mobId) {
