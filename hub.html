@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -109,7 +109,7 @@
         }
         
         .facility-btn {
-            position: relative; /* 🟢 為紅點定位 */
+            position: relative; 
             padding: 0; 
             font-family: inherit; font-size: 10px; font-weight: bold;
             cursor: pointer; border: 2px solid #bdc3c7; color: white; text-decoration: none; 
@@ -208,7 +208,7 @@
             display: none;
             flex-direction: column; 
             justify-content: center; 
-            align-items: center;      
+            align-items: center;        
             z-index: 9999;
         }
         
@@ -314,12 +314,34 @@
         <div class="notice-box">
             <div class="notice-title">📜 公會公告</div>
             <div class="notice-content">
-<b style="color:#c0392b;">【v2.8 更新公告：社交時代】</b>
-2026/01/12 22:00 - 23:00更新: 
-1. 👥 好友系統上線：可發送好友申請，需對方確認。
-2. 💌 獨立私訊視窗：私訊將有獨立的聊天記錄，不再與公頻混雜，且永久保存。
-3. 🔴 未讀提示：收到私訊時，好友列表將顯示紅點提示。
+<b style="color:#c0392b;">【v2.82 系統公告】</b>
+各位冒險者們：
+為了維護公平且穩定的遊戲環境，已於今日完成緊急維護與系統升級。
 
+<b style="color:#e67e22;">🔧 更新內容：</b>
+
+<b>1. 🛡️ 安全與懲處機制</b>
+- 新增 「智慧型封鎖系統 (Ban System)」。
+- 任何使用外掛、腳本、惡意攻擊者，將<b>永久封鎖帳號及 IP</b>。
+- 對於破壞平衡的行為採「零容忍」態度。
+**由於重啟Server, 彩票雖然重新計算，但已買的玩家，如開彩中獎一同樣會有獎金發放**
+
+<b>2. 🔮 混沌裂縫 (Chaos Rift)</b>
+- 等級：Lv.350 - Lv.500
+- 掉落：<span style="color:#e67e22">虛空碎片、暗物質、宇宙鋼、神秘禮物</span>。
+- 機制：新增「討伐列表」，可開房等待隊友。
+
+<b>3. 🔥 裝備強化上限 (+20)</b>
+- +16 ~ +20 為神話領域，<span style="color:red">失敗將導致裝備破碎消失</span>。
+
+<b style="color:#3498db;">4. 🎱 全新功能：彩票 (Lottery)</b>
+- 開獎：每日 22:00 (HKT)。
+- 玩法：每注 1W G，選 6 號碼 (1-49)。
+- 獎勵：頭獎獨得 80% 獎池！
+
+<b>5. ☠️ 世界 BOSS 優化</b>
+- 時間：每日 15:00, 19:00, 23:00 (HKT)。
+- 新增「上屆討伐英雄榜」。
             </div>
             <button class="close-notice-btn" onclick="closeNotice()">我知道了</button>
         </div>
@@ -485,6 +507,25 @@
     
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
+        // 🟢 [安全防護] 防止 XSS 攻擊
+        function escapeHtml(text) {
+            if (!text) return text;
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // 🟢 [安全防護] 防止隱藏字元 (0-31, 127, 200B, 2064, BOM)
+        function hasForbiddenChars(str) {
+            // 禁止：控制字符(0-31), DEL(127), 零寬空格(\u200B), 隱藏加號(\u2064) 等
+            // 注意：保留 \u200D (Zero Width Joiner) 以免破壞組合型 Emoji (👨‍👩‍👧‍👦)
+            const regex = /[\x00-\x1F\x7F\u200B\u2028-\u202F\u2060-\u2064\uFEFF]/;
+            return regex.test(str);
+        }
+
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const overlay = document.getElementById('loading-overlay');
@@ -495,10 +536,11 @@
             }, 2000); 
         });
 
+        // 🟢 [連線修正] 使用正確的 URL
         const socket = io('https://mmo.ttctv-105.cc', { 
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         
         let myLevel = 1;
         let myName = ""; 
@@ -520,10 +562,18 @@
         }
 
         function sendRequest() {
-            const name = document.getElementById('friend-input').value.trim();
+            const input = document.getElementById('friend-input');
+            const name = input.value.trim();
             if(!name) return;
+            
+            // 🟢 檢查非法字元
+            if (hasForbiddenChars(name)) {
+                alert("❌ 名稱包含非法隱藏字元！");
+                return;
+            }
+
             socket.emit('sendFriendRequest', name);
-            document.getElementById('friend-input').value = '';
+            input.value = '';
         }
 
         function answerRequest(name, action) {
@@ -541,13 +591,12 @@
             currentChatTarget = name;
             document.getElementById('friends-modal').style.display = 'none';
             document.getElementById('pm-modal').style.display = 'flex';
+            // 🟢 [安全防護] 名字要 escape
             document.getElementById('pm-target-name').innerText = name;
             document.getElementById('pm-history').innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">載入記錄中...</div>';
             
             socket.emit('getPrivateHistory', name); 
-            // 打開後標記為已讀
             socket.emit('markAsRead', name);
-            // 本地扣除該好友的紅點
             socket.emit('getFriends');
         }
 
@@ -561,6 +610,12 @@
             const msg = input.value.trim();
             if (!msg || !currentChatTarget) return;
             
+            // 🟢 [安全防護] 檢查隱藏字元
+            if (hasForbiddenChars(msg)) {
+                alert("❌ 訊息包含非法隱藏字元，請移除後重試！");
+                return;
+            }
+            
             socket.emit('privateMessage', { targetName: currentChatTarget, msg: msg });
             input.value = '';
         }
@@ -569,7 +624,7 @@
             if (e.key === 'Enter') sendPM();
         });
 
-        // 📜 接收歷史訊息 (修正版：讀取 DB 時間)
+        // 📜 接收歷史訊息
         socket.on('privateHistoryUpdate', (data) => {
             if (currentChatTarget !== data.targetName) return;
             
@@ -580,14 +635,10 @@
                 historyDiv.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">無對話記錄</div>';
             } else {
                 data.history.forEach(row => {
-                    // 🟢 1. 讀取時間 (資料庫欄位通常叫 created_at)
                     const rawTime = row.created_at || row.time || Date.now();
                     const dateObj = new Date(rawTime);
-                    
-                    // 🟢 2. 格式化時間 (例如: 10:30:05)
                     const timeStr = dateObj.toLocaleTimeString('en-GB', { hour12: false }); 
 
-                    // 🟢 3. 傳入 appendPM (記得第三個參數)
                     appendPM(row.sender, row.message || row.msg, timeStr);
                 });
             }
@@ -595,16 +646,12 @@
             setTimeout(() => { historyDiv.scrollTop = historyDiv.scrollHeight; }, 100);
         });
 
-        // 🟢 接收單條私訊 (修正時間)
+        // 🟢 接收單條私訊
         socket.on('receivePrivateChat', (data) => {
-            // data = { fromId, fromName, msg, time }
-            
             const time = data.time ? new Date(data.time) : new Date();
             const timeStr = time.toLocaleTimeString('en-GB', { hour12: false });
 
-            // 1. 如果私訊視窗正開著
             if (currentChatTarget && (data.fromName === currentChatTarget || data.fromName === myName)) {
-                
                 const isSelf = (data.fromName === myName);
                 const senderName = isSelf ? myName : data.fromName;
                 
@@ -614,28 +661,22 @@
                     socket.emit('markAsRead', data.fromName);
                 }
             } 
-            // 2. 如果沒開視窗
             else if (data.fromName !== myName) {
-                showToast(`📩 收到來自 [${data.fromName}] 的私訊`);
-                socket.emit('getFriends'); // 刷新紅點
+                // 🟢 [安全防護]
+                showToast(`📩 收到來自 [${escapeHtml(data.fromName)}] 的私訊`);
+                socket.emit('getFriends'); 
             }
         });
 
-        socket.on('privateMessageUpdate', (data) => {
-            // 這個如果是 server 傳回來的確認封包，也可以用同樣邏輯
-            // 但如果 server 已經用 receivePrivateChat 統一處理，這裡可能可以省略
-            // 視你的 server.js 實作而定
-        });
-
-        // 收到私訊通知 (刷新紅點)
         socket.on('pmNotification', (senderName) => {
             if (currentChatTarget !== senderName) {
-                showToast(`📩 ${senderName} 傳送了私訊給你！`);
+                // 🟢 [安全防護]
+                showToast(`📩 ${escapeHtml(senderName)} 傳送了私訊給你！`);
                 socket.emit('getFriends');
             }
         });
 
-        // 🟢 顯示私訊內容 (含時間)
+        // 🟢 [核心修改] 顯示私訊內容 (XSS 防護)
         function appendPM(sender, msg, time = "") {
             const box = document.getElementById('pm-history');
             if (!box) return;
@@ -649,13 +690,13 @@
                 div.style.textAlign = "right";
                 div.innerHTML = `
                     <span style="font-size:8px; color:#aaa; margin-right:5px;">${time}</span>
-                    <span style="background:#3498db; color:white; padding:6px 10px; border-radius:10px; border-bottom-right-radius:0; font-size:12px;">${msg}</span>
+                    <span style="background:#3498db; color:white; padding:6px 10px; border-radius:10px; border-bottom-right-radius:0; font-size:12px;">${escapeHtml(msg)}</span>
                 `;
             } else {
                 div.style.textAlign = "left";
                 div.innerHTML = `
-                    <div style="font-size:10px; color:#f1c40f; margin-bottom:2px;">${sender}</div>
-                    <span style="background:#e67e22; color:white; padding:6px 10px; border-radius:10px; border-bottom-left-radius:0; font-size:12px;">${msg}</span>
+                    <div style="font-size:10px; color:#f1c40f; margin-bottom:2px;">${escapeHtml(sender)}</div>
+                    <span style="background:#e67e22; color:white; padding:6px 10px; border-radius:10px; border-bottom-left-radius:0; font-size:12px;">${escapeHtml(msg)}</span>
                     <span style="font-size:8px; color:#aaa; margin-left:5px;">${time}</span>
                 `;
             }
@@ -686,11 +727,12 @@
                 requests.forEach(name => {
                     const div = document.createElement('div');
                     div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px dashed #ccc; font-size:10px;";
+                    // 🟢 [安全防護]
                     div.innerHTML = `
-                        <span style="font-weight:bold;">${name}</span>
+                        <span style="font-weight:bold;">${escapeHtml(name)}</span>
                         <div>
-                            <button onclick="answerRequest('${name}', 'accept')" style="background:#2ecc71; border:none; color:white; cursor:pointer; padding:2px 5px; border-radius:3px;">✔</button>
-                            <button onclick="answerRequest('${name}', 'reject')" style="background:#e74c3c; border:none; color:white; cursor:pointer; padding:2px 5px; border-radius:3px;">✘</button>
+                            <button onclick="answerRequest('${escapeHtml(name)}', 'accept')" style="background:#2ecc71; border:none; color:white; cursor:pointer; padding:2px 5px; border-radius:3px;">✔</button>
+                            <button onclick="answerRequest('${escapeHtml(name)}', 'reject')" style="background:#e74c3c; border:none; color:white; cursor:pointer; padding:2px 5px; border-radius:3px;">✘</button>
                         </div>
                     `;
                     reqContainer.appendChild(div);
@@ -717,15 +759,16 @@
                         badgeHtml = `<span class="friend-badge">${f.unread}</span>`;
                     }
 
+                    // 🟢 [安全防護]
                     div.innerHTML = `
                         <div style="display:flex; align-items:center; color:${color}">
                             <div class="friend-status ${statusClass}"></div>
-                            <span class="friend-name">${f.name}</span>
+                            <span class="friend-name">${escapeHtml(f.name)}</span>
                             ${badgeHtml}
                         </div>
                         <div class="friend-actions">
-                            <button class="btn-pm" onclick="startPM('${f.name}')">私訊</button>
-                            <button class="btn-del" onclick="removeFriend('${f.name}')">刪除</button>
+                            <button class="btn-pm" onclick="startPM('${escapeHtml(f.name)}')">私訊</button>
+                            <button class="btn-del" onclick="removeFriend('${escapeHtml(f.name)}')">刪除</button>
                         </div>
                     `;
                     friendContainer.appendChild(div);
@@ -780,7 +823,8 @@
         socket.on('playerStatsUpdate', (p) => {
             myLevel = p.level;
             myName = p.name;
-            document.getElementById('pid').innerText = p.name || "Unknown";
+            // 🟢 [安全防護]
+            document.getElementById('pid').innerText = escapeHtml(p.name) || "Unknown";
             document.getElementById('lvl').innerText = p.level;
             document.getElementById('gold').innerText = (p.gold || 0).toLocaleString();
             let hpPct = (p.hp / p.maxHp) * 100;
@@ -842,7 +886,9 @@
                 else if (index === 2) { medal = '🥉'; rankClass = 'rank-3'; }
                 let dmgText = (r.dmg / 100000000).toFixed(2) + "億";
                 if (r.dmg < 100000000) dmgText = (r.dmg / 10000).toFixed(0) + "萬";
-                div.innerHTML = `<span class="${rankClass}">${medal} ${r.name}</span><span style="color:#ccc;">輸出: ${dmgText}</span>`;
+                
+                // 🟢 [安全防護]
+                div.innerHTML = `<span class="${rankClass}">${medal} ${escapeHtml(r.name)}</span><span style="color:#ccc;">輸出: ${dmgText}</span>`;
                 list.appendChild(div);
             });
         });
@@ -872,8 +918,15 @@
         });
         
         socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
+        
+        // 🟢 系統日誌監聽 (主要用於遊戲內訊息)
         socket.on('battleLog', (msg) => {
-             appendChat('系統', msg);
+            // 🚫 過濾強化系統訊息，不顯示在 Hub 聊天室
+            // 關鍵字：強化 + (成功 | 失敗 | 破碎)
+            if (msg.includes('強化') && (msg.includes('成功') || msg.includes('失敗') || msg.includes('破碎'))) {
+                return;
+            }
+            appendChat('系統', msg);
         });
 
         socket.on('chatHistory', (history) => {
@@ -883,17 +936,25 @@
         });
 
         socket.on('chatMessage', (data) => {
+            // 🚫 過濾強化廣播 (若伺服器是透過 chatMessage 發送)
+            if (data.name === '系統' && data.msg.includes('強化') && (data.msg.includes('成功') || data.msg.includes('失敗'))) {
+                return;
+            }
             appendChat(data.name, data.msg);
         });
 
+        // 🟢 [核心修改] 公頻聊天 (XSS 防護 + 隱藏字元檢查)
         function appendChat(name, msg) {
+if (name === '系統') return;
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
             
+            // 系統訊息通常是安全的 HTML，但如果包含玩家名字要小心
             if (name === '系統') {
                 div.innerHTML = `<span style="color:#e74c3c; font-weight:bold;">[系統]:</span> <span style="color:#bdc3c7;">${msg}</span>`;
             } else {
-                div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${name}]:</span> ${msg}`;
+                // 一般玩家訊息，必須 escape
+                div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${escapeHtml(name)}]:</span> ${escapeHtml(msg)}`;
             }
             
             history.appendChild(div);
@@ -908,7 +969,16 @@
         function sendChat() {
             const input = document.getElementById('chat-input');
             const msg = input.value.trim();
-            if (msg) { socket.emit('sendChat', msg); input.value = ''; }
+            if (!msg) return;
+
+            // 🟢 [安全防護] 檢查隱藏字元
+            if (hasForbiddenChars(msg)) {
+                alert("❌ 訊息包含非法隱藏字元，請移除後重試！");
+                return;
+            }
+
+            socket.emit('sendChat', msg); 
+            input.value = '';
         }
 
         function toggleChat() {
@@ -997,9 +1067,11 @@
                     let lockClass = '';
                     if (isFighting) { statusTag = '<span class="room-tag status-fighting">戰鬥中</span>'; lockClass = 'locked'; }
                     else if (room.playerCount >= 6) { statusTag = '<span class="room-tag" style="background:#e67e22; color:white">已滿員</span>'; }
+                    
+                    // 🟢 [安全防護] 房主名字要 escape
                     html += `<div class="btn ${lockClass}" ${clickAction}>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:12px; font-weight:bold; color:#f1c40f;">🚩 ${room.hostName} 的隊伍</span>
+                            <span style="font-size:12px; font-weight:bold; color:#f1c40f;">🚩 ${escapeHtml(room.hostName)} 的隊伍</span>
                             <span style="font-size:10px; color:#bdc3c7;">#${index + 1}</span>
                         </div>
                         <div style="margin-top:5px; display:flex; justify-content:space-between;">${statusTag}<span class="info-tag">${room.playerCount}/5 人</span></div>
