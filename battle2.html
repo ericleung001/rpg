@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中new4</title>
+    <title>戰鬥中new5</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -426,7 +426,7 @@
             }
         });
 
-        // 🟢 3. 繪製怪物函式 (修正：恢復使用怪物 Key/英文名出圖)
+        // 🟢 3. 繪製怪物函式 (修正：顯示 HP 數值)
         function renderMonsters(mobs) {
             const area = document.getElementById('mob-area');
             area.innerHTML = '';
@@ -439,24 +439,35 @@
                 
                 div.onclick = () => selectTarget(m.id); // 點擊選擇
 
-                // 🟢 [修正] 恢復依照怪物英文名/Key載入圖片
-                // 嘗試取得怪物的圖片 Key (假設伺服器有傳 m.key 或 m.monsterKey)
-                // 如果沒有，則嘗試將名字用空白分割取第一部分 (例如 "Slime 史萊姆" -> "slime")
+                // 處理圖片路徑
                 let imgKey = m.key || m.monsterKey;
                 if (!imgKey && m.name) {
-                    imgKey = m.name.split(' ')[0].toLowerCase();
+                    if (m.name.includes("混沌")) imgKey = "void_walker"; 
+                    else imgKey = m.name.split(' ')[0].toLowerCase();
                 }
-                // 保底預設值
-                if (!imgKey) imgKey = 'slime';
+                if (!imgKey) imgKey = 'slime'; 
 
                 let imgSrc = `img/monsters/${imgKey}.png`;
 
-                const hpPct = (m.hp / m.maxHp) * 100;
+                const hpPct = Math.max(0, Math.min(100, (m.hp / m.maxHp) * 100));
                 
+                // 🟢 [修改] 血量顯示格式： HP: 20/20
+                // 如果數值太大 (超過10萬)，才使用縮寫 (例如 HP: 1.5億)，否則直接顯示數字
+                let hpText = `HP: ${m.hp}/${m.maxHp}`;
+                
+                if (m.maxHp > 100000000) {
+                    hpText = `HP: ${(m.hp/100000000).toFixed(2)}億`;
+                } else if (m.maxHp > 100000) {
+                    hpText = `HP: ${(m.hp/10000).toFixed(1)}萬`;
+                }
+
                 div.innerHTML = `
                     <div class="mob-name">${m.name}</div>
                     <img class="boss-sprite" src="${imgSrc}" onerror="this.src='img/monsters/slime.png'">
-                    <div class="mob-hp-bar"><div class="mob-hp-fill" style="width:${hpPct}%"></div></div>
+                    <div class="mob-hp-bar">
+                        <div class="mob-hp-fill" style="width:${hpPct}%"></div>
+                    </div>
+                    <div class="mob-hp-text">${hpText}</div>
                 `;
                 
                 // 飄字容器
@@ -465,6 +476,7 @@
                 floatArea.style.position = 'absolute';
                 floatArea.style.width = '100%';
                 floatArea.style.height = '100%';
+                floatArea.style.top = '0';
                 floatArea.style.pointerEvents = 'none';
                 div.appendChild(floatArea);
 
@@ -472,44 +484,42 @@
             });
         }
 
-        // 🟢 4. 更新特定怪物狀態 (受傷/死亡)
-        // 🟢 4. 更新特定怪物狀態 (受傷/死亡) - 含血量文字更新
+        // 🟢 4. 更新特定怪物狀態 (即時更新 HP 數值)
         socket.on('updateEntityStatus', (data) => {
             if (data.type === 'monster') {
                 const mobDiv = document.getElementById(`mob-${data.id}`);
                 if (mobDiv) {
-                    // 1. 更新血條長度
+                    // 更新血條長度
                     const fill = mobDiv.querySelector('.mob-hp-fill');
                     const pct = Math.max(0, (data.hp / data.maxHp) * 100);
                     fill.style.width = `${pct}%`;
                     
-                    // 2. 🟢 [新增] 更新血量數字
+                    // 🟢 [修改] 更新血量文字
                     const txtDiv = mobDiv.querySelector('.mob-hp-text');
                     if (txtDiv) {
-                        let hpText = `${data.hp}/${data.maxHp}`;
-                        // 如果血量很大，進行縮寫格式化
+                        let hpText = `HP: ${data.hp}/${data.maxHp}`;
+                        
+                        // 大數字自動縮寫，避免手機版面爆掉
                         if (data.maxHp > 100000000) {
-                            hpText = `${(data.hp/100000000).toFixed(1)}億`;
-                        } else if (data.maxHp > 10000) {
-                            hpText = `${Math.floor(data.hp/10000)}萬`;
+                            hpText = `HP: ${(data.hp/100000000).toFixed(2)}億`;
+                        } else if (data.maxHp > 100000) {
+                            hpText = `HP: ${(data.hp/10000).toFixed(1)}萬`;
                         }
                         txtDiv.innerText = hpText;
                     }
 
-                    // 3. 處理死亡或受傷特效
                     if (data.hp <= 0) {
                         mobDiv.classList.add('dead');
                         mobDiv.querySelector('.boss-sprite').style.filter = "grayscale(100%)";
                     } else {
-                        // 受傷閃爍動畫
                         const img = mobDiv.querySelector('.boss-sprite');
                         img.classList.remove('damaged'); 
-                        void img.offsetWidth; // 觸發重繪 (Reflow)
+                        void img.offsetWidth; 
                         img.classList.add('damaged');
                     }
                 }
                 
-                // 4. 更新本地緩存資料
+                // 更新本地緩存
                 const m = currentMonsters.find(x => x.id === data.id);
                 if (m) { m.hp = data.hp; m.maxHp = data.maxHp; }
             }
