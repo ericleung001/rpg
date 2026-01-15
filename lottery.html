@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>幸運彩票</title>
+    <title>幸運彩票2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -180,10 +180,14 @@
             socket.emit('buyLottery', selected);
         }
 
-        socket.on('connect', () => {
+        // 初始化連線函式
+        function initData() {
             socket.emit('joinGame', myToken);
-            socket.emit('getLotteryData'); // 請求獎池資訊
-        });
+            socket.emit('getLotteryData'); // 請求獎池與上期紀錄
+        }
+
+        socket.on('connect', initData);
+        if (socket.connected) initData();
 
         socket.on('lotteryUpdate', (data) => {
             // 1. 更新獎池與狀態
@@ -222,6 +226,7 @@
                     reversedBets.forEach((bet, idx) => {
                         const div = document.createElement('div');
                         div.className = 'ticket-row';
+                        
                         const fmtNums = bet.nums.map(n => n.toString().padStart(2, '0')).join(' - ');
                         const ticketNum = data.myBets.length - idx;
 
