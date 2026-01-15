@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中new11</title>
+    <title>戰鬥中new</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -932,44 +932,13 @@
         
         function leaveRoom() { socket.emit('leaveRoom', roomId); window.location.href = 'hub.html'; }
 
-        // 🟢 [修正] 戰鬥勝利 UI 更新
         socket.on('battleWon', (data) => {
-            // 1. 停止倒數計時
             if (battleTimer) clearInterval(battleTimer);
             document.getElementById('countdown-timer').style.display = 'none';
-            
-            // 2. 更改上方狀態條
-            const bar = document.getElementById('turn-bar'); 
-            bar.innerText = "🎉 戰鬥勝利！"; 
-            bar.style.background = "gold"; 
-            bar.style.color = "black";
-            
-            // 3. 隱藏怪物圖片 (淡出效果)
-            const mobs = document.querySelectorAll('.boss-sprite');
-            mobs.forEach(img => img.style.opacity = 0);
-
-            // 4. 顯示訊息
-            showMsg(`勝利！獲得 ${data.gold} G`); 
-            if (data.rewards) {
-                data.rewards.forEach(reward => log(`<span style="color:#9b59b6; font-weight:bold;">🎁 獲得: [${reward}]</span>`));
-            }
-
-            // 5. 🟢 [核心修正] 強制更換按鈕區域為「勝利離開」
-            const btnArea = document.getElementById('btns');
-            const fixedArea = document.getElementById('fixed-top-area');
-            const shortcutArea = document.getElementById('shortcut-area');
-
-            // 隱藏快捷鍵和返回鍵，避免干擾
-            fixedArea.style.display = 'none'; 
-            shortcutArea.style.display = 'none'; 
-
-            // 設定為單欄，顯示一顆大按鈕
-            btnArea.style.gridTemplateColumns = '1fr'; 
-            btnArea.innerHTML = `
-                <button class="btn" style="background:#f1c40f; color:#000; font-weight:bold; font-size:14px; border:3px solid #fff; box-shadow: 0 0 10px #f1c40f;" onclick="leaveRoom()">
-                    🏆 戰鬥勝利 (點擊離開)
-                </button>
-            `;
+            const bar = document.getElementById('turn-bar'); bar.innerText = " 勝利！"; bar.style.background = "gold"; bar.style.color = "black";
+            const img = document.getElementById('monster-img'); img.style.opacity = 0;
+            showMsg(`勝利！獲得 ${data.gold} G`); showNormalVictoryBtn();
+            if (data.rewards) data.rewards.forEach(reward => log(`<span style="color:#9b59b6; font-weight:bold;">🎁 獲得: [${reward}]</span>`));
         });
         // 🟢 [修正] 打開魔法列表邏輯
         function openSkill() {
