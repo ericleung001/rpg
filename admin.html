@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GM 超級後台</title>
+    <title>GM 超級後台2</title>
     <style>
         body { background: #222; color: #fff; font-family: monospace; padding: 20px; text-align: center; }
         input, select, button { padding: 10px; margin: 5px; width: 100%; max-width: 300px; box-sizing: border-box; }
@@ -21,6 +21,7 @@
         .btn-close { background: #c0392b; }
         .btn-reset { background: #f39c12; }
         .btn-boss { background: #8e44ad; box-shadow: 0 0 10px #8e44ad; }
+        .btn-draw { background: #3498db; box-shadow: 0 0 5px #2980b9; }
 
         /* 表格共用樣式 */
         table { width: 100%; max-width: 1000px; margin: 0 auto; border-collapse: collapse; background: #111; font-size: 12px; margin-bottom: 20px; }
@@ -90,7 +91,7 @@
 
     <hr>
 
-    <h3 style="color: #8e44ad;">🚫 IP 封鎖管理 (Ban List)</h3>
+    <h3 style="color: #8e44ad;">🚫 IP 封鎖管理 (Ban IP)</h3>
     <div style="display:flex; justify-content:center; gap:5px; margin-bottom:10px;">
         <input type="text" id="ban-ip" placeholder="輸入 IP 地址" style="width:150px;">
         <input type="text" id="ban-reason" placeholder="封鎖原因" style="width:150px;">
@@ -112,7 +113,7 @@
         </tbody>
     </table>
 
-    <h3 style="color: #9b59b6;">🚫 帳號封鎖管理 (Account Ban List)</h3>
+    <h3 style="color: #9b59b6;">🚫 帳號封鎖管理 (Ban Account)</h3>
     <div style="margin-bottom:10px;">
         <button onclick="refreshBans()" style="background:#2f3542; width:auto;">🔄 刷新封鎖名單 (IP & 帳號)</button>
     </div>
@@ -186,9 +187,12 @@
     <hr>
 
     <h3 style="color: #3498db;">🎟️ 彩票系統管理</h3>
-    <div style="display:flex; flex-direction: column; align-items: center;">
-        <button class="btn-open" onclick="controlLottery(true)">🟢 開啟彩票購買</button>
-        <button class="btn-close" onclick="controlLottery(false)">🔴 暫停彩票購買</button>
+    <div style="display:flex; flex-direction: column; align-items: center; gap: 5px;">
+        <div style="display:flex; gap:10px;">
+            <button class="btn-open" onclick="controlLottery(true)">🟢 開啟購買</button>
+            <button class="btn-close" onclick="controlLottery(false)">🔴 暫停購買</button>
+        </div>
+        <button class="btn-draw" onclick="forceDraw()" style="margin-top:5px;">🎱 立即手動開獎 (Force Draw)</button>
     </div>
 
     <hr>
@@ -406,9 +410,10 @@
     
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
+
         socket.on('connect', () => {
             log("✅ 連線成功，請輸入密碼與玩家名稱。");
         });
@@ -435,7 +440,7 @@
         }
 
         // ============================
-        // 🟢 線上玩家管理 (New with Pagination & Search)
+        // 🟢 線上玩家管理 (Search & Pagination)
         // ============================
         let onlinePlayersData = [];
         let onlinePage = 1;
@@ -573,11 +578,21 @@
             }
         }
 
+        // 🟢 [補回] 解封帳號函式
         function doUnbanAcc(name) {
             const pass = getPass();
             if(!pass) return;
             if (confirm(`確定要解封帳號 [${name}] 嗎？`)) {
                 socket.emit('adminUnbanAccount', { adminPass: pass, targetName: name });
+            }
+        }
+
+        // 🟢 [補回] 手動開獎函式
+        function forceDraw() {
+            const pass = getPass();
+            if(!pass) return;
+            if(confirm("🎱 確定要立即執行六合彩開獎嗎？\n(將會廣播全服並計算獎金)")) {
+                socket.emit('adminDrawLottery', { adminPass: pass });
             }
         }
 
@@ -604,7 +619,7 @@
             });
         });
 
-        // 🟢 [新增] 接收帳號封鎖列表
+        // 🟢 [補回] 接收帳號封鎖列表
         socket.on('adminAccountBanList', (bans) => {
             const tbody = document.getElementById('ban-acc-list');
             tbody.innerHTML = '';
