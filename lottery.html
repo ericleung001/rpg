@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>幸運彩票</title>
+    <title>幸運彩票2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -17,10 +17,19 @@
         .jackpot-box {
             background: #c0392b; padding: 15px; border-radius: 10px; border: 4px solid #e74c3c;
             margin-bottom: 20px; width: 100%; max-width: 500px; box-sizing: border-box;
-            box-shadow: 0 0 20px #e74c3c;
+            box-shadow: 0 0 20px #e74c3c; position: relative;
         }
         .jackpot-title { font-size: 12px; margin-bottom: 10px; }
         .jackpot-amount { font-size: 20px; font-weight: bold; color: #f1c40f; word-break: break-all; }
+        
+        /* 系統關閉時的遮罩 */
+        .closed-mask {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: none;
+            justify-content: center; align-items: center;
+            font-size: 14px; color: #e74c3c; font-weight: bold;
+            z-index: 10; border-radius: 6px;
+        }
 
         .number-grid {
             display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
@@ -41,8 +50,14 @@
         .buy-btn {
             background: #27ae60; color: white; padding: 15px 30px; font-family: inherit; font-size: 14px;
             border: none; border-radius: 5px; cursor: pointer; box-shadow: 0 4px 0 #1e8449;
+            transition: background 0.3s;
         }
         .buy-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        /* 禁用按鈕樣式 */
+        .buy-btn:disabled {
+            background: #7f8c8d; cursor: not-allowed; box-shadow: none; transform: none;
+        }
         
         .back-btn { margin-top: 20px; background: #7f8c8d; padding: 10px 20px; color: white; text-decoration: none; border-radius: 5px; font-size: 12px; display: inline-block;}
 
@@ -64,8 +79,8 @@
         .last-result {
             margin-top: 30px; border-top: 1px dashed #7f8c8d; padding-top: 10px; font-size: 10px; color: #bdc3c7; width: 100%; max-width: 500px;
         }
-        .result-balls { display: flex; gap: 5px; justify-content: center; margin-top: 10px; }
-        .res-ball { width: 30px; height: 30px; border-radius: 50%; background: #3498db; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
+        .result-balls { display: flex; gap: 5px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+        .res-ball { width: 30px; height: 30px; border-radius: 50%; background: #3498db; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; margin: 2px; }
     </style>
 </head>
 <body>
@@ -73,6 +88,7 @@
     <h1 class="header">🎱 彩票</h1>
 
     <div class="jackpot-box">
+        <div id="closed-msg" class="closed-mask">⛔ 暫停購買</div>
         <div class="jackpot-title">本期累積獎金</div>
         <div class="jackpot-amount" id="jackpot-display">Loading...</div>
         <div style="font-size:10px; margin-top:5px;">每晚 10:00 開獎</div>
@@ -86,7 +102,7 @@
 
     <div class="number-grid" id="grid"></div>
 
-    <button class="buy-btn" onclick="buyTicket()">購買彩票 (1萬 G)</button>
+    <button id="btn-buy" class="buy-btn" onclick="buyTicket()">購買彩票 (1萬 G)</button>
 
     <div class="my-tickets-area">
         <div class="section-title">我的彩票 (<span id="my-ticket-count">0</span>)</div>
@@ -96,23 +112,24 @@
     </div>
 
     <div class="last-result" id="last-result-area" style="display:none;">
-        上次開獎結果:
+        上次開獎結果 <span id="last-draw-time" style="font-size:8px; color:#777;"></span> :
         <div class="result-balls" id="res-balls"></div>
     </div>
 
     <a href="hub.html" class="back-btn">◀ 返回大廳</a>
 
-    <script src="socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const socket = io('https://mmo.ttctv-105.cc', { 
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
         let selected = [];
+        let isLotteryOpen = true;
 
         // 初始化 49 個號碼球
         const grid = document.getElementById('grid');
@@ -125,6 +142,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
         }
 
         function toggleNumber(n, el) {
+            if (!isLotteryOpen) return; // 關閉時不能選
+
             if (selected.includes(n)) {
                 selected = selected.filter(x => x !== n);
                 el.classList.remove('selected');
@@ -142,6 +161,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         }
 
         function buyTicket() {
+            if (!isLotteryOpen) { alert("⛔ 系統目前暫停購買！"); return; }
             if (selected.length !== 6) { alert("請選擇 6 個號碼！"); return; }
             if (!confirm(`確定要花費 10,000 G 購買號碼 [${selected.join(',')}] 嗎？`)) return;
             
@@ -154,9 +174,26 @@ const socket = io('https://mmo.ttctv-105.cc', {
         });
 
         socket.on('lotteryUpdate', (data) => {
+            // 1. 更新獎池與狀態
             document.getElementById('jackpot-display').innerText = `$ ${data.jackpot.toLocaleString()}`;
             
-            // 🟢 更新我的彩票列表
+            if (data.isOpen !== undefined) {
+                isLotteryOpen = data.isOpen;
+                const btn = document.getElementById('btn-buy');
+                const mask = document.getElementById('closed-msg');
+                
+                if (isLotteryOpen) {
+                    btn.disabled = false;
+                    btn.innerText = "購買彩票 (1萬 G)";
+                    mask.style.display = 'none';
+                } else {
+                    btn.disabled = true;
+                    btn.innerText = "⛔ 暫停購買";
+                    mask.style.display = 'flex';
+                }
+            }
+
+            // 2. 更新我的彩票列表
             if (data.myBets) {
                 const list = document.getElementById('my-ticket-list');
                 const count = document.getElementById('my-ticket-count');
@@ -167,16 +204,21 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 if (data.myBets.length === 0) {
                     list.innerHTML = '<div style="font-size:10px; color:#aaa; padding:10px;">尚未購買</div>';
                 } else {
-                    data.myBets.forEach((nums, idx) => {
+                    // 反轉陣列，讓最新的顯示在最上面
+                    const reversedBets = [...data.myBets].reverse();
+                    
+                    reversedBets.forEach((bet, idx) => {
                         const div = document.createElement('div');
                         div.className = 'ticket-row';
                         
                         // 將號碼美化顯示
-                        // 補零 (01, 02) 看起來比較整齊
-                        const fmtNums = nums.map(n => n.toString().padStart(2, '0')).join(' - ');
+                        const fmtNums = bet.nums.map(n => n.toString().padStart(2, '0')).join(' - ');
+                        
+                        // 計算這是第幾張 (原本的索引是倒過來的)
+                        const ticketNum = data.myBets.length - idx;
 
                         div.innerHTML = `
-                            <span class="ticket-tag">#${idx + 1}</span>
+                            <span class="ticket-tag">#${ticketNum}</span>
                             <span class="ticket-nums">${fmtNums}</span>
                         `;
                         list.appendChild(div);
@@ -184,16 +226,26 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 }
             }
 
-            if (data.lastResult) {
+            // 3. 更新上次開獎結果 (修正版)
+            if (data.lastDraw && data.lastDraw.numbers) {
                 document.getElementById('last-result-area').style.display = 'block';
                 const container = document.getElementById('res-balls');
                 container.innerHTML = '';
-                data.lastResult.forEach(n => {
+                
+                // 顯示號碼球
+                data.lastDraw.numbers.forEach(n => {
                     const b = document.createElement('div');
                     b.className = 'res-ball';
                     b.innerText = n;
                     container.appendChild(b);
                 });
+
+                // 顯示開獎時間
+                if (data.lastDraw.time) {
+                    const date = new Date(data.lastDraw.time);
+                    document.getElementById('last-draw-time').innerText = 
+                        `(${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${date.getMinutes().toString().padStart(2,'0')})`;
+                }
             }
         });
 
