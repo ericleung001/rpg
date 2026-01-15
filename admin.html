@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GM 管理後台2</title>
+    <title>GM 超級後台</title>
     <style>
         body { background: #222; color: #fff; font-family: monospace; padding: 20px; text-align: center; }
         input, select, button { padding: 10px; margin: 5px; width: 100%; max-width: 300px; box-sizing: border-box; }
@@ -16,28 +16,121 @@
         optgroup { color: #f1c40f; background: #333; font-weight: bold; }
         option { color: #fff; background: #222; }
 
-        /* 按鈕顏色 */
+        /* 一般按鈕顏色 */
         .btn-open { background: #27ae60; }
         .btn-close { background: #c0392b; }
         .btn-reset { background: #f39c12; }
         .btn-boss { background: #8e44ad; box-shadow: 0 0 10px #8e44ad; }
 
-        /* 🚨 可疑名單列表樣式 */
-        #suspicious-table { width: 100%; max-width: 800px; margin: 0 auto; border-collapse: collapse; background: #111; }
-        #suspicious-table th, #suspicious-table td { border: 1px solid #444; padding: 8px; text-align: left; font-size: 12px; }
-        #suspicious-table th { background: #c0392b; color: white; }
-        #suspicious-table tr:nth-child(even) { background: #1a1a1a; }
-        #suspicious-table tr:hover { background: #333; }
-        .sus-reason { color: #f39c12; }
+        /* 表格共用樣式 */
+        table { width: 100%; max-width: 1000px; margin: 0 auto; border-collapse: collapse; background: #111; font-size: 12px; margin-bottom: 20px; }
+        th, td { border: 1px solid #444; padding: 8px; text-align: left; }
+        th { background: #c0392b; color: white; text-align: center; }
+        tr:nth-child(even) { background: #1a1a1a; }
+        tr:hover { background: #333; }
+        td { text-align: center; } /* 預設置中 */
+
+        /* 列表內的小按鈕 */
+        .btn-sm { padding: 4px 8px; font-size: 10px; width: auto; margin: 2px; border-radius: 4px; }
+        .btn-kick { background: #f39c12; color: #000; }
+        .btn-ban-acc { background: #8e44ad; }
+        .btn-ban-ip { background: #c0392b; }
+        .btn-unban { background: #27ae60; }
+
+        /* 可疑列表特定樣式 */
+        .sus-reason { color: #f39c12; text-align: left; }
+        
+        /* 分頁控制區樣式 */
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 10px; }
+        .page-btn { padding: 5px 15px; font-size: 12px; width: auto; background: #34495e; }
+        .page-btn:disabled { background: #555; cursor: not-allowed; opacity: 0.7; }
+        #page-info { font-size: 12px; color: #aaa; }
     </style>
 </head>
 <body>
 
-    <h1>🔧 GM 管理後台</h1>
+    <h1>🔧 GM 超級後台</h1>
 
     <input type="password" id="admin-pass" placeholder="輸入管理員密碼">
-    <input type="text" id="target-name" placeholder="目標玩家名稱 (Username)">
     
+    <div style="display:flex; justify-content:center; gap:5px; width:100%; max-width:300px; margin:0 auto;">
+        <input type="text" id="target-name" placeholder="目標玩家名稱 (Username)" style="flex:1;">
+        <button onclick="checkIp()" style="width:80px; background:#3498db;">🔍 IP</button>
+    </div>
+    
+    <hr>
+
+    <h3 style="color: #2ecc71;">🟢 在線玩家管理 (Online Players)</h3>
+    
+    <div style="display:flex; justify-content:center; gap:10px; margin-bottom:10px;">
+        <button onclick="refreshOnline()" style="background:#27ae60; width:auto;">🔄 刷新列表</button>
+        <input type="text" id="online-search" placeholder="🔍 搜尋玩家名稱..." oninput="searchOnline()" style="width: 200px;">
+    </div>
+    
+    <table id="online-table">
+        <thead>
+            <tr>
+                <th style="width: 150px;">玩家名稱</th>
+                <th style="width: 150px;">IP 地址</th>
+                <th style="width: 80px;">等級</th>
+                <th style="width: 120px;">金幣</th>
+                <th>快速操作</th>
+            </tr>
+        </thead>
+        <tbody id="online-list">
+            <tr><td colspan="5" style="color:#aaa;">點擊刷新載入...</td></tr>
+        </tbody>
+    </table>
+
+    <div class="pagination" id="online-pagination" style="display:none;">
+        <button class="page-btn" onclick="changeOnlinePage(-1)" id="btn-online-prev">◀ 上一頁</button>
+        <span id="page-online-info">第 1 頁 / 共 1 頁</span>
+        <button class="page-btn" onclick="changeOnlinePage(1)" id="btn-online-next">下一頁 ▶</button>
+    </div>
+
+    <hr>
+
+    <h3 style="color: #8e44ad;">🚫 IP 封鎖管理 (Ban List)</h3>
+    <div style="display:flex; justify-content:center; gap:5px; margin-bottom:10px;">
+        <input type="text" id="ban-ip" placeholder="輸入 IP 地址" style="width:150px;">
+        <input type="text" id="ban-reason" placeholder="封鎖原因" style="width:150px;">
+        <input type="number" id="ban-duration" placeholder="小時 (0=永久)" style="width:80px;" value="0">
+        <button onclick="doBanManual()" style="background:#c0392b; width:80px;">封鎖 IP</button>
+    </div>
+    
+    <table id="ban-table">
+        <thead>
+            <tr>
+                <th>IP</th>
+                <th>原因</th>
+                <th>到期時間 (+9h)</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="ban-list">
+            <tr><td colspan="4" style="color:#aaa;">暫無資料</td></tr>
+        </tbody>
+    </table>
+
+    <h3 style="color: #9b59b6;">🚫 帳號封鎖管理 (Account Ban List)</h3>
+    <div style="margin-bottom:10px;">
+        <button onclick="refreshBans()" style="background:#2f3542; width:auto;">🔄 刷新封鎖名單 (IP & 帳號)</button>
+    </div>
+
+    <table id="ban-acc-table">
+        <thead>
+            <tr>
+                <th>帳號名稱</th>
+                <th>原因</th>
+                <th>到期時間 (+9h)</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="ban-acc-list">
+            <tr><td colspan="4" style="color:#aaa;">暫無資料</td></tr>
+        </tbody>
+    </table>
+
     <hr>
 
     <h3 style="color: #ff4757; text-shadow: 0 0 5px red;">🚨 可疑帳號監控 (Bot 偵測)</h3>
@@ -49,15 +142,21 @@
     <table id="suspicious-table">
         <thead>
             <tr>
-                <th style="width: 180px;">時間</th>
+                <th style="width: 200px;">時間 (+9h)</th>
                 <th style="width: 150px;">玩家名稱</th>
-                <th>可疑原因</th>
+                <th style="text-align: left;">可疑原因</th>
             </tr>
         </thead>
         <tbody id="suspicious-list">
-            <tr><td colspan="3" style="text-align:center; color:#aaa;">暫無資料，請點擊刷新</td></tr>
+            <tr><td colspan="3" style="color:#aaa;">暫無資料，請點擊刷新</td></tr>
         </tbody>
     </table>
+
+    <div class="pagination" id="pagination-controls" style="display:none;">
+        <button class="page-btn" onclick="changePage(-1)" id="btn-prev">◀ 上一頁</button>
+        <span id="page-info">第 1 頁 / 共 1 頁</span>
+        <button class="page-btn" onclick="changePage(1)" id="btn-next">下一頁 ▶</button>
+    </div>
 
     <hr>
 
@@ -82,6 +181,14 @@
         <button class="btn-open" onclick="controlLuckyBag('open')">🟢 開啟活動 (允許購買)</button>
         <button class="btn-close" onclick="controlLuckyBag('close')">🔴 關閉活動 (禁止購買)</button>
         <button class="btn-reset" onclick="controlLuckyBag('reset')">🔄 重置庫存 (補滿 20 個)</button>
+    </div>
+
+    <hr>
+
+    <h3 style="color: #3498db;">🎟️ 彩票系統管理</h3>
+    <div style="display:flex; flex-direction: column; align-items: center;">
+        <button class="btn-open" onclick="controlLottery(true)">🟢 開啟彩票購買</button>
+        <button class="btn-close" onclick="controlLottery(false)">🔴 暫停彩票購買</button>
     </div>
 
     <hr>
@@ -299,133 +406,370 @@
     
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
-
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         socket.on('connect', () => {
             log("✅ 連線成功，請輸入密碼與玩家名稱。");
         });
 
-        // 🟢 [新增] 接收後端傳來的 Log 資料
-        let currentLogs = []; // 暫存 logs 用於下載
+        // ============================
+        // 🟢 核心工具函式
+        // ============================
 
-        socket.on('adminSuspiciousLogsData', (logs) => {
-            currentLogs = logs;
-            const tbody = document.getElementById('suspicious-list');
+        function getPass() {
+            const pass = document.getElementById('admin-pass').value;
+            if(!pass) { alert("請輸入管理員密碼"); return null; }
+            return pass;
+        }
+
+        function formatTimePlus9(timestamp) {
+            const date = timestamp ? new Date(timestamp) : new Date();
+            date.setTime(date.getTime() + (9 * 60 * 60 * 1000));
+            return date.toLocaleString('zh-HK', { hour12: false });
+        }
+
+        function log(msg) {
+            const area = document.getElementById('log-area');
+            area.innerText = `[${new Date().toLocaleTimeString()}] ${msg}\n` + area.innerText;
+        }
+
+        // ============================
+        // 🟢 線上玩家管理 (New with Pagination & Search)
+        // ============================
+        let onlinePlayersData = [];
+        let onlinePage = 1;
+        const onlinePerPage = 10;
+        let onlineSearchQuery = "";
+
+        function refreshOnline() {
+            const pass = getPass();
+            if(!pass) return;
+            socket.emit('adminGetOnlinePlayers', { adminPass: pass });
+        }
+
+        socket.on('adminOnlineList', (list) => {
+            onlinePlayersData = list;
+            onlinePage = 1; 
+            renderOnlineTable(); 
+            log(`已更新 ${list.length} 位線上玩家`);
+        });
+
+        function searchOnline() {
+            onlineSearchQuery = document.getElementById('online-search').value.toLowerCase();
+            onlinePage = 1; 
+            renderOnlineTable();
+        }
+
+        function changeOnlinePage(step) {
+            onlinePage += step;
+            renderOnlineTable();
+        }
+
+        function renderOnlineTable() {
+            const tbody = document.getElementById('online-list');
+            const paginationDiv = document.getElementById('online-pagination');
             tbody.innerHTML = '';
 
-            if (logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">目前無可疑紀錄</td></tr>';
+            let filteredList = onlinePlayersData;
+            if (onlineSearchQuery) {
+                filteredList = onlinePlayersData.filter(p => p.name.toLowerCase().includes(onlineSearchQuery));
+            }
+
+            if(filteredList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">無符合條件的玩家</td></tr>';
+                paginationDiv.style.display = 'none';
                 return;
             }
 
-            logs.forEach(log => {
+            paginationDiv.style.display = 'flex';
+            const totalPages = Math.ceil(filteredList.length / onlinePerPage);
+            
+            if (onlinePage > totalPages) onlinePage = totalPages;
+            if (onlinePage < 1) onlinePage = 1;
+
+            const startIndex = (onlinePage - 1) * onlinePerPage;
+            const endIndex = startIndex + onlinePerPage;
+            const pageItems = filteredList.slice(startIndex, endIndex);
+
+            pageItems.forEach(p => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${log.time}</td>
+                    <td style="color:#f1c40f; font-weight:bold;">${p.name}</td>
+                    <td>${p.ip}</td>
+                    <td>Lv.${p.level}</td>
+                    <td>$${p.gold.toLocaleString()}</td>
+                    <td>
+                        <button class="btn-sm btn-kick" onclick="kick('${p.name}')">踢出</button>
+                        <button class="btn-sm btn-ban-acc" onclick="banAcc('${p.name}')">Ban帳</button>
+                        <button class="btn-sm btn-ban-ip" onclick="banIp('${p.ip}')">Ban IP</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('page-online-info').innerText = `第 ${onlinePage} 頁 / 共 ${totalPages} 頁 (共 ${filteredList.length} 人)`;
+            document.getElementById('btn-online-prev').disabled = (onlinePage === 1);
+            document.getElementById('btn-online-next').disabled = (onlinePage === totalPages);
+        }
+
+        function kick(name) {
+            if(confirm(`踢出 [${name}] ?`)) { doBanAcc(name, "GM踢出", 0.01); }
+        }
+        function banAcc(name) {
+            const reason = prompt("封鎖原因:", "違規");
+            if(reason) doBanAcc(name, reason, 0); // 0 = 永久
+        }
+        function banIp(ip) {
+            const reason = prompt("封鎖 IP 原因:", "惡意攻擊");
+            if(reason) doBanIp(ip, reason, 0);
+        }
+
+        // ============================
+        // 🟢 IP & 帳號封鎖系統
+        // ============================
+
+        function checkIp() {
+            const pass = getPass();
+            const name = document.getElementById('target-name').value;
+            if(!pass || !name) { alert("請輸入名稱"); return; }
+            log(`[請求] 正在查詢 ${name} 的 IP...`);
+            socket.emit('adminGetPlayerIp', { adminPass: pass, targetName: name });
+        }
+
+        function refreshBans() {
+            const pass = getPass();
+            if(!pass) return;
+            socket.emit('adminGetBans', { adminPass: pass });
+        }
+
+        function doBanManual() {
+            const ip = document.getElementById('ban-ip').value;
+            const reason = document.getElementById('ban-reason').value;
+            const duration = document.getElementById('ban-duration').value;
+            if (!ip) { alert("請輸入 IP"); return; }
+            if (confirm(`確定要封鎖 IP [${ip}] 嗎？`)) {
+                doBanIp(ip, reason, duration);
+            }
+        }
+
+        function doBanAcc(name, reason, duration) {
+            const pass = getPass();
+            if(!pass) return;
+            socket.emit('adminBanAccount', { adminPass: pass, targetName: name, reason, duration });
+        }
+
+        function doBanIp(ip, reason, duration) {
+            const pass = getPass();
+            if(!pass) return;
+            socket.emit('adminBanIP', { adminPass: pass, targetIp: ip, reason: reason || "違規", duration: duration });
+        }
+
+        function doUnban(ip) {
+            const pass = getPass();
+            if(!pass) return;
+            if (confirm(`確定要解封 IP [${ip}] 嗎？`)) {
+                socket.emit('adminUnbanIP', { adminPass: pass, targetIp: ip });
+            }
+        }
+
+        function doUnbanAcc(name) {
+            const pass = getPass();
+            if(!pass) return;
+            if (confirm(`確定要解封帳號 [${name}] 嗎？`)) {
+                socket.emit('adminUnbanAccount', { adminPass: pass, targetName: name });
+            }
+        }
+
+        // 接收 IP 封鎖列表
+        socket.on('adminBanList', (bans) => {
+            const tbody = document.getElementById('ban-list');
+            tbody.innerHTML = '';
+            const ipList = Object.keys(bans);
+            if (ipList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="color:#aaa;">暫無封鎖資料</td></tr>';
+                return;
+            }
+            ipList.forEach(ip => {
+                const info = bans[ip];
+                let expireText = info.expiresAt ? formatTimePlus9(info.expiresAt) : "永久";
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${ip}</td>
+                    <td style="color:#f1c40f;">${info.reason}</td>
+                    <td>${expireText}</td>
+                    <td><button class="btn-sm btn-unban" onclick="doUnban('${ip}')">解封</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+
+        // 🟢 [新增] 接收帳號封鎖列表
+        socket.on('adminAccountBanList', (bans) => {
+            const tbody = document.getElementById('ban-acc-list');
+            tbody.innerHTML = '';
+            const accList = Object.keys(bans);
+            if (accList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="color:#aaa;">暫無封鎖帳號</td></tr>';
+                return;
+            }
+            accList.forEach(name => {
+                const info = bans[name];
+                let expireText = info.expiresAt ? formatTimePlus9(info.expiresAt) : "永久";
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight:bold; color:#f1c40f;">${name}</td>
+                    <td>${info.reason}</td>
+                    <td>${expireText}</td>
+                    <td><button class="btn-sm btn-unban" onclick="doUnbanAcc('${name}')">解封</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+
+        // ============================
+        // 🟢 Bot 監控與分頁
+        // ============================
+        let currentLogs = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
+        socket.on('adminSuspiciousLogsData', (logs) => {
+            currentLogs = logs;
+            currentPage = 1;
+            renderTable();
+            log(`已更新 ${logs.length} 筆可疑紀錄`);
+        });
+
+        function renderTable() {
+            const tbody = document.getElementById('suspicious-list');
+            const paginationDiv = document.getElementById('pagination-controls');
+            tbody.innerHTML = '';
+
+            if (currentLogs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">目前無可疑紀錄</td></tr>';
+                paginationDiv.style.display = 'none';
+                return;
+            }
+            paginationDiv.style.display = 'flex';
+
+            const totalPages = Math.ceil(currentLogs.length / itemsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageItems = currentLogs.slice(startIndex, endIndex);
+
+            pageItems.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${formatTimePlus9(log.time)}</td> 
                     <td style="font-weight:bold; color:#fff;">${log.name}</td>
                     <td class="sus-reason">${log.reason}</td>
                 `;
                 tbody.appendChild(tr);
             });
-            log(`已更新 ${logs.length} 筆可疑紀錄`);
-        });
 
-        // 🟢 [新增] 請求 Log
+            document.getElementById('page-info').innerText = `第 ${currentPage} 頁 / 共 ${totalPages} 頁 (共 ${currentLogs.length} 筆)`;
+            document.getElementById('btn-prev').disabled = (currentPage === 1);
+            document.getElementById('btn-next').disabled = (currentPage === totalPages);
+        }
+
+        function changePage(step) {
+            currentPage += step;
+            renderTable();
+        }
+
         function fetchSuspiciousLogs() {
-            const pass = document.getElementById('admin-pass').value;
-            if(!pass) { alert("請輸入管理員密碼"); return; }
+            const pass = getPass();
+            if(!pass) return;
             socket.emit('adminGetSuspiciousLogs', { adminPass: pass });
         }
 
-        // 🟢 [新增] 下載 Log 功能 (存成 .txt)
         function downloadLogs() {
-            if (currentLogs.length === 0) {
-                alert("沒有資料可下載，請先刷新列表！");
-                return;
-            }
-
-            let content = "=== RPG Game Suspicious Activity Log ===\n";
-            content += `Export Date: ${new Date().toLocaleString()}\n\n`;
-            
+            if (currentLogs.length === 0) { alert("無資料可下載"); return; }
+            let content = "=== RPG Suspicious Log (+9h) ===\nExport: " + formatTimePlus9() + "\n\n";
             currentLogs.forEach(log => {
-                content += `[${log.time}] Player: ${log.name} | Reason: ${log.reason}\n`;
+                content += `[${formatTimePlus9(log.time)}] ${log.name} | ${log.reason}\n`;
             });
-
             const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
-            a.href = url;
-            a.download = `sus_logs_${Date.now()}.txt`;
-            a.click();
+            a.href = url; a.download = `sus_logs_${Date.now()}.txt`; a.click();
             URL.revokeObjectURL(url);
         }
 
-        // --- 原有功能 ---
+        // ============================
+        // 🟢 其他遊戲管理功能
+        // ============================
 
         function spawnBoss() {
-            const pass = document.getElementById('admin-pass').value;
-            if(!pass) { alert("請輸入管理員密碼"); return; }
-            if(!confirm("⚠️ 確定要召喚 [虛空滅世者] 嗎？\n這會向全服發送通知！")) return;
-            log("[請求] 正在召喚世界 BOSS...");
-            socket.emit('adminSpawnWorldBoss', { password: pass });
+            const pass = getPass(); if(!pass) return;
+            if(confirm("確定召喚 BOSS？")) {
+                log("[請求] 正在召喚...");
+                socket.emit('adminSpawnWorldBoss', { password: pass });
+            }
         }
 
         function controlLuckyBag(action) {
-            const pass = document.getElementById('admin-pass').value;
-            if(!pass) { alert("請輸入管理員密碼"); return; }
+            const pass = getPass(); if(!pass) return;
             socket.emit('adminSetLuckyBag', { password: pass, action: action });
         }
 
+        function controlLottery(isOpen) {
+            const pass = getPass(); if(!pass) return;
+            socket.emit('adminSetLotteryState', { password: pass, isOpen: isOpen });
+        }
+
         function setMaintenance(mode) {
-            const pass = document.getElementById('admin-pass').value;
-            if(!pass) { alert("請輸入管理員密碼"); return; }
+            const pass = getPass(); if(!pass) return;
             const action = mode ? "開啟維護" : "關閉維護";
-            if(!confirm(`確定要 ${action} 嗎？`)) return;
-            log(`[請求] 正在 ${action}...`);
-            socket.emit('adminSetMaintenance', { adminPass: pass, mode: mode });
+            if(confirm(`確定要 ${action} 嗎？`)) {
+                log(`[請求] 正在 ${action}...`);
+                socket.emit('adminSetMaintenance', { adminPass: pass, mode: mode });
+            }
         }
 
         function resetPassword() {
-            const pass = document.getElementById('admin-pass').value;
+            const pass = getPass(); if(!pass) return;
             const name = document.getElementById('target-name').value;
             const newPass = document.getElementById('new-pass').value;
-            if(!pass || !name || !newPass) { alert("請輸入完整資訊"); return; }
+            if(!name || !newPass) { alert("請輸入完整資訊"); return; }
             socket.emit('adminResetPass', { adminPass: pass, targetName: name, newPass: newPass });
         }
 
         function setLevel() {
-            const pass = document.getElementById('admin-pass').value;
+            const pass = getPass(); if(!pass) return;
             const name = document.getElementById('target-name').value;
             const level = document.getElementById('level-amount').value;
-            if(!pass || !name || !level) { alert("請填寫所有欄位"); return; }
+            if(!name || !level) { alert("請填寫所有欄位"); return; }
             socket.emit('adminSetLevel', { adminPass: pass, targetName: name, level: level });
         }
 
         function setGatherLevel() {
-            const pass = document.getElementById('admin-pass').value;
+            const pass = getPass(); if(!pass) return;
             const name = document.getElementById('target-name').value;
             const level = document.getElementById('gather-level-amount').value;
-            if(!pass || !name || !level) { alert("請填寫所有欄位"); return; }
+            if(!name || !level) { alert("請填寫所有欄位"); return; }
             socket.emit('adminSetGatherLevel', { adminPass: pass, targetName: name, level: level });
         }
 
         function modifyGold() {
-            const pass = document.getElementById('admin-pass').value;
+            const pass = getPass(); if(!pass) return;
             const name = document.getElementById('target-name').value;
             const mode = document.getElementById('gold-mode').value;
             const amount = document.getElementById('gold-amount').value;
-            if(!pass || !name || !amount) { alert("請填寫所有欄位"); return; }
+            if(!name || !amount) { alert("請填寫所有欄位"); return; }
             socket.emit('adminSetGold', { adminPass: pass, targetName: name, amount: amount, mode: mode });
         }
 
         function sendItem() {
-            const pass = document.getElementById('admin-pass').value;
+            const pass = getPass(); if(!pass) return;
             const name = document.getElementById('target-name').value;
             const item = document.getElementById('item-id').value;
             const count = document.getElementById('item-count').value;
-            if(!pass || !name || !item || !count) { alert("請填寫所有欄位"); return; }
+            if(!name || !item || !count) { alert("請填寫所有欄位"); return; }
             log(`[請求] 發送 ${count} 個 [${item}] 給 ${name}...`);
             socket.emit('adminGiveItem', { adminPass: pass, targetName: name, itemId: item, count: count });
         }
@@ -433,10 +777,6 @@
         socket.on('adminResult', (res) => { log(res.msg); });
         socket.on('errorMessage', (msg) => { log("❌ " + msg); });
 
-        function log(msg) {
-            const area = document.getElementById('log-area');
-            area.innerText = `[${new Date().toLocaleTimeString()}] ${msg}\n` + area.innerText;
-        }
     </script>
 </body>
 </html>
