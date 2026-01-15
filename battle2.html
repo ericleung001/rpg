@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中new2</title>
+    <title>戰鬥中new3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -369,7 +369,7 @@
             }
         });
 
-        // 🟢 3. 繪製怪物函式
+        // 🟢 3. 繪製怪物函式 (修正：恢復使用怪物 Key/英文名出圖)
         function renderMonsters(mobs) {
             const area = document.getElementById('mob-area');
             area.innerHTML = '';
@@ -382,9 +382,17 @@
                 
                 div.onclick = () => selectTarget(m.id); // 點擊選擇
 
-                // 簡單處理圖片：用名字前綴當圖檔名
-                let imgSrc = "img/monsters/slime.png"; 
-                if (m.name.includes("混沌")) imgSrc = "img/monsters/void_walker.png";
+                // 🟢 [修正] 恢復依照怪物英文名/Key載入圖片
+                // 嘗試取得怪物的圖片 Key (假設伺服器有傳 m.key 或 m.monsterKey)
+                // 如果沒有，則嘗試將名字用空白分割取第一部分 (例如 "Slime 史萊姆" -> "slime")
+                let imgKey = m.key || m.monsterKey;
+                if (!imgKey && m.name) {
+                    imgKey = m.name.split(' ')[0].toLowerCase();
+                }
+                // 保底預設值
+                if (!imgKey) imgKey = 'slime';
+
+                let imgSrc = `img/monsters/${imgKey}.png`;
 
                 const hpPct = (m.hp / m.maxHp) * 100;
                 
