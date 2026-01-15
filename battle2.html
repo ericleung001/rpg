@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中_new</title>
+    <title>戰鬥中_new2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -597,7 +597,17 @@
         }
         
         function leaveRoom() { socket.emit('leaveRoom', roomId); window.location.href = 'hub.html'; }
-        
+        // 🟢 [補回缺失的函式] 房主開始戰鬥
+        function requestStart() {
+            if (!roomId) return;
+            // 避免連點
+            const btn = document.getElementById('start-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = "啟動中...";
+            }
+            socket.emit('startBattle', roomId);
+        }
         // 啟動倒數
         function startCountdown() {
             // ...
