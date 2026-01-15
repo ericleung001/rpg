@@ -749,12 +749,52 @@
             document.getElementById('chat-header').innerText = chat.classList.contains('chat-open') ? " 收起" : " 聊天室 (點擊展開)";
         }
 
+        // 🟢 [補回完整代碼] 世界 BOSS 同步邏輯 (適配新版 UI)
         socket.on('worldBossSync', (data) => {
+            // 1. 檢查 BOSS 是否存活
             if (!data.active) {
-                showMsg("BOSS 已被擊敗！"); setTimeout(() => window.location.href = 'hub.html', 3000);
+                showMsg("BOSS 已被擊敗！"); 
+                setTimeout(() => window.location.href = 'hub.html', 3000);
                 return;
             }
-            // (世界Boss 相關)
+
+            // 2. 強制更新上方標題 (因為世界王沒有 CT 條)
+            const bar = document.getElementById('turn-bar');
+            bar.innerText = "🔥 世界 BOSS 討伐戰 🔥";
+            bar.style.background = "#c0392b";
+            bar.style.justifyContent = "center"; // 文字置中
+
+            // 3. 🟢 [核心適配] 將 Boss 數據轉換為新版多怪物格式
+            // 這樣才能使用 renderMonsters 畫出漂亮的血條和數字
+            const bossObj = {
+                id: 'world_boss',      // 固定 ID
+                name: data.name,       // Boss 名稱
+                hp: data.hp,           // 當前血量
+                maxHp: data.maxHp,     // 最大血量
+                key: 'entropy_god',    // 強制指定圖片 Key
+                isDead: false
+            };
+
+            // 更新本地緩存
+            currentMonsters = [bossObj];
+
+            // 呼叫繪圖函式 (這會自動處理血量文字縮寫、圖片載入等)
+            renderMonsters(currentMonsters);
+
+            // 4. 同步倒數計時器
+            if (data.remainingTime !== undefined) {
+                const serverTimeSec = Math.floor(data.remainingTime / 1000);
+                // 如果時間誤差超過 2 秒，或計時器未啟動，則校正
+                if (Math.abs(timeLeft - serverTimeSec) > 2 || !battleTimer) {
+                    timeLeft = serverTimeSec;
+                    if (!battleTimer) startCountdown();
+                    else updateTimerDisplay();
+                }
+            }
+            
+            // 隱藏不必要的 UI
+            document.getElementById('teammates-box').style.display = 'none';
+            document.getElementById('lobby-overlay').style.display = 'none';
         });
 
         socket.on('roomInfoUpdate', (info) => {
