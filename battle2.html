@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中new5</title>
+    <title>戰鬥中new6</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -855,6 +855,7 @@
             if (lines.length > 20) for(let i=20; i<lines.length; i++) lines[i].remove();
         }
 
+        // 🟢 [修正] 移除物品按鈕的 battle-action class，讓它隨時可按
         function resetButtons() {
             const btnArea = document.getElementById('btns');
             const fixedArea = document.getElementById('fixed-top-area');
@@ -867,9 +868,11 @@
             btnArea.innerHTML = `
                 <button class="btn battle-action" onclick="act('attack')">攻擊</button>
                 <button class="btn battle-action" onclick="openSkill()">魔法</button>
-                <button class="btn battle-action" onclick="openBag()">物品</button>
+                <button class="btn" onclick="openBag()">物品</button>
                 <button class="btn" onclick="leaveRoom()">逃跑</button>
             `;
+            
+            // 更新按鈕鎖定狀態 (只鎖定攻擊和魔法)
             if (roomId === 'world_boss') { toggle(false); } else { toggle(!isMyTurn); }
         }
         
@@ -909,7 +912,7 @@
             if (confirm(`確定要踢除 [${targetName}] 嗎？`)) { socket.emit('kickMember', targetId); }
         }
 
-        // --- 物品功能 ---
+        // 🟢 [修正] 打開背包邏輯
         function openBag() {
             const btnArea = document.getElementById('btns');
             const fixedArea = document.getElementById('fixed-top-area');
@@ -926,21 +929,34 @@
                 'potion_mp', 'potion_mp_mid', 'potion_mp_high',
                 'grilled_carp', 'salmon_sushi', 'tuna_steak', 'eel_rice', 'void_soup', 'sushi_plate'
             ];
+            
             let hasItem = false;
+            
             itemsToShow.forEach(itemId => {
                 const count = (myPlayer.inventory && myPlayer.inventory[itemId]) || 0;
                 if(count > 0) {
                     hasItem = true;
                     const potBtn = document.createElement('button');
-                    potBtn.className = 'btn battle-action';
+                    // 這裡加上 battle-action，代表具體的"使用"動作受回合限制
+                    potBtn.className = 'btn battle-action'; 
                     potBtn.style.fontSize = '10px'; 
                     const name = ITEM_NAMES[itemId] || '物品';
                     potBtn.innerText = `${name}(${count})`;
+                    
+                    // 如果不是我的回合，且不是打世界王，則變灰
+                    if (!isMyTurn && roomId !== 'world_boss') {
+                        potBtn.disabled = true;
+                        potBtn.style.opacity = "0.5";
+                    }
+
                     potBtn.onclick = () => { useItem(itemId); };
                     btnArea.appendChild(potBtn);
                 }
             });
-            if(!hasItem) { btnArea.innerHTML = '<div style="grid-column:span 2; font-size:12px; padding:10px;">背包沒有補給品</div>'; }
+            
+            if(!hasItem) { 
+                btnArea.innerHTML = '<div style="grid-column:span 2; font-size:12px; padding:10px; color:#aaa;">背包沒有補給品</div>'; 
+            }
         }
 
         function useItem(itemId) {
