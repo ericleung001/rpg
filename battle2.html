@@ -642,8 +642,20 @@
                 return;
             }
             document.getElementById('monster-name').innerText = data.name;
-            // (世界Boss邏輯暫不支援多怪UI，這裡維持原樣)
-            // ...
+            const hpPct = (data.hp / data.maxHp) * 100;
+            document.getElementById('mhp').style.width = hpPct + '%';
+            document.getElementById('mhp-txt').innerText = `${(data.hp/100000000).toFixed(2)}億`;
+            const img = document.getElementById('monster-img');
+            const bossSrc = "img/monsters/entropy_god.png"; 
+            if (!img.src.includes(bossSrc)) { img.src = bossSrc; img.style.display = 'block'; }
+            if (data.remainingTime !== undefined) {
+                const serverTimeSec = Math.floor(data.remainingTime / 1000);
+                if (Math.abs(timeLeft - serverTimeSec) > 2 || !battleTimer) {
+                    timeLeft = serverTimeSec;
+                    if (!battleTimer) startCountdown(); 
+                    else updateTimerDisplay();
+                }
+            }
         });
 
         socket.on('roomInfoUpdate', (info) => {
