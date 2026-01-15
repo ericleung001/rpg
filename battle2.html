@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中new8</title>
+    <title>戰鬥中new9</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -565,24 +565,30 @@
                 return; 
             }
 
-            // 🟢 [新增] 自動儲存到快捷列 (Most Recently Used 邏輯)
-            // 先從列表中移除 (如果已存在)，再加到最前面
-            myShortcuts = myShortcuts.filter(id => id !== skillId);
-            myShortcuts.unshift(skillId);
+            // 🟢 [修正] 快捷鍵邏輯：只有 "新技能" 才加入，舊的保持位置不動
+            const existingIndex = myShortcuts.indexOf(skillId);
             
-            // 保持最多 4 個
-            if (myShortcuts.length > 4) { myShortcuts.pop(); }
-            
-            // 存入瀏覽器 & 即時更新介面
-            localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
-            updateShortcutStates(myPlayer);
+            if (existingIndex === -1) {
+                // 如果快捷列裡沒有這個技能 -> 加到第一格
+                myShortcuts.unshift(skillId);
+                
+                // 保持最多 4 個
+                if (myShortcuts.length > 4) { myShortcuts.pop(); }
+                
+                // 存檔並更新介面
+                localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
+                updateShortcutStates(myPlayer);
+            } 
+            // 如果 existingIndex !== -1 (已經在快捷列裡)，什麼都不做，保持原位
 
             // 2. 執行技能
             if (roomId === 'world_boss') {
                 toggle(true); 
                 socket.emit('worldBossAction', { type: 'skill', skillId: skillId });
                 const img = document.getElementById('monster-img');
-                img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
+                if(img) {
+                    img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
+                }
                 setTimeout(() => toggle(false), 500);
             } else {
                 // 檢查是否輪到自己
@@ -594,8 +600,6 @@
                 
                 // 需要選目標的情況
                 if (skill.cat !== 'buff' && skill.cat !== 'heal' && skill.name !== '聖光普照' && aliveMobs.length > 1) {
-                    // 這裡不發送請求，而是進入選目標模式
-                    // 注意：這裡不 toggle(true)，因為還要選怪
                     pendingAction = { type: 'skill', skillId: skillId };
                     showTargetTip(true);
                     document.getElementById('menu-container').style.opacity = 0.3;
@@ -603,7 +607,6 @@
                 }
 
                 // 不需要選目標 (單隻怪 或 全體技) -> 直接發送
-                // 如果是單隻怪，自動填入 targetId
                 let targetId = null;
                 if (aliveMobs.length === 1) targetId = aliveMobs[0].id;
 
@@ -617,11 +620,16 @@
                 
                 // 震動特效
                 if (aliveMobs.length > 0) {
-                   // 簡單震動第一隻 (視覺效果)
                    const img = document.querySelector('.boss-sprite');
                    if(img) {
                        img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
                    }
+                }
+                
+                // 🟢 如果是從魔法列表點選的，發送指令後自動返回主選單 (顯示快捷鍵)
+                const fixedArea = document.getElementById('fixed-top-area');
+                if (fixedArea.style.display === 'block') {
+                    resetButtons();
                 }
             }
         }
