@@ -8,7 +8,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
             background-color: #111; font-family: 'Press Start 2P', monospace; 
-            height: 100dvh; margin: 0; overflow: scroll; 
+            height: 100dvh; margin: 0; overflow: hidden; /* 防止整體滾動 */
             display: flex; flex-direction: column; justify-content: flex-start; align-items: center; 
             padding: 10px 10px 50px 10px; box-sizing: border-box; overscroll-behavior: none;
         }
@@ -16,48 +16,51 @@
             width: 100%; max-width: 640px; height: 100%; 
             background: linear-gradient(135deg, #a8c0b0 50%, #789080 50%); 
             border: 4px solid #2c3e50; 
-            display: grid; grid-template-rows: 40px 1.5fr 1.5fr 1.2fr; 
+            /* 🟢 修正比例：壓縮上方顯示區(1.1fr)，加大下方操作區(1.8fr) */
+            display: grid; grid-template-rows: 35px 1.1fr 1.1fr 1.8fr; 
             position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.5); border-radius: 8px;
         }
-        #turn-bar { background: #333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; border-bottom: 4px solid #000; letter-spacing: 1px;}
+        #turn-bar { background: #333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; border-bottom: 4px solid #000; letter-spacing: 1px;}
         
-        .boss-area { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .boss-area { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 5px 0; }
         .boss-sprite { 
-            width: 120px; height: 120px; object-fit: contain; margin-bottom: 10px; 
+            /* 🟢 縮小 Boss 圖片以節省空間 */
+            width: 90px; height: 90px; object-fit: contain; margin-bottom: 5px; 
             transition: transform 0.1s; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5)); 
             image-rendering: pixelated; 
         }
-        .boss-info { width: 80%; text-align: center; }
+        .boss-info { width: 85%; text-align: center; }
         
-        .player-area { display: flex; flex-direction: column; justify-content: center; padding: 0 15px; width: 100%; box-sizing: border-box; gap: 5px; }
-        .my-status { width: 100%; box-sizing: border-box; } 
-        .teammates { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px;} 
+        .player-area { display: flex; flex-direction: column; justify-content: center; padding: 0 10px; width: 100%; box-sizing: border-box; gap: 4px; }
+        .my-status { width: 100%; box-sizing: border-box; padding: 5px; } 
+        .teammates { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 2px;} 
         
-        .gba-box { background: #f0f0d8; border: 4px solid #706870; border-radius: 8px; padding: 8px; color: #383838; font-size: 12px; box-shadow: 4px 4px 0 rgba(0,0,0,0.3); }
-        .mini-box { background: #ecf0f1; border: 2px solid #95a5a6; padding: 4px; font-size: 10px; color: #333; overflow: hidden; border-radius: 4px; }
+        .gba-box { background: #f0f0d8; border: 4px solid #706870; border-radius: 8px; padding: 5px; color: #383838; font-size: 10px; box-shadow: 4px 4px 0 rgba(0,0,0,0.3); }
+        .mini-box { background: #ecf0f1; border: 2px solid #95a5a6; padding: 3px; font-size: 9px; color: #333; overflow: hidden; border-radius: 4px; }
         
-        .hp-bar { width: 100%; height: 12px; background: #555; border: 2px solid #333; margin-top: 5px; border-radius: 2px; }
+        /* 🟢 縮小血條高度 */
+        .hp-bar { width: 100%; height: 8px; background: #555; border: 2px solid #333; margin-top: 3px; border-radius: 2px; }
         .hp-fill { height: 100%; background: #48c058; transition: width 0.3s; }
-        .mp-bar { width: 100%; height: 8px; background: #555; border: 2px solid #333; margin-top: 2px; border-radius: 2px; }
+        .mp-bar { width: 100%; height: 5px; background: #555; border: 2px solid #333; margin-top: 2px; border-radius: 2px; }
         .mp-fill { height: 100%; background: #3498db; transition: width 0.3s; }
 
-        .mini-hp-bar { width: 100%; height: 6px; background: #555; margin-top: 2px; }
+        .mini-hp-bar { width: 100%; height: 4px; background: #555; margin-top: 2px; }
         .mini-hp-fill { height: 100%; background: #e74c3c; width: 100%; }
-        .mini-mp-bar { width: 100%; height: 4px; background: #555; margin-top: 1px; }
+        .mini-mp-bar { width: 100%; height: 3px; background: #555; margin-top: 1px; }
         .mini-mp-fill { height: 100%; background: #3498db; width: 100%; }
 
-        .stat-text { font-size: 10px; margin-top: 4px; font-weight: bold; }
+        .stat-text { font-size: 9px; margin-top: 3px; font-weight: bold; }
         
-        .hud { background: #305080; border-top: 6px solid #c8c8f8; display: flex; height: 100%; overflow: hidden; }
-        .log { width: 50%; padding: 10px; color: white; font-size: 10px; line-height: 1.6; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-start; }
+        .hud { background: #305080; border-top: 4px solid #c8c8f8; display: flex; height: 100%; overflow: hidden; }
+        .log { width: 40%; padding: 8px; color: white; font-size: 9px; line-height: 1.5; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-start; border-right: 2px solid rgba(255,255,255,0.1); }
         
         .menu { 
-            width: 50%; display: flex; flex-direction: column; 
-            background: #fff; border-left: 6px solid #c8c8f8; 
+            width: 60%; display: flex; flex-direction: column; 
+            background: #fff; border-left: 4px solid #c8c8f8; 
             padding: 5px; box-sizing: border-box; position: relative; 
         }
         
-        /* 魔法快捷鍵區域樣式 */
+        /* 快捷鍵區域 */
         #shortcut-area {
             display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
             margin-bottom: 5px; padding-bottom: 5px; border-bottom: 2px solid #ccc;
@@ -65,7 +68,7 @@
         }
         .btn-shortcut {
             background: #ecf0f1; border: 1px solid #bdc3c7; color: #2c3e50;
-            font-size: 10px; padding: 4px; cursor: pointer; border-radius: 4px;
+            font-size: 9px; padding: 8px 2px; cursor: pointer; border-radius: 4px;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             font-family: inherit; font-weight: bold;
         }
@@ -87,8 +90,8 @@
         }
 
         .btn { 
-            background: #f8f8f8; border: 2px solid #888; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; 
-            text-align: center; display:flex; align-items:center; justify-content:center; border-radius: 6px; min-height: 40px;
+            background: #f8f8f8; border: 2px solid #888; cursor: pointer; font-family: inherit; font-size: 11px; font-weight: bold; 
+            text-align: center; display:flex; align-items:center; justify-content:center; border-radius: 6px; min-height: 42px;
             touch-action: manipulation; -webkit-tap-highlight-color: transparent;
         }
         .btn:active { background: #f8d030; color: #000; transform: scale(0.98); }
@@ -96,12 +99,14 @@
         
         #lobby-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
         .player-list { border: 4px solid #fff; padding: 20px; width: 80%; min-height: 100px; text-align: left; margin-bottom: 30px; font-size: 14px; line-height: 2; overflow-y: auto; }
+        
+        /* 🟢 [修正] 開始按鈕預設隱藏，等待 JS 控制 */
         .start-btn { display: none; padding: 15px 30px; font-size: 16px; background: #e74c3c; color: white; border: 4px solid #c0392b; cursor: pointer; font-family: inherit; }
         .start-btn:disabled { background: #7f8c8d; border-color: #555; cursor: wait; }
         
         #chat-container { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7; display: flex; flex-direction: column; font-size: 12px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); transition: height 0.3s ease-in-out; height: 35px; }
         #chat-header { height: 35px; background: #34495e; color: #fff; line-height: 35px; cursor: pointer; font-weight: bold; border-bottom: 1px solid #555; display: flex; justify-content: center; align-items: center; touch-action: manipulation; }
-        .chat-open { height: 20vh !important; }
+        .chat-open { height: 30vh !important; }
         #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
         .chat-open #chat-body { display: flex; }
         #chat-history { flex: 1; overflow-y: auto; padding: 10px; text-align: left; color: white; }
@@ -118,7 +123,7 @@
 
         #countdown-timer {
             position: absolute; top: 10px; right: 10px;
-            color: #e74c3c; font-size: 12px; font-weight: bold;
+            color: #e74c3c; font-size: 10px; font-weight: bold;
             display: none;
             background: rgba(0,0,0,0.7); padding: 5px; border-radius: 4px;
         }
@@ -159,7 +164,11 @@
         <div id="lobby-overlay">
             <div style="color:#f1c40f; margin-bottom:20px; font-size:18px;">等待隊友...</div>
             <div class="player-list" id="lobby-players">讀取中...</div>
-            <div id="host-controls" style="margin-top: 20px;"><button class="start-btn" id="start-btn" onclick="requestStart()">房主開始</button></div>
+            
+            <div id="host-controls" style="margin-top: 20px;">
+                <button class="start-btn" id="start-btn" onclick="requestStart()">房主開始</button>
+            </div>
+            
             <div id="waiting-txt" style="margin-top:15px; font-size:12px; color:#aaa; display:none;">(等待房主...)</div>
             <button onclick="leaveRoom()" style="margin-top:20px; background:transparent; border:2px solid #aaa; color:#aaa; cursor:pointer; font-size:12px; padding:10px;">離開房間</button>
         </div>
@@ -169,21 +178,21 @@
         <div class="boss-area">
             <img id="monster-img" class="boss-sprite" src="" onerror="this.style.display='none'" alt="Monster">
             <div class="gba-box boss-info">
-                <div id="monster-name" style="font-size:14px; font-weight:bold; margin-bottom:5px;">...</div>
+                <div id="monster-name" style="font-size:12px; font-weight:bold; margin-bottom:3px;">...</div>
                 <div class="hp-bar"><div id="mhp" class="hp-fill" style="width:100%"></div></div>
-                <div id="mhp-txt" class="stat-text" style="text-align:right;">...</div>
+                <div id="mhp-txt" class="stat-text" style="text-align:right; font-size:9px;">...</div>
             </div>
         </div>
         
         <div class="player-area">
             <div class="gba-box my-status">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                    <span style="font-size:12px; font-weight:bold;"><span id="my-name">勇者</span>(你)</span>
-                    <span style="font-size:10px; color:#f1c40f;">⚔️<span id="atk-val">0</span> 🛡️<span id="def-val">0</span></span>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                    <span style="font-size:11px; font-weight:bold;"><span id="my-name">勇者</span>(你)</span>
+                    <span style="font-size:9px; color:#f1c40f;">⚔️<span id="atk-val">0</span> 🛡️<span id="def-val">0</span></span>
                 </div>
                 <div class="hp-bar"><div id="php" class="hp-fill" style="width:100%"></div></div>
                 <div class="mp-bar"><div id="pmp" class="mp-fill" style="width:100%"></div></div>
-                <div style="font-size: 10px; margin-top: 5px; text-align:right;" id="hp-txt">...</div>
+                <div style="font-size: 9px; margin-top: 3px; text-align:right;" id="hp-txt">...</div>
             </div>
             
             <div class="teammates" id="teammates-box"></div>
@@ -222,58 +231,46 @@
     
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-// 指定連接到你的 https 網址
-const socket = io('https://mmo.ttctv-105.cc', { 
+        // 🟢 [連線修正] 請使用正確的網址，不要用 rpggameser.cc (它是舊的)
+        const socket = io('https://mmo.ttctv-105.cc', { 
     transports: ['websocket', 'polling'],
     secure: true // 因為你用 https，建議加呢個
 });
-
 
         let isMyTurn = false; 
         const params = new URLSearchParams(window.location.search);
         const roomId = params.get('room');
         let myPlayer = { mp: 0, hp: 0, maxMp: 100, maxHp: 100, skills: ['fireball'] };
         let lastMonsterHp = -1;
-
         let currentMonsterLevel = 0;
         let currentMonsterName = "";
-        
         let battleTimer = null;
         let timeLeft = 540;
 
-        // 🟢 [新增] 讀取 LocalStorage 快捷鍵
         let myShortcuts = []; 
         try {
             const saved = localStorage.getItem('rpg_shortcuts');
-            if (saved) {
-                myShortcuts = JSON.parse(saved);
-            }
-        } catch(e) {
-            console.error("讀取快捷鍵失敗", e);
-            myShortcuts = [];
-        }
+            if (saved) { myShortcuts = JSON.parse(saved); }
+        } catch(e) { console.error("讀取快捷鍵失敗", e); myShortcuts = []; }
 
         const SKILL_INFO = {
-            'fireball':     { name: "火球術", mp: 5, cat: 'atk', desc: "傷x1.5" },
-            'thunder':      { name: "雷擊",   mp: 15, cat: 'atk', desc: "傷x1.2+暈" },
+            'fireball':      { name: "火球術", mp: 5, cat: 'atk', desc: "傷x1.5" },
+            'thunder':       { name: "雷擊",   mp: 15, cat: 'atk', desc: "傷x1.2+暈" },
             'poison_touch': { name: "劇毒之觸", mp: 25, cat: 'atk', desc: "傷x2.5" },
             'frost_nova':   { name: "冰霜新星", mp: 30, cat: 'atk', desc: "傷x1.2+降防" },
-            'meteor':       { name: "隕石術",   mp: 80, cat: 'atk', desc: "傷x3.5" },
+            'meteor':        { name: "隕石術",   mp: 80, cat: 'atk', desc: "傷x3.5" },
             'divine_slash': { name: "次元斬",   mp: 150, cat: 'atk', desc: "傷x5.0" },
-            'drain':        { name: "吸血",     mp: 20, cat: 'atk', desc: "吸血100%" },
-            
-            'void_crush':   { name: "虛空碎擊", mp: 1000, cat: 'atk', desc: "傷x10" },
-            'big_bang':     { name: "宇宙大爆炸", mp: 5000, cat: 'atk', desc: "傷x25" },
+            'drain':         { name: "吸血",     mp: 20, cat: 'atk', desc: "吸血100%" },
+            'void_crush':    { name: "虛空碎擊", mp: 1000, cat: 'atk', desc: "傷x10" },
+            'big_bang':      { name: "宇宙大爆炸", mp: 5000, cat: 'atk', desc: "傷x25" },
             'entropy_decay':{ name: "熱寂·衰變", mp: 2500, cat: 'atk', desc: "5%真傷" },
-
             'holy_shield':  { name: "聖光守護", mp: 40, cat: 'buff', desc: "防禦x2" },
-            'berserk':      { name: "狂暴",     mp: 60, cat: 'buff', desc: "攻x2(自殘)" },
-            'god_mode':     { name: "天神下凡", mp: 300, cat: 'buff', desc: "全能x3" },
-
-            'heal_light':   { name: "小回復",   mp: 10, cat: 'heal', desc: "HP+20%" },
-            'god_light':    { name: "神之光",   mp: 50, cat: 'heal', desc: "HP+50%" },
-            'heal_all':     { name: "聖光普照", mp: 100, cat: 'heal', desc: "全隊滿HP" },
-            'full_heal':    { name: "大天使息", mp: 200, cat: 'heal', desc: "HP全滿" }
+            'berserk':       { name: "狂暴",     mp: 60, cat: 'buff', desc: "攻x2(自殘)" },
+            'god_mode':      { name: "天神下凡", mp: 300, cat: 'buff', desc: "全能x3" },
+            'heal_light':    { name: "小回復",   mp: 10, cat: 'heal', desc: "HP+20%" },
+            'god_light':     { name: "神之光",   mp: 50, cat: 'heal', desc: "HP+50%" },
+            'heal_all':      { name: "聖光普照", mp: 100, cat: 'heal', desc: "全隊滿HP" },
+            'full_heal':     { name: "大天使息", mp: 200, cat: 'heal', desc: "HP全滿" }
         };
 
         const ITEM_NAMES = {
@@ -291,16 +288,13 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken); 
-            
             setTimeout(() => {
                 if (roomId === 'world_boss') {
                     socket.emit('connectToBossRoom');
-                    
                     document.getElementById('turn-bar').innerText = "🔥 世界 BOSS 討伐戰 🔥";
                     document.getElementById('turn-bar').style.background = "#c0392b";
                     document.getElementById('teammates-box').style.display = 'none'; 
                     document.getElementById('lobby-overlay').style.display = 'none';
-                    
                     document.getElementById('countdown-timer').style.display = 'block'; 
                 } else {
                     socket.emit('connectToRoom', roomId);
@@ -308,35 +302,23 @@ const socket = io('https://mmo.ttctv-105.cc', {
             }, 100);
         });
 
-        // 🟢 [AFK 驗證相關]
-        let afkInterval = null; 
-
         socket.on('afkCheck', (data) => {
             document.getElementById('afk-question').innerText = data.question;
             document.getElementById('afk-answer').value = ''; 
             document.getElementById('afk-modal').style.display = 'flex';
-
-            let timeLeft = data.timeout || 60;
+            let timeLeftAfk = data.timeout || 60;
             const timerDisplay = document.getElementById('afk-timer-display');
-            timerDisplay.innerText = `剩餘時間: ${timeLeft}s`;
-
             if (afkInterval) clearInterval(afkInterval);
-
             afkInterval = setInterval(() => {
-                timeLeft--;
-                timerDisplay.innerText = `剩餘時間: ${timeLeft}s`;
-                if (timeLeft <= 0) {
-                    clearInterval(afkInterval);
-                    timerDisplay.innerText = "時間到！";
-                }
+                timeLeftAfk--; timerDisplay.innerText = `剩餘時間: ${timeLeftAfk}s`;
+                if (timeLeftAfk <= 0) { clearInterval(afkInterval); }
             }, 1000);
         });
 
         socket.on('afkSuccess', () => {
             document.getElementById('afk-modal').style.display = 'none';
             if (afkInterval) clearInterval(afkInterval);
-            resetButtons(); 
-            toggle(false); 
+            resetButtons(); toggle(false); 
             log(`<span style="color:#2ecc71">驗證通過！請繼續戰鬥。</span>`);
         });
 
@@ -353,9 +335,15 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         function showMsg(text) {
             const t = document.getElementById('game-toast');
-            t.innerText = text;
-            t.style.top = "30px";
+            t.innerText = text; t.style.top = "30px";
             setTimeout(() => { t.style.top = "-100px"; }, 3000);
+        }
+
+        function appendChat(name, msg) {
+            const history = document.getElementById('chat-history');
+            const div = document.createElement('div');
+            div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${name}]:</span> ${msg}`;
+            history.appendChild(div); history.scrollTop = history.scrollHeight;
         }
 
         socket.on('chatHistory', (history) => {
@@ -364,16 +352,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             history.forEach(data => appendChat(data.name, data.msg));
         });
         socket.on('chatMessage', (data) => { appendChat(data.name, data.msg); });
-        
-        function appendChat(name, msg) {
-            const history = document.getElementById('chat-history');
-            const div = document.createElement('div');
-            const nameSpan = document.createElement('span');
-            nameSpan.style.color = '#f1c40f'; nameSpan.style.fontWeight = 'bold';
-            nameSpan.textContent = `[${name}]: `;
-            div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${name}]:</span> ${msg}`;
-            history.appendChild(div); history.scrollTop = history.scrollHeight;
-        }
 
         document.getElementById('chat-send').onclick = sendChat;
         document.getElementById('chat-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChat(); });
@@ -390,20 +368,16 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         socket.on('worldBossSync', (data) => {
             if (!data.active) {
-                showMsg("BOSS 已被擊敗！");
-                setTimeout(() => window.location.href = 'hub.html', 3000);
+                showMsg("BOSS 已被擊敗！"); setTimeout(() => window.location.href = 'hub.html', 3000);
                 return;
             }
-
             document.getElementById('monster-name').innerText = data.name;
             const hpPct = (data.hp / data.maxHp) * 100;
             document.getElementById('mhp').style.width = hpPct + '%';
             document.getElementById('mhp-txt').innerText = `${(data.hp/100000000).toFixed(2)}億`;
-            
             const img = document.getElementById('monster-img');
             const bossSrc = "img/monsters/entropy_god.png"; 
             if (!img.src.includes(bossSrc)) { img.src = bossSrc; img.style.display = 'block'; }
-
             if (data.remainingTime !== undefined) {
                 const serverTimeSec = Math.floor(data.remainingTime / 1000);
                 if (Math.abs(timeLeft - serverTimeSec) > 2 || !battleTimer) {
@@ -418,46 +392,23 @@ const socket = io('https://mmo.ttctv-105.cc', {
             const amIHost = (info.host === socket.id);
             const lobbyList = document.getElementById('lobby-players');
             lobbyList.innerHTML = ''; 
-            
             info.players.forEach(p => {
                 const row = document.createElement('div');
                 row.style.display = "flex"; row.style.justifyContent = "space-between"; row.style.alignItems = "center";
                 row.style.padding = "5px 0"; row.style.borderBottom = "1px dashed #555"; row.style.fontSize = "12px";
-                let kickBtn = '';
-                if (amIHost && p.id !== socket.id) {
-                    kickBtn = `<button onclick="kickMember('${p.id}', '${p.name}')" style="background:#c0392b; color:white; border:1px solid #e74c3c; cursor:pointer; font-size:10px; padding:2px 5px; margin-left:10px;">踢</button>`;
-                }
+                let kickBtn = (amIHost && p.id !== socket.id) ? `<button onclick="kickMember('${p.id}', '${p.name}')" style="background:#c0392b; color:white; border:1px solid #e74c3c; cursor:pointer; font-size:10px; padding:2px 5px; margin-left:10px;">踢</button>` : '';
                 row.innerHTML = `<span>${p.name} (LV.${p.level})</span> ${kickBtn}`;
                 lobbyList.appendChild(row);
             });
-            
             const overlay = document.getElementById('lobby-overlay');
-            if (info.status === 'fighting') {
-                overlay.style.display = 'none';
-                document.getElementById('countdown-timer').style.display = 'block';
-            } else {
-                if (info.monsterHp <= 0) {
-                    overlay.style.display = 'none';
-                } else {
-                    overlay.style.display = 'flex';
-                    const startBtn = document.getElementById('start-btn');
-                    const waitTxt = document.getElementById('waiting-txt');
-                    if (amIHost) { 
-                        startBtn.style.display = 'block'; startBtn.disabled = false;
-                        startBtn.innerText = `開始 (${info.players.length}人)`; waitTxt.style.display = 'none';
-                    } else { 
-                        startBtn.style.display = 'none'; waitTxt.style.display = 'block'; 
-                    }
-                }
-            }
-            
+            if (info.status === 'fighting') { overlay.style.display = 'none'; document.getElementById('countdown-timer').style.display = 'block'; }
+            else { if (info.monsterHp <= 0) overlay.style.display = 'none'; else overlay.style.display = 'flex'; }
             document.getElementById('monster-name').innerText = info.monsterName;
             const img = document.getElementById('monster-img');
             if (info.monsterKey) {
                 const newSrc = `img/monsters/${info.monsterKey}.png`;
                 if (!img.src.includes(newSrc)) { img.src = newSrc; img.style.display = 'block'; }
             }
-
             const teammatesBox = document.getElementById('teammates-box');
             teammatesBox.innerHTML = '';
             info.players.forEach(p => {
@@ -465,48 +416,43 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     const div = document.createElement('div');
                     div.className = 'mini-box'; div.style.position = 'relative'; div.style.overflow = 'visible'; 
                     const hpPct = (p.hp / p.maxHp) * 100; const mpPct = (p.mp / p.maxMp) * 100;
-                    let kickBtnSmall = '';
-                    if (amIHost && info.status === 'fighting') {
-                        kickBtnSmall = `<div onclick="kickMember('${p.id}', '${p.name}')" style="position:absolute; top:-8px; right:-8px; background:#c0392b; color:white; width:18px; height:18px; font-size:12px; font-weight:bold; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; border:2px solid #fff; z-index:100; box-shadow: 1px 1px 2px rgba(0,0,0,0.5);">×</div>`;
-                    }
-                    div.innerHTML = `${kickBtnSmall}<div style="white-space:nowrap; overflow:hidden; font-weight:bold;">${p.name}</div><div class="mini-hp-bar" title="HP: ${p.hp}"><div class="mini-hp-fill" style="width:${hpPct}%; background:${hpPct<30?'red':'#2ecc71'}"></div></div><div class="mini-mp-bar" title="MP: ${p.mp}"><div class="mini-mp-fill" style="width:${mpPct}%;"></div></div><div style="font-size:8px; text-align:right;">HP:${p.hp} MP:${p.mp}</div>`;
+                    div.innerHTML = `<div style="white-space:nowrap; overflow:hidden; font-weight:bold;">${p.name}</div><div class="mini-hp-bar"><div class="mini-hp-fill" style="width:${hpPct}%; background:${hpPct<30?'red':'#2ecc71'}"></div></div><div class="mini-mp-bar"><div class="mini-mp-fill" style="width:${mpPct}%;"></div></div>`;
                     teammatesBox.appendChild(div);
                 }
             });
+            
+            // 🟢 [修正] 按鈕顯示邏輯
+            const startBtn = document.getElementById('start-btn');
+            const waitTxt = document.getElementById('waiting-txt');
+            if (amIHost) {
+                startBtn.style.display = 'block';
+                startBtn.disabled = false;
+                startBtn.innerText = `開始 (${info.players.length}人)`;
+                waitTxt.style.display = 'none';
+            } else {
+                startBtn.style.display = 'none';
+                waitTxt.style.display = 'block';
+            }
         });
 
-        socket.on('battleStarted', () => { 
-            document.getElementById('lobby-overlay').style.display = 'none'; 
-            log("戰鬥開始！"); 
-            startCountdown();
-        });
+        socket.on('battleStarted', () => { document.getElementById('lobby-overlay').style.display = 'none'; log("戰鬥開始！"); startCountdown(); });
 
         function startCountdown() {
             const timerDiv = document.getElementById('countdown-timer');
-            timerDiv.style.display = 'block';
-            if (battleTimer) clearInterval(battleTimer);
+            timerDiv.style.display = 'block'; if (battleTimer) clearInterval(battleTimer);
             updateTimerDisplay();
-            battleTimer = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay();
-                if (timeLeft <= 0) { 
-                    clearInterval(battleTimer); 
-                    timerDiv.innerText = "☠️ 時間到！"; 
-                }
-            }, 1000);
+            battleTimer = setInterval(() => { timeLeft--; updateTimerDisplay(); if (timeLeft <= 0) { clearInterval(battleTimer); timerDiv.innerText = "☠️ 時間到！"; } }, 1000);
         }
 
         function updateTimerDisplay() {
             const timerDiv = document.getElementById('countdown-timer');
-            if (timeLeft < 0) timeLeft = 0;
             const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
             const sec = (timeLeft % 60).toString().padStart(2, '0');
             timerDiv.innerText = `⚠️ 滅團倒數: ${min}:${sec}`;
         }
 
         socket.on('turnUpdate', (data) => {
-            const bar = document.getElementById('turn-bar');
-            if (roomId === 'world_boss') return; 
+            const bar = document.getElementById('turn-bar'); if (roomId === 'world_boss') return; 
             if (data.currentId === 'monster') { isMyTurn = false; bar.innerText = "⚠️ 怪物回合..."; bar.style.background = "#c0392b"; toggle(true); }
             else if (data.currentId === socket.id) { isMyTurn = true; bar.innerText = "⚔️ 你的回合"; bar.style.background = "#27ae60"; toggle(false); }
             else { isMyTurn = false; bar.innerText = `⏳ ${data.name}`; bar.style.background = "#333"; toggle(true); }
@@ -514,8 +460,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         socket.on('monsterUpdate', (m) => {
             if (roomId === 'world_boss') return;
-            currentMonsterLevel = m.level;
-            currentMonsterName = m.name;
             document.getElementById('monster-name').innerText = `LV.${m.level} ${m.name}`;
             document.getElementById('mhp').style.width = (m.hp / m.maxHp * 100) + '%';
             document.getElementById('mhp-txt').innerText = `HP: ${m.hp}/${m.maxHp}`;
@@ -528,103 +472,49 @@ const socket = io('https://mmo.ttctv-105.cc', {
             myPlayer = p;
             document.getElementById('my-name').innerText = p.name || "勇者";
             document.getElementById('php').style.width = (p.hp / p.maxHp * 100) + '%';
-            let mpPct = (p.mp / p.maxMp * 100); if(mpPct < 0) mpPct = 0;
-            document.getElementById('pmp').style.width = mpPct + '%';
+            document.getElementById('pmp').style.width = (p.mp / p.maxMp * 100) + '%';
             document.getElementById('hp-txt').innerText = `HP:${p.hp}/${p.maxHp}  MP:${p.mp}/${p.maxMp}`;
             if(document.getElementById('atk-val')) document.getElementById('atk-val').innerText = p.atk;
             if(document.getElementById('def-val')) document.getElementById('def-val').innerText = p.def;
-
             updateShortcutStates(p);
         });
 
-        // 🟢 [核心] 快捷鍵更新邏輯 (含 LocalStorage 保存 + 自動取代)
         function updateShortcutStates(p) {
             const area = document.getElementById('shortcut-area');
             const skillsOwned = p.skills || []; 
-
-            // 1. 如果是第一次進遊戲 (Local Storage 空的)，預設拿前 4 個
             if (myShortcuts.length === 0 && skillsOwned.length > 0) {
-                myShortcuts = skillsOwned.slice(0, 4);
-                localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts)); // 即時存檔
+                myShortcuts = skillsOwned.slice(0, 4); localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
             }
-
-            // 2. 清除畫面，重新渲染
             area.innerHTML = '';
-            
-            // 3. 過濾掉已經不擁有的技能 (例如重置過角色)
             let validShortcuts = myShortcuts.filter(sid => skillsOwned.includes(sid));
-            
-            // 4. 如果過濾後不夠 4 個，嘗試從擁有列表補齊
             if (validShortcuts.length < 4) {
-                skillsOwned.forEach(sid => {
-                    if (!validShortcuts.includes(sid) && validShortcuts.length < 4) {
-                        validShortcuts.push(sid);
-                    }
-                });
+                skillsOwned.forEach(sid => { if (!validShortcuts.includes(sid) && validShortcuts.length < 4) validShortcuts.push(sid); });
             }
-            
-            // 5. 更新全域變數 & 存檔
-            myShortcuts = validShortcuts;
-            localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
-
-            // 6. 渲染按鈕
+            myShortcuts = validShortcuts; localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
             myShortcuts.forEach(sid => {
                 const info = SKILL_INFO[sid];
                 if(info) {
                     const btn = document.createElement('button');
-                    btn.className = 'btn-shortcut';
-                    btn.setAttribute('data-mp', info.mp);
-                    btn.setAttribute('data-sid', sid);
+                    btn.className = 'btn-shortcut'; btn.setAttribute('data-mp', info.mp); btn.setAttribute('data-sid', sid);
                     btn.innerHTML = `${info.name} <span style="color:#2980b9">(${info.mp})</span>`;
-                    btn.onclick = () => { useSkill(sid); };
-                    area.appendChild(btn);
+                    btn.onclick = () => { useSkill(sid); }; area.appendChild(btn);
                 }
             });
-
-            // 7. 更新按鈕 MP 狀態 (變灰)
             const btns = area.querySelectorAll('.btn-shortcut');
             btns.forEach(btn => {
                 const cost = parseInt(btn.getAttribute('data-mp'));
-                if (p.mp < cost) {
-                    btn.disabled = true;
-                    btn.style.opacity = "0.5";
-                } else {
-                    if (isMyTurn || roomId === 'world_boss') {
-                        btn.disabled = false;
-                        btn.style.opacity = "1";
-                    }
-                }
+                if (p.mp < cost) { btn.disabled = true; btn.style.opacity = "0.5"; }
+                else if (isMyTurn || roomId === 'world_boss') { btn.disabled = false; btn.style.opacity = "1"; }
             });
         }
 
-        socket.on('playerDamaged', (d) => {
-            const container = document.getElementById('game-container');
-            container.classList.add('shake'); container.classList.add('flash');
-            setTimeout(() => { container.classList.remove('shake'); container.classList.remove('flash'); }, 500);
-            log(`<span style="color:#e74c3c">受到 ${d.damage} 傷害！</span>`); 
-        });
-
         socket.on('battleWon', (data) => {
-            console.log("收到勝利數據:", data); 
             if (battleTimer) clearInterval(battleTimer);
             document.getElementById('countdown-timer').style.display = 'none';
-            const bar = document.getElementById('turn-bar');
-            bar.innerText = " 勝利！"; bar.style.background = "gold"; bar.style.color = "black";
-            const img = document.getElementById('monster-img'); img.style.transition = "opacity 2s"; img.style.opacity = 0;
-
-            if (roomId === 'world_boss') {
-                showMsg(`👑 討伐成功！獲得 ${data.gold} G`);
-                showNormalVictoryBtn(); 
-            } else {
-                showMsg(`勝利！獲得 ${data.gold} G`);
-                showNormalVictoryBtn();
-            }
-
-            if (data.rewards && data.rewards.length > 0) {
-                data.rewards.forEach(reward => {
-                    log(`<span style="color:#9b59b6; font-weight:bold; border:1px solid #9b59b6; padding:2px; background:rgba(155, 89, 182, 0.2);">🎁 獲得戰利品: [${reward}]</span>`);
-                });
-            }
+            const bar = document.getElementById('turn-bar'); bar.innerText = " 勝利！"; bar.style.background = "gold"; bar.style.color = "black";
+            const img = document.getElementById('monster-img'); img.style.opacity = 0;
+            showMsg(`勝利！獲得 ${data.gold} G`); showNormalVictoryBtn();
+            if (data.rewards) data.rewards.forEach(reward => log(`<span style="color:#9b59b6; font-weight:bold;">🎁 獲得: [${reward}]</span>`));
         });
 
         function showNormalVictoryBtn() {
@@ -634,16 +524,13 @@ const socket = io('https://mmo.ttctv-105.cc', {
         }
 
         socket.on('playerDead', () => { 
-            if (battleTimer) clearInterval(battleTimer);
-            document.getElementById('countdown-timer').style.display = 'none';
+            if (battleTimer) clearInterval(battleTimer); document.getElementById('countdown-timer').style.display = 'none';
             log("你被打倒了..."); showMsg("👻 你已經死亡..."); 
-            document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column:span 2; background:red; color:white" onclick="window.location.href='rest.html'"> 去復活</button>`; 
-            document.getElementById('fixed-top-area').style.display = 'none'; 
-            document.getElementById('shortcut-area').style.display = 'none';
+            document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column:span 2; background:red; color:white" onclick="window.location.href='rest.html'"> 去復活</button>`;
+            document.getElementById('fixed-top-area').style.display = 'none'; document.getElementById('shortcut-area').style.display = 'none';
         });
 
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
-        
         socket.on('battleLog', (msg) => log(msg));
         
         socket.on('roomLeft', () => {
@@ -655,31 +542,30 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function requestStart() { socket.emit('startBattle', roomId); }
         
         function act(type) {
-            if (roomId === 'world_boss') {
-                toggle(true);
-                socket.emit('worldBossAction', { type: 'attack' });
-                setTimeout(() => toggle(false), 500); 
-            } else {
-                if(!isMyTurn) return; 
-                toggle(true); 
-                socket.emit('combatAction', { roomId, type });
-            }
+            if (roomId === 'world_boss') { toggle(true); socket.emit('worldBossAction', { type: 'attack' }); setTimeout(() => toggle(false), 500); }
+            else { if(!isMyTurn) return; toggle(true); socket.emit('combatAction', { roomId, type }); }
         }
 
         function kickMember(targetId, targetName) {
-            if (event) event.stopPropagation(); 
+            if (event) event.stopPropagation();
             if (confirm(`確定要踢除 [${targetName}] 嗎？`)) { socket.emit('kickMember', targetId); }
         }
 
+        // 🟢 [核心修改] 進入魔法列表時，隱藏快捷鍵
         function openSkill() {
             const btnArea = document.getElementById('btns');
             const fixedArea = document.getElementById('fixed-top-area');
-            btnArea.innerHTML = ''; fixedArea.style.display = 'block'; 
+            const shortcutArea = document.getElementById('shortcut-area'); // 獲取快捷列
+            
+            btnArea.innerHTML = ''; 
+            fixedArea.style.display = 'block'; 
+            shortcutArea.style.display = 'none'; // 🟢 隱藏快捷鍵
+            
             btnArea.style.gridTemplateColumns = '1fr';
 
-            const sortOrder = { 'atk': 1, 'buff': 2, 'heal': 3 };
             const mySkills = myPlayer.skills || ['fireball'];
-            
+            // 排序邏輯 (同前)
+            const sortOrder = { 'atk': 1, 'buff': 2, 'heal': 3 };
             mySkills.sort((a, b) => {
                 const catA = SKILL_INFO[a] ? SKILL_INFO[a].cat : 'atk';
                 const catB = SKILL_INFO[b] ? SKILL_INFO[b].cat : 'atk';
@@ -695,9 +581,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 const info = SKILL_INFO[skillId];
                 if (info) {
                     const btn = document.createElement('button');
-                    btn.className = 'btn battle-action';
+                    btn.className = 'btn battle-action'; 
                     btn.style.fontSize = '12px'; btn.style.display = 'flex'; btn.style.justifyContent = 'space-between'; btn.style.alignItems = 'center'; btn.style.padding = '0 15px'; btn.style.minHeight = '45px'; 
-
                     let nameColor = "#333";
                     if (info.cat === 'heal') nameColor = "#27ae60";
                     if (info.cat === 'buff') nameColor = "#e67e22";
@@ -712,52 +597,16 @@ const socket = io('https://mmo.ttctv-105.cc', {
             });
         }
 
-        // 🟢 [核心] 使用技能時：自動取代並更新 LocalStorage
-        // 🟢 [核心] 使用技能時：只在「新技能」時才更新順序
-        function useSkill(skillId) {
-            const info = SKILL_INFO[skillId];
-            if (info && myPlayer.mp < info.mp) {
-                showMsg("MP 不足！");
-                return;
-            }
-
-            // 檢查該技能是否已經在快捷列中
-            const existingIndex = myShortcuts.indexOf(skillId);
-
-            if (existingIndex !== -1) {
-                // ✅ 情況 A: 技能已經在快捷列 -> 保持原位，不做任何變動
-                // (如果你希望它即使在列表裡也要移到第一位，就保留原本邏輯，但你說不要亂跳，所以這裡留空)
-            } else {
-                // ✅ 情況 B: 技能不在快捷列 -> 插入到第一位，擠掉最後一個
-                myShortcuts.unshift(skillId);
-                if (myShortcuts.length > 4) {
-                    myShortcuts.pop();
-                }
-                // 只有在列表有變動時才存檔與重繪
-                localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
-                updateShortcutStates(myPlayer);
-            }
-
-            // --- 執行戰鬥動作 ---
-            if (roomId === 'world_boss') {
-                toggle(true);
-                socket.emit('worldBossAction', { type: 'skill', skillId: skillId });
-                const img = document.getElementById('monster-img');
-                img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
-                setTimeout(() => toggle(false), 500);
-            } else {
-                if(!isMyTurn) return; 
-                toggle(true); 
-                socket.emit('combatAction', { roomId, type: 'skill', skillId: skillId });
-                const img = document.getElementById('monster-img');
-                img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
-            }
-        }
-
+        // 🟢 [核心修改] 進入物品列表時，隱藏快捷鍵
         function openBag() {
             const btnArea = document.getElementById('btns');
             const fixedArea = document.getElementById('fixed-top-area');
-            btnArea.innerHTML = ''; fixedArea.style.display = 'block'; 
+            const shortcutArea = document.getElementById('shortcut-area'); // 獲取快捷列
+            
+            btnArea.innerHTML = ''; 
+            fixedArea.style.display = 'block'; 
+            shortcutArea.style.display = 'none'; // 🟢 隱藏快捷鍵
+            
             btnArea.style.gridTemplateColumns = '1fr 1fr'; 
             
             const itemsToShow = [
@@ -782,45 +631,15 @@ const socket = io('https://mmo.ttctv-105.cc', {
             if(!hasItem) { btnArea.innerHTML = '<div style="grid-column:span 2; font-size:12px; padding:10px;">背包沒有補給品</div>'; }
         }
 
-        function useItem(itemId) {
-            if (roomId === 'world_boss') {
-               showMsg("BOSS 戰無法使用道具！");
-               resetButtons();
-            } else {
-                if(!isMyTurn) return; 
-                toggle(true); 
-                socket.emit('combatAction', { roomId, type: 'item', itemId: itemId }); 
-                resetButtons();
-            }
-        }
-
-        function leaveRoom() { socket.emit('leaveRoom', roomId); window.location.href = 'hub.html'; }
-        
-        function toggle(disabled) { 
-            // 鎖定主要按鈕
-            document.querySelectorAll('.battle-action').forEach(b => {
-                b.disabled = disabled;
-                b.style.opacity = disabled ? "0.5" : "1";
-            }); 
-            // 鎖定快捷鍵
-            const area = document.getElementById('shortcut-area');
-            const btns = area.querySelectorAll('.btn-shortcut');
-            btns.forEach(btn => {
-                const cost = parseInt(btn.getAttribute('data-mp'));
-                if (myPlayer.mp < cost) {
-                    btn.disabled = true; 
-                    btn.style.opacity = "0.5";
-                } else {
-                    btn.disabled = disabled;
-                    btn.style.opacity = disabled ? "0.5" : "1";
-                }
-            });
-        }
-        
+        // 🟢 [核心修改] 返回主選單時，重新顯示快捷鍵
         function resetButtons() {
             const btnArea = document.getElementById('btns');
             const fixedArea = document.getElementById('fixed-top-area');
+            const shortcutArea = document.getElementById('shortcut-area'); // 獲取快捷列
+
             fixedArea.style.display = 'none'; 
+            shortcutArea.style.display = 'grid'; // 🟢 重新顯示快捷鍵
+
             btnArea.style.gridTemplateColumns = '1fr 1fr';
             btnArea.innerHTML = `
                 <button class="btn battle-action" onclick="act('attack')">攻擊</button>
@@ -828,19 +647,60 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 <button class="btn battle-action" onclick="openBag()">物品</button>
                 <button class="btn" onclick="leaveRoom()">逃跑</button>
             `;
+            if (roomId === 'world_boss') { toggle(false); } else { toggle(!isMyTurn); }
+        }
+
+        function useSkill(skillId) {
+            const info = SKILL_INFO[skillId];
+            if (info && myPlayer.mp < info.mp) { showMsg("MP 不足！"); return; }
+            const existingIndex = myShortcuts.indexOf(skillId);
+            if (existingIndex === -1) {
+                myShortcuts.unshift(skillId);
+                if (myShortcuts.length > 4) { myShortcuts.pop(); }
+                localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
+                updateShortcutStates(myPlayer);
+            }
             if (roomId === 'world_boss') {
-                toggle(false);
+                toggle(true); socket.emit('worldBossAction', { type: 'skill', skillId: skillId });
+                const img = document.getElementById('monster-img');
+                img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
+                setTimeout(() => toggle(false), 500);
             } else {
-                toggle(!isMyTurn);
+                if(!isMyTurn) return; 
+                toggle(true); socket.emit('combatAction', { roomId, type: 'skill', skillId: skillId });
+                const img = document.getElementById('monster-img');
+                img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
             }
         }
 
+        function useItem(itemId) {
+            if (roomId === 'world_boss') {
+               showMsg("BOSS 戰無法使用道具！"); resetButtons();
+            } else {
+                if(!isMyTurn) return; 
+                toggle(true); socket.emit('combatAction', { roomId, type: 'item', itemId: itemId }); 
+                resetButtons();
+            }
+        }
+
+        function leaveRoom() { socket.emit('leaveRoom', roomId); window.location.href = 'hub.html'; }
+        
+        function toggle(disabled) { 
+            document.querySelectorAll('.battle-action').forEach(b => {
+                b.disabled = disabled; b.style.opacity = disabled ? "0.5" : "1";
+            }); 
+            const area = document.getElementById('shortcut-area');
+            const btns = area.querySelectorAll('.btn-shortcut');
+            btns.forEach(btn => {
+                const cost = parseInt(btn.getAttribute('data-mp'));
+                if (myPlayer.mp < cost) { btn.disabled = true; btn.style.opacity = "0.5"; }
+                else { btn.disabled = disabled; btn.style.opacity = disabled ? "0.5" : "1"; }
+            });
+        }
+
         function log(m) { 
-            const box = document.getElementById('log');
-            const div = document.createElement('div');
-            div.innerHTML = `> ${m}`;
-            box.insertBefore(div, box.firstChild); 
-            
+            const box = document.getElementById('log'); const div = document.createElement('div');
+            div.innerHTML = `> ${m}`; box.insertBefore(div, box.firstChild); 
             const lines = box.querySelectorAll('div');
             if (lines.length > 20) for(let i=20; i<lines.length; i++) lines[i].remove();
         }
