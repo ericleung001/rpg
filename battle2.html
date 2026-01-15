@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中new6</title>
+    <title>戰鬥中new7</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -855,7 +855,7 @@
             if (lines.length > 20) for(let i=20; i<lines.length; i++) lines[i].remove();
         }
 
-        // 🟢 [修正] 移除物品按鈕的 battle-action class，讓它隨時可按
+        // 🟢 [修正] 移除魔法按鈕的 battle-action class，讓它隨時可按
         function resetButtons() {
             const btnArea = document.getElementById('btns');
             const fixedArea = document.getElementById('fixed-top-area');
@@ -867,12 +867,12 @@
             btnArea.style.gridTemplateColumns = '1fr 1fr';
             btnArea.innerHTML = `
                 <button class="btn battle-action" onclick="act('attack')">攻擊</button>
-                <button class="btn battle-action" onclick="openSkill()">魔法</button>
+                <button class="btn" onclick="openSkill()">魔法</button>
                 <button class="btn" onclick="openBag()">物品</button>
                 <button class="btn" onclick="leaveRoom()">逃跑</button>
             `;
             
-            // 更新按鈕鎖定狀態 (只鎖定攻擊和魔法)
+            // 更新按鈕鎖定狀態 (只鎖定攻擊)
             if (roomId === 'world_boss') { toggle(false); } else { toggle(!isMyTurn); }
         }
         
@@ -886,6 +886,70 @@
             if (data.rewards) data.rewards.forEach(reward => log(`<span style="color:#9b59b6; font-weight:bold;">🎁 獲得: [${reward}]</span>`));
         });
 
+        // 🟢 [修正] 打開魔法列表邏輯
+        function openSkill() {
+            const btnArea = document.getElementById('btns');
+            const fixedArea = document.getElementById('fixed-top-area');
+            const shortcutArea = document.getElementById('shortcut-area'); 
+            
+            btnArea.innerHTML = ''; 
+            fixedArea.style.display = 'block'; 
+            shortcutArea.style.display = 'none'; 
+            
+            btnArea.style.gridTemplateColumns = '1fr';
+
+            const mySkills = myPlayer.skills || ['fireball'];
+            
+            // 排序邏輯
+            const sortOrder = { 'atk': 1, 'buff': 2, 'heal': 3 };
+            mySkills.sort((a, b) => {
+                const catA = SKILL_INFO[a] ? SKILL_INFO[a].cat : 'atk';
+                const catB = SKILL_INFO[b] ? SKILL_INFO[b].cat : 'atk';
+                if (sortOrder[catA] === sortOrder[catB]) {
+                    const mpA = SKILL_INFO[a] ? SKILL_INFO[a].mp : 0;
+                    const mpB = SKILL_INFO[b] ? SKILL_INFO[b].mp : 0;
+                    return mpA - mpB;
+                }
+                return (sortOrder[catA] || 4) - (sortOrder[catB] || 4);
+            });
+
+            mySkills.forEach(skillId => {
+                const info = SKILL_INFO[skillId];
+                if (info) {
+                    const btn = document.createElement('button');
+                    // 這裡加上 battle-action，代表具體的"施法"動作受回合限制
+                    btn.className = 'btn battle-action'; 
+                    btn.style.fontSize = '12px'; 
+                    btn.style.display = 'flex'; 
+                    btn.style.justifyContent = 'space-between'; 
+                    btn.style.alignItems = 'center'; 
+                    btn.style.padding = '0 15px'; 
+                    btn.style.minHeight = '45px'; 
+                    
+                    let nameColor = "#333";
+                    if (info.cat === 'heal') nameColor = "#27ae60";
+                    if (info.cat === 'buff') nameColor = "#e67e22";
+                    if (skillId === 'void_crush' || skillId === 'big_bang' || skillId === 'entropy_decay') nameColor = "#8e44ad"; 
+
+                    btn.innerHTML = `<div style="font-weight:bold; color:${nameColor};">${info.name}</div><div style="text-align:right; font-size:10px;"><div style="color:#3498db; margin-bottom:2px;">MP-${info.mp}</div><div style="color:#7f8c8d;">${info.desc}</div></div>`;
+
+                    // 判斷是否鎖定按鈕
+                    if (myPlayer.mp < info.mp) { 
+                        // MP 不足
+                        btn.disabled = true; 
+                        btn.style.opacity = 0.5; 
+                    } else if (!isMyTurn && roomId !== 'world_boss') {
+                        // 不是我的回合
+                        btn.disabled = true;
+                        btn.style.opacity = 0.5;
+                    }
+
+                    btn.onclick = () => { useSkill(skillId); };
+                    btnArea.appendChild(btn);
+                }
+            });
+        }
+        
         function showNormalVictoryBtn() {
             document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column: span 2; background:#f1c40f; color:black; font-weight:bold;" onclick="leaveRoom()">🏆 勝利離開</button>`;
             document.getElementById('fixed-top-area').style.display = 'none'; 
