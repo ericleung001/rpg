@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>幸運彩票2</title>
+    <title>幸運彩票</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -73,7 +73,7 @@
             display: flex; align-items: center; justify-content: space-between;
             border-left: 4px solid #f1c40f;
         }
-        .ticket-nums { font-size: 10px; color: #fff; letter-spacing: 1px; }
+        .ticket-nums { font-size: 10px; color: #fff; letter-spacing: 1px; display: flex; gap: 5px; }
         .ticket-tag { font-size: 8px; color: #aaa; }
 
         .last-result {
@@ -81,6 +81,11 @@
         }
         .result-balls { display: flex; gap: 5px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
         .res-ball { width: 30px; height: 30px; border-radius: 50%; background: #3498db; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; margin: 2px; }
+
+        /* 🟢 中獎核對樣式 */
+        .num-hit { color: #f1c40f; font-weight: bold; text-shadow: 0 0 5px #f1c40f; }
+        .win-badge { font-size: 10px; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 5px; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -105,9 +110,16 @@
     <button id="btn-buy" class="buy-btn" onclick="buyTicket()">購買彩票 (1萬 G)</button>
 
     <div class="my-tickets-area">
-        <div class="section-title">我的彩票 (<span id="my-ticket-count">0</span>)</div>
+        <div class="section-title">🛒 本期已買 (<span id="my-ticket-count">0</span>)</div>
         <div id="my-ticket-list">
             <div style="font-size:10px; color:#aaa; padding:10px;">尚未購買</div>
+        </div>
+    </div>
+
+    <div class="my-tickets-area" style="margin-top: 20px;">
+        <div class="section-title" style="color: #e67e22;">📜 上期核對</div>
+        <div id="last-round-list">
+            <div style="font-size:10px; color:#aaa; padding:10px;">無紀錄</div>
         </div>
     </div>
 
@@ -170,7 +182,7 @@
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
-            socket.emit('getLotteryInfo'); // 請求獎池資訊
+            socket.emit('getLotteryData'); // 請求獎池資訊
         });
 
         socket.on('lotteryUpdate', (data) => {
@@ -193,7 +205,7 @@
                 }
             }
 
-            // 2. 更新我的彩票列表
+            // 2. 更新我的彩票列表 (本期)
             if (data.myBets) {
                 const list = document.getElementById('my-ticket-list');
                 const count = document.getElementById('my-ticket-count');
@@ -210,11 +222,7 @@
                     reversedBets.forEach((bet, idx) => {
                         const div = document.createElement('div');
                         div.className = 'ticket-row';
-                        
-                        // 將號碼美化顯示
                         const fmtNums = bet.nums.map(n => n.toString().padStart(2, '0')).join(' - ');
-                        
-                        // 計算這是第幾張 (原本的索引是倒過來的)
                         const ticketNum = data.myBets.length - idx;
 
                         div.innerHTML = `
@@ -226,13 +234,52 @@
                 }
             }
 
-            // 3. 更新上次開獎結果 (修正版)
+            // 3. 🟢 更新上期核對列表
+            if (data.myLastBets && data.lastDraw && data.lastDraw.numbers) {
+                const lastList = document.getElementById('last-round-list');
+                const winNums = data.lastDraw.numbers; // 開獎號碼
+                lastList.innerHTML = '';
+
+                if (data.myLastBets.length === 0) {
+                    lastList.innerHTML = '<div style="font-size:10px; color:#aaa; padding:10px;">上期無購買紀錄</div>';
+                } else {
+                    data.myLastBets.forEach((bet) => {
+                        const div = document.createElement('div');
+                        div.className = 'ticket-row';
+                        
+                        // 計算中了幾個
+                        let hits = 0;
+                        let numsHtml = bet.nums.map(n => {
+                            const isHit = winNums.includes(n);
+                            if (isHit) hits++;
+                            // 中獎號碼變金色
+                            return isHit ? `<span class="num-hit">${n.toString().padStart(2,'0')}</span>` : n.toString().padStart(2,'0');
+                        }).join(' - ');
+
+                        let winTag = "";
+                        if (hits === 6) winTag = '<span class="win-badge">頭獎!</span>';
+                        else if (hits === 5) winTag = '<span class="win-badge">二獎!</span>';
+                        else if (hits === 4) winTag = '<span class="win-badge">三獎</span>';
+                        else if (hits === 3) winTag = '<span class="win-badge">安慰獎</span>';
+
+                        div.innerHTML = `
+                            <span class="ticket-nums">${numsHtml}</span>
+                            <div style="display:flex; align-items:center;">
+                                ${winTag}
+                                <span class="ticket-tag" style="margin-left:5px;">(${hits}中)</span>
+                            </div>
+                        `;
+                        lastList.appendChild(div);
+                    });
+                }
+            }
+
+            // 4. 更新上次開獎結果
             if (data.lastDraw && data.lastDraw.numbers) {
                 document.getElementById('last-result-area').style.display = 'block';
                 const container = document.getElementById('res-balls');
                 container.innerHTML = '';
                 
-                // 顯示號碼球
                 data.lastDraw.numbers.forEach(n => {
                     const b = document.createElement('div');
                     b.className = 'res-ball';
@@ -240,7 +287,6 @@
                     container.appendChild(b);
                 });
 
-                // 顯示開獎時間
                 if (data.lastDraw.time) {
                     const date = new Date(data.lastDraw.time);
                     document.getElementById('last-draw-time').innerText = 
@@ -252,7 +298,6 @@
         socket.on('lotteryResult', (res) => {
             alert(res.msg);
             if(res.success) {
-                // 清空選擇
                 selected = [];
                 document.querySelectorAll('.ball').forEach(b => b.classList.remove('selected'));
                 updateDisplay();
