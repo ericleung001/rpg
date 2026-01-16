@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Auto Ver0.9)</title>
+    <title>戰鬥中 (Auto Ver1.0</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -789,7 +789,7 @@
         }
 
         // ==========================================
-        // 🟢 6. 自動戰鬥 AI 邏輯 (智能物品與坦克循環版)
+        // 🟢 6. 自動戰鬥 AI 邏輯 (智能物品優化版)
         // ==========================================
         
         // 技能優先級 (維持不變)
@@ -812,24 +812,21 @@
 
         // 🟢 定義物品清單：依回復量「由強到弱」排序
         const ITEMS_HP_DESC = [
-            'void_soup', 'elixir', 'potion_max',    // 神級/全滿 (Lv100+)
-            'potion_high',                          // 大紅 +2000
-            'sushi_plate', 'tuna_steak', 'potion_mid', // 中紅/拼盤 +500
-            'eel_rice',                             // 鰻魚 +300
-            'grilled_carp', 'potion_hp'             // 小紅 +50~100
+            'void_soup', 'elixir', 'potion_max',    
+            'potion_high',                          
+            'sushi_plate', 'tuna_steak', 'potion_mid', 
+            'eel_rice',                             
+            'grilled_carp', 'potion_hp'             
         ];
 
+        // 🟢 修改：MP 清單中，Elixir 排在 Void Soup 前面 (優先消耗甘露)
         const ITEMS_MP_DESC = [
-            'void_soup',                            // 全滿
-            'potion_mp_high',                       // 大藍 +500
-            'potion_mp_mid', 'eel_rice',            // 中藍/鰻魚 +100
-            'salmon_sushi', 'potion_mp'             // 小藍 +30~50
+            'elixir', 'void_soup',                  
+            'potion_mp_high',                       
+            'potion_mp_mid', 'eel_rice',            
+            'salmon_sushi', 'potion_mp'             
         ];
 
-        // ==========================================
-        // 🟢 6. 自動戰鬥 AI 邏輯 (最終完整版)
-        // ==========================================
-        
         function toggleAuto() {
             isAuto = !isAuto;
             const btn = document.getElementById('auto-btn');
@@ -953,13 +950,13 @@
             }
         }
 
-        // 🟢 [核心修改] 智能喝水邏輯 (含虛空湯 MP 乾涸修正)
+        // 🟢 [核心修改] 智能喝水邏輯 (含 Elixir 優先與保護機制)
         function recoverStat(type) {
             const hpPct = myPlayer.hp / myPlayer.maxHp;
             const mpPct = myPlayer.mp / myPlayer.maxMp;
             
             // 定義危急狀態
-            const isDoubleCritical = (hpPct < 0.3 && mpPct < 0.3); // 雙低 -> 喝湯首選
+            const isDoubleCritical = (hpPct < 0.3 && mpPct < 0.3); // 雙低 -> 喝神藥首選
             const isMpDry = (mpPct < 0.1); // MP 乾了 (無法放招) -> 必須喝
             const isHpCritical = (hpPct < 0.15); // 快死了 -> 必須喝
 
@@ -974,31 +971,32 @@
             }
 
             let hasVoidSoup = false; // 標記背包是否有湯
+            let hasElixir = false;   // 標記背包是否有甘露
 
             for (let itemId of targetList) {
                 if (myPlayer.inventory && myPlayer.inventory[itemId] > 0) {
                     
-                    // 虛空湯特殊判斷
-                    if (itemId === 'void_soup') {
-                        hasVoidSoup = true;
+                    // 🟢 神級道具特殊判斷 (Elixir 和 Void Soup)
+                    if (itemId === 'void_soup' || itemId === 'elixir') {
+                        if (itemId === 'void_soup') hasVoidSoup = true;
+                        if (itemId === 'elixir') hasElixir = true;
                         
-                        // 1. 雙重危急 -> 允許喝湯
+                        // 1. 雙重危急 -> 允許使用
                         if (isDoubleCritical) { 
                             useItem(itemId); return true; 
                         }
                         
-                        // 2. 🟢 修正：MP 乾涸且現在要補 MP -> 喝 (防止卡住)
-                        // 即使 HP 很滿，但沒 MP 就不能動，這時候如果沒其他藍水，必須喝湯
+                        // 2. MP 乾涸且現在要補 MP -> 允許使用 (依照列表順序，會先喝 Elixir)
                         if (type === 'mp' && isMpDry) { 
                             useItem(itemId); return true; 
                         }
                         
-                        // 3. HP 極度危急 -> 喝
+                        // 3. HP 極度危急 -> 允許使用
                         if (type === 'hp' && isHpCritical) { 
                             useItem(itemId); return true; 
                         }
 
-                        // 條件未滿足，先跳過湯，找其他專用藥水
+                        // 條件未滿足，先跳過這些貴重物品
                         continue; 
                     }
 
@@ -1008,13 +1006,16 @@
                 }
             }
             
-            // 如果跑到這裡，代表：沒有專用藥水，或者剛才因為條件不符跳過了虛空湯
+            // 如果跑到這裡，代表沒有普通藥水，或者剛才跳過了神藥
             
-            // 🟢 最後保底：如果真的只剩虛空湯，而且我們確實需要補 (數值 < 40%)，別省了，喝吧
-            if (hasVoidSoup) {
-                if ((type === 'hp' && hpPct < 0.4) || (type === 'mp' && mpPct < 0.4)) {
-                    useItem('void_soup');
-                    return true;
+            // 🟢 最後保底：如果真的只剩神藥，而且狀態確實危急 (<40%)，那就喝吧
+            // 這裡也遵循優先級：先看有沒有 Elixir，再看 Soup
+            if ((type === 'hp' && hpPct < 0.4) || (type === 'mp' && mpPct < 0.4)) {
+                if (hasElixir && type === 'mp') { // MP 不足優先喝 Elixir 保底
+                    useItem('elixir'); return true;
+                }
+                if (hasVoidSoup) {
+                    useItem('void_soup'); return true;
                 }
             }
 
