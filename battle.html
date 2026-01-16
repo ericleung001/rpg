@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Auto Ver0.8)</title>
+    <title>戰鬥中 (Auto Ver0.9)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -826,6 +826,10 @@
             'salmon_sushi', 'potion_mp'             // 小藍 +30~50
         ];
 
+        // ==========================================
+        // 🟢 6. 自動戰鬥 AI 邏輯 (最終完整版)
+        // ==========================================
+        
         function toggleAuto() {
             isAuto = !isAuto;
             const btn = document.getElementById('auto-btn');
@@ -855,6 +859,7 @@
             const delay = Math.random() * 700 + 800;
             
             setTimeout(() => {
+                // 防止狀態改變或戰鬥結束
                 if (!isMyTurn || roomId === 'world_boss') { 
                     if(roomId === 'world_boss' && isAuto) {
                         socket.emit('worldBossAction', { type: 'attack' });
@@ -866,9 +871,9 @@
                 const myHpPct = (myPlayer.hp / myPlayer.maxHp) * 100;
                 
                 // [1] 緊急自保 (所有職責通用)
-                // 血量 < 40% 時，優先喝水
+                // 血量 < 40% 時，優先嘗試補血
                 if (myHpPct < 40) {
-                    if (recoverStat('hp')) return;
+                    if (recoverStat('hp')) return; // 喝水
                     // 沒水才試技能
                     if (attemptSkill('full_heal')) return;
                     if (attemptSkill('god_light')) return;
@@ -885,6 +890,7 @@
                                 if (attemptSkill(skill)) return;
                             }
                         } 
+                        // 全員健康 -> 轉輸出
                         if (attemptSkill('divine_slash')) return;
                         if (attemptSkill('thunder')) return;
                         break;
@@ -918,6 +924,7 @@
                 }
 
                 // [3] 保底：普通攻擊
+                // 確保沒魔、沒水、沒湯時，不會停止動作
                 doNormalAttack();
 
             }, delay);
@@ -926,16 +933,19 @@
         // --- 🟢 智能輔助函式 (修正版) ---
 
         function attemptSkill(skillId) {
+            // 1. 檢查是否學會
             if (!myPlayer.skills || !myPlayer.skills.includes(skillId)) return false;
             
             const info = SKILL_INFO[skillId];
             if (!info) return false;
 
+            // 2. 檢查 MP
             if (myPlayer.mp >= info.mp) {
                 useSkill(skillId);
                 return true;
             } else {
-                // MP 不足 -> 找水喝
+                // 3. MP 不足 -> 找水喝
+                // 注意：如果喝水成功，這次 attemptSkill 算 True (因為消耗了一回合動作)
                 if (recoverStat('mp')) {
                     return true; 
                 }
@@ -943,64 +953,66 @@
             }
         }
 
-        // 🟢 [核心修改] 智能喝水邏輯 (含虛空湯特殊判斷)
+        // 🟢 [核心修改] 智能喝水邏輯 (含虛空湯 MP 乾涸修正)
         function recoverStat(type) {
             const hpPct = myPlayer.hp / myPlayer.maxHp;
             const mpPct = myPlayer.mp / myPlayer.maxMp;
             
-            // 判斷是否為 "雙重危急" (HP 和 MP 都 < 30%)
-            const isCriticalEmergency = (hpPct < 0.3 && mpPct < 0.3);
+            // 定義危急狀態
+            const isDoubleCritical = (hpPct < 0.3 && mpPct < 0.3); // 雙低 -> 喝湯首選
+            const isMpDry = (mpPct < 0.1); // MP 乾了 (無法放招) -> 必須喝
+            const isHpCritical = (hpPct < 0.15); // 快死了 -> 必須喝
 
-            // 根據類型選擇列表
-            // 注意：這裡我們需要一個 "排除 void_soup" 的列表，和一個 "只有 void_soup" 的檢查
-            const fullList = (type === 'hp') ? ITEMS_HP_DESC : ITEMS_MP_DESC;
-            
-            // 策略變更：
-            // 1. 如果是雙重危急 -> 允許使用 void_soup (但不一定是第一個，看列表排序)
-            // 2. 如果只是單項危急 -> 跳過 void_soup，先找其他藥水
-            
+            const listDesc = (type === 'hp') ? ITEMS_HP_DESC : ITEMS_MP_DESC;
             let targetList = [];
 
+            // 選擇遍歷順序
             if (type === 'hp' ? hpPct < 0.4 : mpPct < 0.4) {
-                // 危急模式：使用原列表 (強 -> 弱)
-                targetList = [...fullList];
+                targetList = [...listDesc]; // 危急：強 -> 弱 (優先喝大水)
             } else {
-                // 補給模式：反轉列表 (弱 -> 強)
-                targetList = [...fullList].reverse();
+                targetList = [...listDesc].reverse(); // 補給：弱 -> 強 (優先喝小水)
             }
 
-            // 遍歷背包尋找可用物品
+            let hasVoidSoup = false; // 標記背包是否有湯
+
             for (let itemId of targetList) {
-                // 檢查背包有無此物品
                 if (myPlayer.inventory && myPlayer.inventory[itemId] > 0) {
                     
-                    // 🟢 特殊判斷：如果是虛空湯 (void_soup)
+                    // 虛空湯特殊判斷
                     if (itemId === 'void_soup') {
-                        // 只有在 "雙重危急" 時才允許直接使用
-                        if (isCriticalEmergency) {
-                            useItem(itemId);
-                            return true;
-                        } else {
-                            // 如果不是雙重危急，先跳過它，繼續找下一個物品
-                            // 除非... 背包裡真的只剩下虛空湯了，其他都沒了？
-                            // 為了更嚴謹的省錢邏輯，這裡選擇 "跳過"，寧願下一回合再判斷，也不要單補一項就喝神湯
-                            continue; 
+                        hasVoidSoup = true;
+                        
+                        // 1. 雙重危急 -> 允許喝湯
+                        if (isDoubleCritical) { 
+                            useItem(itemId); return true; 
                         }
+                        
+                        // 2. 🟢 修正：MP 乾涸且現在要補 MP -> 喝 (防止卡住)
+                        // 即使 HP 很滿，但沒 MP 就不能動，這時候如果沒其他藍水，必須喝湯
+                        if (type === 'mp' && isMpDry) { 
+                            useItem(itemId); return true; 
+                        }
+                        
+                        // 3. HP 極度危急 -> 喝
+                        if (type === 'hp' && isHpCritical) { 
+                            useItem(itemId); return true; 
+                        }
+
+                        // 條件未滿足，先跳過湯，找其他專用藥水
+                        continue; 
                     }
 
-                    // 普通物品 -> 直接使用
+                    // 普通專用藥水 -> 直接喝
                     useItem(itemId);
                     return true;
                 }
             }
             
-            // 如果跑到這裡，代表：
-            // 1. 背包全空
-            // 2. 或者只剩下 void_soup 但條件不符 (不是雙重危急)
+            // 如果跑到這裡，代表：沒有專用藥水，或者剛才因為條件不符跳過了虛空湯
             
-            // 🟢 保底機制：如果真的只剩下 void_soup 且非常危急 (例如 HP < 10%)，還是喝了吧
-            if (myPlayer.inventory && myPlayer.inventory['void_soup'] > 0) {
-                if (type === 'hp' && hpPct < 0.1) {
+            // 🟢 最後保底：如果真的只剩虛空湯，而且我們確實需要補 (數值 < 40%)，別省了，喝吧
+            if (hasVoidSoup) {
+                if ((type === 'hp' && hpPct < 0.4) || (type === 'mp' && mpPct < 0.4)) {
                     useItem('void_soup');
                     return true;
                 }
