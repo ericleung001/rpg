@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Auto Ver0.2)</title>
+    <title>戰鬥中 (Auto Ver0.3)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -789,7 +789,7 @@
         }
 
         // ==========================================
-        // 🟢 6. 自動戰鬥 AI 邏輯核心
+        // 🟢 6. 自動戰鬥 AI 邏輯 (智能增強版)
         // ==========================================
         
         function toggleAuto() {
@@ -814,10 +814,11 @@
         function autoPlayLogic() {
             if (!isAuto || !isMyTurn) return;
 
-            // 模擬思考時間 (0.8秒 ~ 1.5秒)，避免太快被伺服器擋
+            // 模擬思考時間 (0.8秒 ~ 1.5秒)
             const delay = Math.random() * 700 + 800;
             
             setTimeout(() => {
+                // 再次檢查狀態
                 if (!isMyTurn || roomId === 'world_boss') { 
                     if(roomId === 'world_boss' && isAuto) {
                         socket.emit('worldBossAction', { type: 'attack' });
@@ -827,100 +828,119 @@
                 }
 
                 const myHpPct = (myPlayer.hp / myPlayer.maxHp) * 100;
-                const myMp = myPlayer.mp;
-
-                // [1] 緊急自保 (所有職責通用)
+                
+                // 1. 【通用】緊急自保：血量 < 40% 優先喝紅水
                 if (myHpPct < 40) {
-                    if (hasItem('potion_hp') || hasItem('potion_mid') || hasItem('potion_high')) {
-                        useBestPotion('hp'); return;
-                    }
-                    if (hasSkill('heal_light') && myMp >= 10) { executeSkill('heal_light'); return; }
+                    if (tryUseItem('potion_hp') || tryUseItem('potion_mid') || tryUseItem('potion_high')) return;
+                    // 沒水就試試自補
+                    if (attemptSkill('heal_light')) return;
                 }
 
-                // [2] 補師邏輯 (Healer)
-                if (myRole === 'heal') {
-                    // 找出受傷最重的隊友
-                    let lowestTeammate = null;
-                    let lowestPct = 100;
-                    let injuredCount = 0; 
+                // 2. 根據職責選擇行動
+                switch (myRole) {
+                    case 'heal': // 💖 補師模式
+                        // 檢查是否有隊友 (或自己) 血量低於 50%
+                        const someoneDying = allPlayers.some(p => (p.hp / p.maxHp) < 0.5);
+                        
+                        if (someoneDying) {
+                            // 有人命危 -> 優先群補，沒有就單補
+                            if (attemptSkill('heal_all')) return;
+                            if (attemptSkill('god_light')) return;
+                            if (attemptSkill('heal_light')) return;
+                        } 
+                        
+                        // 全員健康 -> 轉輸出 (次元斬 > 雷擊 > 火球)
+                        if (attemptSkill('divine_slash')) return;
+                        if (attemptSkill('thunder')) return;
+                        if (attemptSkill('fireball')) return;
+                        break;
 
-                    allPlayers.forEach(p => {
-                        const pct = (p.hp / p.maxHp) * 100;
-                        if (pct < 80) injuredCount++;
-                        if (pct < lowestPct) {
-                            lowestPct = pct;
-                            lowestTeammate = p.id; // 這個 ID 暫時無法用於指定治療對象(因為舊版API無指定隊友功能)，這裡只能用全體補或自補
+                    case 'tank': // 🛡️ 坦克模式
+                        // 30% 機率補狀態 (天神下凡 / 聖光守護)，避免無限開盾
+                        // 或者如果 MP 非常多，也可以開一下
+                        const needBuff = Math.random() < 0.3; 
+                        
+                        if (needBuff) {
+                            if (attemptSkill('god_mode')) return;
+                            if (attemptSkill('holy_shield')) return;
                         }
-                    });
+                        
+                        // 攻擊：次元斬 > 劇毒之觸
+                        if (attemptSkill('divine_slash')) return;
+                        if (attemptSkill('poison_touch')) return;
+                        // 沒招就吸血或普攻
+                        if (attemptSkill('drain')) return;
+                        break;
 
-                    // 情況 A: 全隊多人受傷 -> 群補
-                    if (injuredCount >= 2 && hasSkill('heal_all') && myMp >= 100) {
-                        executeSkill('heal_all'); return;
-                    }
-                    
-                    // 情況 B: 自己或隊友命危
-                    // 註：目前舊版 server 技能大多是自補或全補，單體補他人功能需Server支援
-                    if (lowestPct < 60) {
-                        if (hasSkill('god_light') && myMp >= 50) { executeSkill('god_light'); return; }
-                        if (hasSkill('heal_light') && myMp >= 10) { executeSkill('heal_light'); return; }
-                    }
+                    case 'atk': // ⚔️ 輸出模式
+                    default:
+                        // 優先順序：大招 -> 中招/控場 -> 小招
+                        // 虛空碎擊 / 宇宙大爆炸
+                        if (attemptSkill('big_bang')) return;
+                        if (attemptSkill('void_crush')) return;
+                        
+                        // 隕石 / 熱寂
+                        if (attemptSkill('entropy_decay')) return;
+                        if (attemptSkill('meteor')) return;
+                        
+                        // 雷擊 (控場) / 次元斬
+                        if (attemptSkill('divine_slash')) return;
+                        if (attemptSkill('thunder')) return;
+                        
+                        // 還是沒招? 冰霜或劇毒
+                        if (attemptSkill('frost_nova')) return;
+                        if (attemptSkill('poison_touch')) return;
+                        break;
                 }
 
-                // [3] 坦克邏輯 (Tank)
-                if (myRole === 'tank') {
-                    // 優先開盾
-                    if (hasSkill('god_mode') && myMp >= 300) { executeSkill('god_mode'); return; }
-                    if (hasSkill('holy_shield') && myMp >= 40) { executeSkill('holy_shield'); return; }
-                }
-
-                // [4] 補魔 (MP 不足時)
-                if (myMp < 20 && (hasItem('potion_mp') || hasItem('potion_mp_mid'))) {
-                    useBestPotion('mp'); return;
-                }
-
-                // [5] 輸出攻擊 (Attacker / 閒置的補坦)
-                const bestSkill = getBestAtkSkill(myMp);
-                if (bestSkill) {
-                    executeSkill(bestSkill);
-                } else {
-                    // 沒魔用技能 -> 普攻
-                    socket.emit('combatAction', { roomId, type: 'attack' });
-                }
+                // 3. 如果上面都沒執行 (沒招或沒藍水)，最後普攻
+                doNormalAttack();
 
             }, delay);
         }
 
-        // --- AI 輔助函式 ---
+        // --- 🟢 智能輔助函式 (包含 MP 檢查與自動喝水) ---
 
-        function hasSkill(sid) { return myPlayer.skills && myPlayer.skills.includes(sid); }
-        
-        function hasItem(itemId) { return myPlayer.inventory && myPlayer.inventory[itemId] > 0; }
+        // 嘗試使用技能：如果 MP 夠就用；不夠就找水喝；都沒才回傳 false
+        function attemptSkill(skillId) {
+            // 1. 我有沒有這招?
+            if (!myPlayer.skills || !myPlayer.skills.includes(skillId)) return false;
+            
+            const info = SKILL_INFO[skillId];
+            if (!info) return false;
 
-        function executeSkill(sid) {
-            // 目前舊版 Battle API 暫不需要 targetId
-            socket.emit('combatAction', { roomId, type: 'skill', skillId: sid });
-        }
-
-        function useBestPotion(type) {
-            let itemToUse = null;
-            if (type === 'hp') {
-                if (hasItem('potion_hp')) itemToUse = 'potion_hp';
-                else if (hasItem('potion_mid')) itemToUse = 'potion_mid';
-                else if (hasItem('potion_high')) itemToUse = 'potion_high';
+            // 2. MP 夠不夠?
+            if (myPlayer.mp >= info.mp) {
+                // 夠 -> 直接施放
+                useSkill(skillId);
+                return true;
             } else {
-                if (hasItem('potion_mp')) itemToUse = 'potion_mp';
-                else if (hasItem('potion_mp_mid')) itemToUse = 'potion_mp_mid';
+                // 3. 不夠 -> 檢查背包有沒有藍水
+                // 如果有藍水，喝水 (這回合動作變成喝水)
+                if (tryUseItem('potion_mp_high') || tryUseItem('potion_mp_mid') || tryUseItem('potion_mp')) {
+                    // 成功喝水，結束這回合
+                    return true;
+                }
+                // 沒水又沒魔 -> 回傳 false，讓 AI 找下一個技能或普攻
+                return false;
             }
-            if (itemToUse) socket.emit('combatAction', { roomId, type: 'item', itemId: itemToUse });
         }
 
-        function getBestAtkSkill(mp) {
-            // 根據 MP 找傷害最高的技能
-            const priority = ['big_bang', 'void_crush', 'divine_slash', 'meteor', 'frost_nova', 'poison_touch', 'thunder', 'fireball'];
-            for (let sid of priority) {
-                if (hasSkill(sid) && SKILL_INFO[sid].mp <= mp) return sid;
+        // 嘗試使用物品
+        function tryUseItem(itemId) {
+            if (myPlayer.inventory && myPlayer.inventory[itemId] > 0) {
+                useItem(itemId);
+                return true;
             }
-            return null;
+            return false;
+        }
+
+        // 執行普通攻擊
+        function doNormalAttack() {
+            // 簡單找個目標打
+            const aliveMobs = currentMonsters.filter(m => m.hp > 0);
+            const targetId = aliveMobs.length > 0 ? aliveMobs[0].id : null;
+            socket.emit('combatAction', { roomId, type: 'attack', targetId: targetId });
         }
 
     </script>
