@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Auto Ver0.3)</title>
+    <title>戰鬥中 (Auto Ver0.4)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -789,7 +789,7 @@
         }
 
         // ==========================================
-        // 🟢 6. 自動戰鬥 AI 邏輯 (智能增強版)
+        // 🟢 6. 自動戰鬥 AI 邏輯 (客製化增強版)
         // ==========================================
         
         function toggleAuto() {
@@ -799,7 +799,7 @@
                 btn.innerText = "自動: ON";
                 btn.style.background = "#2ecc71"; // 綠色
                 btn.style.border = "1px solid #27ae60";
-                if (isMyTurn) autoPlayLogic(); // 如果剛好輪到我，立刻執行
+                if (isMyTurn) autoPlayLogic(); 
             } else {
                 btn.innerText = "自動: OFF";
                 btn.style.background = "#e74c3c"; // 紅色
@@ -818,7 +818,7 @@
             const delay = Math.random() * 700 + 800;
             
             setTimeout(() => {
-                // 再次檢查狀態
+                // 防止狀態改變
                 if (!isMyTurn || roomId === 'world_boss') { 
                     if(roomId === 'world_boss' && isAuto) {
                         socket.emit('worldBossAction', { type: 'attack' });
@@ -829,99 +829,88 @@
 
                 const myHpPct = (myPlayer.hp / myPlayer.maxHp) * 100;
                 
-                // 1. 【通用】緊急自保：血量 < 40% 優先喝紅水
-                if (myHpPct < 40) {
+                // 【通用保命】血量極低 (<30%) 時優先喝紅水，避免暴斃
+                if (myHpPct < 30) {
                     if (tryUseItem('potion_hp') || tryUseItem('potion_mid') || tryUseItem('potion_high')) return;
-                    // 沒水就試試自補
-                    if (attemptSkill('heal_light')) return;
                 }
 
-                // 2. 根據職責選擇行動
+                // 根據職責選擇行動
                 switch (myRole) {
                     case 'heal': // 💖 補師模式
-                        // 檢查是否有隊友 (或自己) 血量低於 50%
-                        const someoneDying = allPlayers.some(p => (p.hp / p.maxHp) < 0.5);
+                        // 條件：只要有人血量 < 60%
+                        const teamNeedHeal = allPlayers.some(p => (p.hp / p.maxHp) < 0.6);
                         
-                        if (someoneDying) {
-                            // 有人命危 -> 優先群補，沒有就單補
+                        if (teamNeedHeal) {
+                            // 優先放全體補血
                             if (attemptSkill('heal_all')) return;
+                            // 沒魔或沒學群補，試試單補
                             if (attemptSkill('god_light')) return;
                             if (attemptSkill('heal_light')) return;
                         } 
                         
-                        // 全員健康 -> 轉輸出 (次元斬 > 雷擊 > 火球)
+                        // 全員健康 -> 轉輸出 (次元斬 > 雷擊)
                         if (attemptSkill('divine_slash')) return;
                         if (attemptSkill('thunder')) return;
-                        if (attemptSkill('fireball')) return;
                         break;
 
                     case 'tank': // 🛡️ 坦克模式
-                        // 30% 機率補狀態 (天神下凡 / 聖光守護)，避免無限開盾
-                        // 或者如果 MP 非常多，也可以開一下
-                        const needBuff = Math.random() < 0.3; 
-                        
-                        if (needBuff) {
+                        // 30% 機率優先開狀態
+                        if (Math.random() < 0.3) {
                             if (attemptSkill('god_mode')) return;
-                            if (attemptSkill('holy_shield')) return;
                         }
                         
                         // 攻擊：次元斬 > 劇毒之觸
                         if (attemptSkill('divine_slash')) return;
                         if (attemptSkill('poison_touch')) return;
-                        // 沒招就吸血或普攻
-                        if (attemptSkill('drain')) return;
                         break;
 
                     case 'atk': // ⚔️ 輸出模式
                     default:
-                        // 優先順序：大招 -> 中招/控場 -> 小招
-                        // 虛空碎擊 / 宇宙大爆炸
-                        if (attemptSkill('big_bang')) return;
+                        // 優先：虛空碎擊 / 宇宙大爆炸
                         if (attemptSkill('void_crush')) return;
+                        if (attemptSkill('big_bang')) return;
                         
-                        // 隕石 / 熱寂
-                        if (attemptSkill('entropy_decay')) return;
+                        // 其次：隕石 / 雷擊
                         if (attemptSkill('meteor')) return;
-                        
-                        // 雷擊 (控場) / 次元斬
-                        if (attemptSkill('divine_slash')) return;
                         if (attemptSkill('thunder')) return;
                         
-                        // 還是沒招? 冰霜或劇毒
-                        if (attemptSkill('frost_nova')) return;
-                        if (attemptSkill('poison_touch')) return;
+                        // 保底攻擊技
+                        if (attemptSkill('divine_slash')) return;
+                        if (attemptSkill('fireball')) return;
                         break;
                 }
 
-                // 3. 如果上面都沒執行 (沒招或沒藍水)，最後普攻
+                // 3. 如果上面都沒執行 (沒學技能 / MP不足且沒藍水)，最後普攻
                 doNormalAttack();
 
             }, delay);
         }
 
-        // --- 🟢 智能輔助函式 (包含 MP 檢查與自動喝水) ---
+        // --- 🟢 智能輔助函式 (含自動喝水) ---
 
-        // 嘗試使用技能：如果 MP 夠就用；不夠就找水喝；都沒才回傳 false
+        // 嘗試使用技能：
+        // 1. 有技能且MP夠 -> 用技能 (True)
+        // 2. 有技能但MP不夠 -> 找藍水 -> 有水喝水 (True)
+        // 3. 沒技能或沒水 -> (False) -> 下一步
         function attemptSkill(skillId) {
-            // 1. 我有沒有這招?
+            // 檢查是否學會
             if (!myPlayer.skills || !myPlayer.skills.includes(skillId)) return false;
             
             const info = SKILL_INFO[skillId];
             if (!info) return false;
 
-            // 2. MP 夠不夠?
+            // 檢查 MP
             if (myPlayer.mp >= info.mp) {
-                // 夠 -> 直接施放
+                // MP 足夠 -> 施放
                 useSkill(skillId);
                 return true;
             } else {
-                // 3. 不夠 -> 檢查背包有沒有藍水
-                // 如果有藍水，喝水 (這回合動作變成喝水)
+                // MP 不足 -> 檢查背包有沒有藍水
                 if (tryUseItem('potion_mp_high') || tryUseItem('potion_mp_mid') || tryUseItem('potion_mp')) {
-                    // 成功喝水，結束這回合
+                    // 喝水成功，結束這回合
                     return true;
                 }
-                // 沒水又沒魔 -> 回傳 false，讓 AI 找下一個技能或普攻
+                // 沒水，回傳失敗 (AI 會繼續往下找其他招式或普攻)
                 return false;
             }
         }
@@ -937,7 +926,6 @@
 
         // 執行普通攻擊
         function doNormalAttack() {
-            // 簡單找個目標打
             const aliveMobs = currentMonsters.filter(m => m.hp > 0);
             const targetId = aliveMobs.length > 0 ? aliveMobs[0].id : null;
             socket.emit('combatAction', { roomId, type: 'attack', targetId: targetId });
