@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Auto Ver.)</title>
+    <title>戰鬥中 (Auto Ver0.2)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -565,10 +565,50 @@
             if(isAuto) toggleAuto();
         });
 
+        // 🟢 [修正] 勝利按鈕 (增加 z-index 防止被擋，與更明顯的樣式)
         function showNormalVictoryBtn() {
-            document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column: span 2; background:#f1c40f; color:black; font-weight:bold;" onclick="leaveRoom()">🏆 勝利離開</button>`;
+            const btnArea = document.getElementById('btns');
+            
+            // 強制隱藏其他選單
             document.getElementById('fixed-top-area').style.display = 'none'; 
             document.getElementById('shortcut-area').style.display = 'none'; 
+            
+            // 設定按鈕區
+            btnArea.style.gridTemplateColumns = '1fr'; 
+            btnArea.innerHTML = `
+                <button class="btn" 
+                    style="
+                        background: linear-gradient(to bottom, #f1c40f, #f39c12); 
+                        color: #000; 
+                        font-weight: bold; 
+                        font-size: 16px; 
+                        border: 3px solid #fff; 
+                        box-shadow: 0 0 15px rgba(241, 196, 15, 0.8);
+                        z-index: 9999; 
+                        position: relative;
+                        height: 60px;
+                    " 
+                    onclick="leaveRoom()">
+                    🏆 戰鬥勝利 (點擊離開)
+                </button>
+            `;
+        }
+
+        // 🟢 [修正] 離開房間 (更強制的跳轉)
+        function leaveRoom() { 
+            // 1. 通知伺服器 (即使伺服器沒反應，前端也要走)
+            if (socket && socket.connected) {
+                socket.emit('leaveRoom', roomId); 
+            }
+
+            // 2. 顯示提示
+            const btn = document.querySelector('#btns button');
+            if(btn) btn.innerText = "正在回到大廳...";
+
+            // 3. 強制跳轉 (使用 replace 避免按上一頁又回到戰鬥)
+            setTimeout(() => {
+                window.location.replace('hub.html');
+            }, 300); 
         }
 
         socket.on('playerDead', () => { 
