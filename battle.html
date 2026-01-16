@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Auto Ver0.5)</title>
+    <title>戰鬥中 (Auto Ver0.6)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -789,56 +789,58 @@
         }
 
         // ==========================================
-        // 🟢 6. 自動戰鬥 AI 邏輯 (全技能/物品適配版)
+        // 🟢 6. 自動戰鬥 AI 邏輯 (智能物品與坦克循環版)
         // ==========================================
         
-        // 定義技能優先級 (從強到弱)
+        // 技能優先級 (維持不變)
         const SKILL_PRIORITY = {
-            // 輸出型：毀滅性大招 -> 強力輸出 -> 控場/中等 -> 基礎
             atk: [
-                'big_bang', 'entropy_decay', 'void_crush',  // Lv200+
-                'divine_slash', 'meteor',                   // Lv60-100
-                'poison_touch', 'frost_nova',               // Lv25-30
-                'thunder', 'drain', 'fireball'              // Lv1-15
+                'big_bang', 'entropy_decay', 'void_crush',
+                'divine_slash', 'meteor',
+                'poison_touch', 'frost_nova',
+                'thunder', 'drain', 'fireball'
             ],
-            // 坦克型：無敵/減傷 -> 吸血 -> 輸出
             tank: [
-                'god_mode', 'holy_shield',                  // Buff
-                'drain',                                    // 吸血維持
-                'divine_slash', 'poison_touch', 'thunder'   // 仇恨/輸出
+                'god_mode',
+                'holy_shield',
+                'divine_slash', 'poison_touch', 'drain'
             ],
-            // 補師型：全補 -> 單補 -> 輸出
             heal: [
                 'heal_all', 'full_heal', 'god_light', 'heal_light'
             ]
         };
 
-        // 定義物品優先級 (從低階到高階，避免浪費，或者反過來保命)
-        // 這裡設定：優先消耗小藥水/食物，最後才用大藥水
-        const ITEMS_HP = [
-            'potion_hp', 'grilled_carp',                    // +50~100
-            'potion_mid', 'tuna_steak', 'sushi_plate',      // +500
-            'eel_rice',                                     // +300 (混合)
-            'potion_high', 'potion_max', 'elixir', 'void_soup' // +2000~Full
+        // 🟢 定義物品清單：依回復量「由強到弱」排序
+        const ITEMS_HP_DESC = [
+            'void_soup', 'elixir', 'potion_max',    // 神級/全滿 (Lv100+)
+            'potion_high',                          // 大紅 +2000
+            'sushi_plate', 'tuna_steak', 'potion_mid', // 中紅/拼盤 +500
+            'eel_rice',                             // 鰻魚 +300
+            'grilled_carp', 'potion_hp'             // 小紅 +50~100
         ];
 
-        const ITEMS_MP = [
-            'potion_mp', 'salmon_sushi',                    // +30~50
-            'potion_mp_mid', 'eel_rice',                    // +100
-            'potion_mp_high', 'void_soup'                   // +500~Full
+        const ITEMS_MP_DESC = [
+            'void_soup',                            // 全滿
+            'potion_mp_high',                       // 大藍 +500
+            'potion_mp_mid', 'eel_rice',            // 中藍/鰻魚 +100
+            'salmon_sushi', 'potion_mp'             // 小藍 +30~50
         ];
 
         function toggleAuto() {
             isAuto = !isAuto;
             const btn = document.getElementById('auto-btn');
+            
+            // 重置坦克計數器
+            tankAttackCounter = 0; 
+
             if (isAuto) {
                 btn.innerText = "自動: ON";
-                btn.style.background = "#2ecc71"; // 綠色
+                btn.style.background = "#2ecc71"; 
                 btn.style.border = "1px solid #27ae60";
                 if (isMyTurn) autoPlayLogic(); 
             } else {
                 btn.innerText = "自動: OFF";
-                btn.style.background = "#e74c3c"; // 紅色
+                btn.style.background = "#e74c3c"; 
                 btn.style.border = "1px solid #555";
             }
         }
@@ -850,11 +852,9 @@
         function autoPlayLogic() {
             if (!isAuto || !isMyTurn) return;
 
-            // 模擬思考時間 (0.8秒 ~ 1.5秒)
             const delay = Math.random() * 700 + 800;
             
             setTimeout(() => {
-                // 防止狀態改變
                 if (!isMyTurn || roomId === 'world_boss') { 
                     if(roomId === 'world_boss' && isAuto) {
                         socket.emit('worldBossAction', { type: 'attack' });
@@ -865,124 +865,119 @@
 
                 const myHpPct = (myPlayer.hp / myPlayer.maxHp) * 100;
                 
-                // ==========================================
                 // [1] 緊急自保 (所有職責通用)
-                // ==========================================
-                // 血量 < 40% 時，優先嘗試喝水
+                // 血量 < 40% 時，優先喝水
                 if (myHpPct < 40) {
-                    if (recoverStat('hp')) return; // 嘗試喝紅水
-                    
-                    // 沒水喝，試著用技能自救 (如果有學)
+                    if (recoverStat('hp')) return;
+                    // 沒水才試技能
                     if (attemptSkill('full_heal')) return;
                     if (attemptSkill('god_light')) return;
                     if (attemptSkill('heal_light')) return;
                 }
 
-                // ==========================================
                 // [2] 根據職責執行邏輯
-                // ==========================================
-                let actionTaken = false;
-
                 switch (myRole) {
                     case 'heal': // 💖 補師模式
-                        // 掃描全隊 (只要有人 HP < 60%)
                         const teamNeedHeal = allPlayers.some(p => (p.hp / p.maxHp) < 0.6);
                         
                         if (teamNeedHeal) {
-                            // 依序嘗試治療技能 (沒學到或沒魔會自動跳下一個)
                             for (let skill of SKILL_PRIORITY.heal) {
                                 if (attemptSkill(skill)) return;
                             }
                         } 
-                        
-                        // 隊友健康 -> 轉輸出 (使用輸出列表的前幾招)
-                        // 補師稍微保留 MP，只用中低階攻擊
                         if (attemptSkill('divine_slash')) return;
                         if (attemptSkill('thunder')) return;
                         break;
 
-                    case 'tank': // 🛡️ 坦克模式
-                        // 30% 機率優先開狀態 (避免無限開盾不打怪)
-                        if (Math.random() < 0.3) {
-                            if (attemptSkill('god_mode')) return;
-                            if (attemptSkill('holy_shield')) return;
-                        }
-                        
-                        // 坦克攻擊循環 (依列表順序嘗試)
-                        for (let skill of SKILL_PRIORITY.tank) {
-                            if (attemptSkill(skill)) return;
+                    case 'tank': // 🛡️ 坦克模式 (2回合攻擊循環)
+                        if (tankAttackCounter > 0) {
+                            tankAttackCounter--; 
+                            if (attemptSkill('divine_slash')) return;
+                            if (attemptSkill('poison_touch')) return;
+                            if (attemptSkill('drain')) return;
+                        } else {
+                            // 優先開天神
+                            if (attemptSkill('god_mode')) {
+                                tankAttackCounter = 2; return;
+                            }
+                            if (attemptSkill('holy_shield')) {
+                                tankAttackCounter = 2; return;
+                            }
+                            // 沒buff技能就攻擊
+                            if (attemptSkill('divine_slash')) return;
+                            if (attemptSkill('poison_touch')) return;
                         }
                         break;
 
                     case 'atk': // ⚔️ 輸出模式
                     default:
-                        // 輸出攻擊循環：從最強的大招開始嘗試
                         for (let skill of SKILL_PRIORITY.atk) {
                             if (attemptSkill(skill)) return;
                         }
                         break;
                 }
 
-                // ==========================================
                 // [3] 保底：普通攻擊
-                // ==========================================
-                // 如果上面所有技能都沒學、或沒魔且沒水喝
                 doNormalAttack();
 
             }, delay);
         }
 
-        // --- 🟢 智能輔助函式 ---
+        // --- 🟢 智能輔助函式 (修正版) ---
 
-        /**
-         * 嘗試使用技能
-         * @param {string} skillId 技能ID
-         * @return {boolean} 如果成功施放(或成功喝水)返回 true，否則 false
-         */
         function attemptSkill(skillId) {
-            // 1. 檢查是否學會
             if (!myPlayer.skills || !myPlayer.skills.includes(skillId)) return false;
             
             const info = SKILL_INFO[skillId];
             if (!info) return false;
 
-            // 2. 檢查 MP
             if (myPlayer.mp >= info.mp) {
-                // MP 足夠 -> 施放
                 useSkill(skillId);
                 return true;
             } else {
-                // 3. MP 不足 -> 自動找藍水喝
+                // MP 不足 -> 找水喝
                 if (recoverStat('mp')) {
-                    return true; // 喝水算作一個回合行動
+                    return true; 
                 }
-                // 沒水喝 -> 回傳失敗，讓 AI 找下一個技能
                 return false;
             }
         }
 
-        /**
-         * 自動尋找並使用恢復道具
-         * @param {string} type 'hp' 或 'mp'
-         * @return {boolean} 有物品並使用則回傳 true
-         */
+        // 🟢 [核心修改] 智能喝水邏輯
         function recoverStat(type) {
-            const list = (type === 'hp') ? ITEMS_HP : ITEMS_MP;
+            const pct = (type === 'hp') 
+                ? (myPlayer.hp / myPlayer.maxHp) 
+                : (myPlayer.mp / myPlayer.maxMp);
             
-            // 遍歷清單，找到背包裡有的第一個物品
-            for (let itemId of list) {
+            const listDesc = (type === 'hp') ? ITEMS_HP_DESC : ITEMS_MP_DESC;
+            
+            // 策略：
+            // 1. 如果數值 < 40% (危急/沒魔)：從列表頭 (強效) 開始找，有什麼喝什麼。
+            // 2. 如果數值 >= 40% (補給)：從列表尾 (弱效) 開始找，優先消耗小水。
+
+            let targetList = [];
+
+            if (pct < 0.4) {
+                // 危急：使用原列表 (強 -> 弱)
+                targetList = listDesc;
+            } else {
+                // 補給：反轉列表 (弱 -> 強)
+                // 複製一份陣列再反轉，避免影響原陣列
+                targetList = [...listDesc].reverse();
+            }
+
+            // 遍歷並使用第一個背包裡有的物品
+            for (let itemId of targetList) {
                 if (myPlayer.inventory && myPlayer.inventory[itemId] > 0) {
-                    // 找到了！使用它
                     useItem(itemId);
-                    // 可以在這裡加個 log 讓玩家知道自動喝了什麼
-                    // log(`[自動] 使用了 ${ITEM_NAMES[itemId]}`);
+                    // log(`[AI] 自動使用了 ${ITEM_NAMES[itemId]}`); 
                     return true;
                 }
             }
+            
             return false;
         }
 
-        // 執行普通攻擊
         function doNormalAttack() {
             const aliveMobs = currentMonsters.filter(m => m.hp > 0);
             const targetId = aliveMobs.length > 0 ? aliveMobs[0].id : null;
