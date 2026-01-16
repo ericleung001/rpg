@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Auto Ver0.6)</title>
+    <title>戰鬥中 (Auto Ver0.7)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -943,38 +943,69 @@
             }
         }
 
-        // 🟢 [核心修改] 智能喝水邏輯
+        // 🟢 [核心修改] 智能喝水邏輯 (含虛空湯特殊判斷)
         function recoverStat(type) {
-            const pct = (type === 'hp') 
-                ? (myPlayer.hp / myPlayer.maxHp) 
-                : (myPlayer.mp / myPlayer.maxMp);
+            const hpPct = myPlayer.hp / myPlayer.maxHp;
+            const mpPct = myPlayer.mp / myPlayer.maxMp;
             
-            const listDesc = (type === 'hp') ? ITEMS_HP_DESC : ITEMS_MP_DESC;
-            
-            // 策略：
-            // 1. 如果數值 < 40% (危急/沒魔)：從列表頭 (強效) 開始找，有什麼喝什麼。
-            // 2. 如果數值 >= 40% (補給)：從列表尾 (弱效) 開始找，優先消耗小水。
+            // 判斷是否為 "雙重危急" (HP 和 MP 都 < 30%)
+            const isCriticalEmergency = (hpPct < 0.3 && mpPct < 0.3);
 
+            // 根據類型選擇列表
+            // 注意：這裡我們需要一個 "排除 void_soup" 的列表，和一個 "只有 void_soup" 的檢查
+            const fullList = (type === 'hp') ? ITEMS_HP_DESC : ITEMS_MP_DESC;
+            
+            // 策略變更：
+            // 1. 如果是雙重危急 -> 允許使用 void_soup (但不一定是第一個，看列表排序)
+            // 2. 如果只是單項危急 -> 跳過 void_soup，先找其他藥水
+            
             let targetList = [];
 
-            if (pct < 0.4) {
-                // 危急：使用原列表 (強 -> 弱)
-                targetList = listDesc;
+            if (type === 'hp' ? hpPct < 0.4 : mpPct < 0.4) {
+                // 危急模式：使用原列表 (強 -> 弱)
+                targetList = [...fullList];
             } else {
-                // 補給：反轉列表 (弱 -> 強)
-                // 複製一份陣列再反轉，避免影響原陣列
-                targetList = [...listDesc].reverse();
+                // 補給模式：反轉列表 (弱 -> 強)
+                targetList = [...fullList].reverse();
             }
 
-            // 遍歷並使用第一個背包裡有的物品
+            // 遍歷背包尋找可用物品
             for (let itemId of targetList) {
+                // 檢查背包有無此物品
                 if (myPlayer.inventory && myPlayer.inventory[itemId] > 0) {
+                    
+                    // 🟢 特殊判斷：如果是虛空湯 (void_soup)
+                    if (itemId === 'void_soup') {
+                        // 只有在 "雙重危急" 時才允許直接使用
+                        if (isCriticalEmergency) {
+                            useItem(itemId);
+                            return true;
+                        } else {
+                            // 如果不是雙重危急，先跳過它，繼續找下一個物品
+                            // 除非... 背包裡真的只剩下虛空湯了，其他都沒了？
+                            // 為了更嚴謹的省錢邏輯，這裡選擇 "跳過"，寧願下一回合再判斷，也不要單補一項就喝神湯
+                            continue; 
+                        }
+                    }
+
+                    // 普通物品 -> 直接使用
                     useItem(itemId);
-                    // log(`[AI] 自動使用了 ${ITEM_NAMES[itemId]}`); 
                     return true;
                 }
             }
             
+            // 如果跑到這裡，代表：
+            // 1. 背包全空
+            // 2. 或者只剩下 void_soup 但條件不符 (不是雙重危急)
+            
+            // 🟢 保底機制：如果真的只剩下 void_soup 且非常危急 (例如 HP < 10%)，還是喝了吧
+            if (myPlayer.inventory && myPlayer.inventory['void_soup'] > 0) {
+                if (type === 'hp' && hpPct < 0.1) {
+                    useItem('void_soup');
+                    return true;
+                }
+            }
+
             return false;
         }
 
