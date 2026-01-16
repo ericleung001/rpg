@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Auto Ver1.2）</title>
+    <title>戰鬥中 (Auto Ver1.3）</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -789,10 +789,10 @@
         }
 
         // ==========================================
-        // 🟢 6. 自動戰鬥 AI 邏輯 (智能物品優化版)
+        // 🟢 6. 自動戰鬥 AI 邏輯 (補師循環特化版)
         // ==========================================
         
-        // 技能優先級 (維持不變)
+        // 技能優先級
         const SKILL_PRIORITY = {
             atk: [
                 'big_bang', 'entropy_decay', 'void_crush',
@@ -810,29 +810,27 @@
             ]
         };
 
-        // 🟢 定義物品清單：依回復量「由強到弱」排序
+        // 物品清單
         const ITEMS_HP_DESC = [
-            'void_soup', 'elixir', 'potion_max',    
-            'potion_high',                          
-            'sushi_plate', 'tuna_steak', 'potion_mid', 
-            'eel_rice',                             
-            'grilled_carp', 'potion_hp'             
+            'void_soup', 'elixir', 'potion_max', 'potion_high',                          
+            'sushi_plate', 'tuna_steak', 'potion_mid', 'eel_rice', 'grilled_carp', 'potion_hp'             
         ];
 
-        // 🟢 修改：MP 清單中，Elixir 排在 Void Soup 前面 (優先消耗甘露)
         const ITEMS_MP_DESC = [
-            'elixir', 'void_soup',                  
-            'potion_mp_high',                       
-            'potion_mp_mid', 'eel_rice',            
-            'salmon_sushi', 'potion_mp'             
+            'elixir', 'void_soup', 'potion_mp_high', 'potion_mp_mid', 'eel_rice', 'salmon_sushi', 'potion_mp'             
         ];
+
+        // 🟢 新增補師攻擊計數器
+        let tankAttackCounter = 0; 
+        let healerAttackCounter = 0; 
 
         function toggleAuto() {
             isAuto = !isAuto;
             const btn = document.getElementById('auto-btn');
             
-            // 重置坦克計數器
+            // 重置計數器
             tankAttackCounter = 0; 
+            healerAttackCounter = 0;
 
             if (isAuto) {
                 btn.innerText = "自動: ON";
@@ -856,7 +854,6 @@
             const delay = Math.random() * 700 + 800;
             
             setTimeout(() => {
-                // 防止狀態改變或戰鬥結束
                 if (!isMyTurn || roomId === 'world_boss') { 
                     if(roomId === 'world_boss' && isAuto) {
                         socket.emit('worldBossAction', { type: 'attack' });
@@ -867,46 +864,77 @@
 
                 const myHpPct = (myPlayer.hp / myPlayer.maxHp) * 100;
                 
-                // [1] 緊急自保 (所有職責通用)
-                // 血量 < 40% 時，優先嘗試補血
-                if (myHpPct < 40) {
-                    if (recoverStat('hp')) return; // 喝水
-                    // 沒水才試技能
+                // ==========================================
+                // [1] 緊急自保邏輯 (區分職業)
+                // ==========================================
+                
+                // 🟢 補師特例：HP < 50% 必須用 heal_all，不喝紅水
+                if (myRole === 'heal' && myHpPct < 50) {
+                    // 嘗試 heal_all (如果不夠魔 attemptSkill 會自動喝藍水，這沒問題)
+                    if (attemptSkill('heal_all')) {
+                        // 既然進入緊急狀態，重置攻擊循環
+                        healerAttackCounter = 0;
+                        return;
+                    }
+                    // 如果 heal_all 放不出來(沒學?)，試試 full_heal
+                    if (attemptSkill('full_heal')) return;
+                }
+                
+                // 🟢 其他職業：HP < 40% 優先喝水
+                else if (myRole !== 'heal' && myHpPct < 40) {
+                    if (recoverStat('hp')) return; 
                     if (attemptSkill('full_heal')) return;
                     if (attemptSkill('god_light')) return;
                     if (attemptSkill('heal_light')) return;
                 }
 
+                // ==========================================
                 // [2] 根據職責執行邏輯
+                // ==========================================
                 switch (myRole) {
-                    case 'heal': // 💖 補師模式
-                        const teamNeedHeal = allPlayers.some(p => (p.hp / p.maxHp) < 0.6);
+                    case 'heal': // 💖 補師模式 (循環版)
+                        // 1. 檢查隊友 (不含自己，因為自己上面檢查過了) 是否有人 < 50%
+                        const teamEmergency = allPlayers.some(p => p.id !== myPlayer.id && (p.hp / p.maxHp) < 0.5);
                         
-                        if (teamNeedHeal) {
-                            for (let skill of SKILL_PRIORITY.heal) {
-                                if (attemptSkill(skill)) return;
+                        if (teamEmergency) {
+                            // 隊友危急 -> 強制 heal_all
+                            if (attemptSkill('heal_all')) {
+                                healerAttackCounter = 0; // 中斷攻擊循環
+                                return;
                             }
+                            // 沒學群補? 用單補
+                            if (attemptSkill('full_heal')) return;
                         } 
-                        // 全員健康 -> 轉輸出
-                        if (attemptSkill('divine_slash')) return;
-                        if (attemptSkill('thunder')) return;
+                        
+                        // 2. 全員健康 (安全狀態) -> 執行 "1補 2攻" 循環
+                        if (healerAttackCounter > 0) {
+                            // 攻擊階段
+                            healerAttackCounter--;
+                            if (attemptSkill('divine_slash')) return;
+                            if (attemptSkill('thunder')) return; // 沒學次元斬就雷擊
+                        } else {
+                            // 準備階段：施放 Full Heal (當作補滿/Buff)
+                            if (attemptSkill('full_heal')) {
+                                healerAttackCounter = 2; // 設定接下 2 回合攻擊
+                                return;
+                            }
+                            // 如果沒學 Full Heal，試試神之光，或者直接攻擊
+                            if (attemptSkill('god_light')) { healerAttackCounter = 2; return; }
+                            
+                            // 真的沒補招，直接打
+                            if (attemptSkill('divine_slash')) return;
+                        }
                         break;
 
-                    case 'tank': // 🛡️ 坦克模式 (2回合攻擊循環)
+                    case 'tank': // 🛡️ 坦克模式
                         if (tankAttackCounter > 0) {
                             tankAttackCounter--; 
                             if (attemptSkill('divine_slash')) return;
                             if (attemptSkill('poison_touch')) return;
                             if (attemptSkill('drain')) return;
                         } else {
-                            // 優先開天神
-                            if (attemptSkill('god_mode')) {
-                                tankAttackCounter = 2; return;
-                            }
-                            if (attemptSkill('holy_shield')) {
-                                tankAttackCounter = 2; return;
-                            }
-                            // 沒buff技能就攻擊
+                            if (attemptSkill('god_mode')) { tankAttackCounter = 2; return; }
+                            if (attemptSkill('holy_shield')) { tankAttackCounter = 2; return; }
                             if (attemptSkill('divine_slash')) return;
                             if (attemptSkill('poison_touch')) return;
                         }
@@ -921,28 +949,24 @@
                 }
 
                 // [3] 保底：普通攻擊
-                // 確保沒魔、沒水、沒湯時，不會停止動作
                 doNormalAttack();
 
             }, delay);
         }
 
-        // --- 🟢 智能輔助函式 (修正版) ---
+        // --- 🟢 智能輔助函式 ---
 
         function attemptSkill(skillId) {
-            // 1. 檢查是否學會
             if (!myPlayer.skills || !myPlayer.skills.includes(skillId)) return false;
             
             const info = SKILL_INFO[skillId];
             if (!info) return false;
 
-            // 2. 檢查 MP
             if (myPlayer.mp >= info.mp) {
                 useSkill(skillId);
                 return true;
             } else {
-                // 3. MP 不足 -> 找水喝
-                // 注意：如果喝水成功，這次 attemptSkill 算 True (因為消耗了一回合動作)
+                // MP 不足 -> 找水喝 (喝藍水是被允許的)
                 if (recoverStat('mp')) {
                     return true; 
                 }
@@ -950,73 +974,47 @@
             }
         }
 
-        // 🟢 [核心修改] 智能喝水邏輯 (含 Elixir 優先與保護機制)
         function recoverStat(type) {
             const hpPct = myPlayer.hp / myPlayer.maxHp;
             const mpPct = myPlayer.mp / myPlayer.maxMp;
             
-            // 定義危急狀態
-            const isDoubleCritical = (hpPct < 0.3 && mpPct < 0.3); // 雙低 -> 喝神藥首選
-            const isMpDry = (mpPct < 0.1); // MP 乾了 (無法放招) -> 必須喝
-            const isHpCritical = (hpPct < 0.15); // 快死了 -> 必須喝
+            const isDoubleCritical = (hpPct < 0.3 && mpPct < 0.3);
+            const isMpDry = (mpPct < 0.1); 
+            const isHpCritical = (hpPct < 0.15); 
 
             const listDesc = (type === 'hp') ? ITEMS_HP_DESC : ITEMS_MP_DESC;
             let targetList = [];
 
-            // 選擇遍歷順序
             if (type === 'hp' ? hpPct < 0.4 : mpPct < 0.4) {
-                targetList = [...listDesc]; // 危急：強 -> 弱 (優先喝大水)
+                targetList = [...listDesc]; 
             } else {
-                targetList = [...listDesc].reverse(); // 補給：弱 -> 強 (優先喝小水)
+                targetList = [...listDesc].reverse(); 
             }
 
-            let hasVoidSoup = false; // 標記背包是否有湯
-            let hasElixir = false;   // 標記背包是否有甘露
+            let hasVoidSoup = false; 
+            let hasElixir = false;   
 
             for (let itemId of targetList) {
                 if (myPlayer.inventory && myPlayer.inventory[itemId] > 0) {
                     
-                    // 🟢 神級道具特殊判斷 (Elixir 和 Void Soup)
                     if (itemId === 'void_soup' || itemId === 'elixir') {
                         if (itemId === 'void_soup') hasVoidSoup = true;
                         if (itemId === 'elixir') hasElixir = true;
                         
-                        // 1. 雙重危急 -> 允許使用
-                        if (isDoubleCritical) { 
-                            useItem(itemId); return true; 
-                        }
-                        
-                        // 2. MP 乾涸且現在要補 MP -> 允許使用 (依照列表順序，會先喝 Elixir)
-                        if (type === 'mp' && isMpDry) { 
-                            useItem(itemId); return true; 
-                        }
-                        
-                        // 3. HP 極度危急 -> 允許使用
-                        if (type === 'hp' && isHpCritical) { 
-                            useItem(itemId); return true; 
-                        }
+                        if (isDoubleCritical) { useItem(itemId); return true; }
+                        if (type === 'mp' && isMpDry) { useItem(itemId); return true; }
+                        if (type === 'hp' && isHpCritical) { useItem(itemId); return true; }
 
-                        // 條件未滿足，先跳過這些貴重物品
                         continue; 
                     }
-
-                    // 普通專用藥水 -> 直接喝
                     useItem(itemId);
                     return true;
                 }
             }
             
-            // 如果跑到這裡，代表沒有普通藥水，或者剛才跳過了神藥
-            
-            // 🟢 最後保底：如果真的只剩神藥，而且狀態確實危急 (<40%)，那就喝吧
-            // 這裡也遵循優先級：先看有沒有 Elixir，再看 Soup
             if ((type === 'hp' && hpPct < 0.4) || (type === 'mp' && mpPct < 0.4)) {
-                if (hasElixir && type === 'mp') { // MP 不足優先喝 Elixir 保底
-                    useItem('elixir'); return true;
-                }
-                if (hasVoidSoup) {
-                    useItem('void_soup'); return true;
-                }
+                if (hasElixir && type === 'mp') { useItem('elixir'); return true; }
+                if (hasVoidSoup) { useItem('void_soup'); return true; }
             }
 
             return false;
