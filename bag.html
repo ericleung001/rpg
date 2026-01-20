@@ -200,9 +200,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -223,7 +223,10 @@
             'galaxy_saber', 'nebula_plate', 
             'dimension_ring',
             'entropy_sword', 'entropy_god_armor',
-            'enhance_stone' 
+            'enhance_stone',
+            // 🟢 Lv.450 & Lv.500 裝備 (不可賣出)
+            'infinity_blade', 'event_horizon', 'mobius_ring',
+            'singularity_weapon', 'singularity_armor', 'singularity_acc'
         ];
 
         const NPC_SHOP_ALLOW_LIST = [
@@ -251,6 +254,7 @@
             'void_worm': '虛空吞噬蟲', 'shadow_phantom': '虚影夢魘', 'star_eater': '吞星巨獸',
             'nebula_dragon': '星雲幻龍', 'time_keeper': '時空裁決者', 'dimension_breaker': '維度粉碎者',
             'entropy_god': '終焉·熱寂之神',
+            'akashic_record': '全知者·阿卡西', // 🟢 新增 BOSS 卡片
             'potion': '回復卡', 'fire': '攻擊卡', 'shield': '護盾卡'
         };
 
@@ -385,7 +389,45 @@
             'pearl': { name: "珍珠", cost: 500, desc: "圓潤的寶石" },
             'coal': { name: "煤炭", cost: 5, desc: "燃料" }, 
             'ruby': { name: "紅寶石", cost: 200, desc: "紅色的寶石" }, 
-            'diamond': { name: "鑽石", cost: 500, desc: "堅硬的寶石" }
+            'diamond': { name: "鑽石", cost: 500, desc: "堅硬的寶石" },
+            
+            // 🟢 Lv.400-500 新材料
+            'quantum_residue': { name: "量子殘渣", type: 'material', cost: 500000, desc: "物質分解後的最小單位" },
+            'multiverse_shard': { name: "多元宇宙碎片", type: 'material', cost: 2000000, desc: "來自平行時空的殘片" },
+            'divinity_core':    { name: "創世神格", type: 'material', cost: 50000000, desc: "成神所需的唯一核心" },
+
+            // 🟢 Lv.450 神話裝備
+            'infinity_blade':   { name: "無限之刃", type: 'weapon', atk: 350000, hp: 500000, cost: 0, desc: "Lv.450 武器，劍身映照著無數星河" },
+            'event_horizon':    { name: "視界戰甲", type: 'armor', def: 200000, hp: 2000000, cost: 0, desc: "Lv.450 防具，連光都無法逃脫" },
+            'mobius_ring':      { name: "莫比烏斯環", type: 'acc', atk: 30000, def: 30000, hp: 500000, cost: 0, desc: "Lv.450 飾品，象徵無限循環" },
+
+            // 🟢 Lv.500 終極畢業裝備
+            'singularity_weapon': { 
+                name: "奇點·萬象崩壞", 
+                type: 'weapon', 
+                atk: 600000, 
+                hp: 1000000, 
+                cost: 0, 
+                desc: "Lv.500 [最終神兵] 一擊即可重啟宇宙的絕對力量。" 
+            },
+            'singularity_armor': { 
+                name: "奇點·絕對防禦", 
+                type: 'armor', 
+                def: 350000, 
+                hp: 5000000, 
+                cost: 0, 
+                desc: "Lv.500 [最終神甲] 將所有傷害轉移至異次元。" 
+            },
+            'singularity_acc': { 
+                name: "奇點·因果律", 
+                type: 'acc', 
+                atk: 80000, 
+                def: 80000, 
+                hp: 2000000, 
+                mp: 500000,
+                cost: 0, 
+                desc: "Lv.500 [最終飾品] 操控因果，逆轉命運。" 
+            }
         };
 
         socket.on('connect', () => {
