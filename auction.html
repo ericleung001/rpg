@@ -140,6 +140,13 @@
             font-size: 12px; font-weight: bold; padding: 10px;
         }
 
+        /* 🟢 批量上架遮罩樣式 */
+        #bulk-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 30000; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+
         /* 聊天室樣式 */
         #chat-container {
             position: fixed; bottom: 0; left: 0; width: 100%; 
@@ -183,6 +190,14 @@
     </div>
 
     <div id="game-toast"></div>
+
+    <div id="bulk-overlay">
+        <div class="spinner"></div>
+        <div id="bulk-text" style="color:white; margin-top:20px; font-size:14px; line-height: 1.6;">
+            正在批量上架...<br>
+            <span style="color:#e74c3c; font-weight:bold; font-size:12px;">⚠️ 請勿關閉視窗或上一頁！</span>
+        </div>
+    </div>
 
     <div id="app-layout">
         <div id="main-content">
@@ -241,8 +256,18 @@
     <div id="sell-price-modal" class="modal-overlay">
         <div class="modal-box">
             <h3 id="modal-item-name" style="font-size:16px; margin-bottom:10px;">上架物品</h3>
-            <input type="number" id="sell-price" placeholder="輸入價格 (G)" max="999999999">
-            <button class="btn" style="background:#e67e22; margin-top:10px;" onclick="confirmSell()">確認上架</button>
+            
+            <label style="font-size:10px; color:#555; display:block; text-align:left;">單價 (G):</label>
+            <input type="number" id="sell-price" placeholder="輸入單價" max="999999999">
+            
+            <label style="font-size:10px; color:#555; display:block; text-align:left;">數量 (持有: <span id="max-qty">1</span>):</label>
+            <input type="number" id="sell-count" placeholder="輸入數量" min="1" value="1">
+            
+            <div style="font-size:10px; color:#e67e22; margin-top:5px; text-align:left;">
+                預計總收益: <span id="total-price-preview">0</span> G
+            </div>
+
+            <button class="btn" style="background:#e67e22; margin-top:15px;" onclick="confirmSell()">確認上架</button>
             <button class="btn" style="background:#555; margin-top:10px;" onclick="closePriceModal()">取消</button>
         </div>
     </div>
@@ -269,19 +294,23 @@
         });
 
         const socket = io('https://mmo.ttctv-105.cc', { 
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
 
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
         let myInventory = {};
         let currentSellId = null;
+        let currentSellMaxQty = 0;
         let currentItemKey = ''; 
         let currentPage = 1;
         let pendingBuyId = null; 
         let currentCategory = ''; 
+        
+        // 🟢 狀態防呆
+        let isBulkSelling = false;
 
         const PROHIBITED_ITEMS = [
             'lucky_bag',
@@ -289,7 +318,11 @@
             'void_blade', 'void_armor', 
             'galaxy_saber', 'nebula_plate', 
             'dimension_ring',
-            'entropy_sword', 'entropy_god_armor'
+            'entropy_sword', 'entropy_god_armor',
+            'enhance_stone',
+            // 🟢 Lv.450 & Lv.500 裝備 (不可交易，只能自己合成)
+            'infinity_blade', 'event_horizon', 'mobius_ring',
+            'singularity_weapon', 'singularity_armor', 'singularity_acc'
         ];
 
         const CARD_NAME_MAP = {
@@ -307,6 +340,7 @@
             'void_worm': '虛空吞噬蟲', 'shadow_phantom': '虚影夢魘', 'star_eater': '吞星巨獸',
             'nebula_dragon': '星雲幻龍', 'time_keeper': '時空裁決者', 'dimension_breaker': '維度粉碎者',
             'entropy_god': '終焉·熱寂之神',
+            'akashic_record': '全知者·阿卡西', // 🟢 新增 BOSS
             'potion': '回復卡', 'fire': '攻擊卡', 'shield': '護盾卡'
         };
 
@@ -327,6 +361,22 @@
             'tuna': { name: "黑鮪魚" }, 'shark': { name: "大白鯊" }, 'lava_eel': { name: "熔岩鰻" }, 'void_squid': { name: "虛空烏賊" },
             'god_carp': { name: "神之鯉" }, 'pearl': { name: "珍珠" }, 'coal': { name: "煤炭" }, 'ruby': { name: "紅寶石" },
             'diamond': { name: "鑽石" },
+            
+            // 🟢 Lv.400-500 新材料
+            'quantum_residue': { name: "量子殘渣" },
+            'multiverse_shard': { name: "多元宇宙碎片" },
+            'divinity_core':    { name: "創世神格" },
+
+            // 🟢 Lv.450 神話裝備
+            'infinity_blade':   { name: "無限之刃" },
+            'event_horizon':    { name: "視界戰甲" },
+            'mobius_ring':      { name: "莫比烏斯環" },
+
+            // 🟢 Lv.500 終極畢業裝備
+            'singularity_weapon': { name: "奇點·萬象崩壞" },
+            'singularity_armor': { name: "奇點·絕對防禦" },
+            'singularity_acc': { name: "奇點·因果律" },
+
             'potion_hp': { name: "小紅藥水" }, 'potion_mid': { name: "中紅藥水" }, 'potion_high': { name: "大紅藥水" }, 'potion_max': { name: "特級秘藥" },
             'elixir': { name: "神之甘露" }, 
             'potion_mp': { name: "小藍藥水" }, 'potion_mp_mid': { name: "中藍藥水" }, 'potion_mp_high': { name: "大藍藥水" },
@@ -350,7 +400,7 @@
             'ring_life': { name: "生命護符" }, 'ring_magic': { name: "魔力耳環" },
             'bracelet_def': { name: "堅毅手環" }, 'necklace_hp': { name: "紅水晶項鍊" }, 'necklace_mp': { name: "藍水晶項鍊" },
             'ring_galaxy': { name: "銀河指環" }, 'dimension_ring': { name: "維度指環" },
-            'lucky_bag': { name: "🧧 奇蹟福袋" } 
+            'lucky_bag': { name: "🧧 奇蹟福袋" }, 'enhance_stone': { name: "強化石" }
         };
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
@@ -367,6 +417,7 @@
         });
         socket.on('chatMessage', (data) => { appendChat(data.name, data.msg); });
         function appendChat(name, msg) {
+            if (name === '系統') return; 
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
             const nameSpan = document.createElement('span');
@@ -405,7 +456,6 @@
                 document.getElementById('listings-area').style.display = 'flex';
                 socket.emit('getMyListings');
             } else if (cat === 'card') {
-                // 🟢 [關鍵修改] 點選卡片時，改為發送 'all' 請求
                 document.getElementById('status-msg').innerText = "搜尋市場卡片...";
                 socket.emit('getMarketItems', 'all'); 
             } else {
@@ -418,17 +468,15 @@
             const area = document.getElementById('item-select-area');
             area.innerHTML = '';
             
-            // 🟢 [過濾核心] 強力篩選器
+            // 🟢 [過濾核心] 強力篩選器 (排除 Lv.450+ 裝備)
             let filteredItems = items.filter(item => !PROHIBITED_ITEMS.includes(item.id));
 
             if (currentCategory === 'card') {
-                // 只保留 ID 是 card_ 開頭，或者名稱包含 "卡片" 的物品
                 filteredItems = filteredItems.filter(item => 
                     item.id.startsWith('card_') || 
                     (item.name && item.name.indexOf('卡片') !== -1)
                 );
             } else if (currentCategory !== 'mine' && currentCategory !== 'all') {
-                // 如果是其他分類，過濾掉卡片 (避免在材料區看到卡片)
                 filteredItems = filteredItems.filter(item => 
                     !item.id.startsWith('card_') && 
                     (!item.name || item.name.indexOf('卡片') === -1)
@@ -447,7 +495,6 @@
                 const btn = document.createElement('div');
                 btn.className = 'item-btn';
                 
-                // 顯示名稱優化 (把 card_slime 轉成 卡片: 史萊姆)
                 if (item.id.startsWith('card_')) {
                     const cardKey = item.id.replace('card_', '');
                     const cardName = CARD_NAME_MAP[cardKey] || cardKey;
@@ -496,10 +543,9 @@
                     if (row.isMine) {
                         actionBtn = `<button class="btn-cancel" onclick="cancelItem(${row.id})">取回</button>`;
                     } else {
-                        actionBtn = `<button class="btn-buy" onclick="buyItem(${row.id}, ${row.price})">購買</button>`;
+                        actionBtn = `<button class="btn-buy" onclick="buyItem(${row.id}, ${row.price}, ${row.count})">購買</button>`;
                     }
                     
-                    // 列表也顯示卡片名稱
                     let displayItemName = row.itemName;
                     if (displayItemName.startsWith('card_')) {
                          const k = displayItemName.replace('card_', '');
@@ -507,7 +553,7 @@
                     }
 
                     div.innerHTML = `
-                        <div class="col-name">${displayItemName}</div>
+                        <div class="col-name">${displayItemName} ${row.count > 1 ? `(x${row.count})` : ''}</div>
                         <div class="col-price">$${row.price}</div>
                         <div class="col-seller">${row.seller}</div>
                         <div class="col-action">${actionBtn}</div>
@@ -530,8 +576,8 @@
             }
         });
 
-        function buyItem(id, price) {
-            if(confirm(`確定要花費 ${price} G 購買嗎？`)) {
+        function buyItem(id, price, count) {
+            if(confirm(`確定要花費 ${price} G 購買 ${count || 1} 個嗎？`)) {
                 pendingBuyId = id; 
                 socket.emit('requestCaptcha'); 
             }
@@ -582,7 +628,7 @@
                     div.className = 'sell-list-item';
                     div.innerHTML = `
                         <div style="font-size:12px;">${itemData.name} (x${myInventory[key]})</div>
-                        <button onclick="openPriceModal('${key}', '${itemData.name}')">賣出</button>
+                        <button onclick="openPriceModal('${key}', '${itemData.name}', ${myInventory[key]})">賣出</button>
                     `;
                     list.appendChild(div);
                 });
@@ -591,22 +637,95 @@
         }
         function closeInventoryModal() { document.getElementById('inventory-modal').style.display = 'none'; }
 
-        function openPriceModal(key, name) {
+        function openPriceModal(key, name, maxQty) {
             currentSellId = key;
+            currentSellMaxQty = maxQty;
             document.getElementById('modal-item-name').innerText = `賣出: ${name}`;
             document.getElementById('sell-price').value = '';
+            
+            // 重置數量輸入
+            const qtyInput = document.getElementById('sell-amount');
+            qtyInput.value = 1;
+            qtyInput.max = Math.min(30, maxQty); 
+
             document.getElementById('sell-price-modal').style.display = 'flex';
             document.getElementById('inventory-modal').style.display = 'none'; 
         }
         function closePriceModal() { document.getElementById('sell-price-modal').style.display = 'none'; }
         
+        document.getElementById('sell-price').addEventListener('input', updateTotalPrice);
+        document.getElementById('sell-count').addEventListener('input', updateTotalPrice);
+
+        function updateTotalPrice() {
+            const p = parseInt(document.getElementById('sell-price').value) || 0;
+            const c = parseInt(document.getElementById('sell-count').value) || 0;
+            document.getElementById('total-price-preview').innerText = (p * c).toLocaleString();
+        }
+        
         function confirmSell() {
             const priceInput = document.getElementById('sell-price');
+            const countInput = document.getElementById('sell-count');
+            
             const price = parseInt(priceInput.value);
-            if(!price || price <= 0) { showMsg("請輸入有效價格"); return; }
-            if (price > 999999999) { showMsg("價格不能超過 999999999 G"); return; }
+            const count = parseInt(countInput.value);
+
+            if(!price || price <= 0) { showMsg("請輸入有效單價"); return; }
+            if(!count || count <= 0) { showMsg("請輸入有效數量"); return; }
+            if(count > 10) { showMsg("單次批量上架上限為 10 個"); return; } // 防呆上限
+
+            // 如果數量是 1，直接走舊邏輯
+            if (count === 1) {
+                socket.emit('marketSell', { itemId: currentSellId, price: price });
+                closePriceModal();
+                return;
+            }
+
+            // 🚀 批量上架流程
+            if(!confirm(`確定要上架 ${count} 個 ${document.getElementById('modal-item-name').innerText.replace('賣出: ', '')} 嗎？\n(這將產生 ${count} 筆獨立訂單)`)) return;
+
+            closePriceModal();
+            isBulkSelling = true;
+            
+            // 顯示遮罩
+            const overlay = document.getElementById('bulk-overlay');
+            const overlayText = document.getElementById('bulk-text');
+            overlay.style.display = 'flex';
+            
+            let sent = 0;
+            const updateStatus = () => {
+                overlayText.innerHTML = `正在上架 (${sent}/${count})...<br><span style="color:#e74c3c; font-weight:bold; font-size:12px;">⚠️ 請勿關閉視窗！</span>`;
+            };
+
+            // 立即發送第一筆
             socket.emit('marketSell', { itemId: currentSellId, price: price });
+            sent++;
+            updateStatus();
+
+            const interval = setInterval(() => {
+                if (sent >= count) {
+                    clearInterval(interval);
+                    finishBulkSell("✅ 批量上架完成！");
+                    return;
+                }
+                
+                socket.emit('marketSell', { itemId: currentSellId, price: price });
+                sent++;
+                updateStatus();
+                
+            }, 800); // 800ms 間隔
         }
+
+        function finishBulkSell(msg) {
+            isBulkSelling = false;
+            document.getElementById('bulk-overlay').style.display = 'none';
+            showMsg(msg);
+            if (!currentItemKey) { socket.emit('getMyListings'); }
+        }
+
+        // 防止誤觸離開
+        window.onbeforeunload = function() {
+            if (isBulkSelling) return "正在批量上架中，確定要離開嗎？";
+        };
 
         function showMsg(text) {
             const t = document.getElementById('game-toast');
@@ -616,15 +735,23 @@
         }
 
         socket.on('marketResult', (res) => { 
-            showMsg(res.success ? "✅ " + res.msg : "❌ " + res.msg);
-            closePriceModal();
-            closeInventoryModal();
-            if (res.success && currentItemKey) { socket.emit('getMarketListings', { key: currentItemKey, page: currentPage }); }
-            if (res.success && !currentItemKey) { socket.emit('getMyListings'); }
+            // 批量模式下不彈個別 Toast，只靠 finishBulkSell 統一提示
+            if (!isBulkSelling) {
+                showMsg(res.success ? "✅ " + res.msg : "❌ " + res.msg);
+                closePriceModal();
+                closeInventoryModal();
+            }
+            
+            if (res.success && currentItemKey && !isBulkSelling) { 
+                socket.emit('getMarketListings', { key: currentItemKey, page: currentPage }); 
+            }
+            if (res.success && !currentItemKey && !isBulkSelling) { 
+                socket.emit('getMyListings'); 
+            }
         });
         
         socket.on('marketRefresh', () => {
-            if (currentItemKey) { socket.emit('getMarketListings', { key: currentItemKey, page: currentPage }); }
+            if (currentItemKey && !isBulkSelling) { socket.emit('getMarketListings', { key: currentItemKey, page: currentPage }); }
         });
     </script>
 </body>
