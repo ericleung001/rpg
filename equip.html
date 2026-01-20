@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>裝備管理3</title>
+    <title>裝備管理</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -30,7 +30,7 @@
         .btn { background: #27ae60; color: white; border: 2px solid #2ecc71; padding: 8px 12px; cursor: pointer; font-family: inherit; font-size: 12px; border-radius: 4px;}
         .btn-unequip { background: #c0392b; border-color: #e74c3c; margin-top: 5px; font-size: 10px; padding: 5px 8px; }
         .back-btn { background: #7f8c8d; color: white; padding: 15px; text-decoration: none; font-size: 14px; display: block; width: 100%; max-width: 600px; box-sizing: border-box; border-radius: 8px; margin-top: 15px; border: 3px solid #fff;}
-        /* === 通用通知條樣式 === */
+        
         #game-toast {
             position: fixed; 
             top: -100px; 
@@ -76,9 +76,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -113,6 +113,10 @@
             'void_blade':       { name: "虛空之刃", cost: 0, desc: "ATK+75000 HP+80000" }, 
             'galaxy_saber':     { name: "銀河光劍", cost: 0, desc: "ATK+110000 HP+150000" }, 
             'entropy_sword':    { name: "終焉·熱寂之劍", cost: 0, desc: "ATK+200000 HP+300000" },
+
+            // 🟢 Lv.450 - 500 新武器
+            'infinity_blade':     { name: "無限之刃", cost: 0, desc: "ATK+350000 HP+500000" },
+            'singularity_weapon': { name: "奇點·萬象崩壞", cost: 0, desc: "ATK+600000 HP+1000000" },
             
             // 採集武器
             'oak_bow':          { name: "橡木弓", cost: 200, desc: "ATK+25" },
@@ -138,6 +142,10 @@
             'nebula_plate':     { name: "星雲板甲", cost: 0, desc: "DEF+70000 HP+600000" }, 
             'entropy_god_armor':{ name: "終焉·神之庇護", cost: 0, desc: "DEF+120000 HP+1500000" },
 
+            // 🟢 Lv.450 - 500 新防具
+            'event_horizon':      { name: "視界戰甲", cost: 0, desc: "DEF+200000 HP+2000000" },
+            'singularity_armor':  { name: "奇點·絕對防禦", cost: 0, desc: "DEF+350000 HP+5000000" },
+
             // === 飾品 ===
             'bone_ring':        { name: "骨戒", cost: 0, desc: "ATK+15 HP+200" }, 
             'ring_str':         { name: "力量戒指", cost: 3000, desc: "ATK+30" },
@@ -155,7 +163,11 @@
             'ring_magic':       { name: "魔力耳環", cost: 0, desc: "MP+50" },
 
             // Lv.280 新飾品
-            'dimension_ring':   { name: "維度指環", cost: 0, desc: "全能力+15000" }
+            'dimension_ring':   { name: "維度指環", cost: 0, desc: "全能力+15000" },
+
+            // 🟢 Lv.450 - 500 新飾品
+            'mobius_ring':      { name: "莫比烏斯環", cost: 0, desc: "ATK/DEF+30000 HP+500000" },
+            'singularity_acc':  { name: "奇點·因果律", cost: 0, desc: "ATK/DEF+80000 HP+200萬" }
         };
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
