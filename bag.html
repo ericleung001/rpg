@@ -87,13 +87,28 @@
             width: 80%; max-width: 300px; border-radius: 12px; text-align: center;
         }
         
-        /* 🟢 輸入框樣式優化 */
         .input-group { margin: 15px 0; }
         .input-label { display: block; font-size: 10px; color: #555; margin-bottom: 5px; text-align: left;}
         input { 
             width: 100%; padding: 12px; margin-bottom: 5px;
             font-family: inherit; font-size: 14px; 
             box-sizing: border-box; border: 2px solid #ccc; text-align: center;
+        }
+        
+        /* 🟢 新增：數量調整按鈕樣式 */
+        .qty-controls {
+            display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 10px;
+        }
+        .qty-btn {
+            width: 35px; height: 35px; background: #bdc3c7; border: none; 
+            font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 5px;
+            font-family: inherit; color: #2c3e50;
+        }
+        .qty-btn:active { background: #95a5a6; }
+        .qty-input { width: 60px !important; margin: 0 !important; }
+        .max-btn {
+            background: #f39c12; color: white; border: none; 
+            font-size: 10px; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-family: inherit;
         }
 
         #game-toast {
@@ -145,7 +160,7 @@
 
             <div class="input-group">
                 <span class="input-label">數量 (Max: 30)</span>
-                <input type="number" id="sell-amount" value="1" min="1" max="30">
+                <input type="number" id="market-sell-amount" value="1" min="1" max="30">
                 <div style="font-size: 9px; color: #888; text-align: right;">擁有: <span id="owned-count">0</span></div>
             </div>
 
@@ -157,9 +172,26 @@
     <div id="npc-modal" class="modal-overlay">
         <div class="modal-box">
             <h3 style="font-size:16px; margin-bottom:10px; color:#e74c3c;">賣給商人</h3>
-            <div id="npc-msg" style="font-size:12px; color:#555; margin-bottom:20px; line-height:1.6;">...</div>
+            
+            <div style="margin-bottom:15px; font-size:12px;">
+                <div style="color:#2980b9; font-weight:bold; font-size:14px; margin-bottom:5px;" id="npc-item-name">物品名稱</div>
+                <div style="color:#555;">回收單價: <span id="npc-unit-price" style="color:#f1c40f; font-weight:bold;">0</span> G</div>
+                <div style="color:#888; font-size:10px;">擁有數量: <span id="npc-own-qty">0</span></div>
+            </div>
+
+            <div class="qty-controls">
+                <button class="qty-btn" onclick="adjustNpcSell(-1)">-</button>
+                <input type="number" id="npc-sell-amount" class="qty-input" value="1" min="1" oninput="updateNpcTotal()">
+                <button class="qty-btn" onclick="adjustNpcSell(1)">+</button>
+                <button class="max-btn" onclick="npcSellMax()">最大</button>
+            </div>
+
+            <div style="margin-bottom:20px; font-weight:bold; color:#27ae60; font-size:14px;">
+                總獲利: <span id="npc-total-price">0</span> G
+            </div>
+
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <button class="btn" style="background:#e74c3c;" onclick="confirmNPCSell()">確定</button>
+                <button class="btn" style="background:#e74c3c;" onclick="confirmNPCSell()">賣出</button>
                 <button class="btn" style="background:#7f8c8d;" onclick="closeAllModals()">取消</button>
             </div>
         </div>
@@ -181,7 +213,11 @@
         let myInventory = {};
         let myEnhancements = {}; 
         let currentFilter = 'all'; 
+        
+        // 🟢 賣店相關變數
         let currentItemId = null;
+        let currentNpcPrice = 0;
+        let currentNpcMax = 0;
 
         const PROHIBITED_ITEMS = [
             'lucky_bag',
@@ -203,7 +239,6 @@
             'ring_str', 'bracelet_def', 'necklace_hp', 'necklace_mp'
         ];
 
-        // 卡片名稱對照表
         const CARD_NAME_MAP = {
             'slime': '史萊姆', 'rat': '大老鼠', 'bee': '殺人蜂', 'boar': '野豬',
             'thief': '盜賊', 'wolf_king': '狼王', 'snake': '毒蛇',
@@ -363,7 +398,6 @@
         socket.on('playerStatsUpdate', (p) => {
             document.getElementById('my-gold').innerText = p.gold;
             myInventory = p.inventory;
-            // 🔥 [關鍵修改] 接收強化數據
             myEnhancements = p.enhancements || {}; 
             renderBag(); 
         });
@@ -382,7 +416,7 @@
 
         function showMsg(text) {
             const t = document.getElementById('game-toast');
-            t.innerText = text;
+            t.innerHTML = text; // allow html
             t.style.top = "30px"; 
             setTimeout(() => { t.style.top = "-100px"; }, 3000);
         }
@@ -412,7 +446,6 @@
                     if (currentFilter === 'armor') return id.includes('armor') || id.includes('mail') || id.includes('vest') || id.includes('plate') || id.includes('robe') || id.includes('cloak');
                     if (currentFilter === 'accessory') return id.includes('ring') || id.includes('necklace') || id.includes('amulet') || id.includes('bracelet') || id.includes('boots') || id.includes('crown');
                     
-                    // [Modified] New Filter for Cards
                     if (currentFilter === 'card') return id.startsWith('card_'); 
 
                     // 材料 (排除所有裝備和消耗品, 以及卡片)
@@ -440,7 +473,6 @@
             keys.forEach(key => {
                 let item = ITEM_DB[key];
                 
-                // 🟢 [修正] 讀取卡片中文名稱
                 if (!item) {
                      if (key.startsWith('card_')) {
                         const monsterKey = key.replace('card_', '');
@@ -463,18 +495,15 @@
                     showDismantle = true;
                 }
 
-                // 只有福袋顯示「使用」
                 let useBtn = '';
                 if (key === 'lucky_bag') { 
                     useBtn = `<button class="btn btn-use" onclick="useItem('${key}')">使用</button>`;
                 }
 
-                // 賣店與上架按鈕
                 let sellBtns = '';
                 if (!PROHIBITED_ITEMS.includes(key)) {
-                    // 🟢 [關鍵修改] 針對卡片，隱藏賣店和上架按鈕
                     if (key.startsWith('card_')) {
-                        sellBtns = ''; // 不顯示任何賣出按鈕
+                        sellBtns = ''; 
                     } else {
                         sellBtns = `
                             <button class="btn btn-npc" onclick="openNPCModal('${key}', '${item.name}', ${npcPrice})">
@@ -525,21 +554,65 @@
             }
         }
 
+        // 🟢 [修改] 賣給商人 Modal 控制
         function openNPCModal(id, name, price) {
             currentItemId = id;
-            const msg = `確定要將【${name}】賣給商人嗎？<br><br>回收價: <span style="color:#f1c40f; font-weight:bold;">${price} G</span>`;
-            document.getElementById('npc-msg').innerHTML = msg;
+            currentNpcPrice = price;
+            currentNpcMax = myInventory[id] || 0;
+
+            document.getElementById('npc-item-name').innerText = name;
+            document.getElementById('npc-unit-price').innerText = price;
+            document.getElementById('npc-own-qty').innerText = currentNpcMax;
+            
+            // 重置輸入
+            const input = document.getElementById('npc-sell-amount');
+            input.value = 1;
+            input.max = currentNpcMax;
+            
+            updateNpcTotal();
             document.getElementById('npc-modal').style.display = 'flex';
         }
 
-        function confirmNPCSell() { socket.emit('npcSell', currentItemId); }
+        function adjustNpcSell(delta) {
+            const input = document.getElementById('npc-sell-amount');
+            let val = parseInt(input.value) + delta;
+            if (val < 1) val = 1;
+            if (val > currentNpcMax) val = currentNpcMax;
+            input.value = val;
+            updateNpcTotal();
+        }
+
+        function npcSellMax() {
+            document.getElementById('npc-sell-amount').value = currentNpcMax;
+            updateNpcTotal();
+        }
+
+        function updateNpcTotal() {
+            const input = document.getElementById('npc-sell-amount');
+            let val = parseInt(input.value);
+            if (isNaN(val) || val < 1) val = 1;
+            if (val > currentNpcMax) val = currentNpcMax;
+            
+            const total = val * currentNpcPrice;
+            document.getElementById('npc-total-price').innerText = total;
+        }
+
+        function confirmNPCSell() { 
+            const amount = parseInt(document.getElementById('npc-sell-amount').value);
+            if (!amount || amount < 1 || amount > currentNpcMax) {
+                showMsg("❌ 數量不正確");
+                return;
+            }
+            // 傳送物件 { itemId, amount }
+            socket.emit('npcSell', { itemId: currentItemId, amount: amount }); 
+        }
 
         function openMarketModal(id, name, count) {
             currentItemId = id; 
             document.getElementById('market-title').innerText = `上架: ${name}`;
             document.getElementById('sell-price').value = '';
             
-            const amountInput = document.getElementById('sell-amount');
+            const amountInput = document.getElementById('market-sell-amount');
             amountInput.value = 1; 
             amountInput.max = Math.min(30, count); 
             document.getElementById('owned-count').innerText = count;
@@ -549,7 +622,7 @@
 
         function confirmMarketSell() {
             const priceVal = document.getElementById('sell-price').value;
-            const amountVal = document.getElementById('sell-amount').value;
+            const amountVal = document.getElementById('market-sell-amount').value;
             
             const price = parseInt(priceVal);
             const amount = parseInt(amountVal);
