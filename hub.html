@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會_test_V2</title>
+    <title>冒險者公會_test_V3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -575,47 +575,83 @@
             socket.emit('claimDailyReward', key);
         }
 
+
+        const ITEM_NAME_MAP = {
+            'potion_hp': '生命藥水',
+            'potion_mp': '魔力藥水',
+            'potion_mid': '中級藥水',
+            'scroll_exp': '經驗卷軸',
+            'lucky_bag': '幸運福袋',
+            'enhance_stone': '強化石',
+            'elixir': '萬能藥',
+            'gem_atk': '攻擊寶石',
+            'god_stone': '神之石'
+        };
+        
         socket.on('dailyQuestData', (data) => {
             const listDiv = document.getElementById('quest-list');
             listDiv.innerHTML = ''; // 清空
 
             const { config, progress, claimed } = data;
 
+            // 如果沒有任務資料 (例如新號剛創)，顯示提示
+            if (!config || Object.keys(config).length === 0) {
+                listDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">暫無任務，請稍後再試</div>';
+                return;
+            }
+
             for (const [key, quest] of Object.entries(config)) {
                 const cur = progress[key] || 0;
                 const target = quest.target;
+                // 修正：當 cur 超過 target 時，顯示 target (例如 5/5 而不是 6/5)
+                const displayCur = cur > target ? target : cur;
+                
                 const isDone = cur >= target;
                 const isClaimed = claimed.includes(key);
 
-                // 獎勵文字
+                // 🟢 [修改] 獎勵文字顯示邏輯
                 let rewardText = `💰${quest.reward.gold} ✨${quest.reward.exp}`;
-                if (quest.reward.item) rewardText += ` 🎁物品`;
+                
+                if (quest.reward.item) {
+                    // 嘗試從對照表找中文名，找不到就顯示 ID
+                    const itemName = ITEM_NAME_MAP[quest.reward.item] || quest.reward.item;
+                    // 使用橙色顯示物品，比較顯眼
+                    rewardText += ` <span style="color:#e67e22; font-weight:bold;">🎁${itemName}</span>`;
+                }
 
                 // 按鈕狀態
                 let btnHtml = '';
                 if (isClaimed) {
-                    btnHtml = `<button disabled style="background:#7f8c8d; color:#fff; border:1px solid #555; padding:5px; width:100px;">已領取</button>`;
+                    btnHtml = `<button disabled style="background:#7f8c8d; color:#fff; border:1px solid #555; padding:5px; width:100px; border-radius:4px;">已領取</button>`;
                 } else if (isDone) {
-                    btnHtml = `<button onclick="claimQuest('${key}')" style="background:#2ecc71; color:#fff; border:1px solid #27ae60; padding:5px; cursor:pointer; font-weight:bold; width:100px;">領取</button>`;
+                    btnHtml = `<button onclick="claimQuest('${key}')" style="background:#2ecc71; color:#fff; border:1px solid #27ae60; padding:5px; cursor:pointer; font-weight:bold; width:100px; border-radius:4px; box-shadow:0 2px 5px rgba(0,0,0,0.2);">領取</button>`;
                 } else {
-                    btnHtml = `<button disabled style="background:#95a5a6; color:#ddd; border:1px solid #7f8c8d; padding:5px; width:100px;">未完成</button>`;
+                    btnHtml = `<button disabled style="background:#34495e; color:#7f8c8d; border:1px solid #2c3e50; padding:5px; width:100px; border-radius:4px;">未完成</button>`;
                 }
 
                 const itemDiv = document.createElement('div');
                 itemDiv.style.background = 'rgba(0,0,0,0.3)';
                 itemDiv.style.marginBottom = '8px';
                 itemDiv.style.padding = '10px';
-                itemDiv.style.borderRadius = '5px';
+                itemDiv.style.borderRadius = '8px';
                 itemDiv.style.border = '1px solid #444';
+
+                // 根據完成狀態改變邊框顏色 (完成變綠色)
+                if (isDone && !isClaimed) itemDiv.style.borderColor = '#2ecc71';
 
                 itemDiv.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                        <span style="font-weight:bold; color:#f1c40f;">${quest.name}</span>
-                        <span style="font-size:10px; color:#aaa;">${cur}/${target}</span>
+                        <span style="font-weight:bold; color:#f1c40f; font-size:12px;">${quest.name}</span>
+                        <span style="font-size:10px; color:${isDone ? '#2ecc71' : '#aaa'}; font-weight:bold;">
+                            ${displayCur}/${target}
+                        </span>
                     </div>
-                    <div style="font-size:12px; margin-bottom:5px;">${quest.desc}</div>
-                    <div style="font-size:10px; color:#3498db; margin-bottom:8px;">獎勵: ${rewardText}</div>
-                    <div style="text-align:right;">${btnHtml}</div>
+                    <div style="font-size:10px; color:#bdc3c7; margin-bottom:8px;">${quest.desc}</div>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-size:10px; color:#3498db;">${rewardText}</div>
+                        <div>${btnHtml}</div>
+                    </div>
                 `;
                 listDiv.appendChild(itemDiv);
             }
