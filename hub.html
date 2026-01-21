@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會_test_V3</title>
+    <title>冒險者公會_test_V4</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -576,7 +576,9 @@
         }
 
 
+        // 🟢 [完整] 物品名稱對照表 (含道具 + 所有材料)
         const ITEM_NAME_MAP = {
+            // --- 消耗品 & 道具 ---
             'potion_hp': '生命藥水',
             'potion_mp': '魔力藥水',
             'potion_mid': '中級藥水',
@@ -585,7 +587,78 @@
             'enhance_stone': '強化石',
             'elixir': '萬能藥',
             'gem_atk': '攻擊寶石',
-            'god_stone': '神之石'
+            'god_stone': '神之石',
+
+            // --- 基礎材料 ---
+            'copper_ore': '銅礦石',
+            'soft_fur': '柔軟皮毛',
+            'beast_fang': '野獸尖牙',
+            'slime_gel': '黏液',
+            'iron_ore': '鐵礦石',
+            'leather': '皮革',
+            'tough_hide': '硬皮革',
+            'magic_dust': '魔粉',
+            'poison_sac': '毒囊',
+            'bone_shard': '碎骨片',
+            'silver_ore': '銀礦石',
+            'fire_core': '火焰核心',
+            'lava_rock': '熔岩石',
+            'coal': '煤炭',
+
+            // --- 進階材料 ---
+            'dragon_scale': '龍鱗',
+            'gold_ore': '金礦石',
+            'ice_crystal': '永恆冰晶',
+            'yeti_fur': '雪怪毛皮',
+            'spirit_dust': '靈魂粉末',
+            'mithril': '秘銀',
+            'void_dust': '虛空之塵',
+            'demon_horn': '惡魔之角',
+            'dark_essence': '暗之精華',
+            'adamantite': '精金',
+            'ruby': '紅寶石',
+            'diamond': '鑽石',
+
+            // --- 神話級材料 ---
+            'god_blood': '神之血',
+            'chaos_orb': '混沌寶珠',
+            'angel_feather': '天使之羽',
+            'titan_steel': '泰坦神鋼',
+            'star_fragment': '星之碎片',
+            'void_shard': '虛空碎片',
+            'dark_matter': '暗物質',
+            'cosmic_steel': '宇宙鋼',
+            'star_core': '恆星核心',
+            'time_sand': '時光之沙',
+            'dimension_gem': '維度寶石',
+            'entropy_origin': '熱寂原點',
+
+            // --- 木材類 ---
+            'oak_log': '橡木原木',
+            'maple_log': '楓木原木',
+            'yew_log': '紫杉原木',
+            'ancient_log': '遠古神木',
+            'spirit_wood': '靈木',
+            'dragon_wood': '龍骨木',
+            'void_wood': '虛空木',
+            'chaos_wood': '混沌神木',
+
+            // --- 魚類 ---
+            'carp': '鯉魚',
+            'salmon': '鮭魚',
+            'koi': '錦鯉',
+            'magic_fish': '魔力魚',
+            'tuna': '黑鮪魚',
+            'shark': '大白鯊',
+            'lava_eel': '熔岩鰻',
+            'void_squid': '虛空烏賊',
+            'god_carp': '神之鯉',
+            'pearl': '珍珠',
+
+            // --- 終焉奇點材料 ---
+            'quantum_residue': '量子殘渣',
+            'multiverse_shard': '多元宇宙碎片',
+            'divinity_core': '創世神格'
         };
         
         socket.on('dailyQuestData', (data) => {
@@ -894,10 +967,10 @@
             { id: 'city_5', name: '虛空要塞', reqLv: 1, desc: '接近魔界的地方 (Lv.80-100)', monsters: [{ id: 'void_eye', name: '虛空之眼', lv: 82 }, { id: 'shadow_assassin', name: '暗影刺客', lv: 85 }, { id: 'dark_paladin', name: '墮落聖騎', lv: 88 }, { id: 'demon_guard', name: '惡魔守衛', lv: 92 }, { id: 'succubus', name: '魅魔', lv: 95 }, { id: 'void_lord', name: '👁️ 虛空領主 (BOSS)', lv: 99 }] },
             { id: 'city_6', name: '魔界王座', reqLv: 1, desc: '☠️ 最終決戰 (Lv.100-150)', monsters: [{ id: 'chaos_beast', name: '混沌巨獸', lv: 105 }, { id: 'fallen_angel', name: '墮天使', lv: 110 }, { id: 'demon_king', name: '👑 魔王撒旦', lv: 150 }] },
             { id: 'city_7', name: '虛空裂縫', reqLv: 1, desc: '🟣 扭曲的次元 (Lv.160-180)', monsters: [{ id: 'void_walker', name: '虛空行者', lv: 160 }, { id: 'chaos_knight', name: '混沌騎士', lv: 170 }, { id: 'abyss_dragon', name: '🐉 深淵魔龍 (BOSS)', lv: 180 }] },
-            { id: 'city_8', name: '眾神墓地', reqLv: 130, desc: '💀 神話終結之地 (Lv.190-200)', monsters: [{ id: 'fallen_titan', name: '墮落泰坦', lv: 190 }, { id: 'genesis_god', name: '☠️ 創世破壞神 (FINAL)', lv: 200 }] },
-            { id: 'city_9', name: '虛空之界', reqLv: 160, desc: '⚫ 虛無的盡頭 (Lv.210-225)', monsters: [{ id: 'void_worm', name: '虛空吞噬蟲', lv: 210 }, { id: 'shadow_phantom', name: '👻 虚影夢魘 (BOSS)', lv: 225 }] },
+            { id: 'city_8', name: '眾神墓地', reqLv: 100, desc: '💀 神話終結之地 (Lv.190-200)', monsters: [{ id: 'fallen_titan', name: '墮落泰坦', lv: 190 }, { id: 'genesis_god', name: '☠️ 創世破壞神 (FINAL)', lv: 200 }] },
+            { id: 'city_9', name: '虛空之界', reqLv: 120, desc: '⚫ 虛無的盡頭 (Lv.210-225)', monsters: [{ id: 'void_worm', name: '虛空吞噬蟲', lv: 210 }, { id: 'shadow_phantom', name: '👻 虚影夢魘 (BOSS)', lv: 225 }] },
             { id: 'city_10', name: '星際航道', reqLv: 200, desc: '🌌 穿越星辰 (Lv.245-260)', monsters: [{ id: 'star_eater', name: '吞星巨獸', lv: 245 }, { id: 'nebula_dragon', name: '🐲 星雲幻龍 (BOSS)', lv: 260 }] },
-            { id: 'city_11', name: '維度盡頭', reqLv: 215, desc: '⏳ 時間與空間的終點 (Lv.280-300)', monsters: [{ id: 'time_keeper', name: '時空裁決者', lv: 280 }, { id: 'dimension_breaker', name: '維度粉碎者', lv: 290 }, { id: 'entropy_god', name: '👑 終焉·熱寂之神 (GOD)', lv: 300 }] },
+            { id: 'city_11', name: '維度盡頭', reqLv: 200, desc: '⏳ 時間與空間的終點 (Lv.280-300)', monsters: [{ id: 'time_keeper', name: '時空裁決者', lv: 280 }, { id: 'dimension_breaker', name: '維度粉碎者', lv: 290 }, { id: 'entropy_god', name: '👑 終焉·熱寂之神 (GOD)', lv: 300 }] },
             
             // 🟢 新增地圖
             { 
