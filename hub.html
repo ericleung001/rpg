@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會_test_V1</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -226,8 +226,6 @@
             cursor: pointer; font-weight: bold;
         }
         
-        
-
         /* 英雄榜樣式 */
         .ranking-box {
             width: 100%; max-width: 600px;
@@ -312,38 +310,52 @@
 
     <div id="notice-modal">
         <div class="notice-box">
-            <div class="notice-title">📜 公會公告</div>
+            <div class="notice-title">v3.0 更新公告</div>
             <div class="notice-content">
-<b style="color:#c0392b;">【v2.82 系統公告】</b>
-各位冒險者們：
-為了維護公平且穩定的遊戲環境，已於今日完成緊急維護與系統升級。
 
-<b style="color:#e67e22;">🔧 更新內容：</b>
+<b style="color:#f1c40f;">DC Group</b>
+<a href="https://discord.gg/krQpB5Zu" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">如有問題可到這到查詢</a>
+***由於大量購買彩票令Server負荷太重, 暫時限制每人每日10條***
+<b style="color:#e74c3c;">【奇點降臨 & 便利性優化】</b>
+<b style="color:#f1c40f;">1.等級上限突破</b>
+- 開放地圖：<b>終焉奇點</b> (Lv.400+)
+- 新增 BOSS：<b>全知者·阿卡西</b> (掉落神格/碎片)
+- 實裝 <b>Lv.500 奇點套裝</b>
 
-<b>1. 🛡️ 安全與懲處機制</b>
-- 新增 「智慧型封鎖系統 (Ban System)」。
-- 任何使用外掛、腳本、惡意攻擊者，將<b>永久封鎖帳號及 IP</b>。
-- 對於破壞平衡的行為採「零容忍」態度。
-**由於重啟Server, 彩票雖然重新計算，但已買的玩家，如開彩中獎一同樣會有獎金發放**
+<b style="color:#2ecc71;">2.彩票系統大改</b>
+- 新增 <b>[隨機快選]</b> 按鈕 (x10, x50)。
+- 頭獎/二獎現在會送 <b>Lv.500/450 實體裝備</b>！
 
-<b>2. 🔮 混沌裂縫 (Chaos Rift)</b>
-- 等級：Lv.350 - Lv.500
-- 掉落：<span style="color:#e67e22">虛空碎片、暗物質、宇宙鋼、神秘禮物</span>。
-- 機制：新增「討伐列表」，可開房等待隊友。
+<b style="color:#9b59b6;">4. 🛡️ 裝備與材料</b>
+- 新增大量高階材料 (量子殘渣、多元宇宙碎片)。
+- 裝備強化與合成配方已更新。
 
-<b>3. 🔥 裝備強化上限 (+20)</b>
-- +16 ~ +20 為神話領域，<span style="color:red">失敗將導致裝備破碎消失</span>。
-
-<b style="color:#3498db;">4. 🎱 全新功能：彩票 (Lottery)</b>
+<b style="color:#3498db;">每日活動：</b>
+彩票
 - 開獎：每日 22:00 (HKT)。
-- 玩法：每注 1W G，選 6 號碼 (1-49)。
-- 獎勵：頭獎獨得 80% 獎池！
+- 玩法：每注 100G，選 6 號碼 (1-49)。
+- 獎勵：頭獎獨得 50% 獎池！最多100期萬。
 
-<b>5. ☠️ 世界 BOSS 優化</b>
+<b>世界 BOSS</b>
 - 時間：每日 15:00, 19:00, 23:00 (HKT)。
 - 新增「上屆討伐英雄榜」。
+
+<span style="color:#aaa; font-size:9px;">(若介面異常，請 Ctrl+F5 重新整理)</span>
             </div>
-            <button class="close-notice-btn" onclick="closeNotice()">我知道了</button>
+            <button class="close-notice-btn" onclick="closeNotice()">我知道了，立即體驗！</button>
+        </div>
+    </div>
+
+    <div id="quest-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+        <div style="background:#2c3e50; padding:20px; border:4px solid #fff; border-radius:10px; width:85%; max-width:400px; color:white; text-align:center;">
+            <h2 style="color:#f1c40f; margin-top:0;">📜 每日委託</h2>
+            <div style="font-size:10px; color:#aaa; margin-bottom:10px;">(每天 00:00 重置)</div>
+            
+            <div id="quest-list" style="text-align:left; max-height:300px; overflow-y:auto; margin-bottom:10px;">
+                <div style="padding:10px; text-align:center;">載入中...</div>
+            </div>
+
+            <button class="btn" style="background:#c0392b; width:100%;" onclick="document.getElementById('quest-modal').style.display='none'">關閉</button>
         </div>
     </div>
 
@@ -475,6 +487,10 @@
                         👥 好友
                         <div id="main-unread-badge" class="unread-badge">0</div>
                     </div>
+
+                    <div class="facility-btn" style="background:#d35400; border-color:#e67e22;" onclick="openDailyQuests()">
+                        📜 每日任務
+                    </div>
                 </div>
 
                 
@@ -548,6 +564,66 @@
         function closeNotice() {
             document.getElementById('notice-modal').style.display = 'none';
         }
+
+        // 🟢 [新增] 每日任務函式
+        function openDailyQuests() {
+            document.getElementById('quest-modal').style.display = 'flex';
+            socket.emit('getDailyQuests');
+        }
+
+        function claimQuest(key) {
+            socket.emit('claimDailyReward', key);
+        }
+
+        socket.on('dailyQuestData', (data) => {
+            const listDiv = document.getElementById('quest-list');
+            listDiv.innerHTML = ''; // 清空
+
+            const { config, progress, claimed } = data;
+
+            for (const [key, quest] of Object.entries(config)) {
+                const cur = progress[key] || 0;
+                const target = quest.target;
+                const isDone = cur >= target;
+                const isClaimed = claimed.includes(key);
+
+                // 獎勵文字
+                let rewardText = `💰${quest.reward.gold} ✨${quest.reward.exp}`;
+                if (quest.reward.item) rewardText += ` 🎁物品`;
+
+                // 按鈕狀態
+                let btnHtml = '';
+                if (isClaimed) {
+                    btnHtml = `<button disabled style="background:#7f8c8d; color:#fff; border:1px solid #555; padding:5px; width:100px;">已領取</button>`;
+                } else if (isDone) {
+                    btnHtml = `<button onclick="claimQuest('${key}')" style="background:#2ecc71; color:#fff; border:1px solid #27ae60; padding:5px; cursor:pointer; font-weight:bold; width:100px;">領取</button>`;
+                } else {
+                    btnHtml = `<button disabled style="background:#95a5a6; color:#ddd; border:1px solid #7f8c8d; padding:5px; width:100px;">未完成</button>`;
+                }
+
+                const itemDiv = document.createElement('div');
+                itemDiv.style.background = 'rgba(0,0,0,0.3)';
+                itemDiv.style.marginBottom = '8px';
+                itemDiv.style.padding = '10px';
+                itemDiv.style.borderRadius = '5px';
+                itemDiv.style.border = '1px solid #444';
+
+                itemDiv.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <span style="font-weight:bold; color:#f1c40f;">${quest.name}</span>
+                        <span style="font-size:10px; color:#aaa;">${cur}/${target}</span>
+                    </div>
+                    <div style="font-size:12px; margin-bottom:5px;">${quest.desc}</div>
+                    <div style="font-size:10px; color:#3498db; margin-bottom:8px;">獎勵: ${rewardText}</div>
+                    <div style="text-align:right;">${btnHtml}</div>
+                `;
+                listDiv.appendChild(itemDiv);
+            }
+        });
+
+        socket.on('questResult', (res) => {
+            showToast(res.msg);
+        });
 
         // --- 好友系統邏輯 ---
         function openFriends() {
@@ -791,7 +867,7 @@
             { 
                 id: 'city_12', 
                 name: '終焉奇點', 
-                reqLv: 400, 
+                reqLv: 230, 
                 desc: '⚛️ 宇宙重啟之地 (Lv.450-500)', 
                 monsters: [
                     { id: 'chaos_boss', name: '🌀 混沌幻影 (隨機)', lv: '350+' },
@@ -920,7 +996,7 @@
 
         socket.on('roomJoined', (data) => { 
             const roomId = data.roomId || data; 
-            window.location.href = `battle.html?room=${roomId}`; 
+            window.location.href = `battle2.html?room=${roomId}`; 
         });
         
         socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
