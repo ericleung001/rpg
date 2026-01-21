@@ -100,6 +100,12 @@
             setTimeout(() => socket.emit('getGuildInfo'), 500);
         });
 
+        // 🟢 [新增] 監聽自動刷新信號
+        socket.on('refreshGuildUI', () => {
+            // 當伺服器通知資料變更時，重新索取資料
+            socket.emit('getGuildInfo');
+        });
+
         // 🟢 1. 顯示公會列表 (未加入公會時)
         socket.on('guildListUpdate', (list) => {
             const container = document.getElementById('main-content');
