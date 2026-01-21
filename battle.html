@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Auto Ver1.3）</title>
+    <title>戰鬥中 (Auto AI + Kick)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -16,13 +16,11 @@
             width: 100%; max-width: 640px; height: 100%; 
             background: linear-gradient(135deg, #a8c0b0 50%, #789080 50%); 
             border: 4px solid #2c3e50; 
-            /* 🟢 調整高度佈局以容納自動戰鬥面板 */
             display: grid; grid-template-rows: 35px 30px 1.1fr 1fr 1.8fr; 
             position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.5); border-radius: 8px;
         }
         #turn-bar { background: #333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; border-bottom: 4px solid #000; letter-spacing: 1px;}
         
-        /* 🟢 自動戰鬥面板樣式 */
         #auto-panel {
             background: rgba(0,0,0,0.85); color: #fff; display: flex; align-items: center; justify-content: space-between;
             padding: 0 10px; font-size: 10px; border-bottom: 2px solid #555;
@@ -79,11 +77,7 @@
         .btn-shortcut:disabled { opacity: 0.5; cursor: not-allowed; background: #95a5a6; }
 
         .fixed-top-area {
-            flex-shrink: 0;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #ccc;
-            margin-bottom: 5px;
-            display: none; 
+            flex-shrink: 0; padding-bottom: 5px; border-bottom: 1px solid #ccc; margin-bottom: 5px; display: none; 
         }
 
         .scroll-area { 
@@ -123,13 +117,23 @@
         
         #game-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f; color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999; font-size: 14px; font-weight: bold; transition: top 0.5s ease-in-out; pointer-events: none; }
 
-        #countdown-timer {
-            position: absolute; top: 10px; right: 10px;
-            color: #e74c3c; font-size: 10px; font-weight: bold;
-            display: none;
-            background: rgba(0,0,0,0.7); padding: 5px; border-radius: 4px;
-        }
+        #countdown-timer { position: absolute; top: 10px; right: 10px; color: #e74c3c; font-size: 10px; font-weight: bold; display: none; background: rgba(0,0,0,0.7); padding: 5px; border-radius: 4px; }
 
+        /* 自訂設定面板 */
+        #config-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); z-index: 10000; flex-direction: column; padding: 20px; box-sizing: border-box;
+            color: #fff; overflow-y: auto;
+        }
+        .config-box { background: #2c3e50; border: 2px solid #3498db; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+        .config-header { font-size: 14px; color: #f1c40f; margin-bottom: 10px; border-bottom: 1px solid #555; padding-bottom: 5px; }
+        .config-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; font-size: 10px; flex-wrap: wrap; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px;}
+        .config-input { width: 40px; padding: 3px; background: #eee; border: none; text-align: center; }
+        .config-select { padding: 3px; background: #eee; border: none; max-width: 100px;}
+        .btn-del { background: #c0392b; color: white; border: none; padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 3px;}
+        .btn-add { background: #27ae60; color: white; border: none; padding: 5px 10px; font-size: 10px; cursor: pointer; width: 100%; margin-top: 5px; border-radius: 4px;}
+        .config-close { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 200px; padding: 10px; background: #34495e; color: white; border: 2px solid #fff; font-weight: bold; cursor: pointer; box-shadow: 0 0 10px black; }
+        
         #afk-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.9); z-index: 99999; 
@@ -160,6 +164,33 @@
         </div>
     </div>
 
+    <div id="config-modal">
+        <div style="font-size:16px; text-align:center; margin-bottom:15px; color:#3498db; font-weight:bold;">⚙️ 自訂腳本設定</div>
+        
+        <div class="config-box">
+            <div class="config-header">🚨 緊急觸發 (優先執行)</div>
+            <div id="trigger-list"></div>
+            <button class="btn-add" onclick="addTrigger()">+ 新增條件</button>
+        </div>
+
+        <div class="config-box">
+            <div class="config-header">🔄 出招循環 (順序執行)</div>
+            <div id="rotation-list"></div>
+            <button class="btn-add" onclick="addRotation()">+ 新增動作</button>
+        </div>
+
+        <div class="config-box">
+            <div class="config-header">💧 沒魔時 (MP不足)</div>
+            <select id="low-mp-action" class="config-select" style="width:100%" onchange="saveConfig()">
+                <option value="attack">🗡️ 普通攻擊</option>
+                <option value="item">🧪 自動喝藍水</option>
+                <option value="wait">⏳ 待機</option>
+            </select>
+        </div>
+
+        <div style="height: 60px;"></div> <button class="config-close" onclick="closeConfig()">💾 儲存並關閉</button>
+    </div>
+
     <div id="game-container">
         <div id="countdown-timer">⚠️ 滅團倒數: 09:00</div>
 
@@ -179,12 +210,15 @@
         
         <div id="auto-panel">
             <div style="display:flex; gap:5px; align-items:center;">
-                <span style="color:#aaa;">職責:</span>
-                <select id="role-select" style="font-size:10px; padding:2px; background:#ddd; border:none; border-radius:2px;" onchange="updateRole()">
+                <select id="auto-mode" onchange="updateAutoMode()" style="font-size:10px; padding:2px; border-radius:4px; border:none; background:#eee; color:#333; font-weight:bold;">
+                    <option value="custom">🛠️ 自訂</option>
                     <option value="atk">⚔️ 輸出</option>
                     <option value="tank">🛡️ 坦克</option>
                     <option value="heal">💖 補師</option>
                 </select>
+
+                <button id="btn-config" onclick="openConfig()" style="background:#3498db; border:1px solid #2980b9; color:white; font-size:10px; padding:4px 8px; border-radius:4px; cursor:pointer;">⚙️ 設定</button>
+                <span id="current-action-disp" style="color:#aaa; font-size:9px;">...</span>
             </div>
             <button id="auto-btn" onclick="toggleAuto()" style="background:#e74c3c; color:white; border:1px solid #555; font-size:10px; padding:4px 8px; cursor:pointer; border-radius:4px;">
                 自動: OFF
@@ -247,32 +281,38 @@
     
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        const socket = io('https://mmo.ttctv-105.cc', { 
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        
+        const socket = io(BACKEND_URL, {
             transports: ['websocket', 'polling'],
             secure: true 
         });
 
-        // 🟢 3. 新增自動戰鬥全域變數
+        let myToken = localStorage.getItem('rpg_token');
         let isAuto = false;
-        let myRole = 'atk';
-        let allPlayers = []; // 儲存全隊資料
+        let autoMode = 'custom'; // 🟢 預設模式
+        let allPlayers = []; 
+        let rotationIndex = 0; 
+        let rotationCounter = 0; 
+        let afkInterval = null;
 
-        let isMyTurn = false; 
-        const params = new URLSearchParams(window.location.search);
-        const roomId = params.get('room');
-        let myPlayer = { mp: 0, hp: 0, maxMp: 100, maxHp: 100, skills: ['fireball'] };
-        let lastMonsterHp = -1;
-        let currentMonsterLevel = 0;
-        let currentMonsterName = "";
-        let battleTimer = null;
-        let timeLeft = 540;
+        // 自訂模式設定
+        let autoConfig = {
+            triggers: [
+                { type: 'hp_self', val: 30, actionType: 'item', actionId: 'potion_mid' }
+            ],
+            rotation: [
+                { actionType: 'attack', actionId: 'normal', count: 1 }
+            ],
+            lowMp: 'attack'
+        };
 
-        let myShortcuts = []; 
-        try {
-            const saved = localStorage.getItem('rpg_shortcuts');
-            if (saved) { myShortcuts = JSON.parse(saved); }
-        } catch(e) { console.error("讀取快捷鍵失敗", e); myShortcuts = []; }
+        // 職業模式計數器
+        let tankAttackCounter = 0; 
+        let healerAttackCounter = 0; 
 
+        // 🟢 技能與物品定義
         const SKILL_INFO = {
             'fireball':      { name: "火球術", mp: 5, cat: 'atk', desc: "傷x1.5" },
             'thunder':       { name: "雷擊",   mp: 15, cat: 'atk', desc: "傷x1.2+暈" },
@@ -293,506 +333,6 @@
             'full_heal':     { name: "大天使息", mp: 200, cat: 'heal', desc: "HP全滿" }
         };
 
-        const ITEM_NAMES = {
-            'potion_hp': '紅水(小)', 'potion_mid': '紅水(中)', 'potion_high': '紅水(大)', 'potion_max': '秘藥', 'elixir': '甘露',
-            'potion_mp': '藍水(小)', 'potion_mp_mid': '藍水(中)', 'potion_mp_high': '藍水(大)',
-            'grilled_carp': '烤鯉魚', 'salmon_sushi': '鮭魚壽司', 'tuna_steak': '鮪魚排', 
-            'eel_rice': '鰻魚飯', 'void_soup': '虛空湯', 'sushi_plate': '壽司拼盤'
-        };
-
-        let myToken = localStorage.getItem('rpg_token');
-        if (!myToken) { window.location.href = 'index.html'; }
-        if (!roomId && roomId !== 'world_boss') { 
-            showMsg("無效的房間！"); setTimeout(()=>window.location.href = 'hub.html', 1000); 
-        }
-
-        socket.on('connect', () => {
-            socket.emit('joinGame', myToken); 
-            setTimeout(() => {
-                if (roomId === 'world_boss') {
-                    socket.emit('connectToBossRoom');
-                    document.getElementById('turn-bar').innerText = "🔥 世界 BOSS 討伐戰 🔥";
-                    document.getElementById('turn-bar').style.background = "#c0392b";
-                    document.getElementById('teammates-box').style.display = 'none'; 
-                    document.getElementById('lobby-overlay').style.display = 'none';
-                    document.getElementById('countdown-timer').style.display = 'block'; 
-                } else {
-                    socket.emit('connectToRoom', roomId);
-                }
-            }, 100);
-        });
-
-        socket.on('afkCheck', (data) => {
-            document.getElementById('afk-question').innerText = data.question;
-            document.getElementById('afk-answer').value = ''; 
-            document.getElementById('afk-modal').style.display = 'flex';
-            let timeLeftAfk = data.timeout || 60;
-            const timerDisplay = document.getElementById('afk-timer-display');
-            if (afkInterval) clearInterval(afkInterval);
-            afkInterval = setInterval(() => {
-                timeLeftAfk--; timerDisplay.innerText = `剩餘時間: ${timeLeftAfk}s`;
-                if (timeLeftAfk <= 0) { clearInterval(afkInterval); }
-            }, 1000);
-        });
-
-        socket.on('afkSuccess', () => {
-            document.getElementById('afk-modal').style.display = 'none';
-            if (afkInterval) clearInterval(afkInterval);
-            resetButtons(); toggle(false); 
-            log(`<span style="color:#2ecc71">驗證通過！請繼續戰鬥。</span>`);
-        });
-
-        function submitAfk() {
-            const ans = document.getElementById('afk-answer').value;
-            if (ans === '') return;
-            socket.emit('afkResponse', parseInt(ans));
-            document.getElementById('afk-modal').style.display = 'none';
-            if (afkInterval) clearInterval(afkInterval);
-        }
-
-        setInterval(() => { if (socket.connected) socket.emit('heartbeat'); }, 20000);
-        socket.on('disconnect', () => { showMsg("⚠️ 與伺服器連線中斷..."); });
-
-        function showMsg(text) {
-            const t = document.getElementById('game-toast');
-            t.innerText = text; t.style.top = "30px";
-            setTimeout(() => { t.style.top = "-100px"; }, 3000);
-        }
-
-        function appendChat(name, msg) {
-            const history = document.getElementById('chat-history');
-            const div = document.createElement('div');
-            div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${name}]:</span> ${msg}`;
-            history.appendChild(div); history.scrollTop = history.scrollHeight;
-        }
-
-        socket.on('chatHistory', (history) => {
-            const box = document.getElementById('chat-history');
-            box.innerHTML = ''; 
-            history.forEach(data => appendChat(data.name, data.msg));
-        });
-        socket.on('chatMessage', (data) => { appendChat(data.name, data.msg); });
-
-        document.getElementById('chat-send').onclick = sendChat;
-        document.getElementById('chat-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChat(); });
-        function sendChat() {
-            const input = document.getElementById('chat-input');
-            const msg = input.value.trim();
-            if (msg) { socket.emit('sendChat', msg); input.value = ''; }
-        }
-        function toggleChat() {
-            const chat = document.getElementById('chat-container');
-            chat.classList.toggle('chat-open');
-            document.getElementById('chat-header').innerText = chat.classList.contains('chat-open') ? " 收起" : " 聊天室 (點擊展開)";
-        }
-
-        socket.on('worldBossSync', (data) => {
-            if (!data.active) {
-                showMsg("BOSS 已被擊敗！"); setTimeout(() => window.location.href = 'hub.html', 3000);
-                return;
-            }
-            document.getElementById('monster-name').innerText = data.name;
-            const hpPct = (data.hp / data.maxHp) * 100;
-            document.getElementById('mhp').style.width = hpPct + '%';
-            document.getElementById('mhp-txt').innerText = `${(data.hp/100000000).toFixed(2)}億`;
-            const img = document.getElementById('monster-img');
-            const bossSrc = "img/monsters/entropy_god.png"; 
-            if (!img.src.includes(bossSrc)) { img.src = bossSrc; img.style.display = 'block'; }
-            if (data.remainingTime !== undefined) {
-                const serverTimeSec = Math.floor(data.remainingTime / 1000);
-                if (Math.abs(timeLeft - serverTimeSec) > 2 || !battleTimer) {
-                    timeLeft = serverTimeSec;
-                    if (!battleTimer) startCountdown(); 
-                    else updateTimerDisplay();
-                }
-            }
-        });
-
-        socket.on('roomInfoUpdate', (info) => {
-            // 🟢 4. 儲存隊友資料以供 AI 使用
-            allPlayers = info.players;
-
-            const amIHost = (info.host === socket.id);
-            const lobbyList = document.getElementById('lobby-players');
-            lobbyList.innerHTML = ''; 
-            info.players.forEach(p => {
-                const row = document.createElement('div');
-                row.style.display = "flex"; row.style.justifyContent = "space-between"; row.style.alignItems = "center";
-                row.style.padding = "5px 0"; row.style.borderBottom = "1px dashed #555"; row.style.fontSize = "12px";
-                let kickBtn = (amIHost && p.id !== socket.id) ? `<button onclick="kickMember('${p.id}', '${p.name}')" style="background:#c0392b; color:white; border:1px solid #e74c3c; cursor:pointer; font-size:10px; padding:2px 5px; margin-left:10px;">踢</button>` : '';
-                row.innerHTML = `<span>${p.name} (LV.${p.level})</span> ${kickBtn}`;
-                lobbyList.appendChild(row);
-            });
-            const overlay = document.getElementById('lobby-overlay');
-            if (info.status === 'fighting') { overlay.style.display = 'none'; document.getElementById('countdown-timer').style.display = 'block'; }
-            else { if (info.monsterHp <= 0) overlay.style.display = 'none'; else overlay.style.display = 'flex'; }
-            document.getElementById('monster-name').innerText = info.monsterName;
-            const img = document.getElementById('monster-img');
-            if (info.monsterKey) {
-                const newSrc = `img/monsters/${info.monsterKey}.png`;
-                if (!img.src.includes(newSrc)) { img.src = newSrc; img.style.display = 'block'; }
-            }
-            const teammatesBox = document.getElementById('teammates-box');
-            teammatesBox.innerHTML = '';
-            info.players.forEach(p => {
-                if (p.id !== socket.id) { 
-                    const div = document.createElement('div');
-                    div.className = 'mini-box'; div.style.position = 'relative'; div.style.overflow = 'visible'; 
-                    const hpPct = (p.hp / p.maxHp) * 100; const mpPct = (p.mp / p.maxMp) * 100;
-                    div.innerHTML = `<div style="white-space:nowrap; overflow:hidden; font-weight:bold;">${p.name}</div><div class="mini-hp-bar"><div class="mini-hp-fill" style="width:${hpPct}%; background:${hpPct<30?'red':'#2ecc71'}"></div></div><div class="mini-mp-bar"><div class="mini-mp-fill" style="width:${mpPct}%;"></div></div>`;
-                    teammatesBox.appendChild(div);
-                }
-            });
-            
-            const startBtn = document.getElementById('start-btn');
-            const waitTxt = document.getElementById('waiting-txt');
-            if (amIHost) {
-                startBtn.style.display = 'block';
-                startBtn.disabled = false;
-                startBtn.innerText = `開始 (${info.players.length}人)`;
-                waitTxt.style.display = 'none';
-            } else {
-                startBtn.style.display = 'none';
-                waitTxt.style.display = 'block';
-            }
-        });
-
-        socket.on('battleStarted', () => { document.getElementById('lobby-overlay').style.display = 'none'; log("戰鬥開始！"); startCountdown(); });
-
-        function startCountdown() {
-            const timerDiv = document.getElementById('countdown-timer');
-            timerDiv.style.display = 'block'; if (battleTimer) clearInterval(battleTimer);
-            updateTimerDisplay();
-            battleTimer = setInterval(() => { timeLeft--; updateTimerDisplay(); if (timeLeft <= 0) { clearInterval(battleTimer); timerDiv.innerText = "☠️ 時間到！"; } }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const timerDiv = document.getElementById('countdown-timer');
-            const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            const sec = (timeLeft % 60).toString().padStart(2, '0');
-            timerDiv.innerText = `⚠️ 滅團倒數: ${min}:${sec}`;
-        }
-
-        socket.on('turnUpdate', (data) => {
-            const bar = document.getElementById('turn-bar'); 
-            if (roomId === 'world_boss') return; 
-            
-            if (data.currentId === 'monster') { 
-                isMyTurn = false; 
-                bar.innerText = "⚠️ 怪物回合..."; 
-                bar.style.background = "#c0392b"; 
-                toggle(true); 
-            }
-            else if (data.currentId === socket.id) { 
-                isMyTurn = true; 
-                bar.innerText = "⚔️ 你的回合"; 
-                bar.style.background = "#2ecc71"; // 綠色
-                toggle(false); 
-
-                // 🟢 5. 輪到我時，如果開啟自動，觸發 AI
-                if (isAuto) {
-                    log(`<span style="color:#f39c12">🤖 自動戰鬥中...</span>`);
-                    autoPlayLogic();
-                }
-            }
-            else { 
-                isMyTurn = false; 
-                bar.innerText = `⏳ ${data.name}`; 
-                bar.style.background = "#333"; 
-                toggle(true); 
-            }
-        });
-
-        socket.on('monsterUpdate', (m) => {
-            if (roomId === 'world_boss') return;
-            document.getElementById('monster-name').innerText = `LV.${m.level} ${m.name}`;
-            document.getElementById('mhp').style.width = (m.hp / m.maxHp * 100) + '%';
-            document.getElementById('mhp-txt').innerText = `HP: ${m.hp}/${m.maxHp}`;
-            const img = document.getElementById('monster-img');
-            if (lastMonsterHp !== -1 && m.hp < lastMonsterHp) { img.classList.remove('damaged'); void img.offsetWidth; img.classList.add('damaged'); }
-            lastMonsterHp = m.hp;
-        });
-
-        socket.on('playerStatsUpdate', (p) => {
-            myPlayer = p;
-            document.getElementById('my-name').innerText = p.name || "勇者";
-            document.getElementById('php').style.width = (p.hp / p.maxHp * 100) + '%';
-            document.getElementById('pmp').style.width = (p.mp / p.maxMp * 100) + '%';
-            document.getElementById('hp-txt').innerText = `HP:${p.hp}/${p.maxHp}  MP:${p.mp}/${p.maxMp}`;
-            if(document.getElementById('atk-val')) document.getElementById('atk-val').innerText = p.atk;
-            if(document.getElementById('def-val')) document.getElementById('def-val').innerText = p.def;
-            updateShortcutStates(p);
-        });
-
-        function updateShortcutStates(p) {
-            const area = document.getElementById('shortcut-area');
-            const skillsOwned = p.skills || []; 
-            if (myShortcuts.length === 0 && skillsOwned.length > 0) {
-                myShortcuts = skillsOwned.slice(0, 4); localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
-            }
-            area.innerHTML = '';
-            let validShortcuts = myShortcuts.filter(sid => skillsOwned.includes(sid));
-            if (validShortcuts.length < 4) {
-                skillsOwned.forEach(sid => { if (!validShortcuts.includes(sid) && validShortcuts.length < 4) validShortcuts.push(sid); });
-            }
-            myShortcuts = validShortcuts; localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
-            myShortcuts.forEach(sid => {
-                const info = SKILL_INFO[sid];
-                if(info) {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn-shortcut'; btn.setAttribute('data-mp', info.mp); btn.setAttribute('data-sid', sid);
-                    btn.innerHTML = `${info.name} <span style="color:#2980b9">(${info.mp})</span>`;
-                    btn.onclick = () => { useSkill(sid); }; area.appendChild(btn);
-                }
-            });
-            const btns = area.querySelectorAll('.btn-shortcut');
-            btns.forEach(btn => {
-                const cost = parseInt(btn.getAttribute('data-mp'));
-                if (p.mp < cost) { btn.disabled = true; btn.style.opacity = "0.5"; }
-                else if (isMyTurn || roomId === 'world_boss') { btn.disabled = false; btn.style.opacity = "1"; }
-            });
-        }
-
-        socket.on('battleWon', (data) => {
-            if (battleTimer) clearInterval(battleTimer);
-            document.getElementById('countdown-timer').style.display = 'none';
-            const bar = document.getElementById('turn-bar'); bar.innerText = " 勝利！"; bar.style.background = "gold"; bar.style.color = "black";
-            const img = document.getElementById('monster-img'); img.style.opacity = 0;
-            showMsg(`勝利！獲得 ${data.gold} G`); showNormalVictoryBtn();
-            if (data.rewards) data.rewards.forEach(reward => log(`<span style="color:#9b59b6; font-weight:bold;">🎁 獲得: [${reward}]</span>`));
-            
-            // 戰鬥結束，關閉自動
-            if(isAuto) toggleAuto();
-        });
-
-        // 🟢 [修正] 勝利按鈕 (增加 z-index 防止被擋，與更明顯的樣式)
-        function showNormalVictoryBtn() {
-            const btnArea = document.getElementById('btns');
-            
-            // 強制隱藏其他選單
-            document.getElementById('fixed-top-area').style.display = 'none'; 
-            document.getElementById('shortcut-area').style.display = 'none'; 
-            
-            // 設定按鈕區
-            btnArea.style.gridTemplateColumns = '1fr'; 
-            btnArea.innerHTML = `
-                <button class="btn" 
-                    style="
-                        background: linear-gradient(to bottom, #f1c40f, #f39c12); 
-                        color: #000; 
-                        font-weight: bold; 
-                        font-size: 16px; 
-                        border: 3px solid #fff; 
-                        box-shadow: 0 0 15px rgba(241, 196, 15, 0.8);
-                        z-index: 9999; 
-                        position: relative;
-                        height: 60px;
-                    " 
-                    onclick="leaveRoom()">
-                    🏆 戰鬥勝利 (點擊離開)
-                </button>
-            `;
-        }
-
-        // 🟢 [修正] 離開房間 (更強制的跳轉)
-        function leaveRoom() { 
-            // 1. 通知伺服器 (即使伺服器沒反應，前端也要走)
-            if (socket && socket.connected) {
-                socket.emit('leaveRoom', roomId); 
-            }
-
-            // 2. 顯示提示
-            const btn = document.querySelector('#btns button');
-            if(btn) btn.innerText = "正在回到大廳...";
-
-            // 3. 強制跳轉 (使用 replace 避免按上一頁又回到戰鬥)
-            setTimeout(() => {
-                window.location.replace('hub.html');
-            }, 300); 
-        }
-
-        socket.on('playerDead', () => { 
-            if (battleTimer) clearInterval(battleTimer); document.getElementById('countdown-timer').style.display = 'none';
-            log("你被打倒了..."); showMsg("👻 你已經死亡..."); 
-            document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column:span 2; background:red; color:white" onclick="window.location.href='rest.html'"> 去復活</button>`;
-            document.getElementById('fixed-top-area').style.display = 'none'; document.getElementById('shortcut-area').style.display = 'none';
-            if(isAuto) toggleAuto();
-        });
-
-        socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
-        socket.on('battleLog', (msg) => log(msg));
-        
-        socket.on('roomLeft', () => {
-            if (battleTimer) clearInterval(battleTimer);
-            showMsg("你離開了房間");
-            setTimeout(() => { window.location.href = 'hub.html'; }, 1000);
-        });
-
-        function requestStart() { socket.emit('startBattle', roomId); }
-        
-        function act(type) {
-            if (roomId === 'world_boss') { toggle(true); socket.emit('worldBossAction', { type: 'attack' }); setTimeout(() => toggle(false), 500); }
-            else { if(!isMyTurn) return; toggle(true); socket.emit('combatAction', { roomId, type }); }
-        }
-
-        function kickMember(targetId, targetName) {
-            if (event) event.stopPropagation();
-            if (confirm(`確定要踢除 [${targetName}] 嗎？`)) { socket.emit('kickMember', targetId); }
-        }
-
-        function openSkill() {
-            const btnArea = document.getElementById('btns');
-            const fixedArea = document.getElementById('fixed-top-area');
-            const shortcutArea = document.getElementById('shortcut-area'); 
-            
-            btnArea.innerHTML = ''; 
-            fixedArea.style.display = 'block'; 
-            shortcutArea.style.display = 'none'; 
-            
-            btnArea.style.gridTemplateColumns = '1fr';
-
-            const mySkills = myPlayer.skills || ['fireball'];
-            const sortOrder = { 'atk': 1, 'buff': 2, 'heal': 3 };
-            mySkills.sort((a, b) => {
-                const catA = SKILL_INFO[a] ? SKILL_INFO[a].cat : 'atk';
-                const catB = SKILL_INFO[b] ? SKILL_INFO[b].cat : 'atk';
-                if (sortOrder[catA] === sortOrder[catB]) {
-                    const mpA = SKILL_INFO[a] ? SKILL_INFO[a].mp : 0;
-                    const mpB = SKILL_INFO[b] ? SKILL_INFO[b].mp : 0;
-                    return mpA - mpB;
-                }
-                return (sortOrder[catA] || 4) - (sortOrder[catB] || 4);
-            });
-
-            mySkills.forEach(skillId => {
-                const info = SKILL_INFO[skillId];
-                if (info) {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn battle-action'; 
-                    btn.style.fontSize = '12px'; btn.style.display = 'flex'; btn.style.justifyContent = 'space-between'; btn.style.alignItems = 'center'; btn.style.padding = '0 15px'; btn.style.minHeight = '45px'; 
-                    let nameColor = "#333";
-                    if (info.cat === 'heal') nameColor = "#27ae60";
-                    if (info.cat === 'buff') nameColor = "#e67e22";
-                    if (skillId === 'void_crush' || skillId === 'big_bang' || skillId === 'entropy_decay') nameColor = "#8e44ad"; 
-
-                    btn.innerHTML = `<div style="font-weight:bold; color:${nameColor};">${info.name}</div><div style="text-align:right; font-size:10px;"><div style="color:#3498db; margin-bottom:2px;">MP-${info.mp}</div><div style="color:#7f8c8d;">${info.desc}</div></div>`;
-
-                    if (myPlayer.mp < info.mp) { btn.disabled = true; btn.style.opacity = 0.5; }
-                    btn.onclick = () => { useSkill(skillId); };
-                    btnArea.appendChild(btn);
-                }
-            });
-        }
-
-        function openBag() {
-            const btnArea = document.getElementById('btns');
-            const fixedArea = document.getElementById('fixed-top-area');
-            const shortcutArea = document.getElementById('shortcut-area'); 
-            
-            btnArea.innerHTML = ''; 
-            fixedArea.style.display = 'block'; 
-            shortcutArea.style.display = 'none'; 
-            
-            btnArea.style.gridTemplateColumns = '1fr 1fr'; 
-            
-            const itemsToShow = [
-                'potion_hp', 'potion_mid', 'potion_high', 'potion_max', 'elixir', 
-                'potion_mp', 'potion_mp_mid', 'potion_mp_high',
-                'grilled_carp', 'salmon_sushi', 'tuna_steak', 'eel_rice', 'void_soup', 'sushi_plate'
-            ];
-            let hasItem = false;
-            itemsToShow.forEach(itemId => {
-                const count = (myPlayer.inventory && myPlayer.inventory[itemId]) || 0;
-                if(count > 0) {
-                    hasItem = true;
-                    const potBtn = document.createElement('button');
-                    potBtn.className = 'btn battle-action';
-                    potBtn.style.fontSize = '10px'; 
-                    const name = ITEM_NAMES[itemId] || '物品';
-                    potBtn.innerText = `${name}(${count})`;
-                    potBtn.onclick = () => { useItem(itemId); };
-                    btnArea.appendChild(potBtn);
-                }
-            });
-            if(!hasItem) { btnArea.innerHTML = '<div style="grid-column:span 2; font-size:12px; padding:10px;">背包沒有補給品</div>'; }
-        }
-
-        function resetButtons() {
-            const btnArea = document.getElementById('btns');
-            const fixedArea = document.getElementById('fixed-top-area');
-            const shortcutArea = document.getElementById('shortcut-area'); 
-
-            fixedArea.style.display = 'none'; 
-            shortcutArea.style.display = 'grid'; 
-
-            btnArea.style.gridTemplateColumns = '1fr 1fr';
-            btnArea.innerHTML = `
-                <button class="btn battle-action" onclick="act('attack')">攻擊</button>
-                <button class="btn battle-action" onclick="openSkill()">魔法</button>
-                <button class="btn battle-action" onclick="openBag()">物品</button>
-                <button class="btn" onclick="leaveRoom()">逃跑</button>
-            `;
-            if (roomId === 'world_boss') { toggle(false); } else { toggle(!isMyTurn); }
-        }
-
-        function useSkill(skillId) {
-            const info = SKILL_INFO[skillId];
-            if (info && myPlayer.mp < info.mp) { showMsg("MP 不足！"); return; }
-            const existingIndex = myShortcuts.indexOf(skillId);
-            if (existingIndex === -1) {
-                myShortcuts.unshift(skillId);
-                if (myShortcuts.length > 4) { myShortcuts.pop(); }
-                localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
-                updateShortcutStates(myPlayer);
-            }
-            if (roomId === 'world_boss') {
-                toggle(true); socket.emit('worldBossAction', { type: 'skill', skillId: skillId });
-                const img = document.getElementById('monster-img');
-                img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
-                setTimeout(() => toggle(false), 500);
-            } else {
-                if(!isMyTurn) return; 
-                toggle(true); socket.emit('combatAction', { roomId, type: 'skill', skillId: skillId });
-                const img = document.getElementById('monster-img');
-                img.classList.remove('shake'); void img.offsetWidth; img.classList.add('shake');
-            }
-        }
-
-        function useItem(itemId) {
-            if (roomId === 'world_boss') {
-               showMsg("BOSS 戰無法使用道具！"); resetButtons();
-            } else {
-                if(!isMyTurn) return; 
-                toggle(true); socket.emit('combatAction', { roomId, type: 'item', itemId: itemId }); 
-                resetButtons();
-            }
-        }
-
-        function toggle(disabled) { 
-            document.querySelectorAll('.battle-action').forEach(b => {
-                b.disabled = disabled; b.style.opacity = disabled ? "0.5" : "1";
-            }); 
-            const area = document.getElementById('shortcut-area');
-            const btns = area.querySelectorAll('.btn-shortcut');
-            btns.forEach(btn => {
-                const cost = parseInt(btn.getAttribute('data-mp'));
-                if (myPlayer.mp < cost) { btn.disabled = true; btn.style.opacity = "0.5"; }
-                else { btn.disabled = disabled; btn.style.opacity = disabled ? "0.5" : "1"; }
-            });
-        }
-
-        function log(m) { 
-            const box = document.getElementById('log'); const div = document.createElement('div');
-            div.innerHTML = `> ${m}`; box.insertBefore(div, box.firstChild); 
-            const lines = box.querySelectorAll('div');
-            if (lines.length > 20) for(let i=20; i<lines.length; i++) lines[i].remove();
-        }
-
-        // ==========================================
-        // 🟢 6. 自動戰鬥 AI 邏輯 (補師循環特化版)
-        // ==========================================
-        
-        // 技能優先級
         const SKILL_PRIORITY = {
             atk: [
                 'big_bang', 'entropy_decay', 'void_crush',
@@ -810,137 +350,138 @@
             ]
         };
 
-        // 物品清單
-        const ITEMS_HP_DESC = [
-            'void_soup', 'elixir', 'potion_max', 'potion_high',                          
-            'sushi_plate', 'tuna_steak', 'potion_mid', 'eel_rice', 'grilled_carp', 'potion_hp'             
-        ];
+        const ITEM_NAMES = {
+            'potion_hp': '紅水(小)', 'potion_mid': '紅水(中)', 'potion_high': '紅水(大)', 'potion_max': '秘藥', 'elixir': '甘露',
+            'potion_mp': '藍水(小)', 'potion_mp_mid': '藍水(中)', 'potion_mp_high': '藍水(大)',
+            'grilled_carp': '烤鯉魚', 'salmon_sushi': '鮭魚壽司', 'tuna_steak': '鮪魚排', 
+            'eel_rice': '鰻魚飯', 'void_soup': '虛空湯', 'sushi_plate': '壽司拼盤'
+        };
 
-        const ITEMS_MP_DESC = [
-            'elixir', 'void_soup', 'potion_mp_high', 'potion_mp_mid', 'eel_rice', 'salmon_sushi', 'potion_mp'             
-        ];
+        const ITEMS_HP_DESC = ['void_soup', 'elixir', 'potion_max', 'potion_high', 'sushi_plate', 'tuna_steak', 'potion_mid', 'eel_rice', 'grilled_carp', 'potion_hp'];
+        const ITEMS_MP_DESC = ['elixir', 'void_soup', 'potion_mp_high', 'potion_mp_mid', 'eel_rice', 'salmon_sushi', 'potion_mp'];
 
-        // 🟢 新增補師攻擊計數器
-        let tankAttackCounter = 0; 
-        let healerAttackCounter = 0; 
+        let isMyTurn = false; 
+        const params = new URLSearchParams(window.location.search);
+        const roomId = params.get('room');
+        let myPlayer = { mp: 0, hp: 0, maxMp: 100, maxHp: 100, skills: ['fireball'] };
+        let lastMonsterHp = -1;
+        let battleTimer = null;
+        let timeLeft = 530;
+
+        let myShortcuts = []; 
+        try {
+            const saved = localStorage.getItem('rpg_shortcuts');
+            if (saved) { myShortcuts = JSON.parse(saved); }
+            
+            const savedConfig = localStorage.getItem('rpg_auto_config');
+            if (savedConfig) { autoConfig = JSON.parse(savedConfig); }
+
+            // 讀取上次選擇的模式
+            const savedMode = localStorage.getItem('rpg_auto_mode');
+            if(savedMode) { 
+                autoMode = savedMode;
+                document.getElementById('auto-mode').value = autoMode;
+                updateAutoMode(); 
+            }
+        } catch(e) { console.error("讀取失敗", e); }
+
+        // 🟢 核心：自動戰鬥切換
+        function updateAutoMode() {
+            autoMode = document.getElementById('auto-mode').value;
+            localStorage.setItem('rpg_auto_mode', autoMode);
+            const configBtn = document.getElementById('btn-config');
+            if (autoMode === 'custom') { configBtn.style.display = 'block'; } else { configBtn.style.display = 'none'; }
+        }
 
         function toggleAuto() {
             isAuto = !isAuto;
             const btn = document.getElementById('auto-btn');
-            
-            // 重置計數器
-            tankAttackCounter = 0; 
-            healerAttackCounter = 0;
+            rotationIndex = 0; rotationCounter = 0; tankAttackCounter = 0; healerAttackCounter = 0;
 
             if (isAuto) {
-                btn.innerText = "自動: ON";
-                btn.style.background = "#2ecc71"; 
-                btn.style.border = "1px solid #27ae60";
+                btn.innerText = "自動: ON"; btn.style.background = "#2ecc71"; btn.style.border = "1px solid #27ae60";
                 if (isMyTurn) autoPlayLogic(); 
             } else {
-                btn.innerText = "自動: OFF";
-                btn.style.background = "#e74c3c"; 
-                btn.style.border = "1px solid #555";
+                btn.innerText = "自動: OFF"; btn.style.background = "#e74c3c"; btn.style.border = "1px solid #555";
             }
         }
 
-        function updateRole() {
-            myRole = document.getElementById('role-select').value;
-        }
-
+        // 🟢 核心：AI 邏輯主入口
         function autoPlayLogic() {
             if (!isAuto || !isMyTurn) return;
+            
+            // 如果是自訂模式，執行舊的邏輯
+            if (autoMode === 'custom') {
+                runCustomAuto();
+                return;
+            }
 
+            // 否則執行職業 AI 邏輯
             const delay = Math.random() * 700 + 800;
             
             setTimeout(() => {
+                // 雙重檢查
                 if (!isMyTurn || roomId === 'world_boss') { 
                     if(roomId === 'world_boss' && isAuto) {
                         socket.emit('worldBossAction', { type: 'attack' });
-                        return;
                     }
-                    if(!isMyTurn) return;
+                    return; 
                 }
 
+                document.getElementById('current-action-disp').innerText = `AI: ${autoMode}`;
                 const myHpPct = (myPlayer.hp / myPlayer.maxHp) * 100;
                 
-                // ==========================================
-                // [1] 緊急自保邏輯 (區分職業)
-                // ==========================================
-                
-                // 🟢 補師特例：HP < 50% 必須用 heal_all，不喝紅水
-                if (myRole === 'heal' && myHpPct < 50) {
-                    // 嘗試 heal_all (如果不夠魔 attemptSkill 會自動喝藍水，這沒問題)
-                    if (attemptSkill('heal_all')) {
-                        // 既然進入緊急狀態，重置攻擊循環
-                        healerAttackCounter = 0;
-                        return;
-                    }
-                    // 如果 heal_all 放不出來(沒學?)，試試 full_heal
+                // [1] 緊急自保邏輯 (共通)
+                // 補師特例：HP < 50% 優先用技能，不喝紅水 (除非沒魔)
+                if (autoMode === 'heal' && myHpPct < 50) {
+                    if (attemptSkill('heal_all')) { healerAttackCounter = 0; return; }
                     if (attemptSkill('full_heal')) return;
+                    if (recoverStat('hp')) return; // 真的沒招才喝水
                 }
-                
-                // 🟢 其他職業：HP < 40% 優先喝水
-                else if (myRole !== 'heal' && myHpPct < 40) {
-                    if (recoverStat('hp')) return; 
-                    if (attemptSkill('full_heal')) return;
-                    if (attemptSkill('god_light')) return;
+                // 其他職業：HP < 40% 自保
+                else if (autoMode !== 'heal' && myHpPct < 40) {
+                    if (attemptSkill('heal_all')) return;
+                    if (attemptSkill('drain')) return;
                     if (attemptSkill('heal_light')) return;
+                    if (recoverStat('hp')) return; 
                 }
 
-                // ==========================================
-                // [2] 根據職責執行邏輯
-                // ==========================================
-                switch (myRole) {
-                    case 'heal': // 💖 補師模式 (循環版)
-                        // 1. 檢查隊友 (不含自己，因為自己上面檢查過了) 是否有人 < 50%
+                // [2] 職業行為邏輯
+                switch (autoMode) {
+                    case 'heal': // 💖 補師
                         const teamEmergency = allPlayers.some(p => p.id !== myPlayer.id && (p.hp / p.maxHp) < 0.5);
                         
                         if (teamEmergency) {
-                            // 隊友危急 -> 強制 heal_all
-                            if (attemptSkill('heal_all')) {
-                                healerAttackCounter = 0; // 中斷攻擊循環
-                                return;
-                            }
-                            // 沒學群補? 用單補
+                            if (attemptSkill('heal_all')) { healerAttackCounter = 0; return; }
                             if (attemptSkill('full_heal')) return;
                         } 
                         
-                        // 2. 全員健康 (安全狀態) -> 執行 "1補 2攻" 循環
                         if (healerAttackCounter > 0) {
-                            // 攻擊階段
                             healerAttackCounter--;
                             if (attemptSkill('divine_slash')) return;
-                            if (attemptSkill('thunder')) return; // 沒學次元斬就雷擊
+                            if (attemptSkill('thunder')) return; 
                         } else {
-                            // 準備階段：施放 Full Heal (當作補滿/Buff)
-                            if (attemptSkill('full_heal')) {
-                                healerAttackCounter = 2; // 設定接下 2 回合攻擊
-                                return;
-                            }
-                            // 如果沒學 Full Heal，試試神之光，或者直接攻擊
-                            if (attemptSkill('god_light')) { healerAttackCounter = 2; return; }
-                            
-                            // 真的沒補招，直接打
-                            if (attemptSkill('divine_slash')) return;
+                            if (attemptSkill('full_heal')) { healerAttackCounter = 2; return; }
+                            if (attemptSkill('god_light')) { healerAttackCounter = 3; return; }
+                            if (attemptSkill('divine_slash')) return; // 沒補血技就打
                         }
                         break;
 
-                    case 'tank': // 🛡️ 坦克模式
+                    case 'tank': // 🛡️ 坦克
                         if (tankAttackCounter > 0) {
                             tankAttackCounter--; 
                             if (attemptSkill('divine_slash')) return;
                             if (attemptSkill('poison_touch')) return;
                             if (attemptSkill('drain')) return;
                         } else {
-                            if (attemptSkill('god_mode')) { tankAttackCounter = 2; return; }
-                            if (attemptSkill('holy_shield')) { tankAttackCounter = 2; return; }
+                            if (attemptSkill('god_mode')) { tankAttackCounter = 3; return; }
+                            if (attemptSkill('holy_shield')) { tankAttackCounter = 3; return; }
                             if (attemptSkill('divine_slash')) return;
                             if (attemptSkill('poison_touch')) return;
                         }
                         break;
 
-                    case 'atk': // ⚔️ 輸出模式
+                    case 'atk': // ⚔️ 輸出
                     default:
                         for (let skill of SKILL_PRIORITY.atk) {
                             if (attemptSkill(skill)) return;
@@ -951,6 +492,63 @@
                 // [3] 保底：普通攻擊
                 doNormalAttack();
 
+            }, delay);
+        }
+
+        // 🟢 自訂模式邏輯 (舊有的)
+        function runCustomAuto() {
+            const delay = Math.random() * 500 + 500; 
+            setTimeout(() => {
+                if (!isMyTurn || roomId === 'world_boss') return;
+
+                const myHpPct = (myPlayer.hp / myPlayer.maxHp) * 100;
+                const myMpPct = (myPlayer.mp / myPlayer.maxMp) * 100;
+
+                document.getElementById('current-action-disp').innerText = "腳本執行中...";
+
+                // [1] 檢查觸發條件
+                for (let rule of autoConfig.triggers) {
+                    let triggered = false;
+                    if (rule.type === 'hp_self' && myHpPct < rule.val) triggered = true;
+                    if (rule.type === 'mp_self' && myMpPct < rule.val) triggered = true;
+                    if (rule.type === 'hp_team' && rule.actionType === 'skill') {
+                        const needHeal = allPlayers.some(p => p.id !== myPlayer.id && (p.hp / p.maxHp * 100) < rule.val);
+                        if (needHeal) triggered = true;
+                    }
+
+                    if (triggered) {
+                        if (tryExecute(rule.actionType, rule.actionId)) {
+                            document.getElementById('current-action-disp').innerText = `觸發: ${rule.actionId}`;
+                            return;
+                        }
+                    }
+                }
+
+                // [2] 執行循環
+                if (autoConfig.rotation.length === 0) { act('attack'); return; }
+
+                if (rotationIndex >= autoConfig.rotation.length) rotationIndex = 0;
+                const step = autoConfig.rotation[rotationIndex];
+                let executed = false;
+                
+                if (step.actionType === 'attack') { act('attack'); executed = true; } 
+                else if (step.actionType === 'skill') {
+                    if (canUseSkill(step.actionId)) { useSkill(step.actionId); executed = true; } 
+                    else { handleLowMp(); return; }
+                } 
+                else if (step.actionType === 'item') {
+                    if (hasItem(step.actionId)) { useItem(step.actionId); executed = true; } 
+                    else { executed = true; } // 沒道具跳過
+                }
+
+                if (executed) {
+                    rotationCounter++;
+                    if (rotationCounter >= step.count) {
+                        rotationCounter = 0; rotationIndex++;
+                        if (rotationIndex >= autoConfig.rotation.length) rotationIndex = 0;
+                    }
+                    document.getElementById('current-action-disp').innerText = `循環: ${step.actionId}`;
+                }
             }, delay);
         }
 
@@ -992,7 +590,7 @@
             }
 
             let hasVoidSoup = false; 
-            let hasElixir = false;   
+            let hasElixir = false;    
 
             for (let itemId of targetList) {
                 if (myPlayer.inventory && myPlayer.inventory[itemId] > 0) {
@@ -1021,9 +619,561 @@
         }
 
         function doNormalAttack() {
-            const aliveMobs = currentMonsters.filter(m => m.hp > 0);
-            const targetId = aliveMobs.length > 0 ? aliveMobs[0].id : null;
-            socket.emit('combatAction', { roomId, type: 'attack', targetId: targetId });
+            // 在這裡我們假設後端會自動選目標，或者我們簡單傳一個
+            // 為了簡化，直接呼叫 act('attack')，讓後端處理預設目標
+            act('attack');
+        }
+
+        function handleLowMp() {
+            const action = autoConfig.lowMp;
+            if (action === 'attack') {
+                act('attack');
+                document.getElementById('current-action-disp').innerText = "沒魔 -> 普攻";
+            } else if (action === 'item') {
+                if (!recoverStat('mp')) act('attack'); // 沒水喝就普攻
+            } else {
+                document.getElementById('current-action-disp').innerText = "沒魔 -> 待機";
+            }
+        }
+
+        function tryExecute(type, id) {
+            if (type === 'skill') {
+                if (canUseSkill(id)) { useSkill(id); return true; }
+            } else if (type === 'item') {
+                if (hasItem(id)) { useItem(id); return true; }
+            }
+            return false;
+        }
+
+        function canUseSkill(sid) {
+            const info = SKILL_INFO[sid];
+            return info && myPlayer.mp >= info.mp && myPlayer.skills.includes(sid);
+        }
+
+        function hasItem(id) {
+            return myPlayer.inventory && myPlayer.inventory[id] > 0;
+        }
+
+        // 🟢 [新增] 踢人功能函式
+        window.kickPlayer = function(targetId) {
+            if (!targetId) return;
+            if (confirm("確定要將此玩家踢出房間嗎？")) {
+                // 發送踢人指令，需傳入房間ID與目標ID
+                socket.emit('kickPlayer', { roomId: roomId, targetId: targetId });
+            }
+        };
+
+        // ------------------------
+
+        if (!myToken) { window.location.href = 'index.html'; }
+        if (!roomId && roomId !== 'world_boss') { showMsg("無效的房間！"); setTimeout(()=>window.location.href = 'hub.html', 1000); }
+
+        socket.on('connect', () => {
+            socket.emit('joinGame', myToken); 
+            setTimeout(() => {
+                if (roomId === 'world_boss') {
+                    socket.emit('connectToBossRoom');
+                    document.getElementById('turn-bar').innerText = "🔥 世界 BOSS 討伐戰 🔥";
+                    document.getElementById('turn-bar').style.background = "#c0392b";
+                    document.getElementById('teammates-box').style.display = 'none'; 
+                    document.getElementById('lobby-overlay').style.display = 'none';
+                    document.getElementById('countdown-timer').style.display = 'block'; 
+                } else {
+                    socket.emit('connectToRoom', roomId);
+                }
+            }, 100);
+        });
+
+        // (以下保留原本的 Socket 監聽與 UI 邏輯)
+        socket.on('afkCheck', (data) => {
+            document.getElementById('afk-question').innerText = data.question;
+            document.getElementById('afk-answer').value = ''; 
+            document.getElementById('afk-modal').style.display = 'flex';
+            let timeLeftAfk = data.timeout || 60;
+            const timerDisplay = document.getElementById('afk-timer-display');
+            if (afkInterval) clearInterval(afkInterval);
+            afkInterval = setInterval(() => {
+                timeLeftAfk--; timerDisplay.innerText = `剩餘時間: ${timeLeftAfk}s`;
+                if (timeLeftAfk <= 0) { clearInterval(afkInterval); }
+            }, 1000);
+        });
+        socket.on('afkSuccess', () => { 
+            document.getElementById('afk-modal').style.display = 'none'; 
+            if (afkInterval) clearInterval(afkInterval);
+            resetButtons(); toggle(false); log("驗證通過！"); 
+        });
+        function submitAfk() { 
+            const ans = document.getElementById('afk-answer').value; 
+            if(ans) socket.emit('afkResponse', parseInt(ans)); 
+            document.getElementById('afk-modal').style.display = 'none'; 
+            if (afkInterval) clearInterval(afkInterval);
+        }
+
+        setInterval(() => { if (socket.connected) socket.emit('heartbeat'); }, 20000);
+        socket.on('disconnect', () => { showMsg("⚠️ 與伺服器連線中斷..."); });
+
+        function showMsg(text) {
+            const t = document.getElementById('game-toast');
+            t.innerText = text; t.style.top = "30px";
+            setTimeout(() => { t.style.top = "-100px"; }, 3000);
+        }
+
+        // 聊天功能
+        function appendChat(name, msg) {
+            if (name === '系統') return;
+            const history = document.getElementById('chat-history');
+            const div = document.createElement('div');
+            // 簡單防護，防止名字包含 HTML
+            const safeName = name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${safeName}]:</span> ${msg}`;
+            history.appendChild(div); history.scrollTop = history.scrollHeight;
+        }
+        socket.on('chatHistory', (history) => { 
+            document.getElementById('chat-history').innerHTML = ''; 
+            history.forEach(data => appendChat(data.name, data.msg)); 
+        });
+        socket.on('chatMessage', (data) => { appendChat(data.name, data.msg); });
+        
+        function sendChat() { 
+            const input = document.getElementById('chat-input'); 
+            if(input.value) { 
+                socket.emit('sendChat', input.value); 
+                input.value=''; 
+            } 
+        }
+        
+        // 🟢 [修正] 綁定按鈕事件
+        document.getElementById('chat-send').onclick = sendChat;
+        // 🟢 [修正] 綁定 Enter 鍵
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChat();
+        });
+
+        function toggleChat() { document.getElementById('chat-container').classList.toggle('chat-open'); }
+
+        socket.on('worldBossSync', (data) => {
+            if (!data.active) { showMsg("BOSS 已被擊敗！"); setTimeout(() => window.location.href = 'hub.html', 3000); return; }
+            document.getElementById('monster-name').innerText = data.name;
+            document.getElementById('mhp').style.width = (data.hp / data.maxHp * 100) + '%';
+            document.getElementById('mhp-txt').innerText = `${(data.hp/100000000).toFixed(2)}億`;
+            const img = document.getElementById('monster-img');
+            const bossSrc = "img/monsters/entropy_god.png"; 
+            if (!img.src.includes(bossSrc)) { img.src = bossSrc; img.style.display = 'block'; }
+        });
+
+        // 🟢 整合了踢人按鈕的 roomInfoUpdate
+        socket.on('roomInfoUpdate', (info) => {
+            allPlayers = info.players; 
+            
+            const amIHost = (info.host === socket.id);
+            const lobbyList = document.getElementById('lobby-players');
+            lobbyList.innerHTML = ''; 
+            
+            info.players.forEach(p => {
+                let actionBtn = '';
+                // 🟢 判斷：如果是房主 且 對方不是自己 -> 顯示踢人
+                if (amIHost && p.id !== socket.id) {
+                    actionBtn = `<button onclick="kickPlayer('${p.id}')" style="float:right; background:#c0392b; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:10px;">踢出</button>`;
+                }
+
+                // 簡單防護名字
+                const safeName = p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                lobbyList.innerHTML += `
+                    <div style="border-bottom:1px dashed #555; padding:8px 5px; line-height: 20px;">
+                        ${safeName} <span style="color:#aaa; font-size:10px;">(LV.${p.level})</span>
+                        ${actionBtn}
+                    </div>`;
+            });
+
+            const overlay = document.getElementById('lobby-overlay');
+            if (info.status === 'fighting') { 
+                overlay.style.display = 'none'; 
+                document.getElementById('countdown-timer').style.display = 'block'; 
+                
+                // 🟢 倒數計時啟動
+                if (!battleTimer) {
+                    timeLeft = 530; 
+                    if(info.battleStartTime) {
+                        const elapsed = Math.floor((Date.now() - info.battleStartTime) / 1000);
+                        timeLeft = 530 - elapsed;
+                    }
+                    if(timeLeft < 0) timeLeft = 0;
+
+                    const timerEl = document.getElementById('countdown-timer');
+                    battleTimer = setInterval(() => {
+                        timeLeft--;
+                        if (timeLeft <= 0) {
+                            timeLeft = 0;
+                            clearInterval(battleTimer);
+                            timerEl.innerText = "⚠️ 時間到！";
+                        } else {
+                            const mm = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                            const ss = (timeLeft % 60).toString().padStart(2, '0');
+                            timerEl.innerText = `⚠️ 滅團倒數: ${mm}:${ss}`;
+                        }
+                    }, 1000);
+                }
+
+            } else { 
+                if (info.monsterHp <= 0) overlay.style.display = 'none'; else overlay.style.display = 'flex'; 
+                if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+                document.getElementById('countdown-timer').style.display = 'none';
+            }
+            
+            document.getElementById('monster-name').innerText = info.monsterName;
+            const img = document.getElementById('monster-img');
+            if (info.monsterKey) {
+                const newSrc = `img/monsters/${info.monsterKey}.png`;
+                if (!img.src.includes(newSrc)) { img.src = newSrc; img.style.display = 'block'; }
+            }
+
+            const teammatesBox = document.getElementById('teammates-box');
+            teammatesBox.innerHTML = '';
+            info.players.forEach(p => {
+                if (p.id !== socket.id) { 
+                    const hpPct = (p.hp / p.maxHp) * 100; const mpPct = (p.mp / p.maxMp) * 100;
+                    const safeName = p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    teammatesBox.innerHTML += `<div class="mini-box"><div style="font-weight:bold;">${safeName}</div><div class="mini-hp-bar"><div class="mini-hp-fill" style="width:${hpPct}%;"></div></div></div>`;
+                }
+            });
+            
+            const startBtn = document.getElementById('start-btn');
+            if (amIHost) { startBtn.style.display = 'block'; startBtn.innerText = `開始 (${info.players.length}人)`; }
+            else { startBtn.style.display = 'none'; }
+
+            // 非房主顯示等待訊息
+            const waitingTxt = document.getElementById('waiting-txt');
+            if (waitingTxt) waitingTxt.style.display = amIHost ? 'none' : 'block';
+        });
+
+        socket.on('battleStarted', () => { 
+            document.getElementById('lobby-overlay').style.display = 'none'; 
+            log("戰鬥開始！"); 
+            if (!battleTimer) {
+                timeLeft = 530;
+                battleTimer = setInterval(() => {
+                    timeLeft--;
+                    if (timeLeft <= 0) {
+                        timeLeft = 0; clearInterval(battleTimer);
+                        document.getElementById('countdown-timer').innerText = "⚠️ 時間到！";
+                    } else {
+                        const mm = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                        const ss = (timeLeft % 60).toString().padStart(2, '0');
+                        document.getElementById('countdown-timer').innerText = `⚠️ 滅團倒數: ${mm}:${ss}`;
+                    }
+                }, 1000);
+            }
+        });
+
+        socket.on('turnUpdate', (data) => {
+            const bar = document.getElementById('turn-bar'); 
+            if (roomId === 'world_boss') return; 
+            
+            if (data.currentId === 'monster') { 
+                isMyTurn = false; bar.innerText = "⚠️ 怪物回合..."; bar.style.background = "#c0392b"; toggle(true); 
+            }
+            else if (data.currentId === socket.id) { 
+                isMyTurn = true; bar.innerText = "⚔️ 你的回合"; bar.style.background = "#2ecc71"; toggle(false); 
+                if (isAuto) autoPlayLogic(); // 🟢 觸發自動
+            }
+            else { 
+                isMyTurn = false; bar.innerText = `⏳ ${data.name}`; bar.style.background = "#333"; toggle(true); 
+            }
+        });
+
+        socket.on('monsterUpdate', (m) => {
+            if (roomId === 'world_boss') return;
+            document.getElementById('monster-name').innerText = `LV.${m.level} ${m.name}`;
+            document.getElementById('mhp').style.width = (m.hp / m.maxHp * 100) + '%';
+            document.getElementById('mhp-txt').innerText = `HP: ${m.hp}/${m.maxHp}`;
+            const img = document.getElementById('monster-img');
+            if (lastMonsterHp !== -1 && m.hp < lastMonsterHp) { img.classList.remove('damaged'); void img.offsetWidth; img.classList.add('damaged'); }
+            lastMonsterHp = m.hp;
+        });
+
+        socket.on('playerStatsUpdate', (p) => {
+            myPlayer = p;
+            document.getElementById('my-name').innerText = p.name || "勇者";
+            document.getElementById('php').style.width = (p.hp / p.maxHp * 100) + '%';
+            document.getElementById('pmp').style.width = (p.mp / p.maxMp * 100) + '%';
+            document.getElementById('hp-txt').innerText = `HP:${p.hp}/${p.maxHp}  MP:${p.mp}/${p.maxMp}`;
+            if(document.getElementById('atk-val')) document.getElementById('atk-val').innerText = p.atk;
+            if(document.getElementById('def-val')) document.getElementById('def-val').innerText = p.def;
+            updateShortcutStates(p);
+        });
+
+        function updateShortcutStates(p) {
+            const area = document.getElementById('shortcut-area');
+            const skillsOwned = p.skills || []; 
+            if (myShortcuts.length === 0 && skillsOwned.length > 0) {
+                myShortcuts = skillsOwned.slice(0, 4); localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
+            }
+            area.innerHTML = '';
+            myShortcuts.forEach(sid => {
+                const info = SKILL_INFO[sid];
+                if(info && skillsOwned.includes(sid)) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-shortcut'; btn.setAttribute('data-mp', info.mp); btn.setAttribute('data-sid', sid);
+                    btn.innerHTML = `${info.name} <span style="color:#2980b9">(${info.mp})</span>`;
+                    btn.onclick = () => { useSkill(sid); }; area.appendChild(btn);
+                }
+            });
+        }
+
+        socket.on('battleWon', (data) => {
+            if(battleTimer) clearInterval(battleTimer); // 🟢 勝利停計時
+            const bar = document.getElementById('turn-bar'); bar.innerText = " 勝利！"; bar.style.background = "gold"; bar.style.color = "black";
+            showMsg(`勝利！獲得 ${data.gold} G`); showNormalVictoryBtn();
+            if(isAuto) toggleAuto();
+        });
+
+        function showNormalVictoryBtn() {
+            const btnArea = document.getElementById('btns');
+            document.getElementById('fixed-top-area').style.display = 'none'; 
+            document.getElementById('shortcut-area').style.display = 'none'; 
+            btnArea.style.gridTemplateColumns = '1fr'; 
+            btnArea.innerHTML = `<button class="btn" style="background: linear-gradient(to bottom, #f1c40f, #f39c12); color: #000; font-weight: bold; font-size: 16px; border: 3px solid #fff; height: 60px;" onclick="leaveRoom()">🏆 戰鬥勝利 (點擊離開)</button>`;
+        }
+
+        function leaveRoom() { 
+            if (socket && socket.connected) { socket.emit('leaveRoom', roomId); }
+            setTimeout(() => { window.location.replace('hub.html'); }, 300); 
+        }
+
+        socket.on('playerDead', () => { 
+            if(battleTimer) clearInterval(battleTimer); // 🟢 死亡停計時
+            log("你被打倒了..."); showMsg("👻 你已經死亡..."); 
+            document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column:span 2; background:red; color:white" onclick="window.location.href='rest.html'"> 去復活</button>`;
+            if(isAuto) toggleAuto();
+        });
+
+        socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
+        socket.on('battleLog', (msg) => log(msg));
+        
+        socket.on('roomLeft', () => { showMsg("你離開了房間"); setTimeout(() => { window.location.href = 'hub.html'; }, 1000); });
+
+        function requestStart() { socket.emit('startBattle', roomId); }
+        
+        function act(type) {
+            if (roomId === 'world_boss') { toggle(true); socket.emit('worldBossAction', { type: 'attack' }); setTimeout(() => toggle(false), 500); }
+            else { if(!isMyTurn) return; toggle(true); socket.emit('combatAction', { roomId, type }); }
+        }
+
+        // 🟢 [更新] 魔法選單：加上詳細說明
+        function openSkill() {
+            const btnArea = document.getElementById('btns');
+            document.getElementById('fixed-top-area').style.display = 'block'; 
+            document.getElementById('shortcut-area').style.display = 'none'; 
+            btnArea.innerHTML = ''; btnArea.style.gridTemplateColumns = '1fr';
+
+            const mySkills = myPlayer.skills || ['fireball'];
+            mySkills.forEach(skillId => {
+                const info = SKILL_INFO[skillId];
+                if (info) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn battle-action'; 
+                    btn.style.fontSize = '12px'; btn.style.display = 'flex'; btn.style.justifyContent = 'space-between'; btn.style.alignItems = 'center'; btn.style.padding = '0 15px'; btn.style.minHeight = '45px'; 
+                    let nameColor = "#333";
+                    if (info.cat === 'heal') nameColor = "#27ae60";
+                    if (info.cat === 'buff') nameColor = "#e67e22";
+                    if (skillId === 'void_crush' || skillId === 'big_bang' || skillId === 'entropy_decay') nameColor = "#8e44ad"; 
+
+                    btn.innerHTML = `<div style="font-weight:bold; color:${nameColor};">${info.name}</div><div style="text-align:right; font-size:10px;"><div style="color:#3498db; margin-bottom:2px;">MP-${info.mp}</div><div style="color:#7f8c8d;">${info.desc}</div></div>`;
+
+                    if (myPlayer.mp < info.mp) { btn.disabled = true; btn.style.opacity = 0.5; }
+                    btn.onclick = () => { useSkill(skillId); };
+                    btnArea.appendChild(btn);
+                }
+            });
+        }
+
+        function openBag() {
+            const btnArea = document.getElementById('btns');
+            document.getElementById('fixed-top-area').style.display = 'block'; 
+            document.getElementById('shortcut-area').style.display = 'none'; 
+            btnArea.innerHTML = ''; btnArea.style.gridTemplateColumns = '1fr 1fr';
+            
+            const itemsToShow = ['potion_hp', 'potion_mid', 'potion_high', 'potion_max', 'elixir', 'potion_mp', 'potion_mp_mid', 'potion_mp_high'];
+            itemsToShow.forEach(itemId => {
+                const count = (myPlayer.inventory && myPlayer.inventory[itemId]) || 0;
+                if(count > 0) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn battle-action'; btn.style.fontSize = '10px';
+                    btn.innerText = `${ITEM_NAMES[itemId] || itemId}(${count})`;
+                    btn.onclick = () => { useItem(itemId); };
+                    btnArea.appendChild(btn);
+                }
+            });
+        }
+
+        function resetButtons() {
+            document.getElementById('fixed-top-area').style.display = 'none'; 
+            document.getElementById('shortcut-area').style.display = 'grid'; 
+            const btnArea = document.getElementById('btns');
+            btnArea.style.gridTemplateColumns = '1fr 1fr';
+            btnArea.innerHTML = `<button class="btn battle-action" onclick="act('attack')">攻擊</button><button class="btn battle-action" onclick="openSkill()">魔法</button><button class="btn battle-action" onclick="openBag()">物品</button><button class="btn" onclick="leaveRoom()">逃跑</button>`;
+            if (roomId === 'world_boss') { toggle(false); } else { toggle(!isMyTurn); }
+        }
+
+        // 🟢 修正後的快捷鍵置換邏輯
+        function useSkill(skillId) {
+            const info = SKILL_INFO[skillId];
+            if (info && myPlayer.mp < info.mp) { showMsg("MP 不足！"); return; }
+            
+            // 檢查是否已在快捷列
+            const existingIndex = myShortcuts.indexOf(skillId);
+            
+            if (existingIndex !== -1) {
+                // 如果已經在快捷列，不需要做任何事，或者你可以把它移到第一位 (可選)
+            } else {
+                // 如果不在快捷列，把它加到第一位
+                myShortcuts.unshift(skillId);
+                // 如果超過 4 個，移除最後一個
+                if (myShortcuts.length > 4) { 
+                    myShortcuts.pop(); 
+                }
+                // 存入 localStorage
+                localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
+                
+                // 立即更新 UI
+                updateShortcutStates(myPlayer);
+            }
+
+            if (roomId === 'world_boss') { 
+                toggle(true); socket.emit('worldBossAction', { type: 'skill', skillId: skillId }); setTimeout(() => toggle(false), 500); 
+            } else { 
+                if(!isMyTurn) return; 
+                toggle(true); socket.emit('combatAction', { roomId, type: 'skill', skillId: skillId }); 
+            }
+        }
+
+        function useItem(itemId) {
+            if (roomId === 'world_boss') { showMsg("BOSS 戰無法使用道具！"); resetButtons(); }
+            else { if(!isMyTurn) return; toggle(true); socket.emit('combatAction', { roomId, type: 'item', itemId: itemId }); resetButtons(); }
+        }
+
+        function toggle(disabled) { 
+            document.querySelectorAll('.battle-action').forEach(b => { b.disabled = disabled; b.style.opacity = disabled ? "0.5" : "1"; }); 
+        }
+
+        function log(m) { 
+            const box = document.getElementById('log'); const div = document.createElement('div');
+            div.innerHTML = `> ${m}`; box.insertBefore(div, box.firstChild); 
+            if (box.children.length > 20) box.removeChild(box.lastChild);
+        }
+
+        // --- 🟢 設定介面相關 ---
+        
+        function openConfig() {
+            document.getElementById('config-modal').style.display = 'flex';
+            renderTriggerList();
+            renderRotationList();
+            document.getElementById('low-mp-action').value = autoConfig.lowMp;
+        }
+
+        function closeConfig() {
+            saveConfig();
+            document.getElementById('config-modal').style.display = 'none';
+        }
+
+        function saveConfig() {
+            autoConfig.lowMp = document.getElementById('low-mp-action').value;
+            // Triggers 和 Rotation 已經即時更新在物件裡
+            localStorage.setItem('rpg_auto_config', JSON.stringify(autoConfig));
+        }
+
+        function renderTriggerList() {
+            const div = document.getElementById('trigger-list');
+            div.innerHTML = '';
+            autoConfig.triggers.forEach((t, i) => {
+                div.innerHTML += `
+                    <div class="config-row">
+                        <select onchange="updateTrigger(${i}, 'type', this.value)" class="config-select">
+                            <option value="hp_self" ${t.type=='hp_self'?'selected':''}>HP(自) <</option>
+                            <option value="mp_self" ${t.type=='mp_self'?'selected':''}>MP(自) <</option>
+                            <option value="hp_team" ${t.type=='hp_team'?'selected':''}>HP(隊) <</option>
+                        </select>
+                        <input type="number" class="config-input" value="${t.val}" onchange="updateTrigger(${i}, 'val', this.value)"> %
+                        <span>用</span>
+                        <select onchange="updateTrigger(${i}, 'actionType', this.value)" class="config-select" style="width:60px;">
+                            <option value="item" ${t.actionType=='item'?'selected':''}>物品</option>
+                            <option value="skill" ${t.actionType=='skill'?'selected':''}>技能</option>
+                        </select>
+                        <select class="config-select" onchange="updateTrigger(${i}, 'actionId', this.value)" style="flex:1;">
+                            ${getOptionsHtml(t.actionType, t.actionId)}
+                        </select>
+                        <button class="btn-del" onclick="delTrigger(${i})">X</button>
+                    </div>
+                `;
+            });
+        }
+
+        function renderRotationList() {
+            const div = document.getElementById('rotation-list');
+            div.innerHTML = '';
+            autoConfig.rotation.forEach((r, i) => {
+                div.innerHTML += `
+                    <div class="config-row">
+                        <span style="color:#aaa; font-weight:bold; margin-right:5px;">${i+1}.</span>
+                        <select onchange="updateRotation(${i}, 'actionType', this.value)" class="config-select" style="width:60px;">
+                            <option value="attack" ${r.actionType=='attack'?'selected':''}>普攻</option>
+                            <option value="skill" ${r.actionType=='skill'?'selected':''}>技能</option>
+                            <option value="item" ${r.actionType=='item'?'selected':''}>物品</option>
+                        </select>
+                        ${r.actionType !== 'attack' ? `
+                        <select class="config-select" onchange="updateRotation(${i}, 'actionId', this.value)" style="flex:1;">
+                            ${getOptionsHtml(r.actionType, r.actionId)}
+                        </select>` : '<span style="flex:1; text-align:center; color:#aaa;">-</span>'}
+                        <input type="number" class="config-input" value="${r.count}" onchange="updateRotation(${i}, 'count', this.value)" min="1"> 回
+                        <button class="btn-del" onclick="delRotation(${i})">X</button>
+                    </div>
+                `;
+            });
+        }
+
+        function getOptionsHtml(type, currentId) {
+            let html = '';
+            if (type === 'skill') {
+                if(myPlayer.skills) {
+                    myPlayer.skills.forEach(sid => {
+                        const name = SKILL_INFO[sid] ? SKILL_INFO[sid].name : sid;
+                        html += `<option value="${sid}" ${sid===currentId?'selected':''}>${name}</option>`;
+                    });
+                }
+            } else if (type === 'item') {
+                // 列出所有可用物品
+                const keys = Object.keys(ITEM_NAMES);
+                keys.forEach(iid => {
+                    html += `<option value="${iid}" ${iid===currentId?'selected':''}>${ITEM_NAMES[iid]}</option>`;
+                });
+            }
+            return html;
+        }
+
+        function addTrigger() {
+            autoConfig.triggers.push({ type: 'hp_self', val: 50, actionType: 'item', actionId: 'potion_mid' });
+            renderTriggerList();
+        }
+        function delTrigger(i) {
+            autoConfig.triggers.splice(i, 1);
+            renderTriggerList();
+        }
+        function updateTrigger(i, field, val) {
+            autoConfig.triggers[i][field] = val;
+            if (field === 'actionType') renderTriggerList(); // 重繪選項
+        }
+
+        function addRotation() {
+            autoConfig.rotation.push({ actionType: 'attack', actionId: 'normal', count: 1 });
+            renderRotationList();
+        }
+        function delRotation(i) {
+            autoConfig.rotation.splice(i, 1);
+            renderRotationList();
+        }
+        function updateRotation(i, field, val) {
+            autoConfig.rotation[i][field] = val;
+            if (field === 'actionType') renderRotationList(); // 重繪
         }
 
     </script>
