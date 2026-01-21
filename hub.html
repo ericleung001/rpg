@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會V2</title>
+    <title>冒險者公會V3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -1115,7 +1115,21 @@
             window.location.href = `battle3.html?room=${roomId}`; 
         });
         
-        socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
+        // 🟢 [優化] 錯誤訊息處理 (區分 "錯誤" 與 "系統通知")
+        socket.on('errorMessage', (msg) => { 
+            // 如果訊息包含【 】(例如【測試成功】或【系統通知】)，用公告視窗顯示
+            if (msg.includes('【') && msg.includes('】')) {
+                // 修改公告標題
+                document.querySelector('#notice-modal .notice-title').innerText = "📬 系統通知";
+                // 修改公告內容 (支援換行)
+                document.querySelector('#notice-modal .notice-content').innerHTML = msg.replace(/\n/g, '<br>');
+                // 顯示視窗
+                document.getElementById('notice-modal').style.display = 'flex';
+            } else {
+                // 普通錯誤，用 Toast 或 Alert
+                showToast("❌ " + msg); 
+            }
+        });
         
         // 🟢 系統日誌監聽 (主要用於遊戲內訊息)
         socket.on('battleLog', (msg) => {
