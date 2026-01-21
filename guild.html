@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>公會大廳v5</title>
+    <title>公會大廳v6</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -89,10 +89,9 @@
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        const socket = io(BACKEND_URL, { transports: ['websocket', 'polling'], secure: true });
         
         const myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -118,11 +117,20 @@
         // 🟢 監聽玩家狀態 (為了拿背包資料)
         socket.on('playerStatsUpdate', (p) => {
             myInventory = p.inventory || {};
-            // 如果當前在派發頁面，可能需要刷新下拉選單 (這裡暫時不自動刷，避免干擾輸入)
         });
 
         // 🟢 自動刷新
         socket.on('refreshGuildUI', () => { socket.emit('getGuildInfo'); });
+
+        // 🟢 監聽聊天更新
+        socket.on('guildChatUpdate', (history) => {
+            // 如果聊天框在畫面上，直接更新
+            const chatBox = document.getElementById('g-chat-box');
+            if (chatBox) {
+                renderChatHistory(history);
+            }
+            // 如果不在畫面上(例如可能正在列表頁)，下次 renderMyGuild 會自動讀取
+        });
 
         // 1. 公會列表
         socket.on('guildListUpdate', (list) => {
@@ -158,6 +166,10 @@
         socket.on('myGuildData', (data) => {
             myGuildData = data;
             renderMyGuild();
+            // 介面渲染完後，填充聊天內容
+            if (data.chatHistory) {
+                renderChatHistory(data.chatHistory);
+            }
         });
 
         function renderMyGuild() {
@@ -165,8 +177,7 @@
             const container = document.getElementById('main-content');
             const isLeader = myGuildData.isLeader;
 
-            // 🟢 [新增] 公告編輯功能
-            // 這裡將函式掛載到 window 以便 onclick 呼叫
+            // 公告編輯功能
             window.editNotice = function() {
                 const newText = prompt("請輸入新的公會公告 (100字內):", myGuildData.notice);
                 if (newText !== null) {
@@ -174,7 +185,7 @@
                 }
             };
 
-            // 頂部資訊 (已加入公告區塊)
+            // 頂部資訊
             let html = `
                 <div class="info-box">
                     <div style="font-size:14px; font-weight:bold; color:#f1c40f; margin-bottom:5px;">${escapeHtml(myGuildData.name)}</div>
@@ -186,6 +197,17 @@
                             ${isLeader ? `<button onclick="editNotice()" style="font-size:9px; background:none; border:1px solid #aaa; color:#aaa; cursor:pointer; border-radius:3px;">✏️修改</button>` : ''}
                         </div>
                         <div style="color:#ecf0f1; font-size:10px; white-space: pre-wrap; line-height:1.4;">${escapeHtml(myGuildData.notice || "暫無公告")}</div>
+                    </div>
+
+                    <div style="background:rgba(0,0,0,0.4); border:1px solid #7f8c8d; border-radius:5px; margin:10px 0; overflow:hidden;">
+                        <div style="background:#34495e; padding:5px 10px; font-size:10px; color:#bdc3c7; border-bottom:1px solid #555;">💬 公會頻 (最近20條)</div>
+                        <div id="g-chat-box" style="height:150px; overflow-y:auto; padding:8px; text-align:left; font-size:10px; display:flex; flex-direction:column; gap:4px;">
+                            <div style="color:#aaa; text-align:center;">載入中...</div>
+                        </div>
+                        <div style="display:flex; border-top:1px solid #555;">
+                            <input type="text" id="g-chat-input" placeholder="輸入訊息..." style="flex:1; border:none; background:#222; color:white; padding:8px;" maxlength="50">
+                            <button onclick="sendGuildChat()" style="background:#2980b9; color:white; border:none; padding:0 15px; cursor:pointer;">發送</button>
+                        </div>
                     </div>
 
                     <div style="color:#7f8c8d; font-size:9px; margin-bottom:8px;">(資金達 5億，全員每日享 10% 利息)</div>
@@ -289,6 +311,43 @@
             container.innerHTML = html;
         }
 
+        // --- 聊天室相關函式 ---
+        function renderChatHistory(history) {
+            const chatBox = document.getElementById('g-chat-box');
+            if (!chatBox) return;
+
+            chatBox.innerHTML = '';
+            if (!history || history.length === 0) {
+                chatBox.innerHTML = '<div style="color:#aaa; text-align:center; margin-top:20px;">暫無訊息</div>';
+                return;
+            }
+
+            history.forEach(row => {
+                chatBox.innerHTML += `
+                    <div>
+                        <span style="color:#7f8c8d; font-size:8px;">[${row.time}]</span>
+                        <span style="color:#f1c40f; font-weight:bold;">${escapeHtml(row.name)}:</span>
+                        <span style="color:#ecf0f1;">${escapeHtml(row.msg)}</span>
+                    </div>
+                `;
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function sendGuildChat() {
+            const input = document.getElementById('g-chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+            socket.emit('sendGuildChat', msg);
+            input.value = '';
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && document.activeElement.id === 'g-chat-input') {
+                sendGuildChat();
+            }
+        });
+
         // --- 功能函式 ---
         function setTab(t) { currentTab = t; renderMyGuild(); }
 
@@ -304,10 +363,8 @@
         function handleApply(targetName, action) { socket.emit('handleGuildApply', { targetName, action }); }
         function kick(targetName) { if(confirm(`確定踢出 [${targetName}]？`)) socket.emit('kickGuildMember', targetName); }
 
-        // --- 🟢 派發功能邏輯 ---
         function toggleSelectAll() {
             const checkboxes = document.querySelectorAll('.dist-checkbox');
-            // 檢查是否全部已勾選
             const allChecked = Array.from(checkboxes).every(c => c.checked);
             checkboxes.forEach(c => c.checked = !allChecked);
         }
