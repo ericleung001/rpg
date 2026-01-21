@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會V1</title>
+    <title>冒險者公會V2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -310,23 +310,16 @@
 
     <div id="notice-modal">
         <div class="notice-box">
-            <div class="notice-title">v3.2 更新公告</div>
+            <div class="notice-title">v3.1 更新公告</div>
             <div class="notice-content">
 
 <b style="color:#f1c40f;">DC Group</b>
 <a href="https://discord.gg/krQpB5Zu" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">如有問題可到這到查詢</a>
 ***由於大量購買彩票令Server負荷太重, 暫時限制每人每日10條***
-
-<b style="color:#9b59b6;">【🏰 公會系統上線】</b>
-- <b>創建與加入</b>：花費 50萬G 即可建立公會！
-- <b>每日福利</b>：
-  1. 成員滿 20 人，每日登入送 <b>強化石 x1</b>
-  2. 公會資金達 5億，每日登入享 <b>10% 利息</b> (本金上限10億)
-- <b>職位管理</b>：會長可審核申請、踢人。
-
+<b style="color:#e74c3c;">【奇點降臨 & 便利性優化】</b>
 <b style="color:#2ecc71;">【📜 每日任務系統】</b>
-- <b>隨機刷新</b>：每日 00:00 隨機指派 5 個任務。
-- <b>全新類型</b>：等級挑戰、物品達人、BOSS 討伐。
+- <b>隨機刷新</b>：每日 00:00 隨機指派 5 個任務，不再單調！
+- <b>全新類型</b>：新增「等級挑戰」、「物品達人」、「BOSS 討伐」。
 
 <b style="color:#f1c40f;">1.等級上限突破</b>
 - 開放地圖：<b>終焉奇點</b> (Lv.400+)
@@ -336,6 +329,10 @@
 <b style="color:#2ecc71;">2.彩票系統大改</b>
 - 新增 <b>[隨機快選]</b> 按鈕 (x10)。
 - 頭獎/二獎現在會送 <b>Lv.500/450 實體裝備</b>！
+
+<b style="color:#9b59b6;">4. 🛡️ 裝備與材料</b>
+- 新增大量高階材料 (量子殘渣、多元宇宙碎片)。
+- 裝備強化與合成配方已更新。
 
 <b style="color:#3498db;">每日活動：</b>
 彩票
@@ -363,46 +360,6 @@
             </div>
 
             <button class="btn" style="background:#c0392b; width:100%;" onclick="document.getElementById('quest-modal').style.display='none'">關閉</button>
-        </div>
-    </div>
-
-    <div id="guild-modal" class="modal-overlay">
-        <div class="modal-box" style="width: 90%; max-width: 500px;">
-            <button class="close-btn-x" onclick="document.getElementById('guild-modal').style.display='none'">×</button>
-            
-            <div id="guild-title" style="font-size:16px; font-weight:bold; color:#f1c40f; text-align:center; margin-bottom:10px;">公會系統</div>
-
-            <div id="guild-list-view" style="display:none;">
-                <div style="display:flex; gap:5px; margin-bottom:10px;">
-                    <input type="text" id="new-guild-name" placeholder="公會名稱" style="flex:1; padding:5px; font-size:10px;">
-                    <button onclick="createGuild()" style="background:#e67e22; color:white; border:none; border-radius:4px; font-size:10px;">建立 ($50萬)</button>
-                </div>
-                <div id="guild-list-content" style="height:250px; overflow-y:auto; border:1px solid #555; padding:5px;"></div>
-            </div>
-
-            <div id="my-guild-view" style="display:none;">
-                <div style="background:#2c3e50; padding:10px; border-radius:5px; margin-bottom:10px; font-size:10px;">
-                    <div>💰 公會資金: <span id="g-gold" style="color:#f1c40f">0</span> / 5億</div>
-                    <div style="color:#aaa; margin-top:3px;">(達標後每人每日享 10% 利息)</div>
-                    <div style="margin-top:5px; display:flex; gap:5px;">
-                        <input type="number" id="donate-amount" placeholder="金額" style="width:60px; font-size:10px; padding:2px;">
-                        <button onclick="donateGuild()" style="font-size:10px; background:#f39c12; border:none; border-radius:3px; cursor:pointer;">捐獻</button>
-                    </div>
-                </div>
-
-                <div style="display:flex; gap:5px; margin-bottom:5px;">
-                    <button onclick="switchGuildTab('members')" class="btn" style="flex:1; height:30px; font-size:10px;">成員</button>
-                    <button onclick="switchGuildTab('apply')" id="btn-apply-tab" class="btn" style="flex:1; height:30px; display:none; font-size:10px;">審核</button>
-                </div>
-
-                <div id="g-members-list" style="height:200px; overflow-y:auto; border:1px solid #555; padding:5px; display:block;"></div>
-                
-                <div id="g-apply-list" style="height:200px; overflow-y:auto; border:1px solid #555; padding:5px; display:none;"></div>
-                
-                <div style="text-align:right; margin-top:5px; font-size:9px; color:#2ecc71;">
-                    當前人數: <span id="g-count">0</span>/50 (達20人每日送強化石)
-                </div>
-            </div>
         </div>
     </div>
 
@@ -538,10 +495,9 @@
                     <div class="facility-btn" style="background:#d35400; border-color:#e67e22;" onclick="openDailyQuests()">
                         📜 每日任務
                     </div>
-
-                    <div class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;" onclick="openGuild()">
-                        🏰 公會
-                    </div>
+                    <div class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;" onclick="window.location.href='guild.html'">
+    🏰 公會
+</div>
                 </div>
 
                 
@@ -599,9 +555,9 @@
 
         // 🟢 [連線修正] 使用正確的 URL
         const socket = io('https://mmo.ttctv-105.cc', { 
-            transports: ['websocket', 'polling'],
-            secure: true // 因為你用 https，建議加呢個
-        });
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         
         let myLevel = 1;
         let myName = ""; 
@@ -783,123 +739,6 @@
 
         socket.on('questResult', (res) => {
             showToast(res.msg);
-        });
-
-        // --- 🟢 公會系統前端邏輯 ---
-
-        function openGuild() {
-            document.getElementById('guild-modal').style.display = 'flex';
-            socket.emit('getGuildInfo');
-        }
-
-        function createGuild() {
-            const name = document.getElementById('new-guild-name').value;
-            if(confirm(`確定花費 500,000G 建立 [${name}] 嗎？`)) {
-                socket.emit('createGuild', name);
-            }
-        }
-
-        function joinGuild(gid) {
-            socket.emit('joinGuildRequest', gid);
-        }
-
-        function donateGuild() {
-            const val = document.getElementById('donate-amount').value;
-            if(val) socket.emit('donateGuild', val);
-        }
-
-        function switchGuildTab(tab) {
-            document.getElementById('g-members-list').style.display = (tab === 'members') ? 'block' : 'none';
-            document.getElementById('g-apply-list').style.display = (tab === 'apply') ? 'block' : 'none';
-        }
-
-        function handleApply(uid, action) {
-            socket.emit('handleGuildApply', { targetId: uid, action: action });
-        }
-
-        function kickMember(uid) {
-            if(confirm("確定要踢出此會員嗎？")) {
-                socket.emit('kickGuildMember', uid);
-            }
-        }
-
-        // 監聽：公會列表 (未加入時)
-        socket.on('guildListUpdate', (list) => {
-            document.getElementById('guild-list-view').style.display = 'block';
-            document.getElementById('my-guild-view').style.display = 'none';
-            document.getElementById('guild-title').innerText = "加入公會";
-
-            const div = document.getElementById('guild-list-content');
-            div.innerHTML = '';
-            if(list.length === 0) div.innerHTML = '<div style="text-align:center; margin-top:20px; color:#aaa;">暫無公會</div>';
-            
-            list.forEach(g => {
-                div.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #444; padding:8px;">
-                        <div>
-                            <div style="font-weight:bold; color:#3498db;">${g.name}</div>
-                            <div style="font-size:10px; color:#aaa;">會長: ${g.leader} | 人數: ${g.count}</div>
-                        </div>
-                        <button onclick="joinGuild('${g.id}')" style="background:#27ae60; color:white; border:none; border-radius:3px; padding:3px 8px;">申請</button>
-                    </div>
-                `;
-            });
-        });
-
-        // 監聽：我的公會資料 (已加入時)
-        socket.on('myGuildData', (data) => {
-            document.getElementById('guild-list-view').style.display = 'none';
-            document.getElementById('my-guild-view').style.display = 'block';
-            document.getElementById('guild-title').innerText = `🏰 ${data.name}`;
-            
-            document.getElementById('g-gold').innerText = data.gold.toLocaleString();
-            document.getElementById('g-count').innerText = data.members.length;
-
-            // 成員列表
-            const mDiv = document.getElementById('g-members-list');
-            mDiv.innerHTML = '';
-            data.members.forEach(m => {
-                let kickBtn = '';
-                if (data.isLeader && m.rank !== '會長') {
-                    kickBtn = `<button onclick="kickMember('${m.id}')" style="background:#c0392b; color:white; border:none; font-size:9px; padding:2px 5px; margin-left:5px;">踢出</button>`;
-                }
-                
-                mDiv.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #444; padding:5px;">
-                        <span><span style="color:${m.rank==='會長'?'#f1c40f':'#fff'}">[${m.rank}]</span> ${m.name} <span style="font-size:9px; color:#aaa;">(Lv.${m.level})</span></span>
-                        <div>${kickBtn}</div>
-                    </div>
-                `;
-            });
-
-            // 申請列表 (只有會長看得到)
-            const btnApply = document.getElementById('btn-apply-tab');
-            const aDiv = document.getElementById('g-apply-list');
-            if (data.isLeader) {
-                btnApply.style.display = 'block';
-                btnApply.innerText = `審核 (${data.applicants.length})`;
-                aDiv.innerHTML = '';
-                if(data.applicants.length === 0) aDiv.innerHTML = '<div style="text-align:center; padding:10px; color:#aaa;">無申請</div>';
-                
-                data.applicants.forEach(a => {
-                    aDiv.innerHTML += `
-                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #444; padding:5px;">
-                            <span>${a.name}</span>
-                            <div>
-                                <button onclick="handleApply('${a.id}', 'accept')" style="background:#27ae60; color:white; border:none; padding:2px 5px;">✔</button>
-                                <button onclick="handleApply('${a.id}', 'reject')" style="background:#c0392b; color:white; border:none; padding:2px 5px;">✘</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            } else {
-                btnApply.style.display = 'none';
-            }
-        });
-
-        socket.on('guildOpSuccess', (msg) => {
-            alert("✅ " + msg);
-            socket.emit('getGuildInfo'); // 操作成功後刷新
         });
 
         // --- 好友系統邏輯 ---
@@ -1273,7 +1112,7 @@
 
         socket.on('roomJoined', (data) => { 
             const roomId = data.roomId || data; 
-            window.location.href = `battle.html?room=${roomId}`; 
+            window.location.href = `battle3.html?room=${roomId}`; 
         });
         
         socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
