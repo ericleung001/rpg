@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>公會大廳</title>
+    <title>公會大廳v2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -64,6 +64,9 @@
         .loading { margin-top: 50px; color: #aaa; font-size: 10px; }
         
         input { padding: 8px; font-family: inherit; font-size: 12px; width: 60%; }
+        
+        /* 離線狀態 */
+        .offline { color: #95a5a6; }
     </style>
 </head>
 <body>
@@ -81,7 +84,11 @@
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        const socket = io('https://mmo.ttctv-105.cc', { transports: ['websocket', 'polling'], secure: true });
+        const socket = io('https://mmo.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
+        
         const myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
@@ -139,7 +146,7 @@
             let html = `
                 <div class="info-box">
                     <div style="font-size:14px; font-weight:bold; color:#f1c40f; margin-bottom:5px;">${escapeHtml(myGuildData.name)}</div>
-                    <div>💰 資金: <span style="color:#2ecc71">${myGuildData.gold.toLocaleString()}</span> / 500,000,000</div>
+                    <div>💰 資金: <span style="color:#2ecc71">${myGuildData.gold.toLocaleString()}</span> / 5億</div>
                     <div style="color:#7f8c8d; font-size:9px; margin-bottom:8px;">(資金達 5億，全員每日享 10% 利息)</div>
                     <div style="display:flex; gap:5px;">
                         <input type="number" id="donate-val" placeholder="金額" style="width:80px; padding:4px;">
@@ -157,17 +164,21 @@
             if (currentTab === 'members') {
                 html += `<div style="text-align:right; font-size:9px; color:#aaa; margin-bottom:5px;">人數: ${myGuildData.members.length}/50 (滿20人送強化石)</div>`;
                 myGuildData.members.forEach(m => {
+                    // 🟢 這裡傳入的是 m.name 而不是 m.id
                     let kickBtn = (myGuildData.isLeader && m.rank !== '會長') 
-                        ? `<button class="btn-action btn-red" onclick="kick('${m.id}')">踢出</button>` 
+                        ? `<button class="btn-action btn-red" onclick="kick('${escapeHtml(m.name)}')">踢出</button>` 
                         : '';
                     
+                    let statusTxt = m.online ? `<span style="color:#2ecc71">● 線上</span>` : `<span class="offline">○ 離線</span>`;
+                    let levelTxt = m.level === '?' ? '' : `(Lv.${m.level})`;
+
                     html += `
                         <div class="card">
                             <div>
                                 <div class="card-name" style="color:${m.rank==='會長'?'#f1c40f':'white'}">
-                                    [${m.rank}] ${escapeHtml(m.name)}
+                                    [${m.rank}] ${escapeHtml(m.name)} ${levelTxt}
                                 </div>
-                                <div class="card-info">LV.${m.level}</div>
+                                <div class="card-info">${statusTxt}</div>
                             </div>
                             <div>${kickBtn}</div>
                         </div>
@@ -178,12 +189,14 @@
                     html += '<div style="margin-top:20px; color:#7f8c8d;">目前沒有入會申請</div>';
                 } else {
                     myGuildData.applicants.forEach(a => {
+                        // 🟢 這裡傳入的是 a.name
                         html += `
                             <div class="card">
                                 <div class="card-name">${escapeHtml(a.name)}</div>
+                                <div class="card-info">LV.${a.level}</div>
                                 <div>
-                                    <button class="btn-action btn-green" onclick="handleApply('${a.id}', 'accept')">接受</button>
-                                    <button class="btn-action btn-red" onclick="handleApply('${a.id}', 'reject')">拒絕</button>
+                                    <button class="btn-action btn-green" onclick="handleApply('${escapeHtml(a.name)}', 'accept')">接受</button>
+                                    <button class="btn-action btn-red" onclick="handleApply('${escapeHtml(a.name)}', 'reject')">拒絕</button>
                                 </div>
                             </div>
                         `;
@@ -213,14 +226,15 @@
             if(val) socket.emit('donateGuild', val);
         }
 
-        function handleApply(targetId, action) {
-            // 前端做個小延遲防止瘋狂連點 (雖然 Server 也有擋)
-            socket.emit('handleGuildApply', { targetId, action });
+        function handleApply(targetName, action) {
+            // 🟢 改為傳送 targetName
+            socket.emit('handleGuildApply', { targetName: targetName, action: action });
         }
 
-        function kick(targetId) {
-            if(confirm("確定要踢出此會員嗎？")) {
-                socket.emit('kickGuildMember', targetId);
+        function kick(targetName) {
+            if(confirm(`確定要踢出 [${targetName}] 嗎？`)) {
+                // 🟢 改為傳送 targetName
+                socket.emit('kickGuildMember', targetName);
             }
         }
 
