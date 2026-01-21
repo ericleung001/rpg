@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>公會大廳v4</title>
+    <title>公會大廳v5</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -165,11 +165,29 @@
             const container = document.getElementById('main-content');
             const isLeader = myGuildData.isLeader;
 
-            // 頂部資訊
+            // 🟢 [新增] 公告編輯功能
+            // 這裡將函式掛載到 window 以便 onclick 呼叫
+            window.editNotice = function() {
+                const newText = prompt("請輸入新的公會公告 (100字內):", myGuildData.notice);
+                if (newText !== null) {
+                    socket.emit('updateGuildNotice', newText);
+                }
+            };
+
+            // 頂部資訊 (已加入公告區塊)
             let html = `
                 <div class="info-box">
                     <div style="font-size:14px; font-weight:bold; color:#f1c40f; margin-bottom:5px;">${escapeHtml(myGuildData.name)}</div>
-                    <div>💰 資金: <span style="color:#2ecc71">${myGuildData.gold.toLocaleString()}</span> / 5億</div>
+                    <div style="margin-bottom:5px;">💰 資金: <span style="color:#2ecc71">${myGuildData.gold.toLocaleString()}</span> / 5億</div>
+                    
+                    <div style="background:rgba(0,0,0,0.3); padding:8px; border-left:3px solid #f39c12; margin:10px 0; border-radius:3px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                            <span style="font-size:9px; color:#f39c12; font-weight:bold;">📜 公會公告</span>
+                            ${isLeader ? `<button onclick="editNotice()" style="font-size:9px; background:none; border:1px solid #aaa; color:#aaa; cursor:pointer; border-radius:3px;">✏️修改</button>` : ''}
+                        </div>
+                        <div style="color:#ecf0f1; font-size:10px; white-space: pre-wrap; line-height:1.4;">${escapeHtml(myGuildData.notice || "暫無公告")}</div>
+                    </div>
+
                     <div style="color:#7f8c8d; font-size:9px; margin-bottom:8px;">(資金達 5億，全員每日享 10% 利息)</div>
                     <div style="display:flex; gap:5px;">
                         <input type="number" id="donate-val" placeholder="金額" style="width:80px; padding:4px;">
@@ -203,9 +221,8 @@
                 });
             } 
             
-            // --- B. 派發介面 (新功能) ---
+            // --- B. 派發介面 ---
             else if (currentTab === 'distribute' && isLeader) {
-                // 生成物品選項
                 let itemOptions = '<option value="">(不發送物品)</option>';
                 for(let k in myInventory) {
                     let name = ITEM_NAME_MAP[k] || k;
@@ -232,10 +249,9 @@
                     <div id="dist-list">
                 `;
 
-                // 產生可勾選的會員列表 (排除會長自己)
                 let memberCount = 0;
                 myGuildData.members.forEach(m => {
-                    if (m.rank === '會長') return; // 排除自己
+                    if (m.rank === '會長') return;
                     memberCount++;
                     html += `
                         <div class="dist-row">
