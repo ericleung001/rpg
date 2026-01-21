@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會_test_V4</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -310,20 +310,24 @@
 
     <div id="notice-modal">
         <div class="notice-box">
-            <div class="notice-title">v3.0 更新公告</div>
+            <div class="notice-title">v3.1 更新公告</div>
             <div class="notice-content">
 
 <b style="color:#f1c40f;">DC Group</b>
 <a href="https://discord.gg/krQpB5Zu" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">如有問題可到這到查詢</a>
 ***由於大量購買彩票令Server負荷太重, 暫時限制每人每日10條***
 <b style="color:#e74c3c;">【奇點降臨 & 便利性優化】</b>
+<b style="color:#2ecc71;">【📜 每日任務系統】</b>
+- <b>隨機刷新</b>：每日 00:00 隨機指派 5 個任務，不再單調！
+- <b>全新類型</b>：新增「等級挑戰」、「物品達人」、「BOSS 討伐」。
+
 <b style="color:#f1c40f;">1.等級上限突破</b>
 - 開放地圖：<b>終焉奇點</b> (Lv.400+)
 - 新增 BOSS：<b>全知者·阿卡西</b> (掉落神格/碎片)
 - 實裝 <b>Lv.500 奇點套裝</b>
 
 <b style="color:#2ecc71;">2.彩票系統大改</b>
-- 新增 <b>[隨機快選]</b> 按鈕 (x10, x50)。
+- 新增 <b>[隨機快選]</b> 按鈕 (x10)。
 - 頭獎/二獎現在會送 <b>Lv.500/450 實體裝備</b>！
 
 <b style="color:#9b59b6;">4. 🛡️ 裝備與材料</b>
@@ -334,7 +338,7 @@
 彩票
 - 開獎：每日 22:00 (HKT)。
 - 玩法：每注 100G，選 6 號碼 (1-49)。
-- 獎勵：頭獎獨得 50% 獎池！最多100期萬。
+- 獎勵：頭獎獨得 50% 獎池！最多100萬。
 
 <b>世界 BOSS</b>
 - 時間：每日 15:00, 19:00, 23:00 (HKT)。
@@ -1105,7 +1109,7 @@
 
         socket.on('roomJoined', (data) => { 
             const roomId = data.roomId || data; 
-            window.location.href = `battle.html?room=${roomId}`; 
+            window.location.href = `battle3.html?room=${roomId}`; 
         });
         
         socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
