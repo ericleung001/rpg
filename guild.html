@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>公會大廳v3</title>
+    <title>公會大廳v4</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -55,6 +55,7 @@
         .btn-green { background: #27ae60; }
         .btn-red { background: #c0392b; }
         .btn-blue { background: #2980b9; }
+        .btn-gold { background: #f39c12; color: black; }
 
         .info-box {
             background: #2c3e50; padding: 15px; border-radius: 8px; border: 2px solid #3498db;
@@ -63,10 +64,14 @@
 
         .loading { margin-top: 50px; color: #aaa; font-size: 10px; }
         
-        input { padding: 8px; font-family: inherit; font-size: 12px; width: 60%; }
+        input { padding: 8px; font-family: inherit; font-size: 12px; }
+        select { padding: 8px; font-family: inherit; font-size: 12px; width: 100%; margin-bottom: 10px; }
         
-        /* 離線狀態 */
         .offline { color: #95a5a6; }
+
+        /* 派發介面專用 */
+        .dist-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 10px; border-bottom: 1px dashed #555; padding-bottom: 5px; }
+        .dist-checkbox { width: 20px; height: 20px; margin-right: 10px; }
     </style>
 </head>
 <body>
@@ -92,34 +97,46 @@
         const myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
+        // 物品對照表 (為了顯示下拉選單)
+        const ITEM_NAME_MAP = {
+            'potion_hp': '生命藥水', 'potion_mp': '魔力藥水', 'potion_mid': '中級藥水',
+            'scroll_exp': '經驗卷軸', 'lucky_bag': '幸運福袋', 'enhance_stone': '強化石',
+            'elixir': '萬能藥', 'gem_atk': '攻擊寶石', 'god_stone': '神之石',
+            'copper_ore': '銅礦石', 'iron_ore': '鐵礦石', 'gold_ore': '金礦石', 'mithril': '秘銀',
+            'titan_steel': '泰坦神鋼', 'star_fragment': '星之碎片'
+        };
+
         let currentTab = 'members';
         let myGuildData = null;
+        let myInventory = {}; // 儲存會長背包
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
             setTimeout(() => socket.emit('getGuildInfo'), 500);
         });
 
-        // 🟢 [新增] 監聽自動刷新信號
-        socket.on('refreshGuildUI', () => {
-            // 當伺服器通知資料變更時，重新索取資料
-            socket.emit('getGuildInfo');
+        // 🟢 監聽玩家狀態 (為了拿背包資料)
+        socket.on('playerStatsUpdate', (p) => {
+            myInventory = p.inventory || {};
+            // 如果當前在派發頁面，可能需要刷新下拉選單 (這裡暫時不自動刷，避免干擾輸入)
         });
 
-        // 🟢 1. 顯示公會列表 (未加入公會時)
+        // 🟢 自動刷新
+        socket.on('refreshGuildUI', () => { socket.emit('getGuildInfo'); });
+
+        // 1. 公會列表
         socket.on('guildListUpdate', (list) => {
             const container = document.getElementById('main-content');
             let html = `
                 <div class="info-box" style="text-align:center;">
                     <div style="margin-bottom:10px; font-size:12px; color:#f1c40f;">你尚未加入任何公會</div>
                     <div style="display:flex; gap:5px; justify-content:center;">
-                        <input type="text" id="new-guild-name" placeholder="輸入新公會名稱">
+                        <input type="text" id="new-guild-name" placeholder="輸入新公會名稱" style="width:60%">
                         <button class="btn-action btn-blue" onclick="createGuild()">建立 ($50萬)</button>
                     </div>
                 </div>
                 <div style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px;">公會列表</div>
             `;
-
             if (list.length === 0) {
                 html += '<div style="margin-top:20px; color:#7f8c8d;">暫無公會，成為第一個建立者吧！</div>';
             } else {
@@ -131,14 +148,13 @@
                                 <div class="card-info">會長: ${escapeHtml(g.leader)} | 人數: ${g.count}/50</div>
                             </div>
                             <button class="btn-action btn-green" onclick="joinGuild('${g.id}')">申請加入</button>
-                        </div>
-                    `;
+                        </div>`;
                 });
             }
             container.innerHTML = html;
         });
 
-        // 🟢 2. 顯示我的公會 (已加入時)
+        // 2. 我的公會
         socket.on('myGuildData', (data) => {
             myGuildData = data;
             renderMyGuild();
@@ -147,7 +163,8 @@
         function renderMyGuild() {
             if (!myGuildData) return;
             const container = document.getElementById('main-content');
-            
+            const isLeader = myGuildData.isLeader;
+
             // 頂部資訊
             let html = `
                 <div class="info-box">
@@ -161,51 +178,94 @@
                 </div>
 
                 <div class="tabs">
-                    <button class="tab-btn ${currentTab==='members'?'tab-active':''}" onclick="setTab('members')">成員列表</button>
-                    ${myGuildData.isLeader ? `<button class="tab-btn ${currentTab==='apply'?'tab-active':''}" onclick="setTab('apply')">入會申請 <span style="background:red; color:white; padding:1px 4px; border-radius:4px; font-size:8px;">${myGuildData.applicants.length}</span></button>` : ''}
+                    <button class="tab-btn ${currentTab==='members'?'tab-active':''}" onclick="setTab('members')">成員</button>
+                    ${isLeader ? `<button class="tab-btn ${currentTab==='distribute'?'tab-active':''}" onclick="setTab('distribute')">🎁 派發</button>` : ''}
+                    ${isLeader ? `<button class="tab-btn ${currentTab==='apply'?'tab-active':''}" onclick="setTab('apply')">審核 <span style="background:red; color:white; padding:1px 4px; border-radius:4px; font-size:8px;">${myGuildData.applicants.length}</span></button>` : ''}
                 </div>
             `;
 
-            // 內容區
+            // --- A. 成員列表 ---
             if (currentTab === 'members') {
-                html += `<div style="text-align:right; font-size:9px; color:#aaa; margin-bottom:5px;">人數: ${myGuildData.members.length}/50 (滿20人送強化石)</div>`;
+                html += `<div style="text-align:right; font-size:9px; color:#aaa; margin-bottom:5px;">人數: ${myGuildData.members.length}/50</div>`;
                 myGuildData.members.forEach(m => {
-                    // 🟢 這裡傳入的是 m.name 而不是 m.id
-                    let kickBtn = (myGuildData.isLeader && m.rank !== '會長') 
-                        ? `<button class="btn-action btn-red" onclick="kick('${escapeHtml(m.name)}')">踢出</button>` 
-                        : '';
-                    
-                    let statusTxt = m.online ? `<span style="color:#2ecc71">● 線上</span>` : `<span class="offline">○ 離線</span>`;
-                    let levelTxt = m.level === '?' ? '' : `(Lv.${m.level})`;
-
+                    let kickBtn = (isLeader && m.rank !== '會長') ? `<button class="btn-action btn-red" onclick="kick('${escapeHtml(m.name)}')">踢出</button>` : '';
+                    let statusTxt = m.online ? `<span style="color:#2ecc71">●</span>` : `<span class="offline">○</span>`;
                     html += `
                         <div class="card">
                             <div>
                                 <div class="card-name" style="color:${m.rank==='會長'?'#f1c40f':'white'}">
-                                    [${m.rank}] ${escapeHtml(m.name)} ${levelTxt}
+                                    [${m.rank}] ${escapeHtml(m.name)} (Lv.${m.level})
                                 </div>
-                                <div class="card-info">${statusTxt}</div>
+                                <div class="card-info">${statusTxt} ${m.online?'線上':'離線'}</div>
                             </div>
                             <div>${kickBtn}</div>
+                        </div>`;
+                });
+            } 
+            
+            // --- B. 派發介面 (新功能) ---
+            else if (currentTab === 'distribute' && isLeader) {
+                // 生成物品選項
+                let itemOptions = '<option value="">(不發送物品)</option>';
+                for(let k in myInventory) {
+                    let name = ITEM_NAME_MAP[k] || k;
+                    itemOptions += `<option value="${k}">${name} (剩: ${myInventory[k]})</option>`;
+                }
+
+                html += `
+                    <div style="background:#222; padding:10px; border-radius:5px; margin-bottom:10px; text-align:left;">
+                        <div style="color:#f1c40f; margin-bottom:5px; font-weight:bold;">1. 選擇獎勵 (每人獲得)</div>
+                        <div style="margin-bottom:5px;">
+                            金幣 (公會出): <input type="number" id="dist-gold" placeholder="0" style="width:80px;"> G
+                        </div>
+                        <div>
+                            物品 (會長出): <select id="dist-item">${itemOptions}</select>
+                            數量: <input type="number" id="dist-item-count" placeholder="1" style="width:50px;">
+                        </div>
+                    </div>
+
+                    <div style="color:#3498db; margin-bottom:5px; font-weight:bold; display:flex; justify-content:space-between;">
+                        <span>2. 選擇對象 (不含自己)</span>
+                        <button class="btn-action btn-blue" onclick="toggleSelectAll()">全選/取消</button>
+                    </div>
+                    
+                    <div id="dist-list">
+                `;
+
+                // 產生可勾選的會員列表 (排除會長自己)
+                let memberCount = 0;
+                myGuildData.members.forEach(m => {
+                    if (m.rank === '會長') return; // 排除自己
+                    memberCount++;
+                    html += `
+                        <div class="dist-row">
+                            <input type="checkbox" class="dist-checkbox" value="${escapeHtml(m.name)}">
+                            <span>${escapeHtml(m.name)} <span style="color:#aaa;">(Lv.${m.level})</span></span>
                         </div>
                     `;
                 });
-            } else if (currentTab === 'apply' && myGuildData.isLeader) {
+
+                if (memberCount === 0) html += '<div style="color:#aaa;">沒有其他會員可派發</div>';
+                
+                html += `</div>
+                    <button class="btn-action btn-gold" style="width:100%; padding:15px; margin-top:10px; font-size:14px;" onclick="submitDistribute()">確認派發</button>
+                `;
+            }
+
+            // --- C. 審核列表 ---
+            else if (currentTab === 'apply' && isLeader) {
                 if (myGuildData.applicants.length === 0) {
-                    html += '<div style="margin-top:20px; color:#7f8c8d;">目前沒有入會申請</div>';
+                    html += '<div style="margin-top:20px; color:#7f8c8d;">無申請</div>';
                 } else {
                     myGuildData.applicants.forEach(a => {
-                        // 🟢 這裡傳入的是 a.name
                         html += `
                             <div class="card">
                                 <div class="card-name">${escapeHtml(a.name)}</div>
-                                <div class="card-info">LV.${a.level}</div>
                                 <div>
                                     <button class="btn-action btn-green" onclick="handleApply('${escapeHtml(a.name)}', 'accept')">接受</button>
                                     <button class="btn-action btn-red" onclick="handleApply('${escapeHtml(a.name)}', 'reject')">拒絕</button>
                                 </div>
-                            </div>
-                        `;
+                            </div>`;
                     });
                 }
             }
@@ -223,24 +283,40 @@
             }
         }
 
-        function joinGuild(gid) {
-            socket.emit('joinGuildRequest', gid);
+        function joinGuild(gid) { socket.emit('joinGuildRequest', gid); }
+        function donate() { const val = document.getElementById('donate-val').value; if(val) socket.emit('donateGuild', val); }
+        function handleApply(targetName, action) { socket.emit('handleGuildApply', { targetName, action }); }
+        function kick(targetName) { if(confirm(`確定踢出 [${targetName}]？`)) socket.emit('kickGuildMember', targetName); }
+
+        // --- 🟢 派發功能邏輯 ---
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('.dist-checkbox');
+            // 檢查是否全部已勾選
+            const allChecked = Array.from(checkboxes).every(c => c.checked);
+            checkboxes.forEach(c => c.checked = !allChecked);
         }
 
-        function donate() {
-            const val = document.getElementById('donate-val').value;
-            if(val) socket.emit('donateGuild', val);
-        }
+        function submitDistribute() {
+            const checkboxes = document.querySelectorAll('.dist-checkbox:checked');
+            const targets = Array.from(checkboxes).map(c => c.value);
+            
+            if (targets.length === 0) { alert("請至少選擇一位會員！"); return; }
 
-        function handleApply(targetName, action) {
-            // 🟢 改為傳送 targetName
-            socket.emit('handleGuildApply', { targetName: targetName, action: action });
-        }
+            const gold = document.getElementById('dist-gold').value || 0;
+            const itemId = document.getElementById('dist-item').value;
+            const itemCount = document.getElementById('dist-item-count').value || 0;
 
-        function kick(targetName) {
-            if(confirm(`確定要踢出 [${targetName}] 嗎？`)) {
-                // 🟢 改為傳送 targetName
-                socket.emit('kickGuildMember', targetName);
+            if (gold == 0 && (!itemId || itemCount == 0)) {
+                alert("請輸入要派發的金幣或物品數量！"); return;
+            }
+
+            if (confirm(`確定派發給 ${targets.length} 位會員嗎？\n每人獲得: ${gold}G ${itemId ? '+ 物品' : ''}`)) {
+                socket.emit('distributeGuildRewards', {
+                    targets: targets,
+                    gold: gold,
+                    itemId: itemId,
+                    itemCount: itemCount
+                });
             }
         }
 
