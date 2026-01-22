@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Multi-Monster)</title>
+    <title>戰鬥中 (Multi-Monster Fixed)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -385,16 +385,11 @@
             }
         }
 
-        // 🟢 [修正版] AI 邏輯 (修正版)
+        // 🟢 核心：AI 邏輯 (支援自動選怪：優先打殘血)
         function autoPlayLogic() {
             if (!isAuto || !isMyTurn) return;
             
-            // 1. 安全檢查：如果怪物列表是空的，嘗試讀取 DOM
-            if (!currentMonsters || currentMonsters.length === 0) {
-                return;
-            }
-
-            // 2. 尋找目標 (優先打殘血)
+            // 1. 確保有活著的目標
             let targetIdx = -1;
             let minHp = Infinity;
 
@@ -407,18 +402,16 @@
                 }
             });
 
-            // 如果全是死怪，停止
+            // 如果找不到 (全死)，就結束
             if (targetIdx === -1) return;
 
-            // 3. 設定目標
+            // 2. 設定目標 (更新畫面選框)
             selectedTargetIndex = targetIdx;
             selectMonster(targetIdx); 
 
-            // 4. 執行自訂腳本
             if (autoMode === 'custom') { runCustomAuto(); return; }
 
-            // 5. 執行職業 AI
-            const delay = Math.random() * 600 + 600; 
+            const delay = Math.random() * 700 + 800;
             setTimeout(() => {
                 if (!isMyTurn || roomId === 'world_boss') { 
                     if(roomId === 'world_boss' && isAuto) socket.emit('worldBossAction', { type: 'attack' });
@@ -483,7 +476,6 @@
                         break;
                 }
                 
-                // 如果沒使用技能，執行普攻
                 if (!skillUsed) doNormalAttack();
 
             }, delay);
@@ -773,6 +765,7 @@
         socket.on('battleStarted', () => { 
             document.getElementById('lobby-overlay').style.display = 'none'; 
             log("戰鬥開始！"); 
+            
             // 🟢 新增：如果我是房主且開了自動，戰鬥開始時嘗試觸發
             if (isAuto && isMyTurn) {
                 setTimeout(autoPlayLogic, 1000); 
