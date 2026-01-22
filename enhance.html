@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>裝備強化 v10</title>
+    <title>裝備強化 v11</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -575,7 +575,7 @@
             const currentLv = (myData.enhancements && myData.enhancements[itemId]) || 0;
             const nextLv = currentLv + 1;
             
-            if (nextLv > 20) { alert("已達最大等級"); return false; }
+            if (nextLv > 30) { alert("已達最大等級"); return false; }
 
             const config = ENHANCE_RATES[nextLv];
             const stones = myData.inventory['enhance_stone'] || 0;
