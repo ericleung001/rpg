@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Multi-Monster Fixed)2</title>
+    <title>戰鬥中 (Multi-Monster UI Fixed)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -31,11 +31,16 @@
             padding: 10px 5px; overflow-x: auto;
         }
         
+        /* 🟢 修改：卡片樣式與寬度限制 */
         .monster-card {
             background: #f0f0d8; border: 3px solid #706870; border-radius: 6px;
-            padding: 5px; width: 30%; min-width: 80px; max-width: 120px;
+            padding: 5px; 
+            width: 30%; 
+            min-width: 95px; /* 稍微加寬以容納長數字 */
+            max-width: 130px;
             text-align: center; cursor: pointer; position: relative;
             box-shadow: 3px 3px 0 rgba(0,0,0,0.3); transition: transform 0.1s;
+            display: flex; flex-direction: column; align-items: center; /* 內容置中 */
         }
         .monster-card.selected { border-color: #f1c40f; transform: translateY(-3px); box-shadow: 0 0 10px #f1c40f; }
         .monster-card.dead { opacity: 0.5; filter: grayscale(100%); pointer-events: none; border-color: #555; }
@@ -44,7 +49,23 @@
             width: 50px; height: 50px; object-fit: contain; margin-bottom: 2px; 
             image-rendering: pixelated; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); 
         }
-        .m-info { font-size: 9px; color: #333; font-weight: bold; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* 🟢 修改：名字過長自動省略 */
+        .m-info { 
+            font-size: 9px; color: #333; font-weight: bold; margin-bottom: 2px; 
+            width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+        }
+
+        /* 🟢 新增：血量文字樣式 (防止爆框) */
+        .hp-text {
+            font-size: 7.5px; 
+            color: #333; 
+            width: 100%; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; /* 如果真的太長顯示 ... */
+            transform: scale(0.95); /* 稍微縮小 */
+        }
         
         .player-area { display: flex; flex-direction: column; justify-content: center; padding: 0 10px; width: 100%; box-sizing: border-box; gap: 4px; }
         .my-status { width: 100%; box-sizing: border-box; padding: 5px; } 
@@ -53,9 +74,9 @@
         .gba-box { background: #f0f0d8; border: 4px solid #706870; border-radius: 8px; padding: 5px; color: #383838; font-size: 10px; box-shadow: 4px 4px 0 rgba(0,0,0,0.3); }
         .mini-box { background: #ecf0f1; border: 2px solid #95a5a6; padding: 3px; font-size: 9px; color: #333; overflow: hidden; border-radius: 4px; }
         
-        .hp-bar { width: 100%; height: 8px; background: #555; border: 2px solid #333; margin-top: 3px; border-radius: 2px; }
+        .hp-bar { width: 100%; height: 6px; background: #555; border: 1px solid #333; margin: 2px 0; border-radius: 2px; overflow: hidden; }
         .hp-fill { height: 100%; background: #48c058; transition: width 0.3s; }
-        .mp-bar { width: 100%; height: 5px; background: #555; border: 2px solid #333; margin-top: 2px; border-radius: 2px; }
+        .mp-bar { width: 100%; height: 5px; background: #555; border: 1px solid #333; margin-top: 2px; border-radius: 2px; }
         .mp-fill { height: 100%; background: #3498db; transition: width 0.3s; }
 
         .mini-hp-bar { width: 100%; height: 4px; background: #555; margin-top: 2px; }
@@ -830,7 +851,7 @@
                         <div class="hp-bar" style="height:5px; margin:2px 0;">
                             <div class="hp-fill" style="width:${hpPct}%;"></div>
                         </div>
-                        <div style="font-size:8px;">${m.hp}/${m.maxHp}</div>
+                        <div class="hp-text">${m.hp}/${m.maxHp}</div>
                         ${isSelected ? '<div style="font-size:8px; color:#f1c40f;">▼ 目標</div>' : ''}
                     </div>
                 `;
