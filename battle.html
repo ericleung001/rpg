@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Multi-Monster)</title>
+    <title>戰鬥中 (Multi-Monster)2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -746,33 +746,42 @@
             renderMonsters(monsters);
         });
 
-        // 🟢 渲染怪物列表
+        // 🟢 [修正] 渲染怪物列表 (自動修正目標)
         function renderMonsters(monsters) {
             currentMonsters = monsters;
             const container = document.getElementById('monsters-container');
             container.innerHTML = '';
 
+            // 1. 檢查當前目標是否有效 (活著)
+            // 如果當前選的目標不存在，或已經死了 (hp <= 0)，就自動找下一個活著的
+            if (!currentMonsters[selectedTargetIndex] || currentMonsters[selectedTargetIndex].hp <= 0) {
+                const firstAliveIdx = currentMonsters.findIndex(m => m.hp > 0);
+                if (firstAliveIdx !== -1) {
+                    selectedTargetIndex = firstAliveIdx;
+                }
+            }
+
             monsters.forEach((m, index) => {
                 const isDead = m.hp <= 0;
-                const hpPct = Math.max(0, (m.hp / m.maxHp) * 100);
+                const hpPct = m.maxHp > 0 ? Math.max(0, (m.hp / m.maxHp) * 100) : 0; // 防除以0
                 const isSelected = (index === selectedTargetIndex);
                 
                 // 決定圖片
-                let imgSrc = `img/monsters/${m.id.split('_')[0]}.png`; // 假設 ID 格式 m_timestamp_index，這行可能要修
-                // 為了簡單，我們先用後端傳來的 monsterKey (如果有的話) 或者預設圖片
-                // 由於 monsters 陣列裡可能沒有 monsterKey 欄位 (視乎後端實作)，我們可以根據名字判斷
-                // 這裡暫時用通用圖片，或請後端在 monsters 陣列中附帶 img 欄位
+                let imgSrc = 'img/monsters/slime.png'; 
                 if (m.img) imgSrc = `img/monsters/${m.img}`;
-                else imgSrc = 'img/monsters/slime.png'; // 預設
+                
+                // 點擊事件：如果是活著的，就設定為目標
+                const clickAction = isDead ? '' : `onclick="selectMonster(${index})"`;
 
                 container.innerHTML += `
-                    <div class="monster-card ${isDead?'dead':''} ${isSelected?'selected':''}" onclick="selectMonster(${index})">
+                    <div class="monster-card ${isDead?'dead':''} ${isSelected?'selected':''}" ${clickAction}>
                         <img class="boss-sprite" src="${imgSrc}" onerror="this.src='img/monsters/slime.png'">
                         <div class="m-info">${m.name}</div>
                         <div class="hp-bar" style="height:5px; margin:2px 0;">
                             <div class="hp-fill" style="width:${hpPct}%;"></div>
                         </div>
                         <div style="font-size:8px;">${m.hp}/${m.maxHp}</div>
+                        ${isSelected ? '<div style="font-size:8px; color:#f1c40f;">▼ 目標</div>' : ''}
                     </div>
                 `;
             });
@@ -867,12 +876,16 @@
 
         function requestStart() { socket.emit('startBattle', roomId); }
         
+        // 🟢 普通攻擊與物品使用
         function act(type) {
-            if (roomId === 'world_boss') { toggle(true); socket.emit('worldBossAction', { type: 'attack' }); setTimeout(() => toggle(false), 500); }
-            else { 
+            if (roomId === 'world_boss') { 
+                toggle(true); 
+                socket.emit('worldBossAction', { type: 'attack' }); 
+                setTimeout(() => toggle(false), 500); 
+            } else { 
                 if(!isMyTurn) return; 
                 toggle(true); 
-                // 🟢 傳送選定的目標索引
+                // 必須傳送 targetIndex，否則伺服器不知道打誰
                 socket.emit('combatAction', { roomId, type, targetIndex: selectedTargetIndex }); 
             }
         }
