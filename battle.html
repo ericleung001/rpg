@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Multi-Monster)2</title>
+    <title>戰鬥中 (Multi-Monster)3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -388,24 +388,35 @@
             }
         }
 
-        // 🟢 核心：AI 邏輯 (支援自動選怪)
+        // 🟢 核心：AI 邏輯 (支援自動選怪：優先打殘血)
         function autoPlayLogic() {
             if (!isAuto || !isMyTurn) return;
             
-            // 找出一個活著的目標 (優先打當前選擇的，如果死了就找第一個)
-            let targetIdx = selectedTargetIndex;
-            if (!currentMonsters[targetIdx] || currentMonsters[targetIdx].hp <= 0) {
-                targetIdx = currentMonsters.findIndex(m => m.hp > 0);
-            }
-            if (targetIdx === -1) return; // 怪全死
+            // 策略：找出活著的怪物中，血量最少的一隻
+            let targetIdx = -1;
+            let minHp = Infinity;
 
-            // 更新選定目標，讓 UI 也跟著變
+            currentMonsters.forEach((m, idx) => {
+                if (m.hp > 0) {
+                    if (m.hp < minHp) {
+                        minHp = m.hp;
+                        targetIdx = idx;
+                    }
+                }
+            });
+
+            // 如果找不到 (全死)，就結束
+            if (targetIdx === -1) return;
+
+            // 更新選定目標 (這樣畫面上的框框也會跟著跳過去)
+            selectedTargetIndex = targetIdx;
             selectMonster(targetIdx); 
 
             if (autoMode === 'custom') { runCustomAuto(); return; }
 
             const delay = Math.random() * 700 + 800;
             setTimeout(() => {
+                // 再次確認狀態 (防止延遲期間戰鬥結束)
                 if (!isMyTurn || roomId === 'world_boss') { 
                     if(roomId === 'world_boss' && isAuto) socket.emit('worldBossAction', { type: 'attack' });
                     return; 
