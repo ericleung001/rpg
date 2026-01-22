@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Multi-Monster)5</title>
+    <title>戰鬥中 (Multi-Monster)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -16,7 +16,7 @@
             width: 100%; max-width: 640px; height: 100%; 
             background: linear-gradient(135deg, #a8c0b0 50%, #789080 50%); 
             border: 4px solid #2c3e50; 
-            display: grid; grid-template-rows: 35px 30px 1.2fr 0.8fr 1.8fr; /* 調整高度比例 */
+            display: grid; grid-template-rows: 35px 30px 1.2fr 0.8fr 1.8fr;
             position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.5); border-radius: 8px;
         }
         #turn-bar { background: #333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; border-bottom: 4px solid #000; letter-spacing: 1px;}
@@ -26,7 +26,6 @@
             padding: 0 10px; font-size: 10px; border-bottom: 2px solid #555;
         }
 
-        /* 🟢 修改：怪物容器 (支援多怪) */
         .monsters-container {
             display: flex; justify-content: center; align-items: center; gap: 8px;
             padding: 10px 5px; overflow-x: auto;
@@ -130,7 +129,6 @@
 
         #countdown-timer { position: absolute; top: 10px; right: 10px; color: #e74c3c; font-size: 10px; font-weight: bold; display: none; background: rgba(0,0,0,0.7); padding: 5px; border-radius: 4px; }
 
-        /* 自訂設定面板 (保留) */
         #config-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.95); z-index: 10000; flex-direction: column; padding: 20px; box-sizing: border-box;
@@ -233,7 +231,7 @@
         </div>
         
         <div class="monsters-container" id="monsters-container">
-            </div>
+        </div>
         
         <div class="player-area">
             <div class="gba-box my-status">
@@ -297,10 +295,9 @@
         let healerAttackCounter = 0; 
 
         // 🟢 多怪相關變數
-        let currentMonsters = []; // 存儲目前所有怪物的資料
-        let selectedTargetIndex = 0; // 玩家當前選定的目標 (預設第一個)
+        let currentMonsters = []; 
+        let selectedTargetIndex = 0; 
 
-        // 自訂模式設定
         let autoConfig = {
             triggers: [
                 { type: 'hp_self', val: 30, actionType: 'item', actionId: 'potion_mid' }
@@ -388,12 +385,16 @@
             }
         }
 
-        // 🟢 核心：AI 邏輯 (支援自動選怪：優先打殘血)
-        // 🟢 [修正] AI 邏輯
+        // 🟢 [修正版] AI 邏輯 (修正版)
         function autoPlayLogic() {
             if (!isAuto || !isMyTurn) return;
             
-            // 1. 確保有活著的目標
+            // 1. 安全檢查：如果怪物列表是空的，嘗試讀取 DOM
+            if (!currentMonsters || currentMonsters.length === 0) {
+                return;
+            }
+
+            // 2. 尋找目標 (優先打殘血)
             let targetIdx = -1;
             let minHp = Infinity;
 
@@ -406,48 +407,26 @@
                 }
             });
 
-            if (targetIdx === -1) return; // 全死
-
-            // 2. 設定目標
-            selectedTargetIndex = targetIdx;
-            selectMonster(targetIdx); 
-
-            if (autoMode === 'custom') { runCustomAuto(); return; }
-
-            const delay = Math.random() * 600 + 600;
-            setTimeout(() => {
-                if (!isMyTurn || roomId === 'world_boss') return;
-
-                // [重要] 再次校正目標 (防止延遲期間怪被打死)
-                validateTarget();
-
-                // ... (中間的職業判斷邏輯保持不變) ...
-                // 直接跳到最後的執行部分
-                
-                // 這裡原本是 switch case ...
-                // 為了節省篇幅，請保留你原本 switch (autoMode) 的內容
-                
-                // 執行普攻
-                doNormalAttack();
-            }, delay);
-        }
-
-            // 如果找不到 (全死)，就結束
+            // 如果全是死怪，停止
             if (targetIdx === -1) return;
 
-            // 更新選定目標 (這樣畫面上的框框也會跟著跳過去)
+            // 3. 設定目標
             selectedTargetIndex = targetIdx;
             selectMonster(targetIdx); 
 
+            // 4. 執行自訂腳本
             if (autoMode === 'custom') { runCustomAuto(); return; }
 
-            const delay = Math.random() * 700 + 800;
+            // 5. 執行職業 AI
+            const delay = Math.random() * 600 + 600; 
             setTimeout(() => {
-                // 再次確認狀態 (防止延遲期間戰鬥結束)
                 if (!isMyTurn || roomId === 'world_boss') { 
                     if(roomId === 'world_boss' && isAuto) socket.emit('worldBossAction', { type: 'attack' });
                     return; 
                 }
+
+                // [重要] 再次校正目標 (防止延遲期間怪被打死)
+                validateTarget();
 
                 document.getElementById('current-action-disp').innerText = `AI: ${autoMode}`;
                 const myHpPct = (myPlayer.hp / myPlayer.maxHp) * 100;
@@ -465,6 +444,7 @@
                 }
 
                 // [2] 職業行為
+                let skillUsed = false;
                 switch (autoMode) {
                     case 'heal':
                         const teamEmergency = allPlayers.some(p => p.id !== myPlayer.id && (p.hp / p.maxHp) < 0.5);
@@ -498,11 +478,14 @@
                     case 'atk':
                     default:
                         for (let skill of SKILL_PRIORITY.atk) {
-                            if (attemptSkill(skill)) return;
+                            if (attemptSkill(skill)) { skillUsed = true; break; }
                         }
                         break;
                 }
-                doNormalAttack();
+                
+                // 如果沒使用技能，執行普攻
+                if (!skillUsed) doNormalAttack();
+
             }, delay);
         }
 
@@ -510,6 +493,9 @@
             const delay = Math.random() * 500 + 500; 
             setTimeout(() => {
                 if (!isMyTurn || roomId === 'world_boss') return;
+                
+                validateTarget(); // 校正目標
+
                 const myHpPct = (myPlayer.hp / myPlayer.maxHp) * 100;
                 const myMpPct = (myPlayer.mp / myPlayer.maxMp) * 100;
                 document.getElementById('current-action-disp').innerText = "腳本執行中...";
@@ -615,6 +601,19 @@
 
         function hasItem(id) { return myPlayer.inventory && myPlayer.inventory[id] > 0; }
 
+        // 🟢 [新增] 驗證並修正目標 (防呆)
+        function validateTarget() {
+            if (!currentMonsters || currentMonsters.length === 0) return;
+            // 檢查當前目標是否有效
+            if (!currentMonsters[selectedTargetIndex] || currentMonsters[selectedTargetIndex].hp <= 0) {
+                const firstAlive = currentMonsters.findIndex(m => m.hp > 0);
+                if (firstAlive !== -1) {
+                    selectedTargetIndex = firstAlive;
+                    renderMonsters(currentMonsters); 
+                }
+            }
+        }
+
         window.kickPlayer = function(targetId) {
             if (!targetId) return;
             if (confirm("確定要將此玩家踢出房間嗎？")) {
@@ -698,7 +697,6 @@
 
         socket.on('worldBossSync', (data) => {
             if (!data.active) { showMsg("BOSS 已被擊敗！"); setTimeout(() => window.location.href = 'hub.html', 3000); return; }
-            // Boss 戰不需要多怪介面，這裡我們手動造一個單怪列表
             renderMonsters([{ 
                 id: 'boss', name: data.name, hp: data.hp, maxHp: data.maxHp, level: 999, img: 'entropy_god.png' 
             }]);
@@ -749,8 +747,6 @@
                     }, 1000);
                 }
             } else { 
-                // 這裡我們暫時只在 waiting 時更新第一隻怪的預覽 (如果需要)
-                // 實際戰鬥會依賴 monstersUpdate
                 overlay.style.display = 'flex'; 
                 if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
                 document.getElementById('countdown-timer').style.display = 'none';
@@ -777,7 +773,6 @@
         socket.on('battleStarted', () => { 
             document.getElementById('lobby-overlay').style.display = 'none'; 
             log("戰鬥開始！"); 
-            
             // 🟢 新增：如果我是房主且開了自動，戰鬥開始時嘗試觸發
             if (isAuto && isMyTurn) {
                 setTimeout(autoPlayLogic, 1000); 
@@ -789,14 +784,13 @@
             renderMonsters(monsters);
         });
 
-        // 🟢 [修正] 渲染怪物列表 (自動修正目標)
+        // 🟢 [修正] 渲染怪物列表
         function renderMonsters(monsters) {
             currentMonsters = monsters;
             const container = document.getElementById('monsters-container');
             container.innerHTML = '';
 
-            // 1. 檢查當前目標是否有效 (活著)
-            // 如果當前選的目標不存在，或已經死了 (hp <= 0)，就自動找下一個活著的
+            // 1. 檢查當前目標是否有效
             if (!currentMonsters[selectedTargetIndex] || currentMonsters[selectedTargetIndex].hp <= 0) {
                 const firstAliveIdx = currentMonsters.findIndex(m => m.hp > 0);
                 if (firstAliveIdx !== -1) {
@@ -806,14 +800,12 @@
 
             monsters.forEach((m, index) => {
                 const isDead = m.hp <= 0;
-                const hpPct = m.maxHp > 0 ? Math.max(0, (m.hp / m.maxHp) * 100) : 0; // 防除以0
+                const hpPct = m.maxHp > 0 ? Math.max(0, (m.hp / m.maxHp) * 100) : 0; 
                 const isSelected = (index === selectedTargetIndex);
                 
-                // 決定圖片
                 let imgSrc = 'img/monsters/slime.png'; 
                 if (m.img) imgSrc = `img/monsters/${m.img}`;
                 
-                // 點擊事件：如果是活著的，就設定為目標
                 const clickAction = isDead ? '' : `onclick="selectMonster(${index})"`;
 
                 container.innerHTML += `
@@ -834,7 +826,7 @@
         function selectMonster(index) {
             if (currentMonsters[index] && currentMonsters[index].hp > 0) {
                 selectedTargetIndex = index;
-                renderMonsters(currentMonsters); // 重繪以顯示選中框
+                renderMonsters(currentMonsters); 
             }
         }
 
@@ -847,17 +839,17 @@
                 isMyTurn = false; 
                 bar.innerText = `⚠️ ${data.name} 回合...`; 
                 bar.style.background = "#c0392b"; 
-                toggle(true); // 鎖定
+                toggle(true); 
             }
             else if (data.currentId === socket.id) { 
                 isMyTurn = true; 
                 bar.innerText = "⚔️ 你的回合"; 
                 bar.style.background = "#2ecc71"; 
                 
-                // 🟢 強制解鎖按鈕 (防止上一回合卡住)
+                // 🟢 強制解鎖按鈕
                 toggle(false); 
                 
-                // 自動修正目標 (防止選到死怪)
+                // 自動修正目標
                 validateTarget();
 
                 if (isAuto) autoPlayLogic(); 
@@ -935,7 +927,7 @@
 
         function requestStart() { socket.emit('startBattle', roomId); }
         
-        // 🟢 普通攻擊與物品使用
+        // 🟢 [修正] 普通攻擊與物品使用
         function act(type) {
             if (roomId === 'world_boss') { 
                 toggle(true); 
@@ -944,8 +936,12 @@
             } else { 
                 if(!isMyTurn) return; 
                 toggle(true); 
-                // 必須傳送 targetIndex，否則伺服器不知道打誰
-                socket.emit('combatAction', { roomId, type, targetIndex: selectedTargetIndex }); 
+                // 🟢 傳送 targetIndex
+                socket.emit('combatAction', { 
+                    roomId, 
+                    type, 
+                    targetIndex: selectedTargetIndex 
+                }); 
             }
         }
 
@@ -1009,7 +1005,6 @@
             const info = SKILL_INFO[skillId];
             if (info && myPlayer.mp < info.mp) { showMsg("MP 不足！"); return; }
             
-            // 處理快捷鍵邏輯 (保持不變)
             const existingIndex = myShortcuts.indexOf(skillId);
             if (existingIndex === -1) {
                 myShortcuts.unshift(skillId);
@@ -1019,15 +1014,12 @@
             }
 
             if (roomId === 'world_boss') { 
-                toggle(true); 
-                socket.emit('worldBossAction', { type: 'skill', skillId: skillId }); 
-                setTimeout(() => toggle(false), 500); 
+                toggle(true); socket.emit('worldBossAction', { type: 'skill', skillId: skillId }); setTimeout(() => toggle(false), 500); 
             } else { 
                 if(!isMyTurn) return; 
                 toggle(true); 
                 
                 // 🟢 關鍵修正：必須傳送 targetIndex
-                // 如果是自身 Buff 或全體技，後端會忽略這個參數，所以傳了也沒關係
                 socket.emit('combatAction', { 
                     roomId, 
                     type: 'skill', 
@@ -1134,21 +1126,6 @@
                 });
             }
             return html;
-        }
-
-        // 🟢 [新增] 驗證並修正目標
-        function validateTarget() {
-            if (!currentMonsters || currentMonsters.length === 0) return;
-
-            // 檢查當前目標是否有效
-            if (!currentMonsters[selectedTargetIndex] || currentMonsters[selectedTargetIndex].hp <= 0) {
-                // 找第一隻活著的
-                const firstAlive = currentMonsters.findIndex(m => m.hp > 0);
-                if (firstAlive !== -1) {
-                    selectedTargetIndex = firstAlive;
-                    renderMonsters(currentMonsters); // 重繪 UI
-                }
-            }
         }
         function addTrigger() { autoConfig.triggers.push({ type: 'hp_self', val: 50, actionType: 'item', actionId: 'potion_mid' }); renderTriggerList(); }
         function delTrigger(i) { autoConfig.triggers.splice(i, 1); renderTriggerList(); }
