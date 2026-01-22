@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>裝備強化 v11</title>
+    <title>裝備強化 v13 (Lv.30 Cap)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -113,7 +113,7 @@
         .hammer { font-size: 80px; animation: hit 0.5s infinite; }
         @keyframes hit { 0% { transform: rotate(0deg); } 50% { transform: rotate(-45deg); } 100% { transform: rotate(0deg); } }
 
-        /* 🟢 防爆石 Checkbox 樣式 */
+        /* 防爆石 Checkbox 樣式 */
         .safe-stone-box {
             margin: 10px 0; padding: 8px; 
             border: 1px solid #555; border-radius: 5px; 
@@ -224,7 +224,7 @@
                         失敗風險: <span id="risk-txt" class="risk-safe">無</span>
                     </div>
 
-                    <div class="safe-stone-box">
+                    <div id="safe-stone-area" class="safe-stone-box">
                         <label class="safe-stone-label">
                             <input type="checkbox" id="use-safe-stone">
                             <span>使用防爆石 (必過)</span>
@@ -259,9 +259,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -294,7 +294,7 @@
             'ring_lord': '領主指環', 'crown_chaos': '混沌之冠', 'ring_galaxy': '銀河指環',
             'ring_life': '生命護符', 'ring_magic': '魔力耳環', 'dimension_ring': '維度指環',
 
-            // 🟢 Lv.450 - 500 新裝備 (補上)
+            // Lv.450 - 500 新裝備
             'infinity_blade': '無限之刃',
             'event_horizon': '視界戰甲',
             'mobius_ring': '莫比烏斯環',
@@ -360,7 +360,7 @@
 
             // 處理連強邏輯
             if (remainingAutoCount > 0) {
-                if (res.broken || (res.success && res.lv >= 20)) {
+                if (res.broken || (res.success && res.lv >= 30)) { // 如果碎了或滿級，停止連強
                     stopAutoEnhance("強化中止");
                 } else {
                     remainingAutoCount--;
@@ -383,7 +383,7 @@
                 document.getElementById('enhance-info').style.display = 'none';
                 selectedEnhanceSlot = null;
                 document.querySelectorAll('.slot-btn').forEach(el => el.classList.remove('selected'));
-                isProcessing = false;
+                isProcessing = false; 
                 unlockAllButtons();
             }
         });
@@ -479,13 +479,14 @@
             const currentLv = (myData.enhancements && myData.enhancements[itemId]) || 0;
             const nextLv = currentLv + 1;
 
-            if (nextLv > 20) {
+            if (nextLv > 30) {
                 document.getElementById('enhance-info').style.display = 'block';
                 document.getElementById('target-name').innerText = (ITEM_MAP[itemId] || itemId) + " (MAX)";
                 document.querySelector('.btn-group').style.display = 'none';
+                document.getElementById('safe-stone-area').style.display = 'none';
                 return;
             } else {
-                document.querySelector('.btn-group').style.display = 'grid'; // Grid layout
+                document.querySelector('.btn-group').style.display = 'grid'; 
             }
 
             const config = ENHANCE_RATES[nextLv];
@@ -495,7 +496,12 @@
             
             document.getElementById('cur-lv').innerText = `+${currentLv}`;
             document.getElementById('next-lv').innerText = `+${nextLv}`;
-            document.getElementById('rate-txt').innerText = `${config.rate}%`;
+            
+            // 🟢 [顯示] 計算顯示的機率 (處理極小數值)
+            let displayRate = (config.rate * 100);
+            let rateString = displayRate < 0.01 ? displayRate.toFixed(4) : (displayRate < 1 ? displayRate.toFixed(2) : Math.floor(displayRate));
+            
+            document.getElementById('rate-txt').innerText = `${rateString}%`;
             document.getElementById('cost-txt').innerText = config.cost.toLocaleString() + " G";
             
             const riskEl = document.getElementById('risk-txt');
@@ -506,6 +512,17 @@
                 riskEl.innerText = "危險 (失敗降級)"; riskEl.classList.add("risk-drop");
             } else {
                 riskEl.innerText = "極度危險 (失敗裝備消失)"; riskEl.classList.add("risk-break");
+            }
+
+            // 🟢 檢查是否隱藏防爆石選項 (Lv.26 以上隱藏)
+            const safeStoneArea = document.getElementById('safe-stone-area');
+            const safeStoneCheckbox = document.getElementById('use-safe-stone');
+
+            if (nextLv > 25) {
+                safeStoneArea.style.display = 'none'; // 隱藏
+                safeStoneCheckbox.checked = false; // 強制取消勾選
+            } else {
+                safeStoneArea.style.display = 'flex'; // 顯示
             }
         }
 
