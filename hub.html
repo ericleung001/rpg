@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會V3</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -310,13 +310,24 @@
 
     <div id="notice-modal">
         <div class="notice-box">
-            <div class="notice-title">v3.1 更新公告</div>
+            <div class="notice-title">v3.2 更新公告</div>
             <div class="notice-content">
 
 <b style="color:#f1c40f;">DC Group</b>
 <a href="https://discord.gg/krQpB5Zu" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">如有問題可到這到查詢</a>
 ***由於大量購買彩票令Server負荷太重, 暫時限制每人每日10條***
 <b style="color:#e74c3c;">【奇點降臨 & 便利性優化】</b>
+<b style="color:#f1c40f;">🏰 1. 自家公會系統</b>
+- <b>💬 公會聊天室</b>：新增公會專屬頻道，即時交流戰術！(顯示最近20條)
+- <b>📢 會長公告</b>：會長可編輯置頂公告，發布重要消息。
+- <b>🎁 福利派發</b>：會長現在可以將<b>公會資金</b>或<b>背包物品</b>，批量派發給指定會員！
+
+<b style="color:#2ecc71;">💰 2. 每日福利</b>
+- <b>人多勢眾</b>：公會成員達 20 人，全員每日登入送 <b>[強化石 x1]</b>。
+- <b>資本紅利</b>：公會資金達 5億，全員每日享 <b>[10% 利息]</b> (本金上限10億)。
+**例子:A玩家本金：$10,000, 每日發放$1,000利息***
+
+
 <b style="color:#2ecc71;">【📜 每日任務系統】</b>
 - <b>隨機刷新</b>：每日 00:00 隨機指派 5 個任務，不再單調！
 - <b>全新類型</b>：新增「等級挑戰」、「物品達人」、「BOSS 討伐」。
@@ -496,7 +507,7 @@
                         📜 每日任務
                     </div>
                     <div class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;" onclick="window.location.href='guild.html'">
-    🏰 公會
+    🏰 創造自家公會
 </div>
                 </div>
 
@@ -590,7 +601,7 @@
             'potion_mp': '魔力藥水',
             'potion_mid': '中級藥水',
             'scroll_exp': '經驗卷軸',
-            'lucky_bag': '幸運福袋',
+            'lucky_bag': '奇蹟福袋',
             'enhance_stone': '強化石',
             'elixir': '萬能藥',
             'gem_atk': '攻擊寶石',
@@ -665,7 +676,10 @@
             // --- 終焉奇點材料 ---
             'quantum_residue': '量子殘渣',
             'multiverse_shard': '多元宇宙碎片',
-            'divinity_core': '創世神格'
+            'divinity_core': '創世神格',
+'singularity_weapon':'奇點·萬象崩壞',
+'void_reaper':"虛空收割者",
+'demon_armor':"惡魔戰甲"
         };
         
         socket.on('dailyQuestData', (data) => {
@@ -1112,7 +1126,7 @@
 
         socket.on('roomJoined', (data) => { 
             const roomId = data.roomId || data; 
-            window.location.href = `battle3.html?room=${roomId}`; 
+            window.location.href = `battle4.html?room=${roomId}`; 
         });
         
         // 🟢 [優化] 錯誤訊息處理 (區分 "錯誤" 與 "系統通知")
