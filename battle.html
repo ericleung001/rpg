@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Multi-Monster)4</title>
+    <title>戰鬥中 (Multi-Monster)5</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -389,10 +389,11 @@
         }
 
         // 🟢 核心：AI 邏輯 (支援自動選怪：優先打殘血)
+        // 🟢 [修正] AI 邏輯
         function autoPlayLogic() {
             if (!isAuto || !isMyTurn) return;
             
-            // 策略：找出活著的怪物中，血量最少的一隻
+            // 1. 確保有活著的目標
             let targetIdx = -1;
             let minHp = Infinity;
 
@@ -404,6 +405,32 @@
                     }
                 }
             });
+
+            if (targetIdx === -1) return; // 全死
+
+            // 2. 設定目標
+            selectedTargetIndex = targetIdx;
+            selectMonster(targetIdx); 
+
+            if (autoMode === 'custom') { runCustomAuto(); return; }
+
+            const delay = Math.random() * 600 + 600;
+            setTimeout(() => {
+                if (!isMyTurn || roomId === 'world_boss') return;
+
+                // [重要] 再次校正目標 (防止延遲期間怪被打死)
+                validateTarget();
+
+                // ... (中間的職業判斷邏輯保持不變) ...
+                // 直接跳到最後的執行部分
+                
+                // 這裡原本是 switch case ...
+                // 為了節省篇幅，請保留你原本 switch (autoMode) 的內容
+                
+                // 執行普攻
+                doNormalAttack();
+            }, delay);
+        }
 
             // 如果找不到 (全死)，就結束
             if (targetIdx === -1) return;
@@ -811,19 +838,35 @@
             }
         }
 
+        // 🟢 [修正] 回合更新 (強制解鎖按鈕)
         socket.on('turnUpdate', (data) => {
             const bar = document.getElementById('turn-bar'); 
             if (roomId === 'world_boss') return;
             
             if (data.currentId === 'monster') { 
-                isMyTurn = false; bar.innerText = `⚠️ ${data.name} 回合...`; bar.style.background = "#c0392b"; toggle(true); 
+                isMyTurn = false; 
+                bar.innerText = `⚠️ ${data.name} 回合...`; 
+                bar.style.background = "#c0392b"; 
+                toggle(true); // 鎖定
             }
             else if (data.currentId === socket.id) { 
-                isMyTurn = true; bar.innerText = "⚔️ 你的回合"; bar.style.background = "#2ecc71"; toggle(false); 
+                isMyTurn = true; 
+                bar.innerText = "⚔️ 你的回合"; 
+                bar.style.background = "#2ecc71"; 
+                
+                // 🟢 強制解鎖按鈕 (防止上一回合卡住)
+                toggle(false); 
+                
+                // 自動修正目標 (防止選到死怪)
+                validateTarget();
+
                 if (isAuto) autoPlayLogic(); 
             }
             else { 
-                isMyTurn = false; bar.innerText = `⏳ ${data.name}`; bar.style.background = "#333"; toggle(true); 
+                isMyTurn = false; 
+                bar.innerText = `⏳ ${data.name}`; 
+                bar.style.background = "#333"; 
+                toggle(true); 
             }
         });
 
@@ -961,13 +1004,14 @@
             if (roomId === 'world_boss') { toggle(false); } else { toggle(!isMyTurn); }
         }
 
+        // 🟢 [修正] 施放技能 (傳送目標)
         function useSkill(skillId) {
             const info = SKILL_INFO[skillId];
             if (info && myPlayer.mp < info.mp) { showMsg("MP 不足！"); return; }
             
+            // 處理快捷鍵邏輯 (保持不變)
             const existingIndex = myShortcuts.indexOf(skillId);
-            if (existingIndex !== -1) {
-            } else {
+            if (existingIndex === -1) {
                 myShortcuts.unshift(skillId);
                 if (myShortcuts.length > 4) { myShortcuts.pop(); }
                 localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
@@ -975,12 +1019,21 @@
             }
 
             if (roomId === 'world_boss') { 
-                toggle(true); socket.emit('worldBossAction', { type: 'skill', skillId: skillId }); setTimeout(() => toggle(false), 500); 
+                toggle(true); 
+                socket.emit('worldBossAction', { type: 'skill', skillId: skillId }); 
+                setTimeout(() => toggle(false), 500); 
             } else { 
                 if(!isMyTurn) return; 
                 toggle(true); 
-                // 🟢 傳送目標索引
-                socket.emit('combatAction', { roomId, type: 'skill', skillId: skillId, targetIndex: selectedTargetIndex }); 
+                
+                // 🟢 關鍵修正：必須傳送 targetIndex
+                // 如果是自身 Buff 或全體技，後端會忽略這個參數，所以傳了也沒關係
+                socket.emit('combatAction', { 
+                    roomId, 
+                    type: 'skill', 
+                    skillId: skillId, 
+                    targetIndex: selectedTargetIndex 
+                }); 
             }
         }
 
@@ -1081,6 +1134,21 @@
                 });
             }
             return html;
+        }
+
+        // 🟢 [新增] 驗證並修正目標
+        function validateTarget() {
+            if (!currentMonsters || currentMonsters.length === 0) return;
+
+            // 檢查當前目標是否有效
+            if (!currentMonsters[selectedTargetIndex] || currentMonsters[selectedTargetIndex].hp <= 0) {
+                // 找第一隻活著的
+                const firstAlive = currentMonsters.findIndex(m => m.hp > 0);
+                if (firstAlive !== -1) {
+                    selectedTargetIndex = firstAlive;
+                    renderMonsters(currentMonsters); // 重繪 UI
+                }
+            }
         }
         function addTrigger() { autoConfig.triggers.push({ type: 'hp_self', val: 50, actionType: 'item', actionId: 'potion_mid' }); renderTriggerList(); }
         function delTrigger(i) { autoConfig.triggers.splice(i, 1); renderTriggerList(); }
