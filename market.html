@@ -44,10 +44,8 @@
         .btn { padding: 8px 12px; font-family: inherit; font-size: 10px; cursor: pointer; border: 2px solid #27ae60; background: #2ecc71; color: white; border-radius: 6px; font-weight: bold; text-shadow: 1px 1px 0 rgba(0,0,0,0.2);}
         .btn:active { transform: translateY(2px); filter: brightness(0.9); }
         
-        /* 售罄樣式 */
         .sold-out { background: #95a5a6 !important; border-color: #7f8c8d !important; cursor: not-allowed; }
 
-        /* 限量標籤 */
         .limit-tag {
             background: #e74c3c; color: white; font-size: 8px; 
             padding: 2px 5px; border-radius: 4px; margin-left: 5px;
@@ -59,14 +57,37 @@
         #game-toast {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f;
-            color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999;
+            color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 20000;
             font-size: 14px; font-weight: bold; white-space: nowrap;
             transition: top 0.5s ease-in-out; box-shadow: 0 5px 15px rgba(0,0,0,0.5); pointer-events: none; 
         }
+
+        #bulk-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 30000; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid #fff; border-top: 4px solid #f1c40f;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div id="game-toast"></div>
+    
+    <div id="bulk-overlay">
+        <div class="spinner"></div>
+        <div id="bulk-text" style="color:white; margin-top:20px; font-size:14px; line-height: 1.6;">
+            正在處理...<br>
+            <span style="color:#e74c3c; font-weight:bold; font-size:12px;">⚠️ 請勿關閉視窗或上一頁！</span>
+        </div>
+    </div>
+
     <div class="header">
         <h1>🛒 道具屋</h1>
         <div class="gold-display">💰 <span id="my-gold">...</span> G</div>
@@ -84,56 +105,44 @@
     </div>
     <a href="hub.html" class="back-btn">◀ 返回大廳</a>
 
-    <script src="socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
-        // 🟢 道具屋列表 (含分類與限量標記)
         const SHOP_ITEMS = [
-            // === 🧧 特殊商品 ===
-            { id: 'lucky_bag', name: "🧧 奇蹟福袋", cost: 1000000000, desc: "隨機開出價值連城的稀有材料！", type: 'consumable', isLimited: true },
-            
-            // 🟢 [新增] 強化石 (放在消耗品類)
-            { id: 'enhance_stone', name: "強化石", cost: 500000, desc: "用於強化裝備 (成功率+)", type: 'consumable' },
-
-            // === 消耗品 ===
+            { id: 'safe_stone', name: "防爆石", cost: 5000000000, desc: "強化失敗不掉級，且必定成功！", type: 'consumable' },
+            { id: 'enhance_stone', name: "強化石", cost: 50000, desc: "用於強化裝備 (成功率+)", type: 'consumable' },
             { id: 'potion_hp', name: "小紅藥水", cost: 50, desc: "恢復 50 HP", type: 'consumable' },
             { id: 'potion_mid', name: "中紅藥水", cost: 200, desc: "恢復 500 HP", type: 'consumable' },
             { id: 'potion_high', name: "大紅藥水", cost: 600, desc: "恢復 2000 HP", type: 'consumable' }, 
             { id: 'potion_max', name: "特級秘藥", cost: 5000, desc: "恢復 10000 HP", type: 'consumable' },
             { id: 'elixir', name: "神之甘露", cost: 20000, desc: "恢復 50000 HP", type: 'consumable' },
-
             { id: 'potion_mp', name: "小藍藥水", cost: 80, desc: "恢復 30 MP", type: 'consumable' },
             { id: 'potion_mp_mid', name: "中藍藥水", cost: 200, desc: "恢復 100 MP", type: 'consumable' }, 
             { id: 'potion_mp_high', name: "大藍藥水", cost: 600, desc: "恢復 500 MP", type: 'consumable' }, 
-            
-            // === 料理 ===
             { id: 'grilled_carp', name: "烤鯉魚", cost: 30, desc: "HP+100", type: 'consumable' },
             { id: 'salmon_sushi', name: "鮭魚壽司", cost: 50, desc: "MP+50", type: 'consumable' },
             { id: 'tuna_steak', name: "煎鮪魚排", cost: 200, desc: "HP+500", type: 'consumable' },
             { id: 'eel_rice', name: "鰻魚飯", cost: 300, desc: "HP+300, MP+100", type: 'consumable' },
             { id: 'void_soup', name: "虛空海鮮湯", cost: 1000000, desc: "HP/MP 全滿", type: 'consumable' },
-            
-            // === 裝備 ===
             { id: 'wood_sword', name: "木劍", cost: 100, desc: "ATK+10", type: 'equipment' },
             { id: 'copper_dagger', name: "銅匕首", cost: 400, desc: "ATK+20", type: 'equipment' }, 
             { id: 'iron_sword', name: "鐵劍", cost: 1500, desc: "ATK+60", type: 'equipment' }, 
             { id: 'silver_blade', name: "銀刃", cost: 4000, desc: "ATK+100", type: 'equipment' }, 
-
             { id: 'cloth_armor', name: "布衣", cost: 100, desc: "DEF+5", type: 'equipment' },
             { id: 'leather_armor', name: "皮甲", cost: 400, desc: "DEF+15", type: 'equipment' }, 
             { id: 'chain_mail', name: "鎖子甲", cost: 1500, desc: "DEF+40", type: 'equipment' }, 
             { id: 'iron_armor', name: "鐵盔甲", cost: 4000, desc: "DEF+100", type: 'equipment' }, 
-
             { id: 'oak_bow', name: "橡木弓", cost: 200, desc: "ATK+25 (採集)", type: 'equipment' },
             { id: 'maple_staff', name: "楓木法杖", cost: 500, desc: "ATK+50 (採集)", type: 'equipment' },
-
-            // === 飾品 ===
             { id: 'ring_str', name: "力量戒指", cost: 3000, desc: "ATK+30", type: 'accessory' },
             { id: 'bracelet_def', name: "堅毅手環", cost: 3000, desc: "DEF+30", type: 'accessory' }, 
             { id: 'necklace_hp', name: "紅水晶項鍊", cost: 5000, desc: "HP+250", type: 'accessory' }, 
@@ -141,23 +150,34 @@ const socket = io('https://mmo.ttctv-105.cc', {
         ];
 
         let currentFilter = 'all';
-        let currentStock = { 'lucky_bag': 0 }; // 🟢 本地庫存
+        let currentStock = { 'lucky_bag': 0 };
+        let isBulkBuying = false;
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
-        socket.on('playerStatsUpdate', (p) => { document.getElementById('my-gold').innerText = p.gold; });
-        socket.on('buyResult', (res) => { showMsg(res.message); });
-        socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
-
-        // 🟢 監聽庫存更新
-        socket.on('stockUpdate', (data) => {
-            currentStock[data.itemId] = data.count;
-            renderShop(); // 庫存變動時刷新介面
+        socket.on('playerStatsUpdate', (p) => { document.getElementById('my-gold').innerText = p.gold.toLocaleString(); });
+        socket.on('buyResult', (res) => { 
+            if(!isBulkBuying) showMsg(res.message); 
+        });
+        
+        socket.on('errorMessage', (msg) => { 
+            if(isBulkBuying) {
+                // 不做任何事，讓 setInterval 裡面的金幣檢查去停
+            } else {
+                showMsg("❌ " + msg); 
+            }
         });
 
-        // 初始化渲染
+        socket.on('stockUpdate', (data) => {
+            currentStock[data.itemId] = data.count;
+            renderShop();
+        });
+
         renderShop();
 
-        // 🟢 切換分類函數
+        window.onbeforeunload = function() {
+            if (isBulkBuying) return "正在批量購買中，確定要離開嗎？";
+        };
+
         function filterShop(type) {
             currentFilter = type;
             document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
@@ -165,7 +185,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             renderShop();
         }
 
-        // 🟢 渲染列表函數 (含庫存邏輯)
         function renderShop() {
             const list = document.getElementById('shop-list');
             list.innerHTML = '';
@@ -184,7 +203,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 const div = document.createElement('div');
                 div.className = 'item-card';
 
-                // 🟢 處理限量顯示
                 let stockHtml = '';
                 let btnDisabled = false;
                 let btnText = '購買';
@@ -225,13 +243,77 @@ const socket = io('https://mmo.ttctv-105.cc', {
             setTimeout(() => { toast.style.top = "-100px"; }, 3000);
         }
 
-        // 🟢 [修正] 統一使用 playerBuy
         function buy(id) { 
+            if (id === 'enhance_stone') {
+                const input = prompt("請輸入購買數量 (1-100):\n(伺服器限制：約 0.6秒/顆)", "1");
+                if (input === null) return; 
+                
+                let count = parseInt(input);
+                if (isNaN(count) || count < 1) count = 1;
+                if (count > 100) count = 100; 
+
+                const totalCost = count * 50000;
+                
+                const currentGold = parseInt(document.getElementById('my-gold').innerText.replace(/,/g, ''));
+                if (currentGold < totalCost) {
+                    showMsg("❌ 金幣不足！"); // 🟢 改用 showMsg
+                    return;
+                }
+
+                if (!confirm(`確定要花費 ${totalCost.toLocaleString()} G 購買 ${count} 顆強化石嗎？\n(預計耗時 ${Math.ceil(count * 0.6)} 秒)`)) return;
+
+                isBulkBuying = true;
+                const overlay = document.getElementById('bulk-overlay');
+                const overlayText = document.getElementById('bulk-text');
+                overlay.style.display = 'flex';
+                
+                let sent = 0;
+                
+                const updateStatus = () => {
+                    overlayText.innerHTML = `正在購買 (${sent}/${count})...<br><span style="color:#e74c3c; font-weight:bold; font-size:12px;">⚠️ 請勿關閉視窗或上一頁！</span>`;
+                };
+
+                socket.emit('playerBuy', id);
+                sent++;
+                updateStatus();
+
+                if (count > 1) {
+                    const interval = setInterval(() => {
+                        const goldNow = parseInt(document.getElementById('my-gold').innerText.replace(/,/g, ''));
+                        if (goldNow < 50000) {
+                            clearInterval(interval);
+                            finishBulkBuy(`❌ 金幣不足，停止購買！(共買了 ${sent} 顆)`);
+                            return;
+                        }
+
+                        if (sent >= count) {
+                            clearInterval(interval);
+                            finishBulkBuy(`✅ ${count} 顆強化石購買完成！`);
+                            return;
+                        }
+
+                        socket.emit('playerBuy', id);
+                        sent++;
+                        updateStatus();
+                        
+                    }, 600); 
+                } else {
+                    setTimeout(() => finishBulkBuy(`✅ 購買完成！`), 500);
+                }
+                return;
+            }
+
             if(id === 'lucky_bag') {
                 if(!confirm("🧧 確定要花費 10億 G 購買福袋嗎？\n(購買後請至背包使用)")) return;
             }
-            // 關鍵修改：不論買什麼，一律發送 playerBuy
+
             socket.emit('playerBuy', id); 
+        }
+
+        function finishBulkBuy(msg) {
+            isBulkBuying = false;
+            document.getElementById('bulk-overlay').style.display = 'none';
+            showMsg(msg);
         }
     </script>
 </body>
