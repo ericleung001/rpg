@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會v1</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -703,14 +703,19 @@
                 const isDone = cur >= target;
                 const isClaimed = claimed.includes(key);
 
-                // 🟢 [修改] 獎勵文字顯示邏輯
+                // 🟢 [修改] 獎勵文字顯示邏輯 (支援物品數量)
                 let rewardText = `💰${quest.reward.gold} ✨${quest.reward.exp}`;
                 
                 if (quest.reward.item) {
                     // 嘗試從對照表找中文名，找不到就顯示 ID
                     const itemName = ITEM_NAME_MAP[quest.reward.item] || quest.reward.item;
+                    
+                    // 🟢 [重點] 檢查數量，如果大於 1 就顯示 "xN"
+                    const qty = quest.reward.itemCount || 1;
+                    const qtyText = qty > 1 ? ` x${qty}` : "";
+
                     // 使用橙色顯示物品，比較顯眼
-                    rewardText += ` <span style="color:#e67e22; font-weight:bold;">🎁${itemName}</span>`;
+                    rewardText += ` <span style="color:#e67e22; font-weight:bold;">🎁${itemName}${qtyText}</span>`;
                 }
 
                 // 按鈕狀態
