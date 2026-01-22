@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>裝備強化</title>
+    <title>裝備強化 v10</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        
         body { 
             background-color: #2c3e50; color: #fff; 
             font-family: 'Press Start 2P', monospace; 
@@ -24,7 +23,6 @@
             position: relative;
         }
 
-        /* 主內容區塊 (左側/手機全螢幕) */
         #main-content {
             flex: 1;
             display: flex;
@@ -32,7 +30,7 @@
             align-items: center;
             overflow-y: auto;
             padding: 15px;
-            padding-bottom: 40px; /* 留空間給手機版聊天室 */
+            padding-bottom: 40px; 
             width: 100%;
             box-sizing: border-box;
         }
@@ -76,12 +74,20 @@
         .risk-drop { color: #e67e22; }
         .risk-break { color: #e74c3c; font-weight: bold; }
 
+        .btn-group {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px;
+        }
+
         .btn { 
-            padding: 15px; font-family: inherit; font-size: 14px; font-weight: bold;
-            cursor: pointer; border: 2px solid #fff; color: white; margin-top: 15px; width: 100%; 
+            padding: 12px 5px; 
+            font-family: inherit; font-size: 10px; font-weight: bold;
+            cursor: pointer; border: 2px solid #fff; color: white; width: 100%; 
             background: #c0392b; border-radius: 6px;
         }
-        .btn:disabled { background: #555; cursor: not-allowed; }
+        .btn-auto { background: #8e44ad; } 
+        .btn-auto-10 { background: #27ae60; } 
+        .btn-custom { background: #d35400; } 
+        .btn:disabled { background: #555; cursor: not-allowed; opacity: 0.6; }
         
         .back-btn { 
             background: #7f8c8d; color: white; padding: 15px; 
@@ -99,7 +105,6 @@
             pointer-events: none; 
         }
 
-        /* 強化動畫 (層級要最高，蓋過聊天室) */
         #hammer-anim { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.85); z-index: 30000; display: none; 
@@ -107,6 +112,18 @@
         }
         .hammer { font-size: 80px; animation: hit 0.5s infinite; }
         @keyframes hit { 0% { transform: rotate(0deg); } 50% { transform: rotate(-45deg); } 100% { transform: rotate(0deg); } }
+
+        /* 🟢 防爆石 Checkbox 樣式 */
+        .safe-stone-box {
+            margin: 10px 0; padding: 8px; 
+            border: 1px solid #555; border-radius: 5px; 
+            background: rgba(0,0,0,0.3);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .safe-stone-label {
+            display: flex; align-items: center; cursor: pointer; font-size: 10px; color: #f1c40f;
+        }
+        .safe-stone-label input { margin-right: 8px; width: 16px; height: 16px; }
 
         /* --- 聊天室樣式 --- */
         #chat-container {
@@ -163,7 +180,7 @@
     
     <div id="hammer-anim">
         <div class="hammer">🔨</div>
-        <div style="color:white; margin-top:20px; font-size:14px;">強化進行中...</div>
+        <div id="hammer-text" style="color:white; margin-top:20px; font-size:14px;">強化進行中...</div>
     </div>
 
     <div id="app-layout">
@@ -206,8 +223,21 @@
                     <div style="margin-top: 10px; border-top: 1px dashed #555; padding-top: 10px; text-align:center;">
                         失敗風險: <span id="risk-txt" class="risk-safe">無</span>
                     </div>
+
+                    <div class="safe-stone-box">
+                        <label class="safe-stone-label">
+                            <input type="checkbox" id="use-safe-stone">
+                            <span>使用防爆石 (必過)</span>
+                        </label>
+                        <div style="font-size:9px; color:#aaa;">擁有: <span id="safe-stone-count" style="color:white;">0</span></div>
+                    </div>
                     
-                    <button id="enhance-btn" class="btn" style="animation: pulse 2s infinite;" onclick="doEnhance()"> 開始強化 </button>
+                    <div class="btn-group">
+                        <button class="btn action-btn" onclick="doEnhance()">強化 x1</button>
+                        <button class="btn btn-auto action-btn" onclick="startAutoEnhance(5)">連強 x5</button>
+                        <button class="btn btn-auto-10 action-btn" onclick="startAutoEnhance(10)">連強 x10</button>
+                        <button class="btn btn-custom action-btn" onclick="customAutoEnhance()">自訂 xN</button>
+                    </div>
                 </div>
             </div>
 
@@ -238,8 +268,11 @@
 
         let myData = null;
         let selectedEnhanceSlot = null;
+        
+        // 🟢 連續強化變數
+        let remainingAutoCount = 0;
+        let isProcessing = false;
 
-        //  裝備名稱對照表 (確保顯示中文)
         const ITEM_MAP = {
             'wood_sword': '木劍', 'copper_dagger': '銅匕首', 'iron_sword': '鐵劍', 'silver_blade': '銀刃',
             'spike_club': '狼牙棒', 'poison_dag': '劇毒匕首', 'shark_tooth': '鯊魚牙匕首',
@@ -259,10 +292,17 @@
             'necklace_hp': '紅水晶項鍊', 'necklace_mp': '藍水晶項鍊', 'snake_boots': '蛇皮長靴',
             'fish_ring': '魚鱗戒指', 'pearl_necklace': '珍珠項鍊', 'amulet_soul': '靈魂護符',
             'ring_lord': '領主指環', 'crown_chaos': '混沌之冠', 'ring_galaxy': '銀河指環',
-            'ring_life': '生命護符', 'ring_magic': '魔力耳環', 'dimension_ring': '維度指環'
+            'ring_life': '生命護符', 'ring_magic': '魔力耳環', 'dimension_ring': '維度指環',
+
+            // 🟢 Lv.450 - 500 新裝備 (補上)
+            'infinity_blade': '無限之刃',
+            'event_horizon': '視界戰甲',
+            'mobius_ring': '莫比烏斯環',
+            'singularity_weapon': '奇點·萬象崩壞',
+            'singularity_armor': '奇點·絕對防禦',
+            'singularity_acc': '奇點·因果律'
         };
 
-        // 🟢 [更新] 強化機率表 (支援到 +20)
         const ENHANCE_RATES = {
             1: { rate: 100, cost: 1000,  risk: 'safe' },
             2: { rate: 100, cost: 2000,  risk: 'safe' },
@@ -270,7 +310,7 @@
             4: { rate: 80,  cost: 10000, risk: 'drop' },
             5: { rate: 70,  cost: 20000, risk: 'drop' },
             6: { rate: 60,  cost: 40000, risk: 'drop' },
-            7: { rate: 50,  cost: 80000, risk: 'drop' },
+            7: { rate: 50,  cost: 80000, risk: 'drop' },  
             8: { rate: 40,  cost: 150000,risk: 'drop' },
             9: { rate: 30,  cost: 300000,risk: 'drop' },
             10:{ rate: 20,  cost: 1000000,risk: 'drop'},
@@ -296,26 +336,47 @@
             updateUI();
         });
 
+        // 🟢 處理強化結果 (含狀態重置)
         socket.on('enhanceResult', (res) => {
-            document.getElementById('hammer-anim').style.display = 'none';
-            if(res.success) {
-                showMsg(res.msg);
+            showMsg(res.msg);
+
+            // 處理連強邏輯
+            if (remainingAutoCount > 0) {
+                if (res.broken || (res.success && res.lv >= 20)) {
+                    stopAutoEnhance("強化中止");
+                } else {
+                    remainingAutoCount--;
+                    document.getElementById('hammer-text').innerText = `連強中... 剩餘 ${remainingAutoCount} 次`;
+                    
+                    if (remainingAutoCount > 0) {
+                        setTimeout(executeEnhance, 1000);
+                    } else {
+                        stopAutoEnhance("連強完成");
+                    }
+                }
             } else {
-                alert(res.msg);
+                isProcessing = false; 
+                document.getElementById('hammer-anim').style.display = 'none';
+                unlockAllButtons();
+                if (selectedEnhanceSlot) selectEnhanceSlot(selectedEnhanceSlot);
             }
+
             if(res.broken) {
                 document.getElementById('enhance-info').style.display = 'none';
                 selectedEnhanceSlot = null;
                 document.querySelectorAll('.slot-btn').forEach(el => el.classList.remove('selected'));
+                isProcessing = false;
+                unlockAllButtons();
             }
         });
 
         socket.on('errorMessage', (msg) => { 
-            document.getElementById('hammer-anim').style.display = 'none';
+            stopAutoEnhance("發生錯誤");
             alert("❌ " + msg); 
+            isProcessing = false;
+            unlockAllButtons();
         });
 
-        // --- 聊天功能 ---
         socket.on('chatHistory', (history) => {
             const box = document.getElementById('chat-history');
             box.innerHTML = ''; 
@@ -351,13 +412,17 @@
         function updateUI() {
             if(!myData) return;
             const stones = myData.inventory['enhance_stone'] || 0;
+            const safeStones = myData.inventory['safe_stone'] || 0;
             document.getElementById('stone-count').innerText = stones;
+            document.getElementById('safe-stone-count').innerText = safeStones; // 更新防爆石數量
 
             updateSlotDisplay('weapon');
             updateSlotDisplay('armor');
             updateSlotDisplay('acc');
 
-            if (selectedEnhanceSlot) selectEnhanceSlot(selectedEnhanceSlot);
+            if (selectedEnhanceSlot && !isProcessing) {
+                selectEnhanceSlot(selectedEnhanceSlot);
+            }
         }
 
         function updateSlotDisplay(slot) {
@@ -365,7 +430,6 @@
             const itemId = myData.equipment[slot];
             
             if (itemId) {
-                //  讀取強化等級 (ItemID based)
                 const lv = (myData.enhancements && myData.enhancements[itemId]) || 0;
                 let name = ITEM_MAP[itemId] || itemId;
                 
@@ -380,6 +444,8 @@
         }
 
         function selectEnhanceSlot(slot) {
+            if (isProcessing) return;
+
             document.querySelectorAll('.slot-btn').forEach(el => el.classList.remove('selected'));
             document.getElementById(`btn-${slot}`).classList.add('selected');
 
@@ -395,19 +461,18 @@
             const currentLv = (myData.enhancements && myData.enhancements[itemId]) || 0;
             const nextLv = currentLv + 1;
 
-            // 🟢 [更新] 上限改為 20
             if (nextLv > 20) {
                 document.getElementById('enhance-info').style.display = 'block';
                 document.getElementById('target-name').innerText = (ITEM_MAP[itemId] || itemId) + " (MAX)";
-                document.getElementById('enhance-btn').style.display = 'none';
-                // 隱藏其他資訊
+                document.querySelector('.btn-group').style.display = 'none';
                 return;
+            } else {
+                document.querySelector('.btn-group').style.display = 'grid'; // Grid layout
             }
 
             const config = ENHANCE_RATES[nextLv];
             
             document.getElementById('enhance-info').style.display = 'block';
-            document.getElementById('enhance-btn').style.display = 'block';
             document.getElementById('target-name').innerText = ITEM_MAP[itemId] || itemId;
             
             document.getElementById('cur-lv').innerText = `+${currentLv}`;
@@ -418,26 +483,136 @@
             const riskEl = document.getElementById('risk-txt');
             riskEl.className = "";
             if (config.risk === 'safe') {
-                riskEl.innerText = "安全 (無懲罰)";
-                riskEl.classList.add("risk-safe");
+                riskEl.innerText = "安全 (無懲罰)"; riskEl.classList.add("risk-safe");
             } else if (config.risk === 'drop') {
-                riskEl.innerText = "危險 (失敗降級)";
-                riskEl.classList.add("risk-drop");
+                riskEl.innerText = "危險 (失敗降級)"; riskEl.classList.add("risk-drop");
             } else {
-                riskEl.innerText = "極度危險 (失敗裝備消失)";
-                riskEl.classList.add("risk-break");
+                riskEl.innerText = "極度危險 (失敗裝備消失)"; riskEl.classList.add("risk-break");
             }
         }
 
         function doEnhance() {
-            if (!selectedEnhanceSlot) return;
-            if (confirm(`確定要強化嗎？\n失敗可能會導致降級或消失！`)) {
-                document.getElementById('hammer-anim').style.display = 'flex';
-                // 模擬延遲 1.5秒
-                setTimeout(() => {
-                    socket.emit('enhanceItem', selectedEnhanceSlot);
-                }, 1500);
+            if (!selectedEnhanceSlot || isProcessing) return;
+            if (!checkRequirements()) return;
+
+            // 🟢 檢查是否勾選防爆石
+            const useSafe = document.getElementById('use-safe-stone').checked;
+            const msg = useSafe 
+                ? `確定要消耗 [防爆石] 進行 100% 強化嗎？` 
+                : `確定要強化嗎？\n失敗可能會導致降級或消失！`;
+
+            if (confirm(msg)) {
+                remainingAutoCount = 0; 
+                startProcess("強化進行中...");
+                setTimeout(executeEnhance, 1500);
             }
+        }
+
+        function startAutoEnhance(count) {
+            if (!selectedEnhanceSlot || isProcessing) return;
+            if (!checkRequirements()) return;
+
+            // 🟢 連強模式下，強制取消勾選防爆石 (避免誤觸連續消耗)
+            const safeCheckbox = document.getElementById('use-safe-stone');
+            if (safeCheckbox.checked) {
+                if(!confirm("⚠️ 注意：連強模式將【取消】使用防爆石。\n如需使用防爆石，請使用單次強化。\n是否繼續？")) return;
+                safeCheckbox.checked = false;
+            }
+
+            if (confirm(`確定要連續強化 ${count} 次嗎？\n(如果裝備爆掉或滿級會自動停止)`)) {
+                remainingAutoCount = count; 
+                startProcess(`連強中... ${count}/${count}`);
+                setTimeout(executeEnhance, 1500);
+            }
+        }
+
+        // 🟢 自訂連強次數
+        function customAutoEnhance() {
+            if (!selectedEnhanceSlot || isProcessing) return;
+            if (!checkRequirements()) return;
+
+            const input = prompt("請輸入連續強化次數 (1-50):", "10");
+            if (input === null) return;
+            
+            let count = parseInt(input);
+            if (isNaN(count) || count < 1) count = 1;
+            if (count > 50) count = 50; // 防呆上限
+
+            // 🟢 同樣檢查防爆石
+            const safeCheckbox = document.getElementById('use-safe-stone');
+            if (safeCheckbox.checked) {
+                if(!confirm("⚠️ 注意：連強模式將【取消】使用防爆石。\n如需使用防爆石，請使用單次強化。\n是否繼續？")) return;
+                safeCheckbox.checked = false;
+            }
+
+            if (confirm(`確定要連續強化 ${count} 次嗎？\n(如果裝備爆掉或滿級會自動停止)`)) {
+                remainingAutoCount = count; 
+                startProcess(`連強中... ${count}/${count}`);
+                setTimeout(executeEnhance, 1500);
+            }
+        }
+
+        function checkRequirements() {
+            const itemId = myData.equipment[selectedEnhanceSlot];
+            const currentLv = (myData.enhancements && myData.enhancements[itemId]) || 0;
+            const nextLv = currentLv + 1;
+            
+            if (nextLv > 20) { alert("已達最大等級"); return false; }
+
+            const config = ENHANCE_RATES[nextLv];
+            const stones = myData.inventory['enhance_stone'] || 0;
+            const safeStones = myData.inventory['safe_stone'] || 0;
+            const useSafe = document.getElementById('use-safe-stone').checked;
+
+            if (myData.gold < config.cost) { alert("金幣不足！"); return false; }
+            
+            if (useSafe) {
+                if (safeStones < 1) { alert("防爆石不足！"); return false; }
+            } else {
+                if (stones < 1) { alert("強化石不足！"); return false; }
+            }
+            
+            return true;
+        }
+
+        function startProcess(msg) {
+            isProcessing = true;
+            document.getElementById('hammer-text').innerText = msg;
+            document.getElementById('hammer-anim').style.display = 'flex';
+            lockAllButtons();
+        }
+
+        function stopAutoEnhance(msg) {
+            isProcessing = false;
+            remainingAutoCount = 0;
+            document.getElementById('hammer-anim').style.display = 'none';
+            if (msg) showMsg(msg);
+            
+            unlockAllButtons();
+            
+            if (selectedEnhanceSlot) selectEnhanceSlot(selectedEnhanceSlot);
+        }
+
+        function lockAllButtons() {
+            document.querySelectorAll('.action-btn').forEach(b => b.disabled = true);
+            document.querySelectorAll('.slot-btn').forEach(b => b.disabled = true);
+            document.getElementById('use-safe-stone').disabled = true; // 鎖定 checkbox
+        }
+
+        function unlockAllButtons() {
+            document.querySelectorAll('.action-btn').forEach(b => b.disabled = false);
+            document.querySelectorAll('.slot-btn').forEach(b => b.disabled = false);
+            document.getElementById('use-safe-stone').disabled = false; // 解鎖 checkbox
+        }
+
+        function executeEnhance() {
+            if (!checkRequirements()) {
+                stopAutoEnhance("資源不足，停止強化");
+                return;
+            }
+            // 🟢 傳送包含防爆石狀態的物件
+            const useSafe = document.getElementById('use-safe-stone').checked;
+            socket.emit('enhanceItem', { slot: selectedEnhanceSlot, useSafeStone: useSafe });
         }
 
         function showMsg(text) {
