@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Multi-Monster)3</title>
+    <title>戰鬥中 (Multi-Monster)4</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -750,6 +750,11 @@
         socket.on('battleStarted', () => { 
             document.getElementById('lobby-overlay').style.display = 'none'; 
             log("戰鬥開始！"); 
+            
+            // 🟢 新增：如果我是房主且開了自動，戰鬥開始時嘗試觸發
+            if (isAuto && isMyTurn) {
+                setTimeout(autoPlayLogic, 1000); 
+            }
         });
 
         // 🟢 接收多怪數據更新
