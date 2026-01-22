@@ -305,46 +305,46 @@
 
         // 🟢 [前端設定] 強化機率表 (需與 Server 保持一致)
         const ENHANCE_RATES = {
-            // === +1 ~ +10 ===
-            1: { rate: 1.0,  cost: 1000,  risk: 'safe' },    
-            2: { rate: 1.0,  cost: 2000,  risk: 'safe' },
-            3: { rate: 1.0,  cost: 5000,  risk: 'safe' },
-            4: { rate: 0.8,  cost: 10000, risk: 'drop' },    
-            5: { rate: 0.8,  cost: 20000, risk: 'drop' },
-            6: { rate: 0.7,  cost: 40000, risk: 'drop' },
-            7: { rate: 0.7,  cost: 80000, risk: 'drop' },  
-            8: { rate: 0.6,  cost: 150000,risk: 'drop' },
-            9: { rate: 0.6,  cost: 300000,risk: 'drop' },
-            10:{ rate: 0.5,  cost: 1000000,risk: 'drop'},
+    // === +1 ~ +10 (基礎強化) ===
+    1: { rate: 1.0,  cost: 1000,  risk: 'safe' },    
+    2: { rate: 1.0,  cost: 2000,  risk: 'safe' },
+    3: { rate: 1.0,  cost: 5000,  risk: 'safe' },
+    4: { rate: 0.8,  cost: 10000, risk: 'drop' },    
+    5: { rate: 0.8,  cost: 20000, risk: 'drop' },
+    6: { rate: 0.7,  cost: 40000, risk: 'drop' },
+    7: { rate: 0.7,  cost: 80000, risk: 'drop' },  
+    8: { rate: 0.6,  cost: 150000,risk: 'drop' },
+    9: { rate: 0.6,  cost: 300000,risk: 'drop' },
+    10:{ rate: 0.5,  cost: 1000000,risk: 'drop'},
 
-            // === +11 ~ +15 (地獄級) ===
-            11:{ rate: 0.5, cost: 2000000, risk: 'drop'}, 
-            12:{ rate: 0.4, cost: 3000000, risk: 'drop'},
-            13:{ rate: 0.4, cost: 5000000, risk: 'drop'}, 
-            14:{ rate: 0.3, cost: 8000000, risk: 'drop'},
-            15:{ rate: 0.3, cost: 10000000,risk: 'drop'}, 
+    // === +11 ~ +15 (進階強化 - 失敗降級) ===
+    11:{ rate: 0.5, cost: 2000000, risk: 'drop'}, // 50%
+    12:{ rate: 0.4, cost: 3000000, risk: 'drop'},
+    13:{ rate: 0.4, cost: 5000000, risk: 'drop'}, 
+    14:{ rate: 0.3, cost: 8000000, risk: 'drop'},
+    15:{ rate: 0.3, cost: 10000000,risk: 'drop'}, // 30%
 
-            // === +16 ~ +20 (神話級) ===
-            16:{ rate: 0.1,  cost: 20000000, risk: 'break'}, 
-            17:{ rate: 0.07, cost: 30000000, risk: 'break'},
-            18:{ rate: 0.05, cost: 50000000, risk: 'break'}, 
-            19:{ rate: 0.03, cost: 80000000, risk: 'break'}, 
-            20:{ rate: 0.01, cost: 100000000,risk: 'break'}, // 1%
+    // === +16 ~ +20 (神話強化 - 失敗破碎) ===
+    16:{ rate: 0.3,  cost: 20000000, risk: 'break'}, // 10%
+    17:{ rate: 0.4, cost: 30000000, risk: 'break'}, // 7%
+    18:{ rate: 0.4, cost: 50000000, risk: 'break'}, // 5%
+    19:{ rate: 0.5, cost: 80000000, risk: 'break'}, // 3%
+    20:{ rate: 0.5, cost: 100000000,risk: 'break'}, // 1% (1億G)
 
-            // === [新增] +21 ~ +25 (虛空級) ===
-            21:{ rate: 0.005, cost: 150000000, risk: 'break'}, // 0.5%
-            22:{ rate: 0.004, cost: 200000000, risk: 'break'}, // 0.4%
-            23:{ rate: 0.003, cost: 300000000, risk: 'break'}, // 0.3%
-            24:{ rate: 0.002, cost: 400000000, risk: 'break'}, // 0.2%
-            25:{ rate: 0.001, cost: 500000000, risk: 'break'}, // 0.1%
+    // === [新增] +21 ~ +25 (虛空強化 - 失敗破碎) ===
+    21:{ rate: 0.4, cost: 150000000, risk: 'break'}, // 0.5% (1.5億G)
+    22:{ rate: 0.3, cost: 200000000, risk: 'break'}, // 0.4% (2億G)
+    23:{ rate: 0.3, cost: 300000000, risk: 'break'}, // 0.3% (3億G)
+    24:{ rate: 0.2, cost: 400000000, risk: 'break'}, // 0.2% (4億G)
+    25:{ rate: 0.1, cost: 500000000, risk: 'break'}, // 0.1% (5億G) - 千分之一
 
-            // === [新增] +26 ~ +30 (創世級) ===
-            26:{ rate: 0.0005, cost: 1000000000, risk: 'break'}, // 0.05%
-            27:{ rate: 0.0003, cost: 2000000000, risk: 'break'}, // 0.03%
-            28:{ rate: 0.0001, cost: 4000000000, risk: 'break'}, // 0.01%
-            29:{ rate: 0.00005,cost: 6000000000, risk: 'break'}, // 0.005%
-            30:{ rate: 0.00001,cost: 10000000000,risk: 'break'}  // 0.001%
-        };
+    // === [新增] +26 ~ +30 (創世強化 - 奇蹟機率) ===
+    26:{ rate: 0.05, cost: 1000000000, risk: 'break'}, // 0.05% (10億G) - 萬分之五
+    27:{ rate: 0.03, cost: 2000000000, risk: 'break'}, // 0.03% (20億G)
+    28:{ rate: 0.02, cost: 4000000000, risk: 'break'}, // 0.01% (40億G) - 萬分之一
+    29:{ rate: 0.01,cost: 6000000000, risk: 'break'}, // 0.005% (60億G)
+    30:{ rate: 0.01,cost: 10000000000,risk: 'break'}  // 0.001% (100億G) - 十萬分之一
+};
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
 
