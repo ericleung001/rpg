@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Multi-Monster Fixed)</title>
+    <title>戰鬥中 (Multi-Monster Fixed)2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -385,34 +385,55 @@
             }
         }
 
-        // 🟢 核心：AI 邏輯 (支援自動選怪：優先打殘血)
+        // 🟢 核心：AI 邏輯 (支援手動/自動選怪)
         function autoPlayLogic() {
             if (!isAuto || !isMyTurn) return;
             
-            // 1. 確保有活著的目標
-            let targetIdx = -1;
-            let minHp = Infinity;
+            // 1. 安全檢查：如果怪物列表是空的，停止
+            if (!currentMonsters || currentMonsters.length === 0) {
+                return;
+            }
 
-            currentMonsters.forEach((m, idx) => {
-                if (m.hp > 0) {
-                    if (m.hp < minHp) {
-                        minHp = m.hp;
-                        targetIdx = idx;
+            // 2. 決定目標 (Targeting Strategy)
+            let targetIdx = selectedTargetIndex; // 預設使用當前選中的
+
+            // 檢查當前選中的目標是否有效 (存在且活著)
+            const isCurrentTargetValid = currentMonsters[targetIdx] && currentMonsters[targetIdx].hp > 0;
+
+            if (!isCurrentTargetValid) {
+                // 如果當前目標無效，啟動 AI 自動選擇 (優先打殘血)
+                let minHp = Infinity;
+                let bestIdx = -1;
+
+                currentMonsters.forEach((m, idx) => {
+                    if (m.hp > 0) {
+                        if (m.hp < minHp) {
+                            minHp = m.hp;
+                            bestIdx = idx;
+                        }
                     }
-                }
-            });
+                });
+                
+                targetIdx = bestIdx;
+            }
 
-            // 如果找不到 (全死)，就結束
+            // 如果還是找不到目標 (全死)，就結束
             if (targetIdx === -1) return;
 
-            // 2. 設定目標 (更新畫面選框)
-            selectedTargetIndex = targetIdx;
-            selectMonster(targetIdx); 
+            // 3. 更新選定目標 (這樣畫面上的框框也會跟著跳過去)
+            // 這樣玩家可以看到 AI 選了誰，或者自己選了誰
+            if (selectedTargetIndex !== targetIdx) {
+                selectedTargetIndex = targetIdx;
+                selectMonster(targetIdx); 
+            }
 
+            // 4. 執行自訂腳本
             if (autoMode === 'custom') { runCustomAuto(); return; }
 
-            const delay = Math.random() * 700 + 800;
+            // 5. 執行職業 AI
+            const delay = Math.random() * 600 + 600; 
             setTimeout(() => {
+                // 再次確認狀態 (防止延遲期間戰鬥結束或被關閉)
                 if (!isMyTurn || roomId === 'world_boss') { 
                     if(roomId === 'world_boss' && isAuto) socket.emit('worldBossAction', { type: 'attack' });
                     return; 
@@ -424,7 +445,7 @@
                 document.getElementById('current-action-disp').innerText = `AI: ${autoMode}`;
                 const myHpPct = (myPlayer.hp / myPlayer.maxHp) * 100;
                 
-                // [1] 緊急自保
+                // [1] 緊急自保 (維持不變)
                 if (autoMode === 'heal' && myHpPct < 50) {
                     if (attemptSkill('heal_all')) { healerAttackCounter = 0; return; }
                     if (attemptSkill('full_heal')) return;
@@ -436,7 +457,7 @@
                     if (recoverStat('hp')) return; 
                 }
 
-                // [2] 職業行為
+                // [2] 職業行為 (維持不變)
                 let skillUsed = false;
                 switch (autoMode) {
                     case 'heal':
@@ -476,6 +497,7 @@
                         break;
                 }
                 
+                // 如果沒使用技能，執行普攻 (打 selectedTargetIndex)
                 if (!skillUsed) doNormalAttack();
 
             }, delay);
