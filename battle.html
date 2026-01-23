@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Multi-Monster UI Fixed)</title>
+    <title>戰鬥中2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -930,10 +930,45 @@
             });
         }
 
+        // 🟢 [修正] 戰鬥勝利 (加入掉落物顯示)
         socket.on('battleWon', (data) => {
             if(battleTimer) clearInterval(battleTimer); 
-            const bar = document.getElementById('turn-bar'); bar.innerText = " 勝利！"; bar.style.background = "gold"; bar.style.color = "black";
-            showMsg(`勝利！獲得 ${data.gold} G`); showNormalVictoryBtn();
+            
+            const bar = document.getElementById('turn-bar'); 
+            bar.innerText = " 勝利！"; 
+            bar.style.background = "gold"; 
+            bar.style.color = "black";
+            
+            // 1. 構建勝利訊息
+            let winMsg = `勝利！獲得 ${data.gold.toLocaleString()} G`;
+            if (data.exp) winMsg += `、${data.exp.toLocaleString()} 經驗`;
+
+            // 2. 顯示掉落物
+            if (data.drops && data.drops.length > 0) {
+                let dropNames = [];
+                data.drops.forEach(itemId => {
+                    // 嘗試從各個設定檔找名字，找不到就用 ID
+                    let name = ITEM_NAMES[itemId];
+                    if (!name && typeof ITEM_CONFIG !== 'undefined' && ITEM_CONFIG[itemId]) name = ITEM_CONFIG[itemId].name;
+                    if (!name && typeof MATERIAL_CONFIG !== 'undefined' && MATERIAL_CONFIG[itemId]) name = MATERIAL_CONFIG[itemId].name;
+                    
+                    dropNames.push(name || itemId);
+                });
+                
+                // 將掉落物訊息加入 Log (比較詳細)
+                log(`<span style="color:#f1c40f">獲得戰利品: ${dropNames.join(', ')}</span>`);
+                
+                // 將掉落物訊息加入上方 Toast (簡短)
+                winMsg += `\n掉落: ${dropNames.length} 個物品`;
+            }
+
+            // 3. 顯示 Toast
+            showMsg(winMsg); 
+            
+            // 4. 顯示離開按鈕
+            showNormalVictoryBtn();
+            
+            // 5. 自動停止掛機
             if(isAuto) toggleAuto();
         });
 
