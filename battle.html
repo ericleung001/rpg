@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中 (Auto AI + Kick)</title>
+    <title>戰鬥中2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -795,17 +795,22 @@
             }]);
         });
 
+        // 🟢 [修正] 房間資訊更新 (支援戰鬥中踢人)
         socket.on('roomInfoUpdate', (info) => {
             allPlayers = info.players; 
             const amIHost = (info.host === socket.id);
+            
+            // 1. 等待大廳列表 (Lobby)
             const lobbyList = document.getElementById('lobby-players');
             lobbyList.innerHTML = ''; 
             
             info.players.forEach(p => {
                 let actionBtn = '';
+                // 🟢 判斷：如果是房主 且 對方不是自己 -> 顯示踢人
                 if (amIHost && p.id !== socket.id) {
                     actionBtn = `<button onclick="kickPlayer('${p.id}')" style="float:right; background:#c0392b; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:10px;">踢出</button>`;
                 }
+
                 const safeName = p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                 lobbyList.innerHTML += `
                     <div style="border-bottom:1px dashed #555; padding:8px 5px; line-height: 20px;">
@@ -813,6 +818,74 @@
                         ${actionBtn}
                     </div>`;
             });
+
+            // 2. 戰鬥中隊友列表 (Teammates Box)
+            const teammatesBox = document.getElementById('teammates-box');
+            teammatesBox.innerHTML = '';
+            
+            info.players.forEach(p => {
+                if (p.id !== socket.id) { 
+                    const hpPct = (p.hp / p.maxHp) * 100;
+                    const safeName = p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    
+                    // 🟢 戰鬥中也顯示踢人按鈕 (僅限房主)
+                    let kickHtml = '';
+                    if (amIHost) {
+                        kickHtml = `<button onclick="kickPlayer('${p.id}')" style="margin-left:5px; background:#c0392b; color:white; border:none; padding:2px 5px; border-radius:3px; cursor:pointer; font-size:8px;">踢</button>`;
+                    }
+
+                    teammatesBox.innerHTML += `
+                        <div class="mini-box" style="display:flex; flex-direction:column;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div style="font-weight:bold;">${safeName}</div>
+                                ${kickHtml}
+                            </div>
+                            <div class="mini-hp-bar"><div class="mini-hp-fill" style="width:${hpPct}%;"></div></div>
+                        </div>`;
+                }
+            });
+
+            // 3. 切換顯示模式 (大廳 vs 戰鬥)
+            const overlay = document.getElementById('lobby-overlay');
+            if (info.status === 'fighting') { 
+                overlay.style.display = 'none'; 
+                document.getElementById('countdown-timer').style.display = 'block'; 
+                
+                // 戰鬥計時器邏輯 (保持原樣)
+                if (!battleTimer) {
+                    timeLeft = 530; 
+                    if(info.battleStartTime) {
+                        const elapsed = Math.floor((Date.now() - info.battleStartTime) / 1000);
+                        timeLeft = 530 - elapsed;
+                    }
+                    if(timeLeft < 0) timeLeft = 0;
+                    const timerEl = document.getElementById('countdown-timer');
+                    battleTimer = setInterval(() => {
+                        timeLeft--;
+                        if (timeLeft <= 0) {
+                            timeLeft = 0; clearInterval(battleTimer);
+                            timerEl.innerText = "⚠️ 時間到！";
+                        } else {
+                            const mm = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                            const ss = (timeLeft % 60).toString().padStart(2, '0');
+                            timerEl.innerText = `⚠️ 滅團倒數: ${mm}:${ss}`;
+                        }
+                    }, 1000);
+                }
+            } else { 
+                overlay.style.display = 'flex'; 
+                if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+                document.getElementById('countdown-timer').style.display = 'none';
+            }
+            
+            // 4. 開始按鈕狀態
+            const startBtn = document.getElementById('start-btn');
+            if (amIHost) { startBtn.style.display = 'block'; startBtn.innerText = `開始 (${info.players.length}人)`; }
+            else { startBtn.style.display = 'none'; }
+
+            const waitingTxt = document.getElementById('waiting-txt');
+            if (waitingTxt) waitingTxt.style.display = amIHost ? 'none' : 'block';
+        });
 
             const overlay = document.getElementById('lobby-overlay');
             if (info.status === 'fighting') { 
