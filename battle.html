@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中2</title>
+    <title>戰鬥中3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -329,6 +329,73 @@
             lowMp: 'attack'
         };
 
+
+        // 🟢 [新增] 材料與特殊物品設定 (用於顯示掉落物中文名)
+        const MATERIAL_CONFIG = {
+            'copper_ore':   { name: '銅礦石' }, 
+            'soft_fur':     { name: '柔軟皮毛' }, 
+            'beast_fang':   { name: '野獸尖牙' }, 
+            'slime_gel':    { name: '黏液' },
+            'iron_ore':     { name: '鐵礦石' }, 
+            'leather':      { name: '皮革' }, 
+            'tough_hide':   { name: '硬皮革' }, 
+            'magic_dust':   { name: '魔粉' },
+            'poison_sac':   { name: '毒囊' }, 
+            'bone_shard':   { name: '碎骨片' }, 
+            'silver_ore':   { name: '銀礦石' }, 
+            'fire_core':    { name: '火焰核心' },
+            'lava_rock':    { name: '熔岩石' }, 
+            'coal':         { name: '煤炭' },
+            'dragon_scale': { name: '龍鱗' }, 
+            'gold_ore':     { name: '金礦石' }, 
+            'ice_crystal':  { name: '永恆冰晶' },
+            'yeti_fur':     { name: '雪怪毛皮' }, 
+            'spirit_dust':  { name: '靈魂粉末' }, 
+            'mithril':      { name: '秘銀' }, 
+            'void_dust':    { name: '虛空之塵' },
+            'demon_horn':   { name: '惡魔之角' }, 
+            'dark_essence': { name: '暗之精華' }, 
+            'adamantite':   { name: '精金' }, 
+            'ruby':         { name: '紅寶石' }, 
+            'diamond':      { name: '鑽石' },
+            'god_blood':    { name: '神之血' },
+            'chaos_orb':    { name: '混沌寶珠' }, 
+            'angel_feather':{ name: '天使之羽' },
+            'titan_steel':  { name: '泰坦神鋼' }, 
+            'star_fragment':{ name: '星之碎片' }, 
+            'void_shard':   { name: '虛空碎片' }, 
+            'dark_matter':  { name: '暗物質' }, 
+            'cosmic_steel': { name: '宇宙鋼' }, 
+            'star_core':    { name: '恆星核心' }, 
+            'time_sand':    { name: '時光之沙' }, 
+            'dimension_gem':{ name: '維度寶石' }, 
+            'entropy_origin':{ name: '熱寂原點' }, 
+            'oak_log':      { name: "橡木原木" }, 
+            'maple_log':    { name: "楓木原木" }, 
+            'yew_log':      { name: "紫杉原木" }, 
+            'ancient_log':  { name: "遠古神木" },
+            'spirit_wood':  { name: "靈木" }, 
+            'dragon_wood':  { name: "龍骨木" }, 
+            'void_wood':    { name: "虛空木" }, 
+            'chaos_wood':   { name: "混沌神木" },
+            'carp':         { name: "鯉魚" }, 
+            'salmon':       { name: "鮭魚" }, 
+            'koi':          { name: "錦鯉" }, 
+            'magic_fish':   { name: "魔力魚" },
+            'tuna':         { name: "黑鮪魚" }, 
+            'shark':        { name: "大白鯊" }, 
+            'lava_eel':     { name: "熔岩鰻" }, 
+            'void_squid':   { name: "虛空烏賊" },
+            'god_carp':     { name: "神之鯉" }, 
+            'pearl':        { name: "珍珠" },
+            'quantum_residue': { name: '量子殘渣' },
+            'multiverse_shard': { name: '多元宇宙碎片' },
+            'divinity_core': { name: '創世神格' },
+            'safe_stone':    { name: '防爆石' },
+            'enhance_stone': { name: '強化石' },
+            'lucky_bag':     { name: '奇蹟福袋' }
+        };
+        
         const SKILL_INFO = {
             'fireball':      { name: "火球術", mp: 5, cat: 'atk', desc: "傷x1.5" },
             'thunder':       { name: "雷擊",   mp: 15, cat: 'atk', desc: "傷x1.2+暈" },
