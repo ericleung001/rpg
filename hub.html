@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會v4</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -310,19 +310,34 @@
 
     <div id="notice-modal">
         <div class="notice-box">
-            <div class="notice-title">v3.2 更新公告</div>
+            <div class="notice-title">v3.4 更新公告</div>
             <div class="notice-content">
 
 <b style="color:#f1c40f;">DC Group</b>
 <a href="https://discord.gg/krQpB5Zu" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">如有問題可到這到查詢</a>
-***由於大量購買彩票令Server負荷太重, 暫時限制每人每日10條***
 <b style="color:#e74c3c;">【奇點降臨 & 便利性優化】</b>
-<b style="color:#f1c40f;">🏰 1. 自家公會系統</b>
+<b style="color:#f1c40f;">⚔️ 戰鬥系統重大更新</b>
+- <b>現在戰鬥勝利後，所有擊殺的怪物都會獨立計算經驗值、金幣與掉落判定。</b>
+- <b>不再只計算第一隻怪物的獎勵，打越多賺越多！</b>
+- <b>每日任務的擊殺數現在會正確統計場上所有死亡的怪物。</b>
+- <b>以下技能已更新為全體攻擊，可同時對場上所有怪物造成傷害：
+	隕石術、次元斬、虛空碎擊、宇宙大爆炸</b>
+- <b>房主現在可以在戰鬥中途踢出離線或惡意掛機的隊友，戰鬥將自動繼續，不會卡死。</b>
+- <b>如果你手動點擊了一隻怪物（出現黃色框框），會死命打那一隻，直到牠死掉。</b>
+- <b>如果你沒選怪，或者你鎖定的怪被打死了，會自動切換去打 場上血量最低的怪物，確保效率最大化。</b>
+
+<b style="color:#f1c40f;">💎防爆石登場</b>
+- <b>商店新增 [防爆石]，售價 50億。</b>
+- <b>使用後強化 100% 成功，不爆裝、不降級。</b>
+- <b>強化最高已到+30。/防爆石最高到+23</b>
+
+
+<b style="color:#f1c40f;">🏰自家公會系統</b>
 - <b>💬 公會聊天室</b>：新增公會專屬頻道，即時交流戰術！(顯示最近20條)
 - <b>📢 會長公告</b>：會長可編輯置頂公告，發布重要消息。
 - <b>🎁 福利派發</b>：會長現在可以將<b>公會資金</b>或<b>背包物品</b>，批量派發給指定會員！
 
-<b style="color:#2ecc71;">💰 2. 每日福利</b>
+<b style="color:#2ecc71;">💰每日福利</b>
 - <b>人多勢眾</b>：公會成員達 20 人，全員每日登入送 <b>[強化石 x1]</b>。
 - <b>資本紅利</b>：公會資金達 5億，全員每日享 <b>[10% 利息]</b> (本金上限10億)。
 **例子:A玩家本金：$10,000, 每日發放$1,000利息***
@@ -341,7 +356,7 @@
 - 新增 <b>[隨機快選]</b> 按鈕 (x10)。
 - 頭獎/二獎現在會送 <b>Lv.500/450 實體裝備</b>！
 
-<b style="color:#9b59b6;">4. 🛡️ 裝備與材料</b>
+<b style="color:#9b59b6;">3. 🛡️ 裝備與材料</b>
 - 新增大量高階材料 (量子殘渣、多元宇宙碎片)。
 - 裝備強化與合成配方已更新。
 
@@ -546,8 +561,10 @@
                 .replace(/'/g, "&#039;");
         }
 
-        // 🟢 [安全防護] 防止隱藏字元
+        // 🟢 [安全防護] 防止隱藏字元 (0-31, 127, 200B, 2064, BOM)
         function hasForbiddenChars(str) {
+            // 禁止：控制字符(0-31), DEL(127), 零寬空格(\u200B), 隱藏加號(\u2064) 等
+            // 注意：保留 \u200D (Zero Width Joiner) 以免破壞組合型 Emoji (👨‍👩‍👧‍👦)
             const regex = /[\x00-\x1F\x7F\u200B\u2028-\u202F\u2060-\u2064\uFEFF]/;
             return regex.test(str);
         }
@@ -562,11 +579,11 @@
             }, 2000); 
         });
 
-        // 🟢 連線設定
+        // 🟢 [連線修正] 使用正確的 URL
         const socket = io('https://mmo.ttctv-105.cc', { 
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         
         let myLevel = 1;
         let myName = ""; 
@@ -581,7 +598,7 @@
             document.getElementById('notice-modal').style.display = 'none';
         }
 
-        // 🟢 每日任務
+        // 🟢 [新增] 每日任務函式
         function openDailyQuests() {
             document.getElementById('quest-modal').style.display = 'flex';
             socket.emit('getDailyQuests');
@@ -591,39 +608,105 @@
             socket.emit('claimDailyReward', key);
         }
 
-        // 🟢 物品名稱對照表
+
+        // 🟢 [完整] 物品名稱對照表 (含道具 + 所有材料)
         const ITEM_NAME_MAP = {
-            'potion_hp': '生命藥水', 'potion_mp': '魔力藥水', 'potion_mid': '中級藥水',
-            'scroll_exp': '經驗卷軸', 'lucky_bag': '奇蹟福袋', 'enhance_stone': '強化石',
-            'elixir': '萬能藥', 'gem_atk': '攻擊寶石', 'god_stone': '神之石',
-            'copper_ore': '銅礦石', 'soft_fur': '柔軟皮毛', 'beast_fang': '野獸尖牙',
-            'slime_gel': '黏液', 'iron_ore': '鐵礦石', 'leather': '皮革',
-            'tough_hide': '硬皮革', 'magic_dust': '魔粉', 'poison_sac': '毒囊',
-            'bone_shard': '碎骨片', 'silver_ore': '銀礦石', 'fire_core': '火焰核心',
-            'lava_rock': '熔岩石', 'coal': '煤炭', 'dragon_scale': '龍鱗',
-            'gold_ore': '金礦石', 'ice_crystal': '永恆冰晶', 'yeti_fur': '雪怪毛皮',
-            'spirit_dust': '靈魂粉末', 'mithril': '秘銀', 'void_dust': '虛空之塵',
-            'demon_horn': '惡魔之角', 'dark_essence': '暗之精華', 'adamantite': '精金',
-            'ruby': '紅寶石', 'diamond': '鑽石', 'god_blood': '神之血',
-            'chaos_orb': '混沌寶珠', 'angel_feather': '天使之羽', 'titan_steel': '泰坦神鋼',
-            'star_fragment': '星之碎片', 'void_shard': '虛空碎片', 'dark_matter': '暗物質',
-            'cosmic_steel': '宇宙鋼', 'star_core': '恆星核心', 'time_sand': '時光之沙',
-            'dimension_gem': '維度寶石', 'entropy_origin': '熱寂原點', 'oak_log': '橡木原木',
-            'maple_log': '楓木原木', 'yew_log': '紫杉原木', 'ancient_log': '遠古神木',
-            'spirit_wood': '靈木', 'dragon_wood': '龍骨木', 'void_wood': '虛空木',
-            'chaos_wood': '混沌神木', 'carp': '鯉魚', 'salmon': '鮭魚',
-            'koi': '錦鯉', 'magic_fish': '魔力魚', 'tuna': '黑鮪魚',
-            'shark': '大白鯊', 'lava_eel': '熔岩鰻', 'void_squid': '虛空烏賊',
-            'god_carp': '神之鯉', 'pearl': '珍珠', 'quantum_residue': '量子殘渣',
-            'multiverse_shard': '多元宇宙碎片', 'divinity_core': '創世神格',
-            'singularity_weapon':'奇點·萬象崩壞', 'void_reaper':"虛空收割者", 'demon_armor':"惡魔戰甲"
+            // --- 消耗品 & 道具 ---
+            'potion_hp': '生命藥水',
+            'potion_mp': '魔力藥水',
+            'potion_mid': '中級藥水',
+            'scroll_exp': '經驗卷軸',
+            'lucky_bag': '奇蹟福袋',
+            'enhance_stone': '強化石',
+            'elixir': '萬能藥',
+            'gem_atk': '攻擊寶石',
+            'god_stone': '神之石',
+	    'void_soup': "虛空海鮮湯",
+
+            // --- 基礎材料 ---
+            'copper_ore': '銅礦石',
+            'soft_fur': '柔軟皮毛',
+            'beast_fang': '野獸尖牙',
+            'slime_gel': '黏液',
+            'iron_ore': '鐵礦石',
+            'leather': '皮革',
+            'tough_hide': '硬皮革',
+            'magic_dust': '魔粉',
+            'poison_sac': '毒囊',
+            'bone_shard': '碎骨片',
+            'silver_ore': '銀礦石',
+            'fire_core': '火焰核心',
+            'lava_rock': '熔岩石',
+            'coal': '煤炭',
+
+            // --- 進階材料 ---
+            'dragon_scale': '龍鱗',
+            'gold_ore': '金礦石',
+            'ice_crystal': '永恆冰晶',
+            'yeti_fur': '雪怪毛皮',
+            'spirit_dust': '靈魂粉末',
+            'mithril': '秘銀',
+            'void_dust': '虛空之塵',
+            'demon_horn': '惡魔之角',
+            'dark_essence': '暗之精華',
+            'adamantite': '精金',
+            'ruby': '紅寶石',
+            'diamond': '鑽石',
+
+            // --- 神話級材料 ---
+            'god_blood': '神之血',
+            'chaos_orb': '混沌寶珠',
+            'angel_feather': '天使之羽',
+            'titan_steel': '泰坦神鋼',
+            'star_fragment': '星之碎片',
+            'void_shard': '虛空碎片',
+            'dark_matter': '暗物質',
+            'cosmic_steel': '宇宙鋼',
+            'star_core': '恆星核心',
+            'time_sand': '時光之沙',
+            'dimension_gem': '維度寶石',
+            'entropy_origin': '熱寂原點',
+
+            // --- 木材類 ---
+            'oak_log': '橡木原木',
+            'maple_log': '楓木原木',
+            'yew_log': '紫杉原木',
+            'ancient_log': '遠古神木',
+            'spirit_wood': '靈木',
+            'dragon_wood': '龍骨木',
+            'void_wood': '虛空木',
+            'chaos_wood': '混沌神木',
+
+            // --- 魚類 ---
+            'carp': '鯉魚',
+            'salmon': '鮭魚',
+            'koi': '錦鯉',
+            'magic_fish': '魔力魚',
+            'tuna': '黑鮪魚',
+            'shark': '大白鯊',
+            'lava_eel': '熔岩鰻',
+            'void_squid': '虛空烏賊',
+            'god_carp': '神之鯉',
+            'pearl': '珍珠',
+
+            // --- 終焉奇點材料 ---
+            'quantum_residue': '量子殘渣',
+            'multiverse_shard': '多元宇宙碎片',
+            'divinity_core': '創世神格',
+            'singularity_weapon':'奇點·萬象崩壞',
+            'void_reaper':"虛空收割者",
+            'demon_armor':"惡魔戰甲",
+            'singularity_armor': '奇點·絕對防禦'
+
         };
         
         socket.on('dailyQuestData', (data) => {
             const listDiv = document.getElementById('quest-list');
-            listDiv.innerHTML = ''; 
+            listDiv.innerHTML = ''; // 清空
 
             const { config, progress, claimed } = data;
+
+            // 如果沒有任務資料 (例如新號剛創)，顯示提示
             if (!config || Object.keys(config).length === 0) {
                 listDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">暫無任務，請稍後再試</div>';
                 return;
@@ -632,20 +715,28 @@
             for (const [key, quest] of Object.entries(config)) {
                 const cur = progress[key] || 0;
                 const target = quest.target;
+                // 修正：當 cur 超過 target 時，顯示 target (例如 5/5 而不是 6/5)
                 const displayCur = cur > target ? target : cur;
                 
                 const isDone = cur >= target;
                 const isClaimed = claimed.includes(key);
 
+                // 🟢 [修改] 獎勵文字顯示邏輯 (支援物品數量)
                 let rewardText = `💰${quest.reward.gold} ✨${quest.reward.exp}`;
                 
                 if (quest.reward.item) {
+                    // 嘗試從對照表找中文名，找不到就顯示 ID
                     const itemName = ITEM_NAME_MAP[quest.reward.item] || quest.reward.item;
+                    
+                    // 🟢 [重點] 檢查數量，如果大於 1 就顯示 "xN"
                     const qty = quest.reward.itemCount || 1;
                     const qtyText = qty > 1 ? ` x${qty}` : "";
+
+                    // 使用橙色顯示物品，比較顯眼
                     rewardText += ` <span style="color:#e67e22; font-weight:bold;">🎁${itemName}${qtyText}</span>`;
                 }
 
+                // 按鈕狀態
                 let btnHtml = '';
                 if (isClaimed) {
                     btnHtml = `<button disabled style="background:#7f8c8d; color:#fff; border:1px solid #555; padding:5px; width:100px; border-radius:4px;">已領取</button>`;
@@ -662,6 +753,7 @@
                 itemDiv.style.borderRadius = '8px';
                 itemDiv.style.border = '1px solid #444';
 
+                // 根據完成狀態改變邊框顏色 (完成變綠色)
                 if (isDone && !isClaimed) itemDiv.style.borderColor = '#2ecc71';
 
                 itemDiv.innerHTML = `
@@ -697,6 +789,7 @@
             const name = input.value.trim();
             if(!name) return;
             
+            // 🟢 檢查非法字元
             if (hasForbiddenChars(name)) {
                 alert("❌ 名稱包含非法隱藏字元！");
                 return;
@@ -721,6 +814,7 @@
             currentChatTarget = name;
             document.getElementById('friends-modal').style.display = 'none';
             document.getElementById('pm-modal').style.display = 'flex';
+            // 🟢 [安全防護] 名字要 escape
             document.getElementById('pm-target-name').innerText = name;
             document.getElementById('pm-history').innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">載入記錄中...</div>';
             
@@ -739,6 +833,7 @@
             const msg = input.value.trim();
             if (!msg || !currentChatTarget) return;
             
+            // 🟢 [安全防護] 檢查隱藏字元
             if (hasForbiddenChars(msg)) {
                 alert("❌ 訊息包含非法隱藏字元，請移除後重試！");
                 return;
@@ -790,6 +885,7 @@
                 }
             } 
             else if (data.fromName !== myName) {
+                // 🟢 [安全防護]
                 showToast(`📩 收到來自 [${escapeHtml(data.fromName)}] 的私訊`);
                 socket.emit('getFriends'); 
             }
@@ -797,11 +893,13 @@
 
         socket.on('pmNotification', (senderName) => {
             if (currentChatTarget !== senderName) {
+                // 🟢 [安全防護]
                 showToast(`📩 ${escapeHtml(senderName)} 傳送了私訊給你！`);
                 socket.emit('getFriends');
             }
         });
 
+        // 🟢 [核心修改] 顯示私訊內容 (XSS 防護)
         function appendPM(sender, msg, time = "") {
             const box = document.getElementById('pm-history');
             if (!box) return;
@@ -852,6 +950,7 @@
                 requests.forEach(name => {
                     const div = document.createElement('div');
                     div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px dashed #ccc; font-size:10px;";
+                    // 🟢 [安全防護]
                     div.innerHTML = `
                         <span style="font-weight:bold;">${escapeHtml(name)}</span>
                         <div>
@@ -883,6 +982,7 @@
                         badgeHtml = `<span class="friend-badge">${f.unread}</span>`;
                     }
 
+                    // 🟢 [安全防護]
                     div.innerHTML = `
                         <div style="display:flex; align-items:center; color:${color}">
                             <div class="friend-status ${statusClass}"></div>
@@ -958,6 +1058,7 @@
         socket.on('playerStatsUpdate', (p) => {
             myLevel = p.level;
             myName = p.name;
+            // 🟢 [安全防護]
             document.getElementById('pid').innerText = escapeHtml(p.name) || "Unknown";
             document.getElementById('lvl').innerText = p.level;
             document.getElementById('gold').innerText = (p.gold || 0).toLocaleString();
@@ -980,46 +1081,29 @@
             refreshUI(); 
         });
 
-        // 🟢 [修正] 統一處理 World Boss 狀態 (Sync + Update)
-        function updateBossUI(data) {
+        socket.on('worldBossUpdate', (data) => {
             const banner = document.getElementById('boss-banner');
-            
-            if (!data || !data.active) {
+            if (data.active) {
+                banner.style.display = 'block';
+                const pct = (data.hp / data.maxHp) * 100;
+                document.getElementById('boss-hp-bar').style.width = pct + "%";
+                document.getElementById('boss-hp-text').innerText = `${(data.hp/100000000).toFixed(1)}億 / ${(data.maxHp/100000000).toFixed(1)}億`;
+                if (data.remainingTime !== undefined) {
+                    let timeLeft = Math.floor(data.remainingTime / 1000);
+                    const timerSpan = document.getElementById('boss-timer');
+                    if (bossHubTimer) clearInterval(bossHubTimer);
+                    updateHubTimer(timerSpan, timeLeft);
+                    bossHubTimer = setInterval(() => {
+                        timeLeft--;
+                        updateHubTimer(timerSpan, timeLeft);
+                        if (timeLeft <= 0) clearInterval(bossHubTimer);
+                    }, 1000);
+                }
+            } else {
                 banner.style.display = 'none';
                 if (bossHubTimer) clearInterval(bossHubTimer);
-                return;
             }
-
-            banner.style.display = 'block';
-            const pct = Math.max(0, (data.hp / data.maxHp) * 100);
-            document.getElementById('boss-hp-bar').style.width = pct + "%";
-            
-            let hpText = (data.hp > 100000000) ? (data.hp / 100000000).toFixed(1) + "億" : (data.hp / 10000).toFixed(0) + "萬";
-            let maxHpText = (data.maxHp > 100000000) ? (data.maxHp / 100000000).toFixed(1) + "億" : (data.maxHp / 10000).toFixed(0) + "萬";
-            document.getElementById('boss-hp-text').innerText = `${hpText} / ${maxHpText}`;
-            
-            // 倒數計時處理 (使用 startTime)
-            if (data.startTime) {
-                const BOSS_DURATION = 600; // 10分鐘
-                const elapsed = Math.floor((Date.now() - data.startTime) / 1000);
-                let timeLeft = BOSS_DURATION - elapsed;
-                
-                if (timeLeft < 0) timeLeft = 0;
-
-                const timerSpan = document.getElementById('boss-timer');
-                if (bossHubTimer) clearInterval(bossHubTimer);
-                
-                updateHubTimer(timerSpan, timeLeft);
-                bossHubTimer = setInterval(() => {
-                    timeLeft--;
-                    updateHubTimer(timerSpan, timeLeft);
-                    if (timeLeft <= 0) clearInterval(bossHubTimer);
-                }, 1000);
-            }
-        }
-
-        socket.on('worldBossSync', (data) => { updateBossUI(data); });
-        socket.on('worldBossUpdate', (data) => { updateBossUI(data); });
+        });
 
         socket.on('updateHubRanking', (ranking) => {
             const box = document.getElementById('boss-ranking-area');
@@ -1038,6 +1122,7 @@
                 let dmgText = (r.dmg / 100000000).toFixed(2) + "億";
                 if (r.dmg < 100000000) dmgText = (r.dmg / 10000).toFixed(0) + "萬";
                 
+                // 🟢 [安全防護]
                 div.innerHTML = `<span class="${rankClass}">${medal} ${escapeHtml(r.name)}</span><span style="color:#ccc;">輸出: ${dmgText}</span>`;
                 list.appendChild(div);
             });
@@ -1064,20 +1149,29 @@
 
         socket.on('roomJoined', (data) => { 
             const roomId = data.roomId || data; 
-            window.location.href = `battle.html?room=${roomId}`; 
+            window.location.href = `battle_v21.html?room=${roomId}`; 
         });
         
+        // 🟢 [優化] 錯誤訊息處理 (區分 "錯誤" 與 "系統通知")
         socket.on('errorMessage', (msg) => { 
+            // 如果訊息包含【 】(例如【測試成功】或【系統通知】)，用公告視窗顯示
             if (msg.includes('【') && msg.includes('】')) {
+                // 修改公告標題
                 document.querySelector('#notice-modal .notice-title').innerText = "📬 系統通知";
+                // 修改公告內容 (支援換行)
                 document.querySelector('#notice-modal .notice-content').innerHTML = msg.replace(/\n/g, '<br>');
+                // 顯示視窗
                 document.getElementById('notice-modal').style.display = 'flex';
             } else {
+                // 普通錯誤，用 Toast 或 Alert
                 showToast("❌ " + msg); 
             }
         });
         
+        // 🟢 系統日誌監聽 (主要用於遊戲內訊息)
         socket.on('battleLog', (msg) => {
+            // 🚫 過濾強化系統訊息，不顯示在 Hub 聊天室
+            // 關鍵字：強化 + (成功 | 失敗 | 破碎)
             if (msg.includes('強化') && (msg.includes('成功') || msg.includes('失敗') || msg.includes('破碎'))) {
                 return;
             }
@@ -1091,21 +1185,24 @@
         });
 
         socket.on('chatMessage', (data) => {
+            // 🚫 過濾強化廣播 (若伺服器是透過 chatMessage 發送)
             if (data.name === '系統' && data.msg.includes('強化') && (data.msg.includes('成功') || data.msg.includes('失敗'))) {
                 return;
             }
             appendChat(data.name, data.msg);
         });
 
+        // 🟢 [核心修改] 公頻聊天 (XSS 防護 + 隱藏字元檢查)
         function appendChat(name, msg) {
-            if (name === '系統' && !msg.includes('系統')) { /* 簡單過濾，避免重複 */ }
-
+if (name === '系統') return;
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
             
+            // 系統訊息通常是安全的 HTML，但如果包含玩家名字要小心
             if (name === '系統') {
                 div.innerHTML = `<span style="color:#e74c3c; font-weight:bold;">[系統]:</span> <span style="color:#bdc3c7;">${msg}</span>`;
             } else {
+                // 一般玩家訊息，必須 escape
                 div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${escapeHtml(name)}]:</span> ${escapeHtml(msg)}`;
             }
             
@@ -1123,6 +1220,7 @@
             const msg = input.value.trim();
             if (!msg) return;
 
+            // 🟢 [安全防護] 檢查隱藏字元
             if (hasForbiddenChars(msg)) {
                 alert("❌ 訊息包含非法隱藏字元，請移除後重試！");
                 return;
@@ -1219,6 +1317,7 @@
                     if (isFighting) { statusTag = '<span class="room-tag status-fighting">戰鬥中</span>'; lockClass = 'locked'; }
                     else if (room.playerCount >= 6) { statusTag = '<span class="room-tag" style="background:#e67e22; color:white">已滿員</span>'; }
                     
+                    // 🟢 [安全防護] 房主名字要 escape
                     html += `<div class="btn ${lockClass}" ${clickAction}>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:12px; font-weight:bold; color:#f1c40f;">🚩 ${escapeHtml(room.hostName)} 的隊伍</span>
