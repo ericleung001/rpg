@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中2</title>
+    <title>戰鬥中3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -319,6 +319,18 @@
             lowMp: 'attack'
         };
 
+	const MINION_DB = [
+            { img: 'slime.png', name: '變異史萊姆' },
+            { img: 'rat.png', name: '溝渠老鼠' },
+            { img: 'bee.png', name: '殺人蜂' },
+            { img: 'boar.png', name: '暴躁野豬' },
+            { img: 'snake.png', name: '劇毒響尾蛇' },
+            { img: 'skeleton.png', name: '骷髏士兵' },
+            { img: 'zombie.png', name: '腐爛殭屍' },
+            { img: 'thief.png', name: '蒙面盜賊' },
+            { img: 'fire_imp.png', name: '火焰小鬼' }
+        ];
+
 
         // 🟢 [新增] 材料與特殊物品設定 (用於顯示掉落物中文名)
         const MATERIAL_CONFIG = {
@@ -509,7 +521,7 @@
             if (autoMode === 'custom') { runCustomAuto(); return; }
 
             // 5. 執行職業 AI
-            const delay = Math.random() * 600 + 600; 
+            const delay = Math.random() * 300 + 200; 
             setTimeout(() => {
                 // 再次確認狀態 (防止延遲期間戰鬥結束或被關閉)
                 if (!isMyTurn || roomId === 'world_boss') { 
@@ -582,7 +594,7 @@
         }
 
         function runCustomAuto() {
-            const delay = Math.random() * 500 + 500; 
+            const delay = Math.random() * 300 + 200; 
             setTimeout(() => {
                 if (!isMyTurn || roomId === 'world_boss') return;
                 
@@ -890,7 +902,43 @@
             renderMonsters(monsters);
         });
 
-        // 🟢 [修正] 渲染怪物列表 (修復圖片顯示問題)
+        // 🟢 [完整版] 雜兵資料庫 (圖片對應名稱)
+        const LOW_LEVEL_MONSTER_IMGS = [
+            { img: 'slime.png', name: '變異史萊姆' },
+            { img: 'rat.png', name: '溝渠老鼠' },
+            { img: 'bee.png', name: '殺人蜂' },
+            { img: 'boar.png', name: '暴躁野豬' },
+            { img: 'thief.png', name: '蒙面盜賊' },
+            { img: 'wolf_king.png', name: '荒原狼' },
+            { img: 'snake.png', name: '劇毒響尾蛇' },
+            { img: 'zombie.png', name: '腐爛殭屍' },
+            { img: 'skeleton.png', name: '骷髏士兵' },
+            { img: 'ghoul.png', name: '食屍鬼爪牙' },
+            { img: 'witch.png', name: '黑森林女巫' },
+            { img: 'hydra.png', name: '九頭蛇幼體' },
+            { img: 'fire_imp.png', name: '火焰小鬼' },
+            { img: 'lava_golem.png', name: '熔岩傀儡' },
+            { img: 'salamander.png', name: '火蜥蜴' },
+            { img: 'fire_mage.png', name: '烈焰學徒' },
+            { img: 'dragon_hatchling.png', name: '幼龍' },
+            { img: 'balrog.png', name: '炎魔分身' },
+            { img: 'snow_wolf.png', name: '極地雪狼' },
+            { img: 'yeti.png', name: '暴怒雪人' },
+            { img: 'ice_spirit.png', name: '冰霜精靈' },
+            { img: 'frost_knight.png', name: '寒冰衛士' },
+            { img: 'ice_dragon.png', name: '冰龍幻影' },
+            { img: 'lich_king.png', name: '巫妖侍從' },
+            { img: 'void_eye.png', name: '虛空凝視者' },
+            { img: 'shadow_assassin.png', name: '暗影行者' },
+            { img: 'dark_paladin.png', name: '墮落騎士' },
+            { img: 'demon_guard.png', name: '地獄守門犬' },
+            { img: 'succubus.png', name: '魅魔僕從' },
+            { img: 'void_lord.png', name: '虛空行者' },
+            { img: 'chaos_beast.png', name: '混沌魔獸' },
+            { img: 'fallen_angel.png', name: '折翼天使' }
+        ];
+
+        // 🟢 [修正] 渲染怪物列表 (第一隻正常，其餘隨機雜兵圖+名)
         function renderMonsters(monsters) {
             currentMonsters = monsters;
             const container = document.getElementById('monsters-container');
@@ -909,21 +957,27 @@
                 const hpPct = m.maxHp > 0 ? Math.max(0, (m.hp / m.maxHp) * 100) : 0; 
                 const isSelected = (index === selectedTargetIndex);
                 
-                // 圖片路徑邏輯
-                // 預設圖
                 let imgSrc = 'img/monsters/slime.png'; 
-                
-                // 如果後端有傳 img 屬性，就用後端的
-                if (m.img) {
-                    imgSrc = `img/monsters/${m.img}`;
+                let displayName = m.name; // 預設顯示原名
+
+                if (index === 0) {
+                    // 第一隻怪：使用原本設定的圖和名字
+                    if (m.img) imgSrc = `img/monsters/${m.img}`;
+                } else {
+                    // 其他怪：隨機選一張低等怪物圖 + 對應名字
+                    // 使用 index 作為種子，確保同一隻怪不會一直變身
+                    const seed = (index + m.maxHp) % MINION_DB.length;
+                    const minion = MINION_DB[seed];
+                    imgSrc = `img/monsters/${minion.img}`;
+                    displayName = minion.name; // 🟢 替換顯示名稱
                 }
 
                 const clickAction = isDead ? '' : `onclick="selectMonster(${index})"`;
 
                 container.innerHTML += `
                     <div class="monster-card ${isDead?'dead':''} ${isSelected?'selected':''}" ${clickAction}>
-                        <img class="boss-sprite" src="${imgSrc}" onerror="this.src='img/monsters/slime.png'; this.onerror=null;" alt="${m.name}">
-                        <div class="m-info">${m.name}</div>
+                        <img class="boss-sprite" src="${imgSrc}" onerror="this.src='img/monsters/slime.png'; this.onerror=null;" alt="${displayName}">
+                        <div class="m-info">${displayName}</div>
                         <div class="hp-bar" style="height:5px; margin:2px 0;">
                             <div class="hp-fill" style="width:${hpPct}%;"></div>
                         </div>
@@ -999,9 +1053,28 @@
                 const info = SKILL_INFO[sid];
                 if(info && skillsOwned.includes(sid)) {
                     const btn = document.createElement('button');
-                    btn.className = 'btn-shortcut'; btn.setAttribute('data-mp', info.mp); btn.setAttribute('data-sid', sid);
+                    btn.className = 'btn-shortcut'; 
+                    btn.setAttribute('data-mp', info.mp); 
+                    btn.setAttribute('data-sid', sid);
                     btn.innerHTML = `${info.name} <span style="color:#2980b9">(${info.mp})</span>`;
-                    btn.onclick = () => { useSkill(sid); }; area.appendChild(btn);
+                    
+                    // 1. 檢查 MP
+                    if (p.mp < info.mp) {
+                        btn.disabled = true;
+                        btn.style.opacity = "0.5";
+                        btn.style.cursor = "not-allowed";
+                    }
+                    
+                    // 2. 🟢 [修正] 檢查回合 (World Boss 例外)
+                    // 如果不是 World Boss 且 不是我的回合 -> 鎖定
+                    if (roomId !== 'world_boss' && !isMyTurn) {
+                        btn.disabled = true;
+                        btn.style.opacity = "0.5";
+                        btn.style.cursor = "not-allowed";
+                    }
+
+                    btn.onclick = () => { useSkill(sid); }; 
+                    area.appendChild(btn);
                 }
             });
         }
@@ -1145,7 +1218,13 @@
             const btnArea = document.getElementById('btns');
             btnArea.style.gridTemplateColumns = '1fr 1fr';
             btnArea.innerHTML = `<button class="btn battle-action" onclick="act('attack')">攻擊</button><button class="btn battle-action" onclick="openSkill()">魔法</button><button class="btn battle-action" onclick="openBag()">物品</button><button class="btn" onclick="leaveRoom()">逃跑</button>`;
-            if (roomId === 'world_boss') { toggle(false); } else { toggle(!isMyTurn); }
+            
+            // 🟢 [修正] World Boss 模式下，按鈕應該是解鎖的
+            if (roomId === 'world_boss') { 
+                toggle(false); 
+            } else { 
+                toggle(!isMyTurn); 
+            }
         }
 
         // 🟢 [修正] 施放技能 (傳送目標)
@@ -1187,8 +1266,37 @@
             }
         }
 
+        // 🟢 [修正] 切換按鈕狀態 (包含快捷鍵)
         function toggle(disabled) { 
-            document.querySelectorAll('.battle-action').forEach(b => { b.disabled = disabled; b.style.opacity = disabled ? "0.5" : "1"; }); 
+            // 1. 控制主要按鈕 (攻擊、魔法、物品、逃跑)
+            document.querySelectorAll('.battle-action').forEach(b => { 
+                b.disabled = disabled; 
+                b.style.opacity = disabled ? "0.5" : "1"; 
+            }); 
+
+            // 2. 控制快捷鍵按鈕
+            document.querySelectorAll('.btn-shortcut').forEach(b => {
+                b.disabled = disabled;
+                // 如果已經灰掉了 (因為 MP 不足)，不要把透明度設回 1，保持原樣或設為 disabled 樣式
+                if (disabled) {
+                    b.style.opacity = "0.5";
+                    b.style.cursor = "not-allowed";
+                } else {
+                    // 如果解鎖，檢查 MP 是否足夠 (這部分邏輯可以再優化，目前先簡單恢復)
+                    // 或者我們讓 updateShortcutStates 來負責正確的狀態
+                    // 這裡簡單設回 1，讓 updateShortcutStates 稍後修正
+                    b.style.opacity = "1";
+                    b.style.cursor = "pointer";
+                    
+                    // 再次檢查 MP (確保解鎖後，沒魔的還是灰的)
+                    const mpCost = parseInt(b.getAttribute('data-mp') || 0);
+                    if (myPlayer.mp < mpCost) {
+                        b.disabled = true;
+                        b.style.opacity = "0.5";
+                        b.style.cursor = "not-allowed";
+                    }
+                }
+            });
         }
 
         function log(m) { 
