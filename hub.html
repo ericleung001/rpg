@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會v2</title>
+    <title>冒險者公會v3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -1063,7 +1063,7 @@
             refreshUI(); 
         });
 
-        socket.on('worldBossUpdate', (data) => {
+        socket.on('worldBossSync', (data) => {
             const banner = document.getElementById('boss-banner');
             if (data.active) {
                 banner.style.display = 'block';
