@@ -76,9 +76,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -95,7 +95,7 @@
             'shark_tooth':      { name: "鯊魚牙匕首", cost: 800, desc: "ATK+80" },
             'flame_staff':      { name: "火焰法杖", cost: 0, desc: "ATK+300 MP+100" }, 
             'emerald_staff':    { name: "翡翠法杖", cost: 5000, desc: "ATK+300" },
-            'gold_axe':         { name: "黃金巨斧", cost: 10000, desc: "ATK+500" },
+            'gold_axe':         { name: "黃金巨斧", cost: 10000, desc: "ATK+500" }, 
             'obsidian_blade':   { name: "黑曜石之劍", cost: 8000, desc: "ATK+600" },
             'frost_bow':        { name: "寒冰弓", cost: 0, desc: "ATK+1300" }, 
             'dragon_spear':     { name: "龍骨長槍", cost: 15000, desc: "ATK+1200" },
@@ -114,7 +114,7 @@
             'galaxy_saber':     { name: "銀河光劍", cost: 0, desc: "ATK+110000 HP+150000" }, 
             'entropy_sword':    { name: "終焉·熱寂之劍", cost: 0, desc: "ATK+200000 HP+300000" },
 
-            // 🟢 Lv.450 - 500 新武器
+            // Lv.450 - 500 新武器
             'infinity_blade':     { name: "無限之刃", cost: 0, desc: "ATK+350000 HP+500000" },
             'singularity_weapon': { name: "奇點·萬象崩壞", cost: 0, desc: "ATK+600000 HP+1000000" },
             
@@ -131,7 +131,7 @@
             'chain_mail':       { name: "鎖子甲", cost: 1500, desc: "DEF+40" }, 
             'iron_armor':       { name: "鐵盔甲", cost: 4000, desc: "DEF+100" }, 
             'magma_plate':      { name: "熔岩胸甲", cost: 0, desc: "DEF+150 HP+1500" }, 
-            'ice_robe':         { name: "冰霜法袍", cost: 0, desc: "DEF+200 MP+500" },
+            'ice_robe':         { name: "冰霜法袍", cost: 0, desc: "DEF+200 MP+500" }, 
             'yeti_cloak':       { name: "雪怪斗篷", cost: 0, desc: "DEF+350 HP+4000" }, 
             'demon_armor':      { name: "惡魔戰甲", cost: 0, desc: "DEF+1000 HP+12000" }, 
             'angel_armor':      { name: "熾天使鎧甲", cost: 0, desc: "DEF+5000 HP+50000" },
@@ -142,11 +142,11 @@
             'nebula_plate':     { name: "星雲板甲", cost: 0, desc: "DEF+70000 HP+600000" }, 
             'entropy_god_armor':{ name: "終焉·神之庇護", cost: 0, desc: "DEF+120000 HP+1500000" },
 
-            // 🟢 Lv.450 - 500 新防具
+            // Lv.450 - 500 新防具
             'event_horizon':      { name: "視界戰甲", cost: 0, desc: "DEF+200000 HP+2000000" },
             'singularity_armor':  { name: "奇點·絕對防禦", cost: 0, desc: "DEF+350000 HP+5000000" },
 
-            // === 飾品 ===
+            // === 飾品 (一般) ===
             'bone_ring':        { name: "骨戒", cost: 0, desc: "ATK+15 HP+200" }, 
             'ring_str':         { name: "力量戒指", cost: 3000, desc: "ATK+30" },
             'bracelet_def':     { name: "堅毅手環", cost: 3000, desc: "DEF+30" }, 
@@ -165,16 +165,27 @@
             // Lv.280 新飾品
             'dimension_ring':   { name: "維度指環", cost: 0, desc: "全能力+15000" },
 
-            // 🟢 Lv.450 - 500 新飾品
+            // Lv.450 - 500 新飾品
             'mobius_ring':      { name: "莫比烏斯環", cost: 0, desc: "ATK/DEF+30000 HP+500000 MP+10萬" },
-            'singularity_acc':  { name: "奇點·因果律", cost: 0, desc: "ATK/DEF+80000 HP+200萬 MP+50萬" }
+            'singularity_acc':  { name: "奇點·因果律", cost: 0, desc: "ATK/DEF+80000 HP+200萬 MP+50萬" },
+
+            // === 🟢 [新增] 碎片商店專屬飾品 ===
+            'shard_ring_novice':    { name: "學徒碎片戒指", desc: "ATK+10 HP+50" },
+            'shard_neck_brave':     { name: "勇者碎片項鍊", desc: "ATK+30 DEF+10 HP+200" },
+            'shard_charm_wind':     { name: "疾風碎片護符", desc: "ATK+80 MP+200" },
+            'shard_ring_vampire':   { name: "吸血鬼碎片指環", desc: "ATK+150 HP+500" },
+            'shard_earring_holy':   { name: "神聖碎片耳環", desc: "MP+1000 DEF+300 HP+2000" },
+            'shard_belt_titan':     { name: "泰坦碎片腰帶", desc: "DEF+1000 HP+10000" },
+            'shard_pendant_dragon': { name: "龍魂碎片吊墜", desc: "ATK+5000 DEF+2000 HP+30000" },
+            'shard_ring_void':      { name: "虛空碎片之戒", desc: "ATK+15000 MP+5000 HP+50000" },
+            'shard_core_galaxy':    { name: "銀河碎片核心", desc: "ATK+40000 DEF+20000 HP+200000" },
+            'shard_crown_infinity': { name: "無限碎片皇冠", desc: "ATK+100000 DEF+80000 HP+1000000" }
         };
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
         
         socket.on('playerStatsUpdate', (p) => { 
             renderStats(p); 
-            // 🔥 [修改 1] 傳入 enhancements
             renderSlots(p.equipment, p.enhancements); 
             renderInventory(p.inventory, p.enhancements); 
         });
@@ -189,7 +200,6 @@
             document.getElementById('mp').innerText = p.maxMp.toLocaleString();
         }
 
-        // 裝備中物品顯示
         function renderSlots(eq, enhancements) {
             const types = ['weapon', 'armor', 'acc'];
             if (!enhancements) enhancements = {};
@@ -213,13 +223,11 @@
             });
         }
 
-        // 🟢 [修改 2] 背包物品顯示 (加入強化等級)
         function renderInventory(inv, enhancements) {
             const list = document.getElementById('inventory-list');
             list.innerHTML = '';
             let hasEquipable = false;
             
-            // 確保 enhancements 不會 undefined
             if (!enhancements) enhancements = {};
 
             Object.keys(inv).forEach(key => {
@@ -227,11 +235,9 @@
                 if (item && inv[key] > 0) {
                     hasEquipable = true;
                     
-                    // 🔥 讀取強化等級
                     const lv = enhancements[key] || 0;
                     let nameDisplay = `${item.name} x${inv[key]}`;
                     
-                    // 如果有強化，加上 +N
                     if (lv > 0) {
                         nameDisplay += ` <span style="color:#f1c40f; font-weight:bold;">+${lv}</span>`;
                     }
