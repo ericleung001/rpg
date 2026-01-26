@@ -48,6 +48,7 @@
             text-align: left;
             position: relative;
         }
+        .skill-card.maxed { border-color: #f1c40f; background: rgba(241, 196, 15, 0.1); }
 
         .skill-header {
             display: flex; justify-content: space-between; align-items: center;
@@ -85,7 +86,8 @@
         .upgrade-btn:active { transform: translateY(4px); box-shadow: none; }
         
         .btn-ready { background: #27ae60; color: white; border: 2px solid #2ecc71; }
-        .btn-disabled { background: #7f8c8d; color: #bdc3c7; border: 2px solid #95a5a6; cursor: not-allowed; pointer-events: none; }
+        .btn-disabled { background: #7f8c8d; color: #bdc3c7; border: 2px solid #95a5a6; cursor: not-allowed; pointer-events: none; box-shadow: none; transform: none;}
+        .btn-max { background: #f39c12; color: #fff; border: 2px solid #e67e22; cursor: default; box-shadow: none; transform: none; }
         
         .cost-tag { background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-size: 10px; }
 
@@ -127,8 +129,7 @@
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        // 🟢 [前端配置] 用於顯示技能名稱與基礎數值 (需與 Server 同步)
-        // 這裡只需要包含你會用到的技能
+        // 前端配置：技能基礎資訊
         const SKILL_CONFIG = {
             'fireball':     { name: "火球術", val: 1.5, type: 'dmg', desc: "單體傷害" },
             'heal_light':   { name: "小回復", val: 0.2, type: 'heal', desc: "恢復生命" },
@@ -139,7 +140,7 @@
             'poison_touch': { name: "劇毒之觸", val: 2.5, type: 'dot', desc: "持續毒傷" },
             'holy_shield':  { name: "聖光守護", val: 2.0, type: 'buff', desc: "防禦加倍" },
             'berserk':      { name: "狂暴",     val: 2.0, type: 'buff', desc: "攻擊加倍" },
-            'heal_all':     { name: "聖光普照", val: 1.0, type: 'heal_all', desc: "全隊全回" },
+            
             'full_heal':    { name: "大天使之息", val: 1.0, type: 'heal', desc: "完全恢復" },
             'god_mode':     { name: "天神下凡", val: 3.0, type: 'buff', desc: "攻防三倍" },
             'meteor':       { name: "隕石術",   val: 3.5, type: 'aoe', desc: "全體傷害" },
@@ -157,16 +158,13 @@
             socket.emit('joinGame', myToken);
         });
 
-        // 監聽錯誤或成功訊息
         socket.on('errorMessage', (msg) => { showToast(msg); });
 
-        // 核心：接收玩家數據並渲染介面
         socket.on('playerStatsUpdate', (p) => {
             renderSkills(p);
         });
 
         function renderSkills(p) {
-            // 1. 更新碎片數量
             const shards = (p.inventory && p.inventory['skill_shard']) || 0;
             document.getElementById('my-shards').innerText = shards;
 
@@ -178,52 +176,52 @@
                 return;
             }
 
-            // 2. 遍歷玩家已學技能
             p.skills.forEach(skillId => {
                 const config = SKILL_CONFIG[skillId] || { name: skillId, val: 1.0, desc: "未知技能" };
                 const currentLv = (p.skillLevels && p.skillLevels[skillId]) ? p.skillLevels[skillId] : 1;
                 
-                // 3. 計算數值
-                // 升級公式：Current Level * 5
+                // 🟢 [判斷滿級]
+                const isMax = currentLv >= 10;
+
+                // 數值計算
                 const cost = currentLv * 5; 
                 const canAfford = shards >= cost;
                 
-                // 倍率公式：1 + (lv-1)*0.1
                 const currMult = 1 + (currentLv - 1) * 0.1;
-                const nextMult = 1 + (currentLv) * 0.1;
+                const nextMult = 1 + (currentLv) * 0.1; // 下一級
 
-                // 顯示用的數值 (基礎值 * 倍率)
-                // 如果是百分比類型(如熱寂)，顯示 % 數
+                // 顯示數值處理
                 let currDisplay, nextDisplay;
                 
                 if (skillId === 'entropy_decay') {
-                    // 特殊處理百分比顯示
                     currDisplay = (config.val * currMult * 100).toFixed(1) + '%';
                     nextDisplay = (config.val * nextMult * 100).toFixed(1) + '%';
                 } else {
-                    // 一般倍率顯示
                     currDisplay = (config.val * currMult).toFixed(2) + 'x';
                     nextDisplay = (config.val * nextMult).toFixed(2) + 'x';
                 }
 
-                // 4. 判斷是否滿級 (假設 Lv.10 滿級，Server 端也要擋)
-                const isMax = currentLv >= 10;
+                // 🟢 [按鈕與狀態處理]
                 let btnClass = canAfford ? 'btn-ready' : 'btn-disabled';
                 let btnText = `升級 <span class="cost-tag">✨ ${cost}</span>`;
                 let clickAction = `onclick="upgradeSkill('${skillId}', ${cost})"`;
+                let nextStatHtml = `<span class="stat-val next-stat">${nextDisplay}</span>`;
+                let arrowHtml = `<div class="arrow">➡</div>`;
+                let cardClass = 'skill-card';
 
                 if (isMax) {
-                    btnClass = 'btn-disabled';
-                    btnText = "已達最高等級 (MAX)";
-                    clickAction = "";
-                    nextDisplay = "MAX";
+                    btnClass = 'btn-max';
+                    btnText = "👑 已達 MAX";
+                    clickAction = ""; // 移除點擊事件
+                    nextStatHtml = `<span style="color:#f1c40f; font-size:10px;">MAX</span>`;
+                    arrowHtml = `<div class="arrow" style="color:#555;">➡</div>`;
+                    cardClass += ' maxed';
                 } else if (!canAfford) {
                     btnText = `碎片不足 (需 ${cost})`;
                 }
 
-                // 5. 產生 HTML
                 const card = document.createElement('div');
-                card.className = 'skill-card';
+                card.className = cardClass;
                 card.innerHTML = `
                     <div class="skill-header">
                         <div>
@@ -238,10 +236,10 @@
                             <span class="stat-label">目前效果</span>
                             <span class="stat-val curr-stat">${currDisplay}</span>
                         </div>
-                        <div class="arrow">➡</div>
+                        ${arrowHtml}
                         <div>
                             <span class="stat-label">升級後</span>
-                            <span class="stat-val next-stat">${nextDisplay}</span>
+                            ${nextStatHtml}
                         </div>
                     </div>
 
@@ -253,13 +251,10 @@
             });
         }
 
-        // 發送升級請求
         function upgradeSkill(skillId, cost) {
-            // 簡單防手震
             const btn = event.target;
             btn.style.transform = "scale(0.95)";
             setTimeout(() => btn.style.transform = "scale(1)", 100);
-
             socket.emit('upgradeSkill', skillId);
         }
 
