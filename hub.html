@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -327,9 +327,9 @@
 - <b>如果你沒選怪，或者你鎖定的怪被打死了，會自動切換去打 場上血量最低的怪物，確保效率最大化。</b>
 
 <b style="color:#f1c40f;">💎防爆石登場</b>
-- <b>商店新增 [防爆石]，售價 50億。</b>
+- <b>有機會在福袋及打550lv怪物獲得。</b>
 - <b>使用後強化 100% 成功，不爆裝、不降級。</b>
-- <b>強化最高已到+30。/防爆石最高到+23</b>
+- <b>防爆石最高到+23/強化最高已到+30。</b>
 
 
 <b style="color:#f1c40f;">🏰自家公會系統</b>
@@ -524,6 +524,9 @@
                     <div class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;" onclick="window.location.href='guild.html'">
     🏰 創造自家公會
 </div>
+					<a href="skills.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">
+    ⚡ 技能升級
+</a>
                 </div>
 
                 
@@ -1011,8 +1014,8 @@
             { id: 'city_5', name: '虛空要塞', reqLv: 1, desc: '接近魔界的地方 (Lv.80-100)', monsters: [{ id: 'void_eye', name: '虛空之眼', lv: 82 }, { id: 'shadow_assassin', name: '暗影刺客', lv: 85 }, { id: 'dark_paladin', name: '墮落聖騎', lv: 88 }, { id: 'demon_guard', name: '惡魔守衛', lv: 92 }, { id: 'succubus', name: '魅魔', lv: 95 }, { id: 'void_lord', name: '👁️ 虛空領主 (BOSS)', lv: 99 }] },
             { id: 'city_6', name: '魔界王座', reqLv: 1, desc: '☠️ 最終決戰 (Lv.100-150)', monsters: [{ id: 'chaos_beast', name: '混沌巨獸', lv: 105 }, { id: 'fallen_angel', name: '墮天使', lv: 110 }, { id: 'demon_king', name: '👑 魔王撒旦', lv: 150 }] },
             { id: 'city_7', name: '虛空裂縫', reqLv: 1, desc: '🟣 扭曲的次元 (Lv.160-180)', monsters: [{ id: 'void_walker', name: '虛空行者', lv: 160 }, { id: 'chaos_knight', name: '混沌騎士', lv: 170 }, { id: 'abyss_dragon', name: '🐉 深淵魔龍 (BOSS)', lv: 180 }] },
-            { id: 'city_8', name: '眾神墓地', reqLv: 100, desc: '💀 神話終結之地 (Lv.190-200)', monsters: [{ id: 'fallen_titan', name: '墮落泰坦', lv: 190 }, { id: 'genesis_god', name: '☠️ 創世破壞神 (FINAL)', lv: 200 }] },
-            { id: 'city_9', name: '虛空之界', reqLv: 120, desc: '⚫ 虛無的盡頭 (Lv.210-225)', monsters: [{ id: 'void_worm', name: '虛空吞噬蟲', lv: 210 }, { id: 'shadow_phantom', name: '👻 虚影夢魘 (BOSS)', lv: 225 }] },
+            { id: 'city_8', name: '眾神墓地', reqLv: 1, desc: '💀 神話終結之地 (Lv.190-200)', monsters: [{ id: 'fallen_titan', name: '墮落泰坦', lv: 190 }, { id: 'genesis_god', name: '☠️ 創世破壞神 (FINAL)', lv: 200 }] },
+            { id: 'city_9', name: '虛空之界', reqLv: 200, desc: '⚫ 虛無的盡頭 (Lv.210-225)', monsters: [{ id: 'void_worm', name: '虛空吞噬蟲', lv: 210 }, { id: 'shadow_phantom', name: '👻 虚影夢魘 (BOSS)', lv: 225 }] },
             { id: 'city_10', name: '星際航道', reqLv: 200, desc: '🌌 穿越星辰 (Lv.245-260)', monsters: [{ id: 'star_eater', name: '吞星巨獸', lv: 245 }, { id: 'nebula_dragon', name: '🐲 星雲幻龍 (BOSS)', lv: 260 }] },
             { id: 'city_11', name: '維度盡頭', reqLv: 200, desc: '⏳ 時間與空間的終點 (Lv.280-300)', monsters: [{ id: 'time_keeper', name: '時空裁決者', lv: 280 }, { id: 'dimension_breaker', name: '維度粉碎者', lv: 290 }, { id: 'entropy_god', name: '👑 終焉·熱寂之神 (GOD)', lv: 300 }] },
             
@@ -1149,7 +1152,7 @@
 
         socket.on('roomJoined', (data) => { 
             const roomId = data.roomId || data; 
-            window.location.href = `battle.html?room=${roomId}`; 
+            window.location.href = `battle_v21.html?room=${roomId}`; 
         });
         
         // 🟢 [優化] 錯誤訊息處理 (區分 "錯誤" 與 "系統通知")
