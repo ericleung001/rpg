@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>技能祭壇</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body { 
+            background-color: #2c3e50; color: #ecf0f1; 
+            font-family: 'Press Start 2P', monospace; 
+            text-align: center; 
+            margin: 0; padding: 0; 
+            min-height: 100vh;
+            display: flex; justify-content: center; 
+        }
+
+        #app-layout {
+            width: 100%; max-width: 600px;
+            padding: 15px; box-sizing: border-box;
+            display: flex; flex-direction: column;
+        }
+
+        /* 頂部資源列 */
+        .header {
+            border-bottom: 3px solid #f1c40f;
+            padding-bottom: 15px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .shard-display {
+            color: #9b59b6; font-size: 12px; font-weight: bold;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        /* 技能卡片容器 */
+        .skill-list {
+            display: flex; flex-direction: column; gap: 15px;
+            overflow-y: auto; padding-bottom: 20px;
+        }
+
+        /* 單個技能卡片 */
+        .skill-card {
+            background: rgba(0,0,0,0.3);
+            border: 2px solid #7f8c8d;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: left;
+            position: relative;
+        }
+
+        .skill-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; border-bottom: 1px dashed #555;
+            padding-bottom: 5px;
+        }
+        .skill-name { color: #f1c40f; font-size: 14px; }
+        .skill-type { font-size: 10px; color: #aaa; background: #333; padding: 3px 6px; border-radius: 4px; }
+
+        /* 數值比較區 */
+        .stats-compare {
+            display: grid; grid-template-columns: 1fr 20px 1fr;
+            align-items: center; text-align: center;
+            font-size: 10px; margin-bottom: 10px;
+            background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px;
+        }
+        .curr-stat { color: #bdc3c7; }
+        .next-stat { color: #2ecc71; font-weight: bold; }
+        .arrow { color: #f39c12; }
+
+        .stat-label { display: block; color: #7f8c8d; font-size: 8px; margin-bottom: 4px; }
+        .stat-val { font-size: 12px; }
+
+        /* 升級按鈕 */
+        .upgrade-btn {
+            width: 100%;
+            padding: 12px;
+            border: none; border-radius: 6px;
+            font-family: inherit; font-size: 12px; font-weight: bold;
+            cursor: pointer;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+            transition: transform 0.1s;
+        }
+        .upgrade-btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        .btn-ready { background: #27ae60; color: white; border: 2px solid #2ecc71; }
+        .btn-disabled { background: #7f8c8d; color: #bdc3c7; border: 2px solid #95a5a6; cursor: not-allowed; pointer-events: none; }
+        
+        .cost-tag { background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+
+        /* 返回按鈕 */
+        .back-btn {
+            display: block; margin-top: 20px;
+            background: #34495e; color: white; text-decoration: none;
+            padding: 12px; border: 2px solid #bdc3c7; border-radius: 6px;
+            font-size: 12px;
+        }
+
+        /* 提示視窗 */
+        #toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.9); color: #fff;
+            padding: 10px 20px; border-radius: 20px; border: 2px solid #f1c40f;
+            display: none; z-index: 999; font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast"></div>
+
+    <div id="app-layout">
+        <div class="header">
+            <div style="font-size:16px;">⚡ 技能祭壇</div>
+            <div class="shard-display">
+                ✨ 碎片: <span id="my-shards" style="color:#fff; font-size:14px;">0</span>
+            </div>
+        </div>
+
+        <div id="skill-container" class="skill-list">
+            <div style="padding:20px; color:#aaa; font-size:10px;">讀取技能資料中...</div>
+        </div>
+
+        <a href="hub.html" class="back-btn">◀ 返回大廳</a>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script>
+        // 🟢 [前端配置] 用於顯示技能名稱與基礎數值 (需與 Server 同步)
+        // 這裡只需要包含你會用到的技能
+        const SKILL_CONFIG = {
+            'fireball':     { name: "火球術", val: 1.5, type: 'dmg', desc: "單體傷害" },
+            'heal_light':   { name: "小回復", val: 0.2, type: 'heal', desc: "恢復生命" },
+            'thunder':      { name: "雷擊",   val: 1.2, type: 'dmg', desc: "機率暈眩" },
+            'drain':        { name: "吸血",   val: 1.0, type: 'drain', desc: "吸取生命" },
+            'god_light':    { name: "神之光", val: 0.5, type: 'heal', desc: "大幅恢復" },
+            'frost_nova':   { name: "冰霜新星", val: 1.2, type: 'debuff', desc: "緩速傷害" },
+            'poison_touch': { name: "劇毒之觸", val: 2.5, type: 'dot', desc: "持續毒傷" },
+            'holy_shield':  { name: "聖光守護", val: 2.0, type: 'buff', desc: "防禦加倍" },
+            'berserk':      { name: "狂暴",     val: 2.0, type: 'buff', desc: "攻擊加倍" },
+            'heal_all':     { name: "聖光普照", val: 1.0, type: 'heal_all', desc: "全隊全回" },
+            'full_heal':    { name: "大天使之息", val: 1.0, type: 'heal', desc: "完全恢復" },
+            'god_mode':     { name: "天神下凡", val: 3.0, type: 'buff', desc: "攻防三倍" },
+            'meteor':       { name: "隕石術",   val: 3.5, type: 'aoe', desc: "全體傷害" },
+            'divine_slash': { name: "次元斬",   val: 5.0, type: 'aoe', desc: "全體重擊" },
+            'void_crush':   { name: "虛空碎擊", val: 10.0, type: 'aoe', desc: "全體毀滅" },
+            'entropy_decay':{ name: "熱寂·衰變", val: 0.05, type: 'aoe', desc: "全體真傷" },
+            'big_bang':     { name: "宇宙大爆炸", val: 25.0, type: 'aoe', desc: "終焉一擊" }
+        };
+
+        const socket = io('https://mmo.ttctv-105.cc', { transports: ['websocket'], secure: true });
+        const myToken = localStorage.getItem('rpg_token');
+        if (!myToken) window.location.href = 'index.html';
+
+        socket.on('connect', () => {
+            socket.emit('joinGame', myToken);
+        });
+
+        // 監聽錯誤或成功訊息
+        socket.on('errorMessage', (msg) => { showToast(msg); });
+
+        // 核心：接收玩家數據並渲染介面
+        socket.on('playerStatsUpdate', (p) => {
+            renderSkills(p);
+        });
+
+        function renderSkills(p) {
+            // 1. 更新碎片數量
+            const shards = (p.inventory && p.inventory['skill_shard']) || 0;
+            document.getElementById('my-shards').innerText = shards;
+
+            const container = document.getElementById('skill-container');
+            container.innerHTML = '';
+
+            if (!p.skills || p.skills.length === 0) {
+                container.innerHTML = '<div style="padding:20px; color:#aaa;">你還沒有學會任何技能</div>';
+                return;
+            }
+
+            // 2. 遍歷玩家已學技能
+            p.skills.forEach(skillId => {
+                const config = SKILL_CONFIG[skillId] || { name: skillId, val: 1.0, desc: "未知技能" };
+                const currentLv = (p.skillLevels && p.skillLevels[skillId]) ? p.skillLevels[skillId] : 1;
+                
+                // 3. 計算數值
+                // 升級公式：Current Level * 5
+                const cost = currentLv * 5; 
+                const canAfford = shards >= cost;
+                
+                // 倍率公式：1 + (lv-1)*0.1
+                const currMult = 1 + (currentLv - 1) * 0.1;
+                const nextMult = 1 + (currentLv) * 0.1;
+
+                // 顯示用的數值 (基礎值 * 倍率)
+                // 如果是百分比類型(如熱寂)，顯示 % 數
+                let currDisplay, nextDisplay;
+                
+                if (skillId === 'entropy_decay') {
+                    // 特殊處理百分比顯示
+                    currDisplay = (config.val * currMult * 100).toFixed(1) + '%';
+                    nextDisplay = (config.val * nextMult * 100).toFixed(1) + '%';
+                } else {
+                    // 一般倍率顯示
+                    currDisplay = (config.val * currMult).toFixed(2) + 'x';
+                    nextDisplay = (config.val * nextMult).toFixed(2) + 'x';
+                }
+
+                // 4. 判斷是否滿級 (假設 Lv.10 滿級，Server 端也要擋)
+                const isMax = currentLv >= 10;
+                let btnClass = canAfford ? 'btn-ready' : 'btn-disabled';
+                let btnText = `升級 <span class="cost-tag">✨ ${cost}</span>`;
+                let clickAction = `onclick="upgradeSkill('${skillId}', ${cost})"`;
+
+                if (isMax) {
+                    btnClass = 'btn-disabled';
+                    btnText = "已達最高等級 (MAX)";
+                    clickAction = "";
+                    nextDisplay = "MAX";
+                } else if (!canAfford) {
+                    btnText = `碎片不足 (需 ${cost})`;
+                }
+
+                // 5. 產生 HTML
+                const card = document.createElement('div');
+                card.className = 'skill-card';
+                card.innerHTML = `
+                    <div class="skill-header">
+                        <div>
+                            <div class="skill-name">${config.name}</div>
+                            <div style="font-size:8px; color:#aaa; margin-top:2px;">${config.desc}</div>
+                        </div>
+                        <div class="skill-type">Lv.${currentLv}</div>
+                    </div>
+
+                    <div class="stats-compare">
+                        <div>
+                            <span class="stat-label">目前效果</span>
+                            <span class="stat-val curr-stat">${currDisplay}</span>
+                        </div>
+                        <div class="arrow">➡</div>
+                        <div>
+                            <span class="stat-label">升級後</span>
+                            <span class="stat-val next-stat">${nextDisplay}</span>
+                        </div>
+                    </div>
+
+                    <button class="upgrade-btn ${btnClass}" ${clickAction}>
+                        ${btnText}
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 發送升級請求
+        function upgradeSkill(skillId, cost) {
+            // 簡單防手震
+            const btn = event.target;
+            btn.style.transform = "scale(0.95)";
+            setTimeout(() => btn.style.transform = "scale(1)", 100);
+
+            socket.emit('upgradeSkill', skillId);
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.innerText = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
+        }
+    </script>
+</body>
+</html>
