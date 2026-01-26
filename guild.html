@@ -3,24 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>自家公會2</title>
+    <title>公會大廳v10</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
         body { 
-            background-color: #2c3e50; color: #ecf0f1; 
+            background-color: #222; color: #ecf0f1; 
             font-family: 'Press Start 2P', monospace; 
             text-align: center; margin: 0; padding: 0; height: 100dvh; 
-            display: flex; flex-direction: column; align-items: center;
-            overflow: hidden;
+            display: flex; justify-content: center;
+            overflow: hidden; 
+        }
+
+        #app-layout {
+            display: flex;
+            flex-direction: column; 
+            width: 100%;
+            height: 100%;
+            max-width: 600px; 
+            position: relative;
+            background: #2c3e50;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
         #container {
-            width: 100%; max-width: 600px; height: 100%;
+            flex: 1; 
             display: flex; flex-direction: column;
             background: #34495e; box-sizing: border-box;
             border-left: 2px solid #555; border-right: 2px solid #555;
-            padding-bottom: 35px; /* 預留給底部公頻 */
+            padding-bottom: 35px; 
+            overflow: hidden;
+            width: 100%;
         }
 
         .header {
@@ -36,7 +49,6 @@
 
         .content { flex: 1; overflow-y: auto; padding: 15px; }
 
-        /* 標籤頁樣式 */
         .tabs { display: flex; gap: 5px; margin-bottom: 15px; }
         .tab-btn {
             flex: 1; padding: 10px; background: #95a5a6; color: #2c3e50; border: none;
@@ -44,7 +56,6 @@
         }
         .tab-active { background: #ecf0f1; font-weight: bold; border-bottom: 3px solid #3498db; }
 
-        /* 卡片樣式 */
         .card {
             background: rgba(0,0,0,0.2); border: 1px solid #7f8c8d;
             padding: 10px; margin-bottom: 8px; border-radius: 5px; text-align: left;
@@ -72,18 +83,20 @@
         
         .offline { color: #95a5a6; }
 
-        /* 派發介面專用 */
         .dist-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 10px; border-bottom: 1px dashed #555; padding-bottom: 5px; }
         .dist-checkbox { width: 20px; height: 20px; margin-right: 10px; }
 
-        /* 🟢 底部公頻樣式 */
+        #chat-container {
+            display: flex; flex-direction: column; font-size: 10px; z-index: 100;
+            background: #34495e;
+        }
+        
         #chat-container {
             position: fixed; bottom: 0; left: 0; width: 100%; 
             background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7;
-            display: flex; flex-direction: column; font-size: 10px; z-index: 100;
             padding-bottom: env(safe-area-inset-bottom);
             transition: height 0.3s ease-in-out;
-            height: 35px; /* 預設收合高度 */
+            height: 35px; 
         }
         #chat-header {
             height: 35px; background: #34495e; color: #fff; line-height: 35px; 
@@ -93,7 +106,8 @@
         }
         #chat-header:hover { background: #2c3e50; }
 
-        .chat-open { height: 40vh !important; }
+        .chat-open { height: 45vh !important; } 
+        
         #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
         .chat-open #chat-body { display: flex; } 
 
@@ -103,38 +117,66 @@
         #chat-send { background: #2980b9; color: white; border: none; padding: 0 15px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; touch-action: manipulation; }
 
         @media (min-width: 1024px) {
-            #chat-container { position: static; width: 100%; max-width: 600px; height: 35px; }
-            .chat-open { height: 200px !important; }
+            #app-layout {
+                flex-direction: row; 
+                max-width: 1000px;   
+            }
+            
+            #container {
+                width: 600px; 
+                border-right: 4px solid #bdc3c7;
+                padding-bottom: 0; 
+                border-left: none;
+            }
+
+            #chat-container {
+                position: static; 
+                width: 400px;     
+                height: 100%;     
+                border-top: none;
+                background: #34495e;
+            }
+
+            #chat-header { 
+                cursor: default; 
+                background: #2c3e50; 
+                pointer-events: none; 
+                border-bottom: 2px solid #bdc3c7;
+            }
+            
+            #chat-body { display: flex !important; height: calc(100% - 35px); }
         }
     </style>
 </head>
 <body>
 
-    <div id="container">
-        <div class="header">
-            <div class="title">🏰 公會系統</div>
-            <button class="back-btn" onclick="window.location.href='hub.html'">返回大廳</button>
+    <div id="app-layout">
+        <div id="container">
+            <div class="header">
+                <div class="title">🏰 公會系統</div>
+                <button class="back-btn" onclick="window.location.href='hub.html'">返回大廳</button>
+            </div>
+
+            <div class="content" id="main-content">
+                <div class="loading">讀取資料中...</div>
+            </div>
         </div>
 
-        <div class="content" id="main-content">
-            <div class="loading">讀取資料中...</div>
-        </div>
-    </div>
-
-    <div id="chat-container">
-        <div id="chat-header" onclick="toggleChat()">🌍 世界頻道 (點擊展開)</div>
-        <div id="chat-body">
-            <div id="chat-history"></div>
-            <div id="chat-input-area">
-                <input type="text" id="chat-input" placeholder="輸入訊息..." maxlength="50">
-                <button id="chat-send">發送</button>
+        <div id="chat-container">
+            <div id="chat-header" onclick="toggleChat()">🌍 世界頻道 (點擊展開)</div>
+            <div id="chat-body">
+                <div id="chat-history"></div>
+                <div id="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="輸入訊息..." maxlength="50">
+                    <button id="chat-send">發送</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-       const socket = io('https://mmo.ttctv-105.cc', { 
+        const socket = io('https://mmo.ttctv-105.cc', { 
     transports: ['websocket', 'polling'],
     secure: true // 因為你用 https，建議加呢個
 });
@@ -142,12 +184,45 @@
         const myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
+        function escapeHtml(text) {
+            if (!text) return text;
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // 🟢 [核心] 轉生稱號格式化工具 (新增)
+        function formatName(name, rebirth) {
+            if (rebirth && rebirth > 0) {
+                // 顯示為：名字+1 (金色)
+                return `${escapeHtml(name)}<span style="color:#f1c40f; font-weight:bold; margin-left:2px;">+${rebirth}</span>`;
+            }
+            return escapeHtml(name);
+        }
+
         const ITEM_NAME_MAP = {
+            'copper_ore': '銅礦石', 'soft_fur': '柔軟皮毛', 'beast_fang': '野獸尖牙', 'slime_gel': '黏液',
+            'iron_ore': '鐵礦石', 'leather': '皮革', 'tough_hide': '硬皮革', 'magic_dust': '魔粉',
+            'poison_sac': '毒囊', 'bone_shard': '碎骨片', 'silver_ore': '銀礦石', 'fire_core': '火焰核心',
+            'lava_rock': '熔岩石', 'dragon_scale': '龍鱗', 'gold_ore': '金礦石', 'ice_crystal': '永恆冰晶',
+            'yeti_fur': '雪怪毛皮', 'spirit_dust': '靈魂粉末', 'mithril': '秘銀', 'void_dust': '虛空之塵',
+            'demon_horn': '惡魔之角', 'dark_essence': '暗之精華', 'adamantite': '精金', 'god_blood': '神之血',
+            'chaos_orb': '混沌寶珠', 'angel_feather': '天使之羽', 'titan_steel': '泰坦神鋼', 'star_fragment': '星之碎片',
+            'oak_log': '橡木原木', 'maple_log': '楓木原木', 'yew_log': '紫杉原木', 'ancient_log': '遠古神木',
+            'spirit_wood': '靈木', 'dragon_wood': '龍骨木', 'void_wood': '虛空木', 'chaos_wood': '混沌神木',
+            'carp': '鯉魚', 'salmon': '鮭魚', 'koi': '錦鯉', 'magic_fish': '魔力魚', 'tuna': '黑鮪魚',
+            'shark': '大白鯊', 'lava_eel': '熔岩鰻', 'void_squid': '虛空烏賊', 'god_carp': '神之鯉',
+            'pearl': '珍珠', 'coal': '煤炭', 'ruby': '紅寶石', 'diamond': '鑽石',
+            'void_shard': '虛空碎片', 'dark_matter': '暗物質', 'star_core': '恆星核心',
+            'cosmic_steel': '宇宙鋼', 'time_sand': '時光之沙', 'dimension_gem': '維度寶石',
+            'entropy_origin': '熱寂原點',
+            'void_blade': '虛空之刃', 'void_armor': '虛空戰甲',
+            'galaxy_saber': '銀河光劍', 'nebula_plate': '星雲板甲',
+            'ring_galaxy': '銀河指環', 'genesis_weapon': '創世·終焉之劍', 'genesis_armor': '創世·神之庇護',
             'potion_hp': '生命藥水', 'potion_mp': '魔力藥水', 'potion_mid': '中級藥水',
             'scroll_exp': '經驗卷軸', 'lucky_bag': '幸運福袋', 'enhance_stone': '強化石',
             'elixir': '萬能藥', 'gem_atk': '攻擊寶石', 'god_stone': '神之石',
-            'copper_ore': '銅礦石', 'iron_ore': '鐵礦石', 'gold_ore': '金礦石', 'mithril': '秘銀',
-            'titan_steel': '泰坦神鋼', 'star_fragment': '星之碎片'
+            'quantum_residue': '量子殘渣', 'multiverse_shard': '多元宇宙碎片', 'divinity_core': '創世神格',
+            'infinity_blade': '無限之刃', 'event_horizon': '視界戰甲', 'mobius_ring': '莫比烏斯環',
+            'singularity_weapon': '奇點·萬象崩壞', 'singularity_armor': '奇點·絕對防禦', 'singularity_acc': '奇點·因果律'
         };
 
         let currentTab = 'members';
@@ -165,22 +240,35 @@
 
         socket.on('refreshGuildUI', () => { socket.emit('getGuildInfo'); });
 
-        // 🟢 公會頻監聽 (顯示在公會面板內)
         socket.on('guildChatUpdate', (history) => {
             const chatBox = document.getElementById('g-chat-box');
             if (chatBox) renderChatHistory(history);
         });
 
-        // 🟢 世界頻監聽 (顯示在底部)
+        // 🟢 世界頻邏輯 (支援轉生顯示)
         socket.on('chatHistory', (history) => {
             const box = document.getElementById('chat-history');
             box.innerHTML = ''; 
-            history.forEach(data => appendWorldChat(data.name, data.msg));
+            history.forEach(data => appendWorldChat(data.name, data.msg, data.rebirth));
         });
         socket.on('chatMessage', (data) => {
-            if (data.name === '系統' && data.msg.includes('強化')) return; // 過濾強化廣播
-            appendWorldChat(data.name, data.msg);
+            if (data.name === '系統' && data.msg.includes('強化')) return; 
+            appendWorldChat(data.name, data.msg, data.rebirth);
         });
+
+        // 🟢 [核心修改] 世界頻渲染
+        function appendWorldChat(name, msg, rebirth) {
+            const div = document.createElement('div');
+            if (name === '系統') {
+                div.innerHTML = `<span style="color:#e74c3c; font-weight:bold;">[系統]:</span> <span style="color:#bdc3c7;">${msg}</span>`;
+            } else {
+                const displayName = formatName(name, rebirth);
+                div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${displayName}]:</span> ${escapeHtml(msg)}`;
+            }
+            document.getElementById('chat-history').appendChild(div);
+            const h = document.getElementById('chat-history');
+            h.scrollTop = h.scrollHeight;
+        }
 
         // 1. 公會列表
         socket.on('guildListUpdate', (list) => {
@@ -223,17 +311,42 @@
             if (!myGuildData) return;
             const container = document.getElementById('main-content');
             const isLeader = myGuildData.isLeader;
+            const daily = myGuildData.dailyStatus || { canClaim: false, gold: 0, stone: 0 };
 
             window.editNotice = function() {
                 const newText = prompt("請輸入新的公會公告 (100字內):", myGuildData.notice);
                 if (newText !== null) socket.emit('updateGuildNotice', newText);
             };
 
+            let leaveBtnHtml = isLeader 
+                ? (myGuildData.members.length === 1 ? `<button class="btn-action btn-red" onclick="leaveGuild()" style="font-size:10px;">⚠️ 解散公會</button>` : '') 
+                : `<button class="btn-action btn-red" onclick="leaveGuild()" style="font-size:10px;">🚪 退出公會</button>`;
+
+            let dailyBtnHtml = '';
+            if (daily.canClaim) {
+                let hint = `可領: ${daily.gold > 0 ? '$' + daily.gold.toLocaleString() : ''} ${daily.stone > 0 ? '強化石x1' : ''}`;
+                dailyBtnHtml = `
+                    <div style="margin: 10px 0; padding: 10px; background: rgba(241, 196, 15, 0.2); border: 1px solid #f1c40f; border-radius: 5px; text-align: center;">
+                        <div style="color: #f1c40f; font-size: 10px; margin-bottom: 5px;">🎁 每日福利 (${hint})</div>
+                        <button class="btn-action btn-gold" style="width: 100%; padding: 8px; font-weight: bold;" onclick="claimDaily()">💰 立即領取</button>
+                    </div>`;
+            } else {
+                dailyBtnHtml = `
+                    <div style="margin: 10px 0; padding: 5px; background: rgba(0,0,0,0.3); border-radius: 5px; text-align: center; color: #7f8c8d; font-size: 9px;">
+                        🎁 每日福利: 今日已領取 或 未達標
+                    </div>`;
+            }
+
             let html = `
                 <div class="info-box">
-                    <div style="font-size:14px; font-weight:bold; color:#f1c40f; margin-bottom:5px;">${escapeHtml(myGuildData.name)}</div>
+                    <div style="font-size:14px; font-weight:bold; color:#f1c40f; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+                        <span>${escapeHtml(myGuildData.name)}</span>
+                        ${leaveBtnHtml} 
+                    </div>
                     <div style="margin-bottom:5px;">💰 資金: <span style="color:#2ecc71">${myGuildData.gold.toLocaleString()}</span> / 5億</div>
                     
+                    ${dailyBtnHtml}
+
                     <div style="background:rgba(0,0,0,0.3); padding:8px; border-left:3px solid #f39c12; margin:10px 0; border-radius:3px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
                             <span style="font-size:9px; color:#f39c12; font-weight:bold;">📜 公會公告</span>
@@ -253,8 +366,14 @@
                         </div>
                     </div>
 
-                    <div style="color:#7f8c8d; font-size:9px; margin-bottom:8px;">(資金達 5億，全員每日享 10% 利息)</div>
-                    <div style="display:flex; gap:5px;">
+                    <div style="margin-top:10px; text-align:left;">
+                        <div style="color:#f1c40f; font-size:9px; margin-bottom:3px; font-weight:bold;">🎁 公會福利規則：</div>
+                        <div style="color:#bdc3c7; font-size:8px; margin-bottom:3px;">1. 需每日手動點擊上方 [立即領取] 按鈕。</div>
+                        <div style="color:#bdc3c7; font-size:8px; margin-bottom:3px;">2. 成員達 20人：每人可領 [強化石 x1]。</div>
+                        <div style="color:#bdc3c7; font-size:8px; margin-bottom:8px;">3. 資金達 5億：每人可領本金 10% 利息 (上限1億)。</div>
+                    </div>
+
+                    <div style="display:flex; gap:5px; border-top:1px solid #555; padding-top:10px;">
                         <input type="number" id="donate-val" placeholder="金額" style="width:80px; padding:4px;">
                         <button class="btn-action btn-blue" onclick="donate()">捐獻</button>
                     </div>
@@ -272,18 +391,27 @@
                 myGuildData.members.forEach(m => {
                     let kickBtn = (isLeader && m.rank !== '會長') ? `<button class="btn-action btn-red" onclick="kick('${escapeHtml(m.name)}')">踢出</button>` : '';
                     let statusTxt = m.online ? `<span style="color:#2ecc71">●</span>` : `<span class="offline">○</span>`;
+                    let moneyText = m.contribution ? m.contribution.toLocaleString() : "0";
+                    
+                    // 🟢 [修改] 顯示轉生稱號
+                    const displayName = formatName(m.name, m.rebirth || 0);
+
                     html += `
                         <div class="card">
                             <div>
                                 <div class="card-name" style="color:${m.rank==='會長'?'#f1c40f':'white'}">
-                                    [${m.rank}] ${escapeHtml(m.name)} (Lv.${m.level})
+                                    [${m.rank}] ${displayName} (Lv.${m.level})
                                 </div>
-                                <div class="card-info">${statusTxt} ${m.online?'線上':'離線'}</div>
+                                <div class="card-info">
+                                    ${statusTxt} ${m.online?'線上':'離線'} 
+                                    <span style="color:#f39c12; margin-left:8px;">💰 捐獻: ${moneyText}</span>
+                                </div>
                             </div>
                             <div>${kickBtn}</div>
                         </div>`;
                 });
             } else if (currentTab === 'distribute' && isLeader) {
+                // (... 派發介面保持不變，省略以節省篇幅 ...)
                 let itemOptions = '<option value="">(不發送物品)</option>';
                 for(let k in myInventory) {
                     let name = ITEM_NAME_MAP[k] || k;
@@ -303,7 +431,9 @@
                 myGuildData.members.forEach(m => {
                     if (m.rank === '會長') return;
                     memberCount++;
-                    html += `<div class="dist-row"><input type="checkbox" class="dist-checkbox" value="${escapeHtml(m.name)}"><span>${escapeHtml(m.name)} <span style="color:#aaa;">(Lv.${m.level})</span></span></div>`;
+                    // 🟢 轉生顯示
+                    const dName = formatName(m.name, m.rebirth || 0);
+                    html += `<div class="dist-row"><input type="checkbox" class="dist-checkbox" value="${escapeHtml(m.name)}"><span>${dName} <span style="color:#aaa;">(Lv.${m.level})</span></span></div>`;
                 });
                 if (memberCount === 0) html += '<div style="color:#aaa;">沒有其他會員可派發</div>';
                 html += `</div><button class="btn-action btn-gold" style="width:100%; padding:15px; margin-top:10px; font-size:14px;" onclick="submitDistribute()">確認派發</button>`;
@@ -326,8 +456,7 @@
             container.innerHTML = html;
         }
 
-        // --- 🟢 聊天功能 (公會 + 世界) ---
-        
+        // --- 聊天功能 ---
         function renderChatHistory(history) {
             const chatBox = document.getElementById('g-chat-box');
             if (!chatBox) return;
@@ -357,18 +486,6 @@
             }
         });
 
-        // 🟢 世界頻道邏輯
-        function appendWorldChat(name, msg) {
-            if (name === '系統') {
-                document.getElementById('chat-history').innerHTML += `<div><span style="color:#e74c3c; font-weight:bold;">[系統]:</span> <span style="color:#bdc3c7;">${msg}</span></div>`;
-            } else {
-                const safeName = name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                document.getElementById('chat-history').innerHTML += `<div><span style="color:#f1c40f; font-weight:bold;">[${safeName}]:</span> ${escapeHtml(msg)}</div>`;
-            }
-            const h = document.getElementById('chat-history');
-            h.scrollTop = h.scrollHeight;
-        }
-
         function sendWorldChat() {
             const input = document.getElementById('chat-input');
             const msg = input.value.trim();
@@ -378,15 +495,29 @@
         }
 
         function toggleChat() {
+            if (window.innerWidth >= 1024) return;
             const chat = document.getElementById('chat-container');
             const header = document.getElementById('chat-header');
-            if (window.innerWidth >= 1024) return;
             chat.classList.toggle('chat-open');
             header.innerText = chat.classList.contains('chat-open') ? "點擊收起" : "🌍 世界頻道 (點擊展開)";
         }
         document.getElementById('chat-send').onclick = sendWorldChat;
 
-        // --- 功能函式 ---
+        function claimDaily() {
+            socket.emit('claimGuildDaily');
+        }
+
+        function leaveGuild() {
+            const isLeader = myGuildData && myGuildData.isLeader;
+            const msg = isLeader 
+                ? "確定要【解散公會】嗎？\n此操作無法復原，公會資金與資料將永久刪除！" 
+                : "確定要退出公會嗎？\n退出後將無法享有公會福利。";
+
+            if (confirm(msg)) {
+                socket.emit('leaveGuild');
+            }
+        }
+
         function setTab(t) { currentTab = t; renderMyGuild(); }
         function createGuild() { const name = document.getElementById('new-guild-name').value; if (confirm(`建立公會需花費 500,000G，確定嗎？`)) socket.emit('createGuild', name); }
         function joinGuild(gid) { socket.emit('joinGuildRequest', gid); }
@@ -410,11 +541,6 @@
 
         socket.on('guildOpSuccess', (msg) => { alert("✅ " + msg); });
         socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
-
-        function escapeHtml(text) {
-            if (!text) return text;
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
     </script>
 </body>
 </html>
