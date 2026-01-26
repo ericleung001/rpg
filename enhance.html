@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>裝備強化 v13 (Lv.30 Cap)</title>
+    <title>裝備強化</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -259,9 +259,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -300,7 +300,17 @@
             'mobius_ring': '莫比烏斯環',
             'singularity_weapon': '奇點·萬象崩壞',
             'singularity_armor': '奇點·絕對防禦',
-            'singularity_acc': '奇點·因果律'
+            'singularity_acc': '奇點·因果律',
+            'shard_ring_novice': '學徒碎片戒指',   // Lv.10
+    'shard_neck_brave': '勇者碎片項鍊',    // Lv.30
+    'shard_charm_wind': '疾風碎片護符',    // Lv.60
+    'shard_ring_vampire': '吸血鬼碎片指環', // Lv.100 (特殊：吸血)
+    'shard_earring_holy': '神聖碎片耳環',   // Lv.150 (高魔力)
+    'shard_belt_titan': '泰坦碎片腰帶',    // Lv.200 (高防禦)
+    'shard_pendant_dragon': '龍魂碎片吊墜', // Lv.300 (高攻防)
+    'shard_ring_void': '虛空碎片之戒',     // Lv.400
+    'shard_core_galaxy': '銀河碎片核心',   // Lv.450
+    'shard_crown_infinity': '無限碎片皇冠' // Lv.500 (畢業級)
         };
 
         // 🟢 [前端設定] 強化機率表 (需與 Server 保持一致)
@@ -326,13 +336,13 @@
 
     // === +16 ~ +20 (神話強化 - 失敗破碎) ===
     16:{ rate: 0.3,  cost: 20000000, risk: 'break'}, // 10%
-    17:{ rate: 0.4, cost: 30000000, risk: 'break'}, // 7%
-    18:{ rate: 0.4, cost: 50000000, risk: 'break'}, // 5%
-    19:{ rate: 0.5, cost: 80000000, risk: 'break'}, // 3%
-    20:{ rate: 0.5, cost: 100000000,risk: 'break'}, // 1% (1億G)
+    17:{ rate: 0.3, cost: 30000000, risk: 'break'}, // 7%
+    18:{ rate: 0.3, cost: 50000000, risk: 'break'}, // 5%
+    19:{ rate: 0.3, cost: 80000000, risk: 'break'}, // 3%
+    20:{ rate: 0.3, cost: 100000000,risk: 'break'}, // 1% (1億G)
 
     // === [新增] +21 ~ +25 (虛空強化 - 失敗破碎) ===
-    21:{ rate: 0.4, cost: 150000000, risk: 'break'}, // 0.5% (1.5億G)
+    21:{ rate: 0.3, cost: 150000000, risk: 'break'}, // 0.5% (1.5億G)
     22:{ rate: 0.3, cost: 200000000, risk: 'break'}, // 0.4% (2億G)
     23:{ rate: 0.3, cost: 300000000, risk: 'break'}, // 0.3% (3億G)
     24:{ rate: 0.2, cost: 400000000, risk: 'break'}, // 0.2% (4億G)
