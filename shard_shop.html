@@ -123,16 +123,16 @@
     <script>
         // 🟢 [前端配置] 商品列表 (需與 Server 的 SHOP_PRICES 和 ITEM_CONFIG 對應)
         const SHOP_ITEMS = [
-            { id: 'shard_ring_novice',    name: "學徒碎片戒指", cost: 10,    stats: "ATK+10 HP+50", desc: "適合新手入門" },
-            { id: 'shard_neck_brave',     name: "勇者碎片項鍊", cost: 30,    stats: "ATK+30 DEF+10 HP+200", desc: "賦予勇氣" },
-            { id: 'shard_charm_wind',     name: "疾風碎片護符", cost: 80,    stats: "ATK+80 MP+200", desc: "身輕如燕" },
-            { id: 'shard_ring_vampire',   name: "吸血鬼碎片指環", cost: 150,   stats: "ATK+150 HP+500", desc: "散發血腥氣息" },
-            { id: 'shard_earring_holy',   name: "神聖碎片耳環", cost: 300,   stats: "MP+1000 DEF+300 HP+2000", desc: "女神的祝福" },
-            { id: 'shard_belt_titan',     name: "泰坦碎片腰帶", cost: 600,   stats: "DEF+1000 HP+10000", desc: "如泰坦般堅固" },
-            { id: 'shard_pendant_dragon', name: "龍魂碎片吊墜", cost: 1200,  stats: "ATK+5000 DEF+2000 HP+3w", desc: "古龍靈魂封印" },
-            { id: 'shard_ring_void',      name: "虛空碎片之戒", cost: 2500,  stats: "ATK+1.5w MP+5000 HP+5w", desc: "凝視深淵..." },
-            { id: 'shard_core_galaxy',    name: "銀河碎片核心", cost: 5000,  stats: "ATK+4w DEF+2w HP+20w", desc: "星系運轉之力" },
-            { id: 'shard_crown_infinity', name: "無限碎片皇冠", cost: 10000, stats: "ATK+10w DEF+8w HP+100w", desc: "象徵無盡力量" }
+            { id: 'shard_ring_novice',    name: "學徒碎片戒指", cost: 3,    stats: "ATK+10 HP+50", desc: "適合新手入門" },
+            { id: 'shard_neck_brave',     name: "勇者碎片項鍊", cost: 5,    stats: "ATK+30 DEF+10 HP+200", desc: "賦予勇氣" },
+            { id: 'shard_charm_wind',     name: "疾風碎片護符", cost: 10,    stats: "ATK+80 MP+200", desc: "身輕如燕" },
+            { id: 'shard_ring_vampire',   name: "吸血鬼碎片指環", cost: 15,   stats: "ATK+150 HP+500", desc: "散發血腥氣息" },
+            { id: 'shard_earring_holy',   name: "神聖碎片耳環", cost: 20,   stats: "MP+1000 DEF+300 HP+2000", desc: "女神的祝福" },
+            { id: 'shard_belt_titan',     name: "泰坦碎片腰帶", cost: 25,   stats: "DEF+1000 HP+10000", desc: "如泰坦般堅固" },
+            { id: 'shard_pendant_dragon', name: "龍魂碎片吊墜", cost: 30,  stats: "ATK+5000 DEF+2000 HP+3w", desc: "古龍靈魂封印" },
+            { id: 'shard_ring_void',      name: "虛空碎片之戒", cost: 35,  stats: "ATK+1.5w MP+5000 HP+5w", desc: "凝視深淵..." },
+            { id: 'shard_core_galaxy',    name: "銀河碎片核心", cost: 5000,  stats: "ATK+10w DEF+10w HP+300w MP+55w", desc: "星系運轉之力" },
+            { id: 'shard_crown_infinity', name: "無限碎片皇冠", cost: 10000, stats: "ATK+15w DEF+13w HP+500w MP+70w", desc: "象徵無盡力量" }
         ];
 
         const socket = io('https://mmo.ttctv-105.cc', { transports: ['websocket'], secure: true });
