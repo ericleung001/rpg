@@ -49,7 +49,7 @@
         
         <div class="info-row">
             當前等級: <span id="curr-lv" style="color:#3498db">Loading...</span><br>
-            轉生條件: <span style="color:#f1c40f">Lv.400</span><br>
+            轉生條件: <span style="color:#f1c40f">Lv.580</span><br>
             當前加成: <span id="curr-bonus" class="highlight">0%</span>
         </div>
 
@@ -58,11 +58,13 @@
         <div class="info-row" style="text-align: left;">
             <b>轉生好處：</b><br>
             1. 全屬性提升 <span style="color:#2ecc71">+20%</span><br>
-            2. 獲得稱號與榮耀<br>
-            3. 保留所有裝備、技能與物品<br>
+            2. 獲得轉生稱號與榮耀<br>
+            3. 保留技能與技能等級<br>
             <br>
-            <b>代價：</b><br>
-            <span style="color:#e74c3c">等級重置為 Lv.1</span>
+            <b>⚠️ 轉生代價 (硬核模式)：</b><br>
+            1. 等級重置為 Lv.1<br>
+            2. <span style="color:#e74c3c">清空背包與身上裝備</span><br>
+            3. <span style="color:#e74c3c">金幣保留上限 1000 萬</span>
         </div>
 
         <button id="btn-action" class="btn-rebirth btn-disabled" onclick="doRebirth()" disabled>
@@ -92,11 +94,12 @@
 
             const btn = document.getElementById('btn-action');
             
+            // 🟢 修正判斷邏輯：Lv.580 才能轉
             if (rb >= 10) {
                 btn.innerText = "已達轉生巔峰";
                 btn.disabled = true;
                 btn.className = "btn-rebirth btn-disabled";
-            } else if (lv >= 400) {
+            } else if (lv >= 580) {
                 btn.innerText = "🔥 立即轉生 🔥";
                 btn.disabled = false;
                 btn.className = "btn-rebirth";
@@ -111,6 +114,10 @@
             if (res.success) {
                 document.getElementById('msg-area').innerText = "轉生成功！力量湧現！";
                 // 播放音效或特效 (選用)
+                setTimeout(() => {
+                    alert("轉生成功！請重新整理頁面以更新狀態。");
+                    window.location.href = "hub.html";
+                }, 1000);
             }
         });
 
@@ -119,8 +126,11 @@
         });
 
         function doRebirth() {
-            if (confirm("⚠️ 確定要轉生嗎？\n等級將重置為 Lv.1，但屬性將大幅提升！")) {
-                socket.emit('playerRebirth');
+            // 🟢 加入二次確認，提醒會清空裝備
+            if (confirm("⚠️ 警告：轉生將會重置等級、清空所有裝備與背包！\n\n確定要繼續嗎？")) {
+                if(confirm("再問一次：真的要轉生嗎？\n(金幣將保留最多 1000 萬)")) {
+                    socket.emit('playerRebirth');
+                }
             }
         }
     </script>
