@@ -1150,7 +1150,7 @@
 
         socket.on('roomJoined', (data) => { 
             const roomId = data.roomId || data; 
-            window.location.href = `battle_v21.html?room=${roomId}`; 
+            window.location.href = `battle.html?room=${roomId}`; 
         });
         
         // 🟢 [優化] 錯誤訊息處理 (區分 "錯誤" 與 "系統通知")
