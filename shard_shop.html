@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>碎片交換所</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body { 
+            background-color: #2c3e50; color: #ecf0f1; 
+            font-family: 'Press Start 2P', monospace; 
+            text-align: center; 
+            margin: 0; padding: 0; 
+            min-height: 100vh;
+            display: flex; justify-content: center; 
+        }
+
+        #app-layout {
+            width: 100%; max-width: 600px;
+            padding: 15px; box-sizing: border-box;
+            display: flex; flex-direction: column;
+        }
+
+        /* 頂部資源列 */
+        .header {
+            background: linear-gradient(180deg, #34495e, #2c3e50);
+            border-bottom: 3px solid #9b59b6;
+            padding: 15px; margin-bottom: 15px; border-radius: 8px;
+            display: flex; flex-direction: column; gap: 5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .title { color: #f1c40f; font-size: 16px; margin-bottom: 5px; }
+        .shard-display {
+            color: #fff; font-size: 12px;
+            background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 15px;
+            display: inline-block; align-self: center;
+        }
+        .shard-icon { color: #9b59b6; text-shadow: 0 0 5px #9b59b6; }
+
+        /* 商品列表 */
+        .shop-list {
+            display: grid; grid-template-columns: 1fr; gap: 12px;
+            overflow-y: auto; padding-bottom: 80px;
+        }
+
+        /* 商品卡片 */
+        .shop-item {
+            background: rgba(0,0,0,0.2);
+            border: 2px solid #7f8c8d;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex; flex-direction: column; gap: 8px;
+            position: relative;
+            transition: transform 0.1s, border-color 0.2s;
+        }
+        .shop-item.affordable { border-color: #27ae60; background: rgba(39, 174, 96, 0.1); }
+        
+        .item-top { display: flex; justify-content: space-between; align-items: center; }
+        .item-name { color: #e67e22; font-size: 12px; font-weight: bold; text-align: left; }
+        .item-stats { font-size: 9px; color: #bdc3c7; text-align: left; line-height: 1.4; }
+        .stat-highlight { color: #3498db; }
+
+        /* 購買按鈕 */
+        .buy-btn {
+            background: #34495e; color: #bdc3c7;
+            border: 2px solid #7f8c8d; padding: 8px;
+            font-family: inherit; font-size: 10px; cursor: not-allowed;
+            border-radius: 6px; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .buy-btn.can-buy {
+            background: #27ae60; color: white; border-color: #2ecc71;
+            cursor: pointer; box-shadow: 0 3px 0 #1e8449;
+        }
+        .buy-btn.can-buy:active { transform: translateY(3px); box-shadow: none; }
+
+        /* 底部導航 */
+        .nav-bar {
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 600px;
+            background: #2c3e50; border-top: 2px solid #bdc3c7;
+            padding: 10px; display: flex; justify-content: space-around;
+            box-sizing: border-box;
+        }
+        .nav-btn {
+            background: #34495e; color: white; border: 1px solid #fff;
+            padding: 8px 15px; text-decoration: none; font-size: 10px; border-radius: 4px;
+        }
+
+        /* 提示 */
+        #toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.9); color: #fff; border: 2px solid #f1c40f;
+            padding: 10px 20px; border-radius: 20px; display: none; z-index: 999; font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast"></div>
+
+    <div id="app-layout">
+        <div class="header">
+            <div class="title">💎 碎片交換所</div>
+            <div class="shard-display">
+                持有: <span class="shard-icon">✨</span> <span id="my-shards">0</span> 碎片
+            </div>
+        </div>
+
+        <div id="shop-container" class="shop-list">
+            <div style="padding:20px; color:#aaa; font-size:10px;">載入商品中...</div>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <a href="hub.html" class="nav-btn">🏠 大廳</a>
+        <a href="bag.html" class="nav-btn">🎒 背包</a>
+        <a href="skills.html" class="nav-btn">⚡ 技能</a>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script>
+        // 🟢 [前端配置] 商品列表 (需與 Server 的 SHOP_PRICES 和 ITEM_CONFIG 對應)
+        const SHOP_ITEMS = [
+            { id: 'shard_ring_novice',    name: "學徒碎片戒指", cost: 10,    stats: "ATK+10 HP+50", desc: "適合新手入門" },
+            { id: 'shard_neck_brave',     name: "勇者碎片項鍊", cost: 30,    stats: "ATK+30 DEF+10 HP+200", desc: "賦予勇氣" },
+            { id: 'shard_charm_wind',     name: "疾風碎片護符", cost: 80,    stats: "ATK+80 MP+200", desc: "身輕如燕" },
+            { id: 'shard_ring_vampire',   name: "吸血鬼碎片指環", cost: 150,   stats: "ATK+150 HP+500", desc: "散發血腥氣息" },
+            { id: 'shard_earring_holy',   name: "神聖碎片耳環", cost: 300,   stats: "MP+1000 DEF+300 HP+2000", desc: "女神的祝福" },
+            { id: 'shard_belt_titan',     name: "泰坦碎片腰帶", cost: 600,   stats: "DEF+1000 HP+10000", desc: "如泰坦般堅固" },
+            { id: 'shard_pendant_dragon', name: "龍魂碎片吊墜", cost: 1200,  stats: "ATK+5000 DEF+2000 HP+3w", desc: "古龍靈魂封印" },
+            { id: 'shard_ring_void',      name: "虛空碎片之戒", cost: 2500,  stats: "ATK+1.5w MP+5000 HP+5w", desc: "凝視深淵..." },
+            { id: 'shard_core_galaxy',    name: "銀河碎片核心", cost: 5000,  stats: "ATK+4w DEF+2w HP+20w", desc: "星系運轉之力" },
+            { id: 'shard_crown_infinity', name: "無限碎片皇冠", cost: 10000, stats: "ATK+10w DEF+8w HP+100w", desc: "象徵無盡力量" }
+        ];
+
+        const socket = io('https://mmo.ttctv-105.cc', { transports: ['websocket'], secure: true });
+        const myToken = localStorage.getItem('rpg_token');
+        if (!myToken) window.location.href = 'index.html';
+
+        socket.on('connect', () => {
+            socket.emit('joinGame', myToken);
+        });
+
+        socket.on('errorMessage', (msg) => { showToast(msg); });
+
+        // 接收玩家數據更新
+        socket.on('playerStatsUpdate', (p) => {
+            renderShop(p);
+        });
+
+        function renderShop(p) {
+            const shards = (p.inventory && p.inventory['skill_shard']) || 0;
+            document.getElementById('my-shards').innerText = shards;
+
+            const container = document.getElementById('shop-container');
+            container.innerHTML = '';
+
+            SHOP_ITEMS.forEach(item => {
+                const canAfford = shards >= item.cost;
+                const cardClass = canAfford ? 'shop-item affordable' : 'shop-item';
+                const btnClass = canAfford ? 'buy-btn can-buy' : 'buy-btn';
+                const btnText = canAfford ? '立即兌換' : '碎片不足';
+                const clickAction = canAfford ? `onclick="buyItem('${item.id}', '${item.name}', ${item.cost})"` : '';
+
+                const html = `
+                    <div class="${cardClass}">
+                        <div class="item-top">
+                            <div class="item-name">${item.name}</div>
+                            <div style="font-size:10px; color:#f1c40f;">✨ ${item.cost}</div>
+                        </div>
+                        <div class="item-stats">
+                            <div class="stat-highlight">${item.stats}</div>
+                            <div style="color:#7f8c8d; margin-top:2px;">${item.desc}</div>
+                        </div>
+                        <button class="${btnClass}" ${clickAction}>
+                            <span>${btnText}</span>
+                            <span>💰 -${item.cost}</span>
+                        </button>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+        }
+
+        function buyItem(id, name, cost) {
+            if (confirm(`確定花費 ${cost} 碎片兌換 [${name}] 嗎？`)) {
+                socket.emit('buyShardShopItem', id);
+            }
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.innerText = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
+        }
+    </script>
+</body>
+</html>
