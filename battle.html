@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中3</title>
+    <title>戰鬥中</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -246,7 +246,7 @@
         <div class="player-area">
             <div class="gba-box my-status">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
-                    <span style="font-size:11px; font-weight:bold;"><span id="my-name">勇者</span>(你)</span>
+                    <span style="font-size:11px; font-weight:bold;"><span id="my-name-display">勇者</span>(你)</span>
                     <span style="font-size:9px; color:#f1c40f;">⚔️<span id="atk-val">0</span> 🛡️<span id="def-val">0</span></span>
                 </div>
                 <div class="hp-bar"><div id="php" class="hp-fill" style="width:100%"></div></div>
@@ -295,6 +295,24 @@
     secure: true // 因為你用 https，建議加呢個
 });
 
+        // 🟢 [核心] 轉生稱號格式化工具 (新增)
+        function formatName(name, rebirth) {
+            if (rebirth && rebirth > 0) {
+                return `${escapeHtml(name)}<span style="color:#f1c40f; font-weight:bold; margin-left:2px;">+${rebirth}</span>`;
+            }
+            return escapeHtml(name);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return text;
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         let myToken = localStorage.getItem('rpg_token');
         let isAuto = false;
         let autoMode = 'custom';
@@ -305,7 +323,7 @@
         let tankAttackCounter = 0; 
         let healerAttackCounter = 0; 
 
-        // 🟢 多怪相關變數
+        // 多怪相關變數
         let currentMonsters = []; 
         let selectedTargetIndex = 0; 
 
@@ -319,7 +337,7 @@
             lowMp: 'attack'
         };
 
-	const MINION_DB = [
+        const MINION_DB = [
             { img: 'slime.png', name: '變異史萊姆' },
             { img: 'rat.png', name: '溝渠老鼠' },
             { img: 'bee.png', name: '殺人蜂' },
@@ -331,8 +349,6 @@
             { img: 'fire_imp.png', name: '火焰小鬼' }
         ];
 
-
-        // 🟢 [新增] 材料與特殊物品設定 (用於顯示掉落物中文名)
         const MATERIAL_CONFIG = {
             'copper_ore':   { name: '銅礦石' }, 
             'soft_fur':     { name: '柔軟皮毛' }, 
@@ -404,11 +420,11 @@
             'poison_touch': { name: "劇毒之觸", mp: 25, cat: 'atk', desc: "傷x2.5" },
             'frost_nova':    { name: "冰霜新星", mp: 30, cat: 'atk', desc: "傷x1.2+降防" },
             'meteor':        { name: "隕石術",   mp: 80, cat: 'atk', desc: "傷x3.5" },
-            'divine_slash': { name: "次元斬",   mp: 150, cat: 'atk', desc: "傷x5.0" },
+            'divine_slash': { name: "次元斬",   mp: 150, cat: 'atk', desc: "傷x5.0(AOE)" },
             'drain':         { name: "吸血",     mp: 20, cat: 'atk', desc: "吸血100%" },
-            'void_crush':    { name: "虛空碎擊", mp: 1000, cat: 'atk', desc: "傷x10" },
-            'big_bang':      { name: "宇宙大爆炸", mp: 5000, cat: 'atk', desc: "傷x25" },
-            'entropy_decay':{ name: "熱寂·衰變", mp: 2500, cat: 'atk', desc: "5%真傷" },
+            'void_crush':    { name: "虛空碎擊", mp: 1000, cat: 'atk', desc: "傷x10(AOE)" },
+            'big_bang':      { name: "宇宙大爆炸", mp: 5000, cat: 'atk', desc: "傷x25(AOE)" },
+            'entropy_decay':{ name: "熱寂·衰變", mp: 2500, cat: 'atk', desc: "5%真傷(AOE)" },
             'holy_shield':  { name: "聖光守護", mp: 40, cat: 'buff', desc: "防禦x2" },
             'berserk':       { name: "狂暴",     mp: 60, cat: 'buff', desc: "攻x2(自殘)" },
             'god_mode':      { name: "天神下凡", mp: 300, cat: 'buff', desc: "全能x3" },
@@ -817,10 +833,13 @@
                 if (amIHost && p.id !== socket.id) {
                     actionBtn = `<button onclick="kickPlayer('${p.id}')" style="float:right; background:#c0392b; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:10px;">踢出</button>`;
                 }
-                const safeName = p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                
+                // 🟢 [修改] 顯示轉生稱號
+                const displayName = formatName(p.name, p.rebirth);
+                
                 lobbyList.innerHTML += `
                     <div style="border-bottom:1px dashed #555; padding:8px 5px; line-height: 20px;">
-                        ${safeName} <span style="color:#aaa; font-size:10px;">(LV.${p.level})</span>
+                        ${displayName} <span style="color:#aaa; font-size:10px;">(LV.${p.level})</span>
                         ${actionBtn}
                     </div>`;
             });
@@ -861,7 +880,7 @@
             info.players.forEach(p => {
                 if (p.id !== socket.id) { 
                     const hpPct = (p.hp / p.maxHp) * 100;
-                    const safeName = p.name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    const displayName = formatName(p.name, p.rebirth);
                     
                     let kickHtml = '';
                     if (amIHost) {
@@ -871,7 +890,7 @@
                     teammatesBox.innerHTML += `
                         <div class="mini-box" style="display:flex; flex-direction:column;">
                             <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div style="font-weight:bold;">${safeName}</div>
+                                <div style="font-weight:bold;">${displayName}</div>
                                 ${kickHtml}
                             </div>
                             <div class="mini-hp-bar"><div class="mini-hp-fill" style="width:${hpPct}%;"></div></div>
@@ -1033,7 +1052,10 @@
 
         socket.on('playerStatsUpdate', (p) => {
             myPlayer = p;
-            document.getElementById('my-name').innerText = p.name || "勇者";
+            
+            // 🟢 [修改] 顯示玩家自己的轉生稱號
+            document.getElementById('my-name-display').innerHTML = formatName(p.name, p.rebirth);
+            
             document.getElementById('php').style.width = (p.hp / p.maxHp * 100) + '%';
             document.getElementById('pmp').style.width = (p.mp / p.maxMp * 100) + '%';
             document.getElementById('hp-txt').innerText = `HP:${p.hp}/${p.maxHp}  MP:${p.mp}/${p.maxMp}`;
@@ -1058,16 +1080,15 @@
                     btn.setAttribute('data-sid', sid);
                     btn.innerHTML = `${info.name} <span style="color:#2980b9">(${info.mp})</span>`;
                     
-                    // 1. 檢查 MP
+                    // 🟢 檢查 MP 是否足夠
                     if (p.mp < info.mp) {
                         btn.disabled = true;
                         btn.style.opacity = "0.5";
                         btn.style.cursor = "not-allowed";
                     }
                     
-                    // 2. 🟢 [修正] 檢查回合 (World Boss 例外)
-                    // 如果不是 World Boss 且 不是我的回合 -> 鎖定
-                    if (roomId !== 'world_boss' && !isMyTurn) {
+                    // 🟢 [新增] 檢查是否輪到我 (如果在對手回合，強制鎖定)
+                    if (!isMyTurn) {
                         btn.disabled = true;
                         btn.style.opacity = "0.5";
                         btn.style.cursor = "not-allowed";
@@ -1218,13 +1239,7 @@
             const btnArea = document.getElementById('btns');
             btnArea.style.gridTemplateColumns = '1fr 1fr';
             btnArea.innerHTML = `<button class="btn battle-action" onclick="act('attack')">攻擊</button><button class="btn battle-action" onclick="openSkill()">魔法</button><button class="btn battle-action" onclick="openBag()">物品</button><button class="btn" onclick="leaveRoom()">逃跑</button>`;
-            
-            // 🟢 [修正] World Boss 模式下，按鈕應該是解鎖的
-            if (roomId === 'world_boss') { 
-                toggle(false); 
-            } else { 
-                toggle(!isMyTurn); 
-            }
+            if (roomId === 'world_boss') { toggle(false); } else { toggle(!isMyTurn); }
         }
 
         // 🟢 [修正] 施放技能 (傳送目標)
