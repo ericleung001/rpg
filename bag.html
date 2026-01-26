@@ -236,7 +236,7 @@
             'wood_sword', 'copper_dagger', 'iron_sword', 'silver_blade',
             'oak_bow', 'maple_staff',
             'cloth_armor', 'leather_armor', 'chain_mail', 'iron_armor',
-            'ring_str', 'bracelet_def', 'necklace_hp', 'necklace_mp'
+            'ring_str', 'bracelet_def', 'necklace_hp', 'necklace_mp', 'safe_stone'
         ];
 
         const CARD_NAME_MAP = {
@@ -261,6 +261,7 @@
         const ITEM_DB = {
             'lucky_bag': { name: "🧧 奇蹟福袋(節日限定)", cost: 1000000000, desc: "隨機獲得巨量稀有材料！" },
             'enhance_stone': { name: "強化石", cost: 5000, desc: "蘊含神祕力量，用於強化裝備 (鐵匠鋪)" },
+	    'safe_stone': { name: "防爆石", cost: 0, desc: "強化失敗不掉級，且必定成功！" },
 
             'potion_hp': { name: "小紅藥水", cost: 50, desc: "恢復 50 HP" },
             'potion_mid': { name: "中紅藥水", cost: 200, desc: "恢復 500 HP" },
@@ -483,7 +484,13 @@
                     if (currentFilter === 'food') return id.includes('grilled') || id.includes('sushi') || id.includes('steak') || id.includes('rice') || id.includes('soup') || id.includes('plate');
                     if (currentFilter === 'weapon') return id.includes('sword') || id.includes('bow') || id.includes('staff') || id.includes('dagger') || id.includes('axe') || id.includes('spear') || id.includes('blade') || id.includes('saber') || id.includes('slayer') || id.includes('reaper') || id.includes('club') || id.includes('tooth') || id.includes('dag') || id.includes('weapon');
                     if (currentFilter === 'armor') return id.includes('armor') || id.includes('mail') || id.includes('vest') || id.includes('plate') || id.includes('robe') || id.includes('cloak');
-                    if (currentFilter === 'accessory') return id.includes('ring') || id.includes('necklace') || id.includes('amulet') || id.includes('bracelet') || id.includes('boots') || id.includes('crown');
+                    
+                    // 🟢 [修正] 飾品過濾邏輯：加入 '_acc' 以及 'singularity_acc'
+                    if (currentFilter === 'accessory') {
+                        return id.includes('ring') || id.includes('necklace') || id.includes('amulet') || 
+                               id.includes('bracelet') || id.includes('boots') || id.includes('crown') || 
+                               id.includes('_acc') || id.includes('singularity_acc');
+                    }
                     
                     if (currentFilter === 'card') return id.startsWith('card_'); 
 
@@ -497,6 +504,7 @@
                                !id.includes('reaper') && !id.includes('club') && !id.includes('tooth') && !id.includes('dag') && !id.includes('weapon') &&
                                !id.includes('armor') && !id.includes('mail') && !id.includes('vest') && !id.includes('robe') && !id.includes('cloak') && 
                                !id.includes('ring') && !id.includes('necklace') && !id.includes('amulet') && !id.includes('bracelet') && !id.includes('boots') && !id.includes('crown') &&
+                               !id.includes('_acc') && !id.includes('singularity_acc') &&
                                !id.includes('plate') && 
                                !id.startsWith('card_') && true; 
                     }
@@ -528,7 +536,7 @@
                 // 判斷是否顯示分解
                 let showDismantle = false;
                 const kid = key.toLowerCase();
-                const isEquipment = kid.includes('sword') || kid.includes('bow') || kid.includes('staff') || kid.includes('dagger') || kid.includes('axe') || kid.includes('blade') || kid.includes('saber') || kid.includes('slayer') || kid.includes('reaper') || kid.includes('armor') || kid.includes('mail') || kid.includes('plate') || kid.includes('robe') || kid.includes('cloak') || kid.includes('ring') || kid.includes('necklace') || kid.includes('amulet') || kid.includes('crown') || kid.includes('weapon');
+                const isEquipment = kid.includes('sword') || kid.includes('bow') || kid.includes('staff') || kid.includes('dagger') || kid.includes('axe') || kid.includes('blade') || kid.includes('saber') || kid.includes('slayer') || kid.includes('reaper') || kid.includes('armor') || kid.includes('mail') || kid.includes('plate') || kid.includes('robe') || kid.includes('cloak') || kid.includes('ring') || kid.includes('necklace') || kid.includes('amulet') || kid.includes('crown') || kid.includes('weapon') || kid.includes('_acc');
                 const isShopItem = NPC_SHOP_ALLOW_LIST.includes(key);
                 if (isEquipment && !isShopItem) {
                     showDismantle = true;
