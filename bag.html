@@ -95,7 +95,7 @@
             box-sizing: border-box; border: 2px solid #ccc; text-align: center;
         }
         
-        /* 🟢 新增：數量調整按鈕樣式 */
+        /* 數量調整按鈕樣式 */
         .qty-controls {
             display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 10px;
         }
@@ -200,9 +200,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -211,11 +211,11 @@
         let myEnhancements = {}; 
         let currentFilter = 'all'; 
         
-        // 🟢 賣店相關變數
         let currentItemId = null;
         let currentNpcPrice = 0;
         let currentNpcMax = 0;
 
+        // 🟢 1. 禁止交易/分解列表 (加入碎片與飾物)
         const PROHIBITED_ITEMS = [
             'lucky_bag',
             'genesis_weapon', 'genesis_armor', 'void_reaper_dark', 'ring_galaxy', 
@@ -224,9 +224,14 @@
             'dimension_ring',
             'entropy_sword', 'entropy_god_armor',
             'enhance_stone',
-            // 🟢 Lv.450 & Lv.500 裝備 (不可賣出)
             'infinity_blade', 'event_horizon', 'mobius_ring',
-            'singularity_weapon', 'singularity_armor', 'singularity_acc'
+            'singularity_weapon', 'singularity_armor', 'singularity_acc',
+            
+            // 🟢 新增：技能碎片與兌換飾物 (防止誤賣/誤分解)
+            'skill_shard',
+            'shard_ring_novice', 'shard_neck_brave', 'shard_charm_wind', 
+            'shard_ring_vampire', 'shard_earring_holy', 'shard_belt_titan', 
+            'shard_pendant_dragon', 'shard_ring_void', 'shard_core_galaxy', 'shard_crown_infinity'
         ];
 
         const NPC_SHOP_ALLOW_LIST = [
@@ -254,15 +259,16 @@
             'void_worm': '虛空吞噬蟲', 'shadow_phantom': '虚影夢魘', 'star_eater': '吞星巨獸',
             'nebula_dragon': '星雲幻龍', 'time_keeper': '時空裁決者', 'dimension_breaker': '維度粉碎者',
             'entropy_god': '終焉·熱寂之神',
-            'akashic_record': '全知者·阿卡西', // 🟢 新增 BOSS 卡片
+            'akashic_record': '全知者·阿卡西',
             'potion': '回復卡', 'fire': '攻擊卡', 'shield': '護盾卡'
         };
 
+        // 🟢 2. 新增物品資料 (讓背包顯示中文)
         const ITEM_DB = {
+            // === 原有物品 ===
             'lucky_bag': { name: "🧧 奇蹟福袋(節日限定)", cost: 1000000000, desc: "隨機獲得巨量稀有材料！" },
             'enhance_stone': { name: "強化石", cost: 5000, desc: "蘊含神祕力量，用於強化裝備 (鐵匠鋪)" },
-	    'safe_stone': { name: "防爆石", cost: 0, desc: "強化失敗不掉級，且必定成功！" },
-
+            'safe_stone': { name: "防爆石", cost: 0, desc: "強化失敗不掉級，且必定成功！" },
             'potion_hp': { name: "小紅藥水", cost: 50, desc: "恢復 50 HP" },
             'potion_mid': { name: "中紅藥水", cost: 200, desc: "恢復 500 HP" },
             'potion_high': { name: "大紅藥水", cost: 600, desc: "恢復 2000 HP" }, 
@@ -312,7 +318,7 @@
             'chain_mail': { name: "鎖子甲", cost: 1500, desc: "DEF+40" }, 
             'iron_armor': { name: "鐵盔甲", cost: 4000, desc: "DEF+100" }, 
             'magma_plate': { name: "熔岩胸甲", cost: 0, desc: "DEF+150 HP+1500" }, 
-            'ice_robe': { name: "冰霜法袍", cost: 0, desc: "DEF+200 MP+500" },
+            'ice_robe': { name: "冰霜法袍", cost: 0, desc: "DEF+200 MP+500" }, 
             'yeti_cloak': { name: "雪怪斗篷", cost: 0, desc: "DEF+350 HP+4000" }, 
             'demon_armor': { name: "惡魔戰甲", cost: 0, desc: "DEF+1000 HP+12000" }, 
             'angel_armor': { name: "熾天使鎧甲", cost: 0, desc: "DEF+5000 HP+50000" },
@@ -391,44 +397,28 @@
             'coal': { name: "煤炭", cost: 5, desc: "燃料" }, 
             'ruby': { name: "紅寶石", cost: 200, desc: "紅色的寶石" }, 
             'diamond': { name: "鑽石", cost: 500, desc: "堅硬的寶石" },
-            
-            // 🟢 Lv.400-500 新材料
-            'quantum_residue': { name: "量子殘渣", type: 'material', cost: 500000, desc: "物質分解後的最小單位" },
-            'multiverse_shard': { name: "多元宇宙碎片", type: 'material', cost: 2000000, desc: "來自平行時空的殘片" },
-            'divinity_core':    { name: "創世神格", type: 'material', cost: 50000000, desc: "成神所需的唯一核心" },
+            'quantum_residue': { name: "量子殘渣", cost: 500000, desc: "物質分解後的最小單位" },
+            'multiverse_shard': { name: "多元宇宙碎片", cost: 2000000, desc: "來自平行時空的殘片" },
+            'divinity_core':    { name: "創世神格", cost: 50000000, desc: "成神所需的唯一核心" },
+            'infinity_blade':   { name: "無限之刃", cost: 0, desc: "Lv.450 武器，劍身映照著無數星河" },
+            'event_horizon':    { name: "視界戰甲", cost: 0, desc: "Lv.450 防具，連光都無法逃脫" },
+            'mobius_ring':      { name: "莫比烏斯環", cost: 0, desc: "Lv.450 飾品，象徵無限循環" },
+            'singularity_weapon': { name: "奇點·萬象崩壞", cost: 0, desc: "Lv.500 [最終神兵] 一擊即可重啟宇宙的絕對力量。" },
+            'singularity_armor': { name: "奇點·絕對防禦", cost: 0, desc: "Lv.500 [最終神甲] 將所有傷害轉移至異次元。" },
+            'singularity_acc': { name: "奇點·因果律", cost: 0, desc: "Lv.500 [最終飾品] 操控因果，逆轉命運。" },
 
-            // 🟢 Lv.450 神話裝備
-            'infinity_blade':   { name: "無限之刃", type: 'weapon', atk: 350000, hp: 500000, cost: 0, desc: "Lv.450 武器，劍身映照著無數星河" },
-            'event_horizon':    { name: "視界戰甲", type: 'armor', def: 200000, hp: 2000000, cost: 0, desc: "Lv.450 防具，連光都無法逃脫" },
-            'mobius_ring':      { name: "莫比烏斯環", type: 'acc', atk: 30000, def: 30000, hp: 500000, cost: 0, desc: "Lv.450 飾品，象徵無限循環" },
-
-            // 🟢 Lv.500 終極畢業裝備
-            'singularity_weapon': { 
-                name: "奇點·萬象崩壞", 
-                type: 'weapon', 
-                atk: 600000, 
-                hp: 1000000, 
-                cost: 0, 
-                desc: "Lv.500 [最終神兵] 一擊即可重啟宇宙的絕對力量。" 
-            },
-            'singularity_armor': { 
-                name: "奇點·絕對防禦", 
-                type: 'armor', 
-                def: 350000, 
-                hp: 5000000, 
-                cost: 0, 
-                desc: "Lv.500 [最終神甲] 將所有傷害轉移至異次元。" 
-            },
-            'singularity_acc': { 
-                name: "奇點·因果律", 
-                type: 'acc', 
-                atk: 80000, 
-                def: 80000, 
-                hp: 2000000, 
-                mp: 500000,
-                cost: 0, 
-                desc: "Lv.500 [最終飾品] 操控因果，逆轉命運。" 
-            }
+            // === 🟢 新增：技能碎片與飾物 ===
+            'skill_shard': { name: "✨ 技能碎片", cost: 100, desc: "用於升級技能或兌換特殊飾物" },
+            'shard_ring_novice': { name: "學徒碎片戒指", cost: 0, desc: "ATK+10 HP+50 (碎片兌換)" },
+            'shard_neck_brave': { name: "勇者碎片項鍊", cost: 0, desc: "ATK+30 DEF+10 HP+200 (碎片兌換)" },
+            'shard_charm_wind': { name: "疾風碎片護符", cost: 0, desc: "ATK+80 MP+200 (碎片兌換)" },
+            'shard_ring_vampire': { name: "吸血鬼碎片指環", cost: 0, desc: "ATK+150 HP+500 (碎片兌換)" },
+            'shard_earring_holy': { name: "神聖碎片耳環", cost: 0, desc: "MP+1000 DEF+300 HP+2000 (碎片兌換)" },
+            'shard_belt_titan': { name: "泰坦碎片腰帶", cost: 0, desc: "DEF+1000 HP+10000 (碎片兌換)" },
+            'shard_pendant_dragon': { name: "龍魂碎片吊墜", cost: 0, desc: "ATK+5000 DEF+2000 HP+30000 (碎片兌換)" },
+            'shard_ring_void': { name: "虛空碎片之戒", cost: 0, desc: "ATK+15000 MP+5000 HP+50000 (碎片兌換)" },
+            'shard_core_galaxy': { name: "銀河碎片核心", cost: 0, desc: "ATK+40000 DEF+20000 HP+200000 (碎片兌換)" },
+            'shard_crown_infinity': { name: "無限碎片皇冠", cost: 0, desc: "ATK+100000 DEF+80000 HP+1000000 (碎片兌換)" }
         };
 
         socket.on('connect', () => {
@@ -485,7 +475,6 @@
                     if (currentFilter === 'weapon') return id.includes('sword') || id.includes('bow') || id.includes('staff') || id.includes('dagger') || id.includes('axe') || id.includes('spear') || id.includes('blade') || id.includes('saber') || id.includes('slayer') || id.includes('reaper') || id.includes('club') || id.includes('tooth') || id.includes('dag') || id.includes('weapon');
                     if (currentFilter === 'armor') return id.includes('armor') || id.includes('mail') || id.includes('vest') || id.includes('plate') || id.includes('robe') || id.includes('cloak');
                     
-                    // 🟢 [修正] 飾品過濾邏輯：加入 '_acc' 以及 'singularity_acc'
                     if (currentFilter === 'accessory') {
                         return id.includes('ring') || id.includes('necklace') || id.includes('amulet') || 
                                id.includes('bracelet') || id.includes('boots') || id.includes('crown') || 
@@ -496,6 +485,7 @@
 
                     // 材料 (排除所有裝備和消耗品, 以及卡片)
                     if (currentFilter === 'material') {
+                        // 🟢 [修正] 材料判斷也要排除碎片飾物
                         return !id.includes('potion') && !id.includes('elixir') && !id.includes('enhance_stone') && 
                                !id.includes('grilled') && !id.includes('sushi') && !id.includes('steak') && !id.includes('rice') && !id.includes('soup') && !id.includes('plate') &&
                                !id.includes('sword') && !id.includes('bow') && !id.includes('staff') && 
@@ -505,6 +495,7 @@
                                !id.includes('armor') && !id.includes('mail') && !id.includes('vest') && !id.includes('robe') && !id.includes('cloak') && 
                                !id.includes('ring') && !id.includes('necklace') && !id.includes('amulet') && !id.includes('bracelet') && !id.includes('boots') && !id.includes('crown') &&
                                !id.includes('_acc') && !id.includes('singularity_acc') &&
+                               !id.includes('shard_') && // 排除所有 shard_ 開頭的飾物
                                !id.includes('plate') && 
                                !id.startsWith('card_') && true; 
                     }
@@ -533,12 +524,14 @@
                 let npcPrice = Math.floor((item.cost || 10) * 0.2);
                 if(npcPrice < 1) npcPrice = 1;
 
-                // 判斷是否顯示分解
+                // 判斷是否顯示分解 (碎片飾物不可分解)
                 let showDismantle = false;
                 const kid = key.toLowerCase();
                 const isEquipment = kid.includes('sword') || kid.includes('bow') || kid.includes('staff') || kid.includes('dagger') || kid.includes('axe') || kid.includes('blade') || kid.includes('saber') || kid.includes('slayer') || kid.includes('reaper') || kid.includes('armor') || kid.includes('mail') || kid.includes('plate') || kid.includes('robe') || kid.includes('cloak') || kid.includes('ring') || kid.includes('necklace') || kid.includes('amulet') || kid.includes('crown') || kid.includes('weapon') || kid.includes('_acc');
                 const isShopItem = NPC_SHOP_ALLOW_LIST.includes(key);
-                if (isEquipment && !isShopItem) {
+                
+                // 🟢 檢查是否為禁分解物品
+                if (isEquipment && !isShopItem && !PROHIBITED_ITEMS.includes(key)) {
                     showDismantle = true;
                 }
 
@@ -601,7 +594,7 @@
             }
         }
 
-        // 🟢 [修改] 賣給商人 Modal 控制
+        // 賣給商人 Modal 控制
         function openNPCModal(id, name, price) {
             currentItemId = id;
             currentNpcPrice = price;
@@ -650,7 +643,6 @@
                 showMsg("❌ 數量不正確");
                 return;
             }
-            // 傳送物件 { itemId, amount }
             socket.emit('npcSell', { itemId: currentItemId, amount: amount }); 
         }
 
