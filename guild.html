@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>公會大廳</title>
+    <title>公會大廳2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -399,12 +399,12 @@
                     let kickBtn = (isLeader && m.rank !== '會長') ? `<button class="btn-action btn-red" onclick="kick('${escapeHtml(m.name)}')">踢出</button>` : '';
                     
                     let roleBtn = '';
-                    // 只有會長有權限，且對象不是會長
+                    // 🟢 [修正] 傳送名字而不是ID，支援離線玩家
                     if (isLeader && m.rank !== '會長') {
                         if (m.rank === '副會長') {
-                            roleBtn = `<button class="btn-action btn-orange" onclick="demoteVice('${m.id}')">降職</button>`;
+                            roleBtn = `<button class="btn-action btn-orange" onclick="demoteVice('${escapeHtml(m.name)}')">降職</button>`;
                         } else {
-                            roleBtn = `<button class="btn-action btn-purple" onclick="appointVice('${m.id}')">任命</button>`;
+                            roleBtn = `<button class="btn-action btn-purple" onclick="appointVice('${escapeHtml(m.name)}')">任命</button>`;
                         }
                     }
 
@@ -451,7 +451,6 @@
                     <div id="dist-list">`;
                 let memberCount = 0;
                 myGuildData.members.forEach(m => {
-                    // 排除自己 (不能發給自己，後端已有邏輯，這裡前端可過濾或不過濾皆可，但過濾較佳)
                     memberCount++;
                     const dName = formatName(m.name, m.rebirth || 0);
                     html += `<div class="dist-row"><input type="checkbox" class="dist-checkbox" value="${escapeHtml(m.name)}"><span>${dName} <span style="color:#aaa;">(Lv.${m.level})</span></span></div>`;
@@ -541,17 +540,17 @@
         function kick(targetName) { if(confirm(`確定踢出 [${targetName}]？`)) socket.emit('kickGuildMember', targetName); }
         function toggleSelectAll() { const cbs = document.querySelectorAll('.dist-checkbox'); const all = Array.from(cbs).every(c=>c.checked); cbs.forEach(c=>c.checked=!all); }
         
-        // 任命副會長
-        function appointVice(targetId) {
-            if (confirm("確定要任命此人為副會長嗎？\n⚠️ 舊的副會長將會自動卸任！")) {
-                socket.emit('guildAppointVice', targetId);
+        // 🟢 [修改] 改為傳送名字 (支援離線玩家)
+        function appointVice(targetName) {
+            if (confirm(`確定要任命 [${targetName}] 為副會長嗎？\n(舊的副會長將會自動卸任)`)) {
+                socket.emit('guildAppointVice', targetName);
             }
         }
 
-        // 🟢 [新增] 降職副會長
-        function demoteVice(targetId) {
-            if (confirm("確定要解除此人的副會長職務，將其降為普通會員嗎？")) {
-                socket.emit('guildDemoteVice', targetId);
+        // 🟢 [修改] 改為傳送名字
+        function demoteVice(targetName) {
+            if (confirm(`確定要解除 [${targetName}] 的副會長職務，將其降為普通會員嗎？`)) {
+                socket.emit('guildDemoteVice', targetName);
             }
         }
 
