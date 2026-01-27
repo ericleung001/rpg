@@ -184,9 +184,9 @@
             });
         }
 
-        function buyItem(id, name, cost) {
-            if (confirm(`確定花費 ${cost} 碎片兌換 [${name}] 嗎？`)) {
-                socket.emit('buyShardShopItem', id);
+        function buyItem(id) {
+            if(confirm("確定要兌換此物品嗎？")) {
+                socket.emit('shardShopBuy', id); // 只傳 ID
             }
         }
 
