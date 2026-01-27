@@ -70,6 +70,7 @@
         .btn-red { background: #c0392b; }
         .btn-blue { background: #2980b9; }
         .btn-gold { background: #f39c12; color: black; }
+        .btn-purple { background: #9b59b6; } /* 副會長按鈕 */
 
         .info-box {
             background: #2c3e50; padding: 15px; border-radius: 8px; border: 2px solid #3498db;
@@ -119,7 +120,7 @@
         @media (min-width: 1024px) {
             #app-layout {
                 flex-direction: row; 
-                max-width: 1000px;   
+                max-width: 1000px;    
             }
             
             #container {
@@ -131,8 +132,8 @@
 
             #chat-container {
                 position: static; 
-                width: 400px;     
-                height: 100%;     
+                width: 400px;      
+                height: 100%;      
                 border-top: none;
                 background: #34495e;
             }
@@ -177,9 +178,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         
         const myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -189,14 +190,10 @@
             return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
-        // 🟢 [核心] 轉生稱號格式化工具
         function formatName(name, rebirth) {
-            // 如果 rebirth 存在且大於 0
             if (rebirth && rebirth > 0) {
-                // 回傳：名字 + 金色加粗的 +N
                 return `${escapeHtml(name)}<span style="color:#f1c40f; font-weight:bold; margin-left:2px;">+${rebirth}</span>`;
             }
-            // 否則只回傳名字
             return escapeHtml(name);
         }
 
@@ -225,31 +222,13 @@
             'quantum_residue': '量子殘渣', 'multiverse_shard': '多元宇宙碎片', 'divinity_core': '創世神格',
             'infinity_blade': '無限之刃', 'event_horizon': '視界戰甲', 'mobius_ring': '莫比烏斯環',
             'singularity_weapon': '奇點·萬象崩壞', 'singularity_armor': '奇點·絕對防禦', 'singularity_acc': '奇點·因果律',
-            // [新增] 碎片商店專屬飾物
-    'shard_ring_novice': '學徒碎片戒指',   // Lv.10
-    'shard_neck_brave': '勇者碎片項鍊',    // Lv.30
-    'shard_charm_wind': '疾風碎片護符',    // Lv.60
-    'shard_ring_vampire': '吸血鬼碎片指環', // Lv.100 (特殊：吸血)
-    'shard_earring_holy': '神聖碎片耳環',   // Lv.150 (高魔力)
-    'shard_belt_titan': '泰坦碎片腰帶',    // Lv.200 (高防禦)
-    'shard_pendant_dragon': '龍魂碎片吊墜', // Lv.300 (高攻防)
-    'shard_ring_void': '虛空碎片之戒',     // Lv.400
-    'shard_core_galaxy': '銀河碎片核心',   // Lv.450
-    'shard_crown_infinity': '無限碎片皇冠', // Lv.500 (畢業級)
-    // 在 ITEM_NAME_MAP 中加入：
-	'shard_blade_novice': '碎光長劍',
-	'shard_axe_crystal': '晶體戰斧',
-	'shard_scythe_void': '虛空撕裂者',
-	'shard_spear_galaxy': '星河·貫穿之槍',
-	'shard_wep_dimension': '維度·終焉裁決',
-	'shard_wep_origin': '原初·萬物歸零',
-	// 在 ITEM_NAME_MAP 中加入：
-	'shard_armor_novice': '碎光輕甲',
-	'shard_armor_crystal': '晶體戰甲',
-	'shard_robe_void': '虛空行者法袍',
-	'shard_plate_galaxy': '星河·不滅壁壘',
-	'shard_armor_dimension': '維度·虛數裝甲',
-	'shard_armor_origin': '原初·混沌神軀'
+            'shard_ring_novice': '學徒碎片戒指', 'shard_neck_brave': '勇者碎片項鍊', 'shard_charm_wind': '疾風碎片護符', 
+            'shard_ring_vampire': '吸血鬼碎片指環', 'shard_earring_holy': '神聖碎片耳環', 'shard_belt_titan': '泰坦碎片腰帶', 
+            'shard_pendant_dragon': '龍魂碎片吊墜', 'shard_ring_void': '虛空碎片之戒', 'shard_core_galaxy': '銀河碎片核心', 'shard_crown_infinity': '無限碎片皇冠',
+            'shard_blade_novice': '碎光長劍', 'shard_axe_crystal': '晶體戰斧', 'shard_scythe_void': '虛空撕裂者',
+            'shard_spear_galaxy': '星河·貫穿之槍', 'shard_wep_dimension': '維度·終焉裁決', 'shard_wep_origin': '原初·萬物歸零',
+            'shard_armor_novice': '碎光輕甲', 'shard_armor_crystal': '晶體戰甲', 'shard_robe_void': '虛空行者法袍',
+            'shard_plate_galaxy': '星河·不滅壁壘', 'shard_armor_dimension': '維度·虛數裝甲', 'shard_armor_origin': '原初·混沌神軀'
         };
 
         let currentTab = 'members';
@@ -333,7 +312,14 @@
         function renderMyGuild() {
             if (!myGuildData) return;
             const container = document.getElementById('main-content');
-            const isLeader = myGuildData.isLeader;
+            
+            // 🟢 [核心] 權限判斷
+            const isLeader = myGuildData.isLeader; // 會長
+            const isVice = myGuildData.isVice;     // 副會長 (Server 需傳送此欄位)
+            
+            // 派發與審核權限：會長 OR 副會長
+            const canManage = isLeader || isVice;
+
             const daily = myGuildData.dailyStatus || { canClaim: false, gold: 0, stone: 0 };
 
             window.editNotice = function() {
@@ -373,7 +359,7 @@
                     <div style="background:rgba(0,0,0,0.3); padding:8px; border-left:3px solid #f39c12; margin:10px 0; border-radius:3px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
                             <span style="font-size:9px; color:#f39c12; font-weight:bold;">📜 公會公告</span>
-                            ${isLeader ? `<button onclick="editNotice()" style="font-size:9px; background:none; border:1px solid #aaa; color:#aaa; cursor:pointer; border-radius:3px;">✏️修改</button>` : ''}
+                            ${canManage ? `<button onclick="editNotice()" style="font-size:9px; background:none; border:1px solid #aaa; color:#aaa; cursor:pointer; border-radius:3px;">✏️修改</button>` : ''}
                         </div>
                         <div style="color:#ecf0f1; font-size:10px; white-space: pre-wrap; line-height:1.4;">${escapeHtml(myGuildData.notice || "暫無公告")}</div>
                     </div>
@@ -404,26 +390,36 @@
 
                 <div class="tabs">
                     <button class="tab-btn ${currentTab==='members'?'tab-active':''}" onclick="setTab('members')">成員</button>
-                    ${isLeader ? `<button class="tab-btn ${currentTab==='distribute'?'tab-active':''}" onclick="setTab('distribute')">🎁 派發</button>` : ''}
-                    ${isLeader ? `<button class="tab-btn ${currentTab==='apply'?'tab-active':''}" onclick="setTab('apply')">審核 <span style="background:red; color:white; padding:1px 4px; border-radius:4px; font-size:8px;">${myGuildData.applicants.length}</span></button>` : ''}
+                    ${canManage ? `<button class="tab-btn ${currentTab==='distribute'?'tab-active':''}" onclick="setTab('distribute')">🎁 派發</button>` : ''}
+                    ${canManage ? `<button class="tab-btn ${currentTab==='apply'?'tab-active':''}" onclick="setTab('apply')">審核 <span style="background:red; color:white; padding:1px 4px; border-radius:4px; font-size:8px;">${myGuildData.applicants.length}</span></button>` : ''}
                 </div>
             `;
 
             if (currentTab === 'members') {
                 html += `<div style="text-align:right; font-size:9px; color:#aaa; margin-bottom:5px;">人數: ${myGuildData.members.length}/50</div>`;
                 myGuildData.members.forEach(m => {
+                    // 踢人權限：會長可踢除了自己以外的人；副會長不可踢人 (或你可自行開放)
+                    // 這裡設定：只有會長可以踢人 (且不能踢自己)
                     let kickBtn = (isLeader && m.rank !== '會長') ? `<button class="btn-action btn-red" onclick="kick('${escapeHtml(m.name)}')">踢出</button>` : '';
+                    
+                    // 任命權限：只有會長可以任命，對象不是會長也不是副會長
+                    let appointBtn = (isLeader && m.rank !== '會長' && m.rank !== '副會長') 
+                        ? `<button class="btn-action btn-purple" onclick="appointVice('${m.id}')">任命副會</button>` 
+                        : '';
+
                     let statusTxt = m.online ? `<span style="color:#2ecc71">●</span>` : `<span class="offline">○</span>`;
                     let moneyText = m.contribution ? m.contribution.toLocaleString() : "0";
-                    
-                    // 🟢 [核心修改] 使用 formatName 顯示帶轉生數的名字
-                    // 注意：m.rebirth 是由 Server 傳來的，如果 Server 沒傳對，這裡會是 undefined
                     const displayName = formatName(m.name, m.rebirth || 0);
+
+                    // 顏色區分職位
+                    let nameColor = 'white';
+                    if (m.rank === '會長') nameColor = '#f1c40f';
+                    else if (m.rank === '副會長') nameColor = '#9b59b6';
 
                     html += `
                         <div class="card">
                             <div>
-                                <div class="card-name" style="color:${m.rank==='會長'?'#f1c40f':'white'}">
+                                <div class="card-name" style="color:${nameColor}">
                                     [${m.rank}] ${displayName} (Lv.${m.level})
                                 </div>
                                 <div class="card-info">
@@ -431,10 +427,13 @@
                                     <span style="color:#f39c12; margin-left:8px;">💰 捐獻: ${moneyText}</span>
                                 </div>
                             </div>
-                            <div>${kickBtn}</div>
+                            <div style="display:flex; gap:3px;">
+                                ${appointBtn}
+                                ${kickBtn}
+                            </div>
                         </div>`;
                 });
-            } else if (currentTab === 'distribute' && isLeader) {
+            } else if (currentTab === 'distribute' && canManage) {
                 let itemOptions = '<option value="">(不發送物品)</option>';
                 for(let k in myInventory) {
                     let name = ITEM_NAME_MAP[k] || k;
@@ -444,7 +443,7 @@
                     <div style="background:#222; padding:10px; border-radius:5px; margin-bottom:10px; text-align:left;">
                         <div style="color:#f1c40f; margin-bottom:5px; font-weight:bold;">1. 選擇獎勵</div>
                         <div style="margin-bottom:5px;">金幣 (公會出): <input type="number" id="dist-gold" placeholder="0" style="width:80px;"> G</div>
-                        <div>物品 (會長出): <select id="dist-item">${itemOptions}</select> 數量: <input type="number" id="dist-item-count" placeholder="1" style="width:50px;"></div>
+                        <div>物品 (您的背包): <select id="dist-item">${itemOptions}</select> 數量: <input type="number" id="dist-item-count" placeholder="1" style="width:50px;"></div>
                     </div>
                     <div style="color:#3498db; margin-bottom:5px; font-weight:bold; display:flex; justify-content:space-between;">
                         <span>2. 選擇對象</span><button class="btn-action btn-blue" onclick="toggleSelectAll()">全選/取消</button>
@@ -452,15 +451,17 @@
                     <div id="dist-list">`;
                 let memberCount = 0;
                 myGuildData.members.forEach(m => {
-                    if (m.rank === '會長') return;
+                    // 排除自己 (不能發給自己)
+                    // 注意：這裡假設後端回傳的 m.isMe 或透過 socket.id 判斷，這裡簡單用名字排除
+                    // 但 m.name 可能跟自己一樣，建議後端加 isMe 欄位，或者前端記住自己名字
+                    // 這裡暫時顯示所有人，後端會過濾掉自己
                     memberCount++;
-                    // 🟢 派發清單也要顯示轉生
                     const dName = formatName(m.name, m.rebirth || 0);
                     html += `<div class="dist-row"><input type="checkbox" class="dist-checkbox" value="${escapeHtml(m.name)}"><span>${dName} <span style="color:#aaa;">(Lv.${m.level})</span></span></div>`;
                 });
                 if (memberCount === 0) html += '<div style="color:#aaa;">沒有其他會員可派發</div>';
                 html += `</div><button class="btn-action btn-gold" style="width:100%; padding:15px; margin-top:10px; font-size:14px;" onclick="submitDistribute()">確認派發</button>`;
-            } else if (currentTab === 'apply' && isLeader) {
+            } else if (currentTab === 'apply' && canManage) {
                 if (myGuildData.applicants.length === 0) {
                     html += '<div style="margin-top:20px; color:#7f8c8d;">無申請</div>';
                 } else {
@@ -543,6 +544,13 @@
         function kick(targetName) { if(confirm(`確定踢出 [${targetName}]？`)) socket.emit('kickGuildMember', targetName); }
         function toggleSelectAll() { const cbs = document.querySelectorAll('.dist-checkbox'); const all = Array.from(cbs).every(c=>c.checked); cbs.forEach(c=>c.checked=!all); }
         
+        // 🟢 [新增] 任命副會長
+        function appointVice(targetId) {
+            if (confirm("確定要任命此人為副會長嗎？(舊的副會長將會被撤換)")) {
+                socket.emit('guildAppointVice', targetId);
+            }
+        }
+
         function submitDistribute() {
             const cbs = document.querySelectorAll('.dist-checkbox:checked');
             const targets = Array.from(cbs).map(c=>c.value);
