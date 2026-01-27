@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中</title>
+    <title>戰鬥中2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -1164,15 +1164,28 @@
         }
 
         // 🟢 [新增] 請求再戰一場
+        // 🟢 [新增] 請求再戰一場
         function restartBattle() {
-            socket.emit('restartBattle', roomId);
-            const restartBtn = document.querySelector('button[onclick="restartBattle()"]');
-            if (restartBtn) {
-                restartBtn.disabled = true;
-                restartBtn.innerText = "準備中...";
-            }
-        }
+            if (!roomId) return;
 
+            // 1. 發送指令給伺服器
+            socket.emit('restartBattle', roomId);
+            
+            // 2. UI 反饋：禁用按鈕，避免重複點擊
+            // 找到那個「再戰一場」按鈕
+            const allBtns = document.getElementsByTagName('button');
+            for (let btn of allBtns) {
+                if (btn.innerText.includes('再戰')) {
+                    btn.disabled = true;
+                    btn.innerText = "準備中...";
+                    btn.style.background = "#7f8c8d"; // 變灰色
+                }
+            }
+            
+            // 3. 顯示提示
+            showMsg("正在重置戰場...");
+        }
+        
         function leaveRoom() { 
             if (socket && socket.connected) { socket.emit('leaveRoom', roomId); }
             setTimeout(() => { window.location.replace('hub.html'); }, 300); 
