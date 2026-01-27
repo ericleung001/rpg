@@ -70,7 +70,8 @@
         .btn-red { background: #c0392b; }
         .btn-blue { background: #2980b9; }
         .btn-gold { background: #f39c12; color: black; }
-        .btn-purple { background: #9b59b6; } /* 副會長按鈕 */
+        .btn-purple { background: #9b59b6; } 
+        .btn-orange { background: #e67e22; }
 
         .info-box {
             background: #2c3e50; padding: 15px; border-radius: 8px; border: 2px solid #3498db;
@@ -313,11 +314,8 @@
             if (!myGuildData) return;
             const container = document.getElementById('main-content');
             
-            // 🟢 [核心] 權限判斷
-            const isLeader = myGuildData.isLeader; // 會長
-            const isVice = myGuildData.isVice;     // 副會長 (Server 需傳送此欄位)
-            
-            // 派發與審核權限：會長 OR 副會長
+            const isLeader = myGuildData.isLeader; 
+            const isVice = myGuildData.isVice;     
             const canManage = isLeader || isVice;
 
             const daily = myGuildData.dailyStatus || { canClaim: false, gold: 0, stone: 0 };
@@ -398,20 +396,22 @@
             if (currentTab === 'members') {
                 html += `<div style="text-align:right; font-size:9px; color:#aaa; margin-bottom:5px;">人數: ${myGuildData.members.length}/50</div>`;
                 myGuildData.members.forEach(m => {
-                    // 踢人權限：會長可踢除了自己以外的人；副會長不可踢人 (或你可自行開放)
-                    // 這裡設定：只有會長可以踢人 (且不能踢自己)
                     let kickBtn = (isLeader && m.rank !== '會長') ? `<button class="btn-action btn-red" onclick="kick('${escapeHtml(m.name)}')">踢出</button>` : '';
                     
-                    // 任命權限：只有會長可以任命，對象不是會長也不是副會長
-                    let appointBtn = (isLeader && m.rank !== '會長' && m.rank !== '副會長') 
-                        ? `<button class="btn-action btn-purple" onclick="appointVice('${m.id}')">任命副會</button>` 
-                        : '';
+                    let roleBtn = '';
+                    // 只有會長有權限，且對象不是會長
+                    if (isLeader && m.rank !== '會長') {
+                        if (m.rank === '副會長') {
+                            roleBtn = `<button class="btn-action btn-orange" onclick="demoteVice('${m.id}')">降職</button>`;
+                        } else {
+                            roleBtn = `<button class="btn-action btn-purple" onclick="appointVice('${m.id}')">任命</button>`;
+                        }
+                    }
 
                     let statusTxt = m.online ? `<span style="color:#2ecc71">●</span>` : `<span class="offline">○</span>`;
                     let moneyText = m.contribution ? m.contribution.toLocaleString() : "0";
                     const displayName = formatName(m.name, m.rebirth || 0);
 
-                    // 顏色區分職位
                     let nameColor = 'white';
                     if (m.rank === '會長') nameColor = '#f1c40f';
                     else if (m.rank === '副會長') nameColor = '#9b59b6';
@@ -428,7 +428,7 @@
                                 </div>
                             </div>
                             <div style="display:flex; gap:3px;">
-                                ${appointBtn}
+                                ${roleBtn}
                                 ${kickBtn}
                             </div>
                         </div>`;
@@ -451,10 +451,7 @@
                     <div id="dist-list">`;
                 let memberCount = 0;
                 myGuildData.members.forEach(m => {
-                    // 排除自己 (不能發給自己)
-                    // 注意：這裡假設後端回傳的 m.isMe 或透過 socket.id 判斷，這裡簡單用名字排除
-                    // 但 m.name 可能跟自己一樣，建議後端加 isMe 欄位，或者前端記住自己名字
-                    // 這裡暫時顯示所有人，後端會過濾掉自己
+                    // 排除自己 (不能發給自己，後端已有邏輯，這裡前端可過濾或不過濾皆可，但過濾較佳)
                     memberCount++;
                     const dName = formatName(m.name, m.rebirth || 0);
                     html += `<div class="dist-row"><input type="checkbox" class="dist-checkbox" value="${escapeHtml(m.name)}"><span>${dName} <span style="color:#aaa;">(Lv.${m.level})</span></span></div>`;
@@ -544,10 +541,17 @@
         function kick(targetName) { if(confirm(`確定踢出 [${targetName}]？`)) socket.emit('kickGuildMember', targetName); }
         function toggleSelectAll() { const cbs = document.querySelectorAll('.dist-checkbox'); const all = Array.from(cbs).every(c=>c.checked); cbs.forEach(c=>c.checked=!all); }
         
-        // 🟢 [新增] 任命副會長
+        // 任命副會長
         function appointVice(targetId) {
-            if (confirm("確定要任命此人為副會長嗎？(舊的副會長將會被撤換)")) {
+            if (confirm("確定要任命此人為副會長嗎？\n⚠️ 舊的副會長將會自動卸任！")) {
                 socket.emit('guildAppointVice', targetId);
+            }
+        }
+
+        // 🟢 [新增] 降職副會長
+        function demoteVice(targetId) {
+            if (confirm("確定要解除此人的副會長職務，將其降為普通會員嗎？")) {
+                socket.emit('guildDemoteVice', targetId);
             }
         }
 
