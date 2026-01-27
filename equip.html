@@ -85,7 +85,7 @@
 
         // 🟢 完整裝備列表 (需與 Server 同步)
         const ITEM_MAP = {
-            // === 武器 ===
+            // === ⚔️ 武器 ===
             'wood_sword':       { name: "木劍", cost: 100, desc: "ATK+10" },
             'copper_dagger':    { name: "銅匕首", cost: 400, desc: "ATK+20" }, 
             'iron_sword':       { name: "鐵劍", cost: 1500, desc: "ATK+60" }, 
@@ -118,11 +118,19 @@
             'infinity_blade':     { name: "無限之刃", cost: 0, desc: "ATK+350000 HP+500000" },
             'singularity_weapon': { name: "奇點·萬象崩壞", cost: 0, desc: "ATK+600000 HP+1000000" },
             
+            // 🟢 [新增] 碎片商店專屬武器
+            'shard_blade_novice':   { name: "碎光長劍", cost: 0, desc: "ATK+250 HP+500" },
+            'shard_axe_crystal':    { name: "晶體戰斧", cost: 0, desc: "ATK+5000 HP+2萬" },
+            'shard_scythe_void':    { name: "虛空撕裂者", cost: 0, desc: "ATK+4.5萬 HP+50萬" },
+            'shard_spear_galaxy':   { name: "星河·貫穿之槍", cost: 0, desc: "ATK+9萬 HP+150萬" },
+            'shard_wep_dimension':  { name: "維度·終焉裁決", cost: 0, desc: "ATK+18萬 HP+400萬" },
+            'shard_wep_origin':     { name: "原初·萬物歸零", cost: 0, desc: "ATK+35萬 HP+800萬" },
+
             // 採集武器
             'oak_bow':          { name: "橡木弓", cost: 200, desc: "ATK+25" },
             'maple_staff':      { name: "楓木法杖", cost: 500, desc: "ATK+50" },
 
-            // === 防具 ===
+            // === 🛡️ 防具 ===
             'cloth_armor':      { name: "布衣", cost: 100, desc: "DEF+5" },
             'hunt_vest':        { name: "獵人背心", cost: 0, desc: "DEF+25 HP+200" },
             'leather_armor':    { name: "皮甲", cost: 400, desc: "DEF+15" }, 
@@ -146,7 +154,15 @@
             'event_horizon':      { name: "視界戰甲", cost: 0, desc: "DEF+200000 HP+2000000" },
             'singularity_armor':  { name: "奇點·絕對防禦", cost: 0, desc: "DEF+350000 HP+5000000" },
 
-            // === 飾品 (一般) ===
+            // 🟢 [新增] 碎片商店專屬防具
+            'shard_armor_novice':   { name: "碎光輕甲", cost: 0, desc: "DEF+50 HP+1000" },
+            'shard_armor_crystal':  { name: "晶體戰甲", cost: 0, desc: "DEF+2000 HP+5萬" },
+            'shard_robe_void':      { name: "虛空行者法袍", cost: 0, desc: "DEF+2萬 HP+80萬" },
+            'shard_plate_galaxy':   { name: "星河·不滅壁壘", cost: 0, desc: "DEF+15萬 HP+300萬" },
+            'shard_armor_dimension':{ name: "維度·虛數裝甲", cost: 0, desc: "DEF+50萬 HP+800萬" },
+            'shard_armor_origin':   { name: "原初·混沌神軀", cost: 0, desc: "DEF+80萬 HP+1500萬" },
+
+            // === 💍 飾品 ===
             'bone_ring':        { name: "骨戒", cost: 0, desc: "ATK+15 HP+200" }, 
             'ring_str':         { name: "力量戒指", cost: 3000, desc: "ATK+30" },
             'bracelet_def':     { name: "堅毅手環", cost: 3000, desc: "DEF+30" }, 
@@ -166,10 +182,10 @@
             'dimension_ring':   { name: "維度指環", cost: 0, desc: "全能力+15000" },
 
             // Lv.450 - 500 新飾品
-            'mobius_ring':      { name: "莫比烏斯環", cost: 0, desc: "ATK/DEF+30000 HP+500000 MP+10萬" },
-            'singularity_acc':  { name: "奇點·因果律", cost: 0, desc: "ATK/DEF+80000 HP+200萬 MP+50萬" },
+            'mobius_ring':      { name: "莫比烏斯環", cost: 0, desc: "全能+3萬 HP+50萬" },
+            'singularity_acc':  { name: "奇點·因果律", cost: 0, desc: "全能+8萬 HP+200萬" },
 
-            // === 🟢 [新增] 碎片商店專屬飾品 ===
+            // 🟢 [新增] 碎片商店專屬飾品
             'shard_ring_novice':    { name: "學徒碎片戒指", desc: "ATK+10 HP+50" },
             'shard_neck_brave':     { name: "勇者碎片項鍊", desc: "ATK+30 DEF+10 HP+200" },
             'shard_charm_wind':     { name: "疾風碎片護符", desc: "ATK+80 MP+200" },
