@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中2</title>
+    <title>戰鬥中3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -911,10 +911,11 @@
         socket.on('battleStarted', () => { 
             document.getElementById('lobby-overlay').style.display = 'none'; 
             
-            // ⬇️ 加入這行：把「再戰」按鈕變回「攻擊/魔法」按鈕
+            // 🔴【關鍵修正】加入這一行！
+            // 這會把「準備中」按鈕移除，變回「攻擊/魔法/物品/逃跑」
             resetButtons(); 
-            
-            // 清空回合條顏色
+
+            // 還原上方狀態條
             const bar = document.getElementById('turn-bar');
             bar.innerText = "戰鬥開始！";
             bar.style.background = "#333";
