@@ -397,9 +397,27 @@
             'bracelet_def': { name: "堅毅手環" }, 'necklace_hp': { name: "紅水晶項鍊" }, 'necklace_mp': { name: "藍水晶項鍊" },
             'ring_galaxy': { name: "銀河指環" }, 'dimension_ring': { name: "維度指環" },
             'lucky_bag': { name: "🧧 奇蹟福袋" }, 'enhance_stone': { name: "強化石" }, 'safe_stone': { name: "防爆石" }, 'skill_shard': { name: "技能碎片" },
+            
+            // 🟢 [新增] 碎片商店飾品
             'shard_ring_novice': { name: "學徒碎片戒指" }, 'shard_neck_brave': { name: "勇者碎片項鍊" }, 'shard_charm_wind': { name: "疾風碎片護符" }, 
             'shard_ring_vampire': { name: "吸血鬼碎片指環" }, 'shard_earring_holy': { name: "神聖碎片耳環" }, 'shard_belt_titan': { name: "泰坦碎片腰帶" }, 
-            'shard_pendant_dragon': { name: "龍魂碎片吊墜" }, 'shard_ring_void': { name: "虛空碎片之戒" }, 'shard_core_galaxy': { name: "銀河碎片核心" }, 'shard_crown_infinity': { name: "無限碎片皇冠" }
+            'shard_pendant_dragon': { name: "龍魂碎片吊墜" }, 'shard_ring_void': { name: "虛空碎片之戒" }, 'shard_core_galaxy': { name: "銀河碎片核心" }, 'shard_crown_infinity': { name: "無限碎片皇冠" },
+
+            // 🟢 [新增] 碎片商店武器
+            'shard_blade_novice':   { name: "碎光長劍" },
+            'shard_axe_crystal':    { name: "晶體戰斧" },
+            'shard_scythe_void':    { name: "虛空撕裂者" },
+            'shard_spear_galaxy':   { name: "星河·貫穿之槍" },
+            'shard_wep_dimension':  { name: "維度·終焉裁決" },
+            'shard_wep_origin':     { name: "原初·萬物歸零" },
+
+            // 🟢 [新增] 碎片商店防具
+            'shard_armor_novice':   { name: "碎光輕甲" },
+            'shard_armor_crystal':  { name: "晶體戰甲" },
+            'shard_robe_void':      { name: "虛空行者法袍" },
+            'shard_plate_galaxy':   { name: "星河·不滅壁壘" },
+            'shard_armor_dimension':{ name: "維度·虛數裝甲" },
+            'shard_armor_origin':   { name: "原初·混沌神軀" }
         };
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
