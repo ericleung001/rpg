@@ -291,9 +291,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
 
         // 🟢 [核心] 轉生稱號格式化工具 (新增)
         function formatName(name, rebirth) {
@@ -412,7 +412,7 @@
             'safe_stone':    { name: '防爆石' },
             'enhance_stone': { name: '強化石' },
             'lucky_bag':     { name: '奇蹟福袋' },
-'skill_shard': { name: '技能碎片'}
+            'skill_shard': { name: '技能碎片'}
         };
         
         const SKILL_INFO = {
@@ -795,7 +795,6 @@
         }
 
         function appendChat(name, msg) {
-if (name === '系統') return;
             if (name === '系統') return;
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
@@ -912,7 +911,6 @@ if (name === '系統') return;
             document.getElementById('lobby-overlay').style.display = 'none'; 
             log("戰鬥開始！"); 
             
-            // 🟢 新增：如果我是房主且開了自動，戰鬥開始時嘗試觸發
             if (isAuto && isMyTurn) {
                 setTimeout(autoPlayLogic, 1000); 
             }
@@ -1139,18 +1137,40 @@ if (name === '系統') return;
             showMsg(winMsg); 
             
             // 4. 顯示離開按鈕
-            showNormalVictoryBtn();
+            // 🟢 [修改] 這裡呼叫新的按鈕顯示函式
+            showVictoryButtons();
             
             // 5. 自動停止掛機
             if(isAuto) toggleAuto();
         });
 
-        function showNormalVictoryBtn() {
+        // 🟢 [新增] 顯示勝利後的按鈕群組 (離開 & 再戰)
+        function showVictoryButtons() {
             const btnArea = document.getElementById('btns');
             document.getElementById('fixed-top-area').style.display = 'none'; 
             document.getElementById('shortcut-area').style.display = 'none'; 
-            btnArea.style.gridTemplateColumns = '1fr'; 
-            btnArea.innerHTML = `<button class="btn" style="background: linear-gradient(to bottom, #f1c40f, #f39c12); color: #000; font-weight: bold; font-size: 16px; border: 3px solid #fff; height: 60px;" onclick="leaveRoom()">🏆 戰鬥勝利 (點擊離開)</button>`;
+            
+            // 改為兩欄佈局
+            btnArea.style.gridTemplateColumns = '1fr 1fr'; 
+            
+            btnArea.innerHTML = `
+                <button class="btn" style="background: #e74c3c; color: white; font-weight: bold;" onclick="leaveRoom()">
+                    🚪 離開
+                </button>
+                <button class="btn" style="background: linear-gradient(to bottom, #f1c40f, #f39c12); color: black; font-weight: bold; border: 2px solid #fff;" onclick="restartBattle()">
+                    ⚔️ 再戰一場
+                </button>
+            `;
+        }
+
+        // 🟢 [新增] 請求再戰一場
+        function restartBattle() {
+            socket.emit('restartBattle', roomId);
+            const restartBtn = document.querySelector('button[onclick="restartBattle()"]');
+            if (restartBtn) {
+                restartBtn.disabled = true;
+                restartBtn.innerText = "準備中...";
+            }
         }
 
         function leaveRoom() { 
