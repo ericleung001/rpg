@@ -907,9 +907,20 @@
             if (waitingTxt) waitingTxt.style.display = amIHost ? 'none' : 'block';
         });
 
+        // 🟢 [修正] 收到戰鬥開始信號時，還原介面
         socket.on('battleStarted', () => { 
             document.getElementById('lobby-overlay').style.display = 'none'; 
-            log("戰鬥開始！"); 
+            
+            // ⬇️ 加入這行：把「再戰」按鈕變回「攻擊/魔法」按鈕
+            resetButtons(); 
+            
+            // 清空回合條顏色
+            const bar = document.getElementById('turn-bar');
+            bar.innerText = "戰鬥開始！";
+            bar.style.background = "#333";
+            bar.style.color = "white";
+
+            log("⚔️ 戰鬥開始！"); 
             
             if (isAuto && isMyTurn) {
                 setTimeout(autoPlayLogic, 1000); 
