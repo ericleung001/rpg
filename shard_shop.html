@@ -26,7 +26,7 @@
         .header {
             background: linear-gradient(180deg, #34495e, #2c3e50);
             border-bottom: 3px solid #9b59b6;
-            padding: 15px; margin-bottom: 15px; border-radius: 8px;
+            padding: 15px; margin-bottom: 10px; border-radius: 8px;
             display: flex; flex-direction: column; gap: 5px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
@@ -37,6 +37,23 @@
             display: inline-block; align-self: center;
         }
         .shard-icon { color: #9b59b6; text-shadow: 0 0 5px #9b59b6; }
+
+        /* 🟢 分類標籤 */
+        .category-tabs {
+            display: flex; gap: 5px; margin-bottom: 15px;
+            overflow-x: auto; padding-bottom: 5px;
+        }
+        .tab-btn {
+            flex: 1; min-width: 60px;
+            padding: 8px 5px; font-size: 10px;
+            background: #34495e; color: #bdc3c7;
+            border: 2px solid #7f8c8d; border-radius: 6px;
+            cursor: pointer; white-space: nowrap;
+        }
+        .tab-btn.active {
+            background: #9b59b6; color: white; border-color: #f1c40f;
+            font-weight: bold;
+        }
 
         /* 商品列表 */
         .shop-list {
@@ -108,6 +125,13 @@
             </div>
         </div>
 
+        <div class="category-tabs">
+            <div class="tab-btn active" onclick="setTab('all')">全部</div>
+            <div class="tab-btn" onclick="setTab('weapon')">⚔️ 武器</div>
+            <div class="tab-btn" onclick="setTab('armor')">🛡️ 防具</div>
+            <div class="tab-btn" onclick="setTab('acc')">💍 飾品</div>
+        </div>
+
         <div id="shop-container" class="shop-list">
             <div style="padding:20px; color:#aaa; font-size:10px;">載入商品中...</div>
         </div>
@@ -121,43 +145,96 @@
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        // 🟢 [前端配置] 商品列表 (需與 Server 的 SHOP_PRICES 和 ITEM_CONFIG 對應)
+        // 🟢 [前端配置] 商品列表 (數值顯示已改為 "萬")
         const SHOP_ITEMS = [
-            { id: 'shard_ring_novice',    name: "學徒碎片戒指", cost: 3,    stats: "ATK+10 HP+50", desc: "適合新手入門" },
-            { id: 'shard_neck_brave',     name: "勇者碎片項鍊", cost: 5,    stats: "ATK+30 DEF+10 HP+200", desc: "賦予勇氣" },
-            { id: 'shard_charm_wind',     name: "疾風碎片護符", cost: 10,    stats: "ATK+80 MP+200", desc: "身輕如燕" },
-            { id: 'shard_ring_vampire',   name: "吸血鬼碎片指環", cost: 15,   stats: "ATK+150 HP+500", desc: "散發血腥氣息" },
-            { id: 'shard_earring_holy',   name: "神聖碎片耳環", cost: 20,   stats: "MP+1000 DEF+300 HP+2000", desc: "女神的祝福" },
-            { id: 'shard_belt_titan',     name: "泰坦碎片腰帶", cost: 25,   stats: "DEF+1000 HP+10000", desc: "如泰坦般堅固" },
-            { id: 'shard_pendant_dragon', name: "龍魂碎片吊墜", cost: 30,  stats: "ATK+5000 DEF+2000 HP+3w", desc: "古龍靈魂封印" },
-            { id: 'shard_ring_void',      name: "虛空碎片之戒", cost: 35,  stats: "ATK+1.5w MP+5000 HP+5w", desc: "凝視深淵..." },
-            { id: 'shard_core_galaxy',    name: "銀河碎片核心", cost: 5000,  stats: "ATK+10w DEF+10w HP+300w MP+55w", desc: "星系運轉之力" },
-            { id: 'shard_crown_infinity', name: "無限碎片皇冠", cost: 10000, stats: "ATK+15w DEF+13w HP+500w MP+70w", desc: "象徵無盡力量" }
+            // --- 💍 飾品 ---
+            { id: 'shard_ring_novice',    type: 'acc', name: "學徒碎片戒指", cost: 3,    stats: "ATK+10 HP+50", desc: "適合新手入門" },
+            { id: 'shard_neck_brave',     type: 'acc', name: "勇者碎片項鍊", cost: 5,    stats: "ATK+30 DEF+10 HP+200", desc: "賦予勇氣" },
+            { id: 'shard_charm_wind',     type: 'acc', name: "疾風碎片護符", cost: 10,   stats: "ATK+80 MP+200", desc: "身輕如燕" },
+            { id: 'shard_ring_vampire',   type: 'acc', name: "吸血鬼碎片指環", cost: 15,   stats: "ATK+150 HP+500", desc: "散發血腥氣息" },
+            { id: 'shard_earring_holy',   type: 'acc', name: "神聖碎片耳環", cost: 20,   stats: "MP+1000 DEF+300 HP+2000", desc: "女神的祝福" },
+            { id: 'shard_belt_titan',     type: 'acc', name: "泰坦碎片腰帶", cost: 25,   stats: "DEF+1000 HP+1萬", desc: "如泰坦般堅固" },
+            { id: 'shard_pendant_dragon', type: 'acc', name: "龍魂碎片吊墜", cost: 30,  stats: "ATK+5000 DEF+2000 HP+3萬", desc: "古龍靈魂封印" },
+            { id: 'shard_ring_void',      type: 'acc', name: "虛空碎片之戒", cost: 35,  stats: "ATK+1.5萬 MP+5000 HP+5萬", desc: "凝視深淵..." },
+            { id: 'shard_core_galaxy',    type: 'acc', name: "銀河碎片核心", cost: 5000,  stats: "ATK+10萬 DEF+10萬 HP+300萬", desc: "星系運轉之力" },
+            { id: 'shard_crown_infinity', type: 'acc', name: "無限碎片皇冠", cost: 10000, stats: "全能+15萬 HP+500萬", desc: "象徵無盡力量" },
+
+            // --- ⚔️ 武器 ---
+            { id: 'shard_blade_novice',   type: 'weapon', name: "碎光長劍", cost: 3, stats: "ATK+250 HP+500", desc: "凝聚微弱星光" },
+            { id: 'shard_axe_crystal',    type: 'weapon', name: "晶體戰斧", cost: 15, stats: "ATK+5000 HP+2萬", desc: "能量晶體打造" },
+            { id: 'shard_scythe_void',    type: 'weapon', name: "虛空撕裂者", cost: 35, stats: "ATK+4.5萬 HP+50萬", desc: "來自虛空深處" },
+            { id: 'shard_spear_galaxy',   type: 'weapon', name: "星河·貫穿之槍", cost: 1000, stats: "ATK+9萬 HP+150萬", desc: "閃爍星河光輝" },
+            { id: 'shard_wep_dimension',  type: 'weapon', name: "維度·終焉裁決", cost: 3000, stats: "ATK+18萬 HP+400萬", desc: "斬斷維度的巨劍" },
+            { id: 'shard_wep_origin',     type: 'weapon', name: "原初·萬物歸零", cost: 8000, stats: "ATK+35萬 HP+800萬", desc: "一切的終點" },
+
+            // --- 🛡️ 防具 ---
+            { id: 'shard_armor_novice',   type: 'armor', name: "碎光輕甲", cost: 3, stats: "DEF+50 HP+1000", desc: "輕便護甲" },
+            { id: 'shard_armor_crystal',  type: 'armor', name: "晶體戰甲", cost: 15, stats: "DEF+2000 HP+5萬", desc: "堅硬能量晶體" },
+            { id: 'shard_robe_void',      type: 'armor', name: "虛空行者法袍", cost: 35, stats: "DEF+2萬 HP+80萬", desc: "融入虛空之中" },
+            { id: 'shard_plate_galaxy',   type: 'armor', name: "星河·不滅壁壘", cost: 1000, stats: "DEF+15萬 HP+300萬", desc: "生生不息" },
+            { id: 'shard_armor_dimension',type: 'armor', name: "維度·虛數裝甲", cost: 3000, stats: "DEF+50萬 HP+800萬", desc: "物理法則無效" },
+            { id: 'shard_armor_origin',   type: 'armor', name: "原初·混沌神軀", cost: 8000, stats: "DEF+80萬 HP+1500萬", desc: "化身不可名狀" }
         ];
 
         const socket = io('https://mmo.ttctv-105.cc', { transports: ['websocket'], secure: true });
         const myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
+        let currentTab = 'all';
+        let playerData = null; // 暫存玩家資料，切換 Tab 時不用重整
+
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
         });
 
         socket.on('errorMessage', (msg) => { showToast(msg); });
+        socket.on('shopResult', (res) => { if(res.success) showToast(res.msg); });
 
         // 接收玩家數據更新
         socket.on('playerStatsUpdate', (p) => {
-            renderShop(p);
+            playerData = p;
+            renderShop();
         });
 
-        function renderShop(p) {
+        function setTab(tab) {
+            currentTab = tab;
+            // 更新按鈕樣式
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.innerText.includes(getTabName(tab))) btn.classList.add('active');
+                if (tab === 'all' && btn.innerText === '全部') btn.classList.add('active');
+            });
+            renderShop();
+        }
+
+        function getTabName(t) {
+            if(t==='weapon') return '武器';
+            if(t==='armor') return '防具';
+            if(t==='acc') return '飾品';
+            return '全部';
+        }
+
+        function renderShop() {
+            if (!playerData) return;
+            const p = playerData;
             const shards = (p.inventory && p.inventory['skill_shard']) || 0;
             document.getElementById('my-shards').innerText = shards;
 
             const container = document.getElementById('shop-container');
             container.innerHTML = '';
 
-            SHOP_ITEMS.forEach(item => {
+            // 🟢 過濾商品
+            const filteredItems = SHOP_ITEMS.filter(item => {
+                if (currentTab === 'all') return true;
+                return item.type === currentTab;
+            });
+
+            if (filteredItems.length === 0) {
+                container.innerHTML = '<div style="padding:20px; color:#aaa; font-size:10px;">此分類暫無商品</div>';
+                return;
+            }
+
+            filteredItems.forEach(item => {
                 const canAfford = shards >= item.cost;
                 const cardClass = canAfford ? 'shop-item affordable' : 'shop-item';
                 const btnClass = canAfford ? 'buy-btn can-buy' : 'buy-btn';
