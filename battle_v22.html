@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>戰鬥中</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body { 
+            background-color: #111; font-family: 'Press Start 2P', monospace; 
+            height: 100dvh; margin: 0; overflow: hidden; 
+            display: flex; flex-direction: column; justify-content: flex-start; align-items: center; 
+            padding: 10px 10px 50px 10px; box-sizing: border-box; overscroll-behavior: none;
+        }
+        #game-container { 
+            width: 100%; max-width: 640px; height: 100%; 
+            background: linear-gradient(135deg, #a8c0b0 50%, #789080 50%); 
+            border: 4px solid #2c3e50; 
+            display: grid; grid-template-rows: 35px 30px 1.2fr 0.8fr 1.8fr; 
+            position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.5); border-radius: 8px;
+        }
+        #turn-bar { background: #333; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; border-bottom: 4px solid #000; letter-spacing: 1px;}
+        
+        #auto-panel {
+            background: rgba(0,0,0,0.85); color: #fff; display: flex; align-items: center; justify-content: space-between;
+            padding: 0 10px; font-size: 10px; border-bottom: 2px solid #555;
+        }
+
+        .monsters-container {
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+            padding: 10px 5px; overflow-x: auto;
+        }
+        
+        .monster-card {
+            background: #f0f0d8; border: 3px solid #706870; border-radius: 6px;
+            padding: 5px; 
+            width: 30%; 
+            min-width: 95px; max-width: 130px;
+            text-align: center; cursor: pointer; position: relative;
+            box-shadow: 3px 3px 0 rgba(0,0,0,0.3); transition: transform 0.1s;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .monster-card.selected { border-color: #f1c40f; transform: translateY(-3px); box-shadow: 0 0 10px #f1c40f; }
+        .monster-card.dead { opacity: 0.5; filter: grayscale(100%); pointer-events: none; border-color: #555; }
+        
+        .boss-sprite { 
+            width: 50px; height: 50px; object-fit: contain; margin-bottom: 2px; 
+            image-rendering: pixelated; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); 
+        }
+        .m-info { 
+            font-size: 9px; color: #333; font-weight: bold; margin-bottom: 2px; 
+            width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+        }
+        
+        .player-area { display: flex; flex-direction: column; justify-content: center; padding: 0 10px; width: 100%; box-sizing: border-box; gap: 4px; }
+        .my-status { width: 100%; box-sizing: border-box; padding: 5px; } 
+        .teammates { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 2px;} 
+        
+        .gba-box { background: #f0f0d8; border: 4px solid #706870; border-radius: 8px; padding: 5px; color: #383838; font-size: 10px; box-shadow: 4px 4px 0 rgba(0,0,0,0.3); }
+        .mini-box { background: #ecf0f1; border: 2px solid #95a5a6; padding: 3px; font-size: 9px; color: #333; overflow: hidden; border-radius: 4px; }
+        
+        .hp-bar { width: 100%; height: 6px; background: #555; border: 1px solid #333; margin: 2px 0; border-radius: 2px; overflow: hidden; }
+        .hp-fill { height: 100%; background: #48c058; transition: width 0.3s; }
+        .mp-bar { width: 100%; height: 5px; background: #555; border: 1px solid #333; margin-top: 2px; border-radius: 2px; }
+        .mp-fill { height: 100%; background: #3498db; transition: width 0.3s; }
+        .hp-text { font-size: 7.5px; color: #333; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transform: scale(0.95); }
+
+        .mini-hp-bar { width: 100%; height: 4px; background: #555; margin-top: 2px; }
+        .mini-hp-fill { height: 100%; background: #e74c3c; width: 100%; }
+
+        .stat-text { font-size: 8px; margin-top: 2px; font-weight: bold; }
+        
+        .hud { background: #305080; border-top: 4px solid #c8c8f8; display: flex; height: 100%; overflow: hidden; }
+        .log { width: 40%; padding: 8px; color: white; font-size: 9px; line-height: 1.5; overflow-y: auto; display: flex; flex-direction: column; justify-content: flex-start; border-right: 2px solid rgba(255,255,255,0.1); }
+        
+        .menu { 
+            width: 60%; display: flex; flex-direction: column; 
+            background: #fff; border-left: 4px solid #c8c8f8; 
+            padding: 5px; box-sizing: border-box; position: relative; 
+        }
+        
+        #shortcut-area {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+            margin-bottom: 5px; padding-bottom: 5px; border-bottom: 2px solid #ccc;
+            flex-shrink: 0;
+        }
+        .btn-shortcut {
+            background: #ecf0f1; border: 1px solid #bdc3c7; color: #2c3e50;
+            font-size: 9px; padding: 8px 2px; cursor: pointer; border-radius: 4px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-family: inherit; font-weight: bold;
+        }
+        .btn-shortcut:active { background: #bdc3c7; transform: translateY(1px); }
+        .btn-shortcut:disabled { opacity: 0.5; cursor: not-allowed; background: #95a5a6; }
+
+        .fixed-top-area {
+            flex-shrink: 0; padding-bottom: 5px; border-bottom: 1px solid #ccc; margin-bottom: 5px; display: none; 
+        }
+
+        .scroll-area { 
+            flex: 1; overflow-y: auto; 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 5px; 
+            align-content: start; padding-bottom: 5px;
+        }
+
+        .btn { 
+            background: #f8f8f8; border: 2px solid #888; cursor: pointer; font-family: inherit; font-size: 11px; font-weight: bold; 
+            text-align: center; display:flex; align-items:center; justify-content:center; border-radius: 6px; min-height: 42px;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .btn:active { background: #f8d030; color: #000; transform: scale(0.98); }
+        .btn:disabled { background: #999; color: #555; cursor: not-allowed; opacity: 0.6; }
+        
+        #lobby-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        .player-list { border: 4px solid #fff; padding: 20px; width: 80%; min-height: 100px; text-align: left; margin-bottom: 30px; font-size: 14px; line-height: 2; overflow-y: auto; }
+        
+        .start-btn { display: none; padding: 15px 30px; font-size: 16px; background: #e74c3c; color: white; border: 4px solid #c0392b; cursor: pointer; font-family: inherit; }
+        .start-btn:disabled { background: #7f8c8d; border-color: #555; cursor: wait; }
+        
+        #chat-container { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7; display: flex; flex-direction: column; font-size: 12px; z-index: 100; padding-bottom: env(safe-area-inset-bottom); transition: height 0.3s ease-in-out; height: 35px; }
+        #chat-header { height: 35px; background: #34495e; color: #fff; line-height: 35px; cursor: pointer; font-weight: bold; border-bottom: 1px solid #555; display: flex; justify-content: center; align-items: center; touch-action: manipulation; }
+        .chat-open { height: 30vh !important; }
+        #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+        .chat-open #chat-body { display: flex; }
+        #chat-history { flex: 1; overflow-y: auto; padding: 10px; text-align: left; color: white; }
+        #chat-input-area { display: flex; border-top: 1px solid #555; height: 45px; }
+        #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 15px; font-family: inherit; font-size: 14px; outline: none; }
+        #chat-send { background: #2980b9; color: white; border: none; padding: 0 20px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: bold; touch-action: manipulation; }
+        
+        .shake { animation: shake 0.5s; } .flash { animation: flash 0.3s; }
+        .damaged { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; filter: sepia(1) hue-rotate(-50deg) saturate(3) drop-shadow(0 0 10px red) !important; }
+        @keyframes shake { 0%,100% {transform:translateX(0);} 25% {transform:translateX(-5px);} 75% {transform:translateX(5px);} }
+        @keyframes flash { 0%,100% {filter:none;} 50% {filter:sepia(1) hue-rotate(-50deg) saturate(5);} }
+        
+        #game-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f; color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999; font-size: 14px; font-weight: bold; transition: top 0.5s ease-in-out; pointer-events: none; }
+
+        #countdown-timer { position: absolute; top: 10px; right: 10px; color: #e74c3c; font-size: 10px; font-weight: bold; display: none; background: rgba(0,0,0,0.7); padding: 5px; border-radius: 4px; }
+
+        #config-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); z-index: 10000; flex-direction: column; padding: 20px; box-sizing: border-box;
+            color: #fff; overflow-y: auto;
+        }
+        .config-box { background: #2c3e50; border: 2px solid #3498db; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
+        .config-header { font-size: 14px; color: #f1c40f; margin-bottom: 10px; border-bottom: 1px solid #555; padding-bottom: 5px; }
+        .config-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; font-size: 10px; flex-wrap: wrap; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 4px;}
+        .config-input { width: 40px; padding: 3px; background: #eee; border: none; text-align: center; }
+        .config-select { padding: 3px; background: #eee; border: none; max-width: 100px;}
+        .btn-del { background: #c0392b; color: white; border: none; padding: 2px 6px; font-size: 10px; cursor: pointer; border-radius: 3px;}
+        .btn-add { background: #27ae60; color: white; border: none; padding: 5px 10px; font-size: 10px; cursor: pointer; width: 100%; margin-top: 5px; border-radius: 4px;}
+        .config-close { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 200px; padding: 10px; background: #34495e; color: white; border: 2px solid #fff; font-weight: bold; cursor: pointer; box-shadow: 0 0 10px black; }
+        
+        #afk-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); z-index: 99999; 
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        .afk-box {
+            background: #fff; color: #2c3e50; padding: 20px; border-radius: 10px; 
+            border: 4px solid #e74c3c; text-align: center; max-width: 300px; width: 80%;
+        }
+        .afk-title { color: #c0392b; margin-top: 0; font-size: 16px; font-weight: bold; }
+        .afk-desc { font-size: 10px; margin-bottom: 15px; color: #555; line-height: 1.5; }
+        .afk-question { font-size: 20px; font-weight: bold; margin: 20px 0; color: #2980b9; word-break: break-all; }
+        .afk-input { padding: 10px; font-size: 16px; width: 80%; text-align: center; margin-bottom: 10px; border: 2px solid #bdc3c7; border-radius: 5px; outline: none; }
+        .afk-btn { background: #27ae60; color: white; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; width: 100%; border-radius: 5px; font-family: inherit; }
+    </style>
+</head>
+<body>
+    <div id="game-toast"></div>
+    
+    <div id="afk-modal">
+        <div class="afk-box">
+            <div class="afk-title">⚠️ 靈魂拷問 ⚠️</div>
+            <div class="afk-desc">系統偵測到你操作過快，<br>請證明你不是機器人！</div>
+            <div id="afk-timer-display" style="color:red; font-weight:bold; margin-bottom:10px;">剩餘時間: 60s</div>
+            <div class="afk-question" id="afk-question">...</div>
+            <input type="number" id="afk-answer" class="afk-input" placeholder="輸入數字答案">
+            <button class="afk-btn" onclick="submitAfk()">確認</button>
+        </div>
+    </div>
+
+    <div id="config-modal">
+        <div style="font-size:16px; text-align:center; margin-bottom:15px; color:#3498db; font-weight:bold;">⚙️ 自訂腳本設定</div>
+        
+        <div class="config-box">
+            <div class="config-header">🚨 緊急觸發 (優先執行)</div>
+            <div id="trigger-list"></div>
+            <button class="btn-add" onclick="addTrigger()">+ 新增條件</button>
+        </div>
+
+        <div class="config-box">
+            <div class="config-header">🔄 出招循環 (順序執行)</div>
+            <div id="rotation-list"></div>
+            <button class="btn-add" onclick="addRotation()">+ 新增動作</button>
+        </div>
+
+        <div class="config-box">
+            <div class="config-header">💧 沒魔時 (MP不足)</div>
+            <select id="low-mp-action" class="config-select" style="width:100%" onchange="saveConfig()">
+                <option value="attack">🗡️ 普通攻擊</option>
+                <option value="item">🧪 自動喝藍水</option>
+                <option value="wait">⏳ 待機</option>
+            </select>
+        </div>
+        <div style="height: 60px;"></div> <button class="config-close" onclick="closeConfig()">💾 儲存並關閉</button>
+    </div>
+
+    <div id="game-container">
+        <div id="countdown-timer">⚠️ 滅團倒數: 09:00</div>
+
+        <div id="lobby-overlay">
+            <div style="color:#f1c40f; margin-bottom:20px; font-size:18px;">等待隊友...</div>
+            <div class="player-list" id="lobby-players">讀取中...</div>
+            
+            <div id="host-controls" style="margin-top: 20px;">
+                <button class="start-btn" id="start-btn" onclick="requestStart()">房主開始</button>
+            </div>
+            
+            <div id="waiting-txt" style="margin-top:15px; font-size:12px; color:#aaa; display:none;">(等待房主...)</div>
+            <button onclick="leaveRoom()" style="margin-top:20px; background:transparent; border:2px solid #aaa; color:#aaa; cursor:pointer; font-size:12px; padding:10px;">離開房間</button>
+        </div>
+        
+        <div id="turn-bar">等待...</div>
+        
+        <div id="auto-panel">
+            <div style="display:flex; gap:5px; align-items:center;">
+                <select id="auto-mode" onchange="updateAutoMode()" style="font-size:10px; padding:2px; border-radius:4px; border:none; background:#eee; color:#333; font-weight:bold;">
+                    <option value="custom">🛠️ 自訂</option>
+                    <option value="atk">⚔️ 輸出</option>
+                    <option value="tank">🛡️ 坦克</option>
+                    <option value="heal">💖 補師</option>
+                </select>
+
+                <button id="btn-config" onclick="openConfig()" style="background:#3498db; border:1px solid #2980b9; color:white; font-size:10px; padding:4px 8px; border-radius:4px; cursor:pointer;">⚙️ 設定</button>
+                <span id="current-action-disp" style="color:#aaa; font-size:9px;">...</span>
+            </div>
+            <button id="auto-btn" onclick="toggleAuto()" style="background:#e74c3c; color:white; border:1px solid #555; font-size:10px; padding:4px 8px; cursor:pointer; border-radius:4px;">
+                自動: OFF
+            </button>
+        </div>
+        
+        <div class="monsters-container" id="monsters-container">
+        </div>
+        
+        <div class="player-area">
+            <div class="gba-box my-status">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                    <span style="font-size:11px; font-weight:bold;"><span id="my-name-display">勇者</span>(你)</span>
+                    <span style="font-size:9px; color:#f1c40f;">⚔️<span id="atk-val">0</span> 🛡️<span id="def-val">0</span></span>
+                </div>
+                <div class="hp-bar"><div id="php" class="hp-fill" style="width:100%"></div></div>
+                <div class="mp-bar"><div id="pmp" class="mp-fill" style="width:100%"></div></div>
+                <div style="font-size: 9px; margin-top: 3px; text-align:right;" id="hp-txt">...</div>
+            </div>
+            
+            <div class="teammates" id="teammates-box"></div>
+        </div>
+        
+        <div class="hud">
+            <div class="log" id="log"><div>準備戰鬥...</div></div>
+            <div class="menu" id="menu-container">
+                
+                <div id="shortcut-area"></div>
+
+                <div id="fixed-top-area" class="fixed-top-area">
+                    <button class="btn" style="width:100%; background:#ddd; color:#555;" onclick="resetButtons()">◀ 返回選單</button>
+                </div>
+
+                <div id="btns" class="scroll-area">
+                    <button class="btn battle-action" onclick="act('attack')">攻擊</button>
+                    <button class="btn battle-action" onclick="openSkill()">魔法</button>
+                    <button class="btn battle-action" onclick="openBag()">物品</button>
+                    <button class="btn" onclick="leaveRoom()">逃跑</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="chat-container">
+        <div id="chat-header" onclick="toggleChat()"> 聊天室 (點擊展開)</div>
+        <div id="chat-body">
+            <div id="chat-history"></div>
+            <div id="chat-input-area">
+                <input type="text" id="chat-input" placeholder="輸入訊息..." maxlength="50">
+                <button id="chat-send">發送</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script>
+        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
+        const BACKEND_URL = atob(_0x5a1b);
+        
+        const socket = io(BACKEND_URL, {
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
+
+        // 🟢 [核心] 轉生稱號格式化工具 (新增)
+        function formatName(name, rebirth) {
+            if (rebirth && rebirth > 0) {
+                return `${escapeHtml(name)}<span style="color:#f1c40f; font-weight:bold; margin-left:2px;">+${rebirth}</span>`;
+            }
+            return escapeHtml(name);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return text;
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        let myToken = localStorage.getItem('rpg_token');
+        let isAuto = false;
+        let autoMode = 'custom';
+        let allPlayers = []; 
+        let rotationIndex = 0; 
+        let rotationCounter = 0; 
+        let afkInterval = null;
+        let tankAttackCounter = 0; 
+        let healerAttackCounter = 0; 
+
+        // 多怪相關變數
+        let currentMonsters = []; 
+        let selectedTargetIndex = 0; 
+
+        let autoConfig = {
+            triggers: [
+                { type: 'hp_self', val: 30, actionType: 'item', actionId: 'potion_mid' }
+            ],
+            rotation: [
+                { actionType: 'attack', actionId: 'normal', count: 1 }
+            ],
+            lowMp: 'attack'
+        };
+
+        const MINION_DB = [
+            { img: 'slime.png', name: '變異史萊姆' },
+            { img: 'rat.png', name: '溝渠老鼠' },
+            { img: 'bee.png', name: '殺人蜂' },
+            { img: 'boar.png', name: '暴躁野豬' },
+            { img: 'snake.png', name: '劇毒響尾蛇' },
+            { img: 'skeleton.png', name: '骷髏士兵' },
+            { img: 'zombie.png', name: '腐爛殭屍' },
+            { img: 'thief.png', name: '蒙面盜賊' },
+            { img: 'fire_imp.png', name: '火焰小鬼' }
+        ];
+
+        const MATERIAL_CONFIG = {
+            'copper_ore':   { name: '銅礦石' }, 
+            'soft_fur':     { name: '柔軟皮毛' }, 
+            'beast_fang':   { name: '野獸尖牙' }, 
+            'slime_gel':    { name: '黏液' },
+            'iron_ore':     { name: '鐵礦石' }, 
+            'leather':      { name: '皮革' }, 
+            'tough_hide':   { name: '硬皮革' }, 
+            'magic_dust':   { name: '魔粉' },
+            'poison_sac':   { name: '毒囊' }, 
+            'bone_shard':   { name: '碎骨片' }, 
+            'silver_ore':   { name: '銀礦石' }, 
+            'fire_core':    { name: '火焰核心' },
+            'lava_rock':    { name: '熔岩石' }, 
+            'coal':         { name: '煤炭' },
+            'dragon_scale': { name: '龍鱗' }, 
+            'gold_ore':     { name: '金礦石' }, 
+            'ice_crystal':  { name: '永恆冰晶' },
+            'yeti_fur':     { name: '雪怪毛皮' }, 
+            'spirit_dust':  { name: '靈魂粉末' }, 
+            'mithril':      { name: '秘銀' }, 
+            'void_dust':    { name: '虛空之塵' },
+            'demon_horn':   { name: '惡魔之角' }, 
+            'dark_essence': { name: '暗之精華' }, 
+            'adamantite':   { name: '精金' }, 
+            'ruby':         { name: '紅寶石' }, 
+            'diamond':      { name: '鑽石' },
+            'god_blood':    { name: '神之血' },
+            'chaos_orb':    { name: '混沌寶珠' }, 
+            'angel_feather':{ name: '天使之羽' },
+            'titan_steel':  { name: '泰坦神鋼' }, 
+            'star_fragment':{ name: '星之碎片' }, 
+            'void_shard':   { name: '虛空碎片' }, 
+            'dark_matter':  { name: '暗物質' }, 
+            'cosmic_steel': { name: '宇宙鋼' }, 
+            'star_core':    { name: '恆星核心' }, 
+            'time_sand':    { name: '時光之沙' }, 
+            'dimension_gem':{ name: '維度寶石' }, 
+            'entropy_origin':{ name: '熱寂原點' }, 
+            'oak_log':      { name: "橡木原木" }, 
+            'maple_log':    { name: "楓木原木" }, 
+            'yew_log':      { name: "紫杉原木" }, 
+            'ancient_log':  { name: "遠古神木" },
+            'spirit_wood':  { name: "靈木" }, 
+            'dragon_wood':  { name: "龍骨木" }, 
+            'void_wood':    { name: "虛空木" }, 
+            'chaos_wood':   { name: "混沌神木" },
+            'carp':         { name: "鯉魚" }, 
+            'salmon':       { name: "鮭魚" }, 
+            'koi':          { name: "錦鯉" }, 
+            'magic_fish':   { name: "魔力魚" },
+            'tuna':         { name: "黑鮪魚" }, 
+            'shark':        { name: "大白鯊" }, 
+            'lava_eel':     { name: "熔岩鰻" }, 
+            'void_squid':   { name: "虛空烏賊" },
+            'god_carp':     { name: "神之鯉" }, 
+            'pearl':        { name: "珍珠" },
+            'quantum_residue': { name: '量子殘渣' },
+            'multiverse_shard': { name: '多元宇宙碎片' },
+            'divinity_core': { name: '創世神格' },
+            'safe_stone':    { name: '防爆石' },
+            'enhance_stone': { name: '強化石' },
+            'lucky_bag':     { name: '奇蹟福袋' },
+'skill_shard': { name: '技能碎片'}
+        };
+        
+        const SKILL_INFO = {
+            'fireball':      { name: "火球術", mp: 5, cat: 'atk', desc: "傷x1.5" },
+            'thunder':       { name: "雷擊",   mp: 15, cat: 'atk', desc: "傷x1.2+暈" },
+            'poison_touch': { name: "劇毒之觸", mp: 25, cat: 'atk', desc: "傷x2.5" },
+            'frost_nova':    { name: "冰霜新星", mp: 30, cat: 'atk', desc: "傷x1.2+降防" },
+            'meteor':        { name: "隕石術",   mp: 80, cat: 'atk', desc: "傷x3.5" },
+            'divine_slash': { name: "次元斬",   mp: 150, cat: 'atk', desc: "傷x5.0(AOE)" },
+            'drain':         { name: "吸血",     mp: 20, cat: 'atk', desc: "吸血100%" },
+            'void_crush':    { name: "虛空碎擊", mp: 1000, cat: 'atk', desc: "傷x10(AOE)" },
+            'big_bang':      { name: "宇宙大爆炸", mp: 5000, cat: 'atk', desc: "傷x25(AOE)" },
+            'entropy_decay':{ name: "熱寂·衰變", mp: 2500, cat: 'atk', desc: "5%真傷(AOE)" },
+            'holy_shield':  { name: "聖光守護", mp: 40, cat: 'buff', desc: "防禦x2" },
+            'berserk':       { name: "狂暴",     mp: 60, cat: 'buff', desc: "攻x2(自殘)" },
+            'god_mode':      { name: "天神下凡", mp: 300, cat: 'buff', desc: "全能x3" },
+            'heal_light':    { name: "小回復",   mp: 10, cat: 'heal', desc: "HP+20%" },
+            'god_light':     { name: "神之光",   mp: 50, cat: 'heal', desc: "HP+50%" },
+            'heal_all':      { name: "聖光普照", mp: 100, cat: 'heal', desc: "全隊滿HP" },
+            'full_heal':     { name: "大天使息", mp: 200, cat: 'heal', desc: "HP全滿" }
+        };
+
+        const SKILL_PRIORITY = {
+            atk: ['big_bang', 'entropy_decay', 'void_crush', 'divine_slash', 'meteor', 'poison_touch', 'frost_nova', 'thunder', 'drain', 'fireball'],
+            tank: ['god_mode', 'holy_shield', 'divine_slash', 'poison_touch', 'drain'],
+            heal: ['heal_all', 'full_heal', 'god_light', 'heal_light']
+        };
+
+        const ITEM_NAMES = {
+            'potion_hp': '紅水(小)', 'potion_mid': '紅水(中)', 'potion_high': '紅水(大)', 'potion_max': '秘藥', 'elixir': '甘露',
+            'potion_mp': '藍水(小)', 'potion_mp_mid': '藍水(中)', 'potion_mp_high': '藍水(大)',
+            'grilled_carp': '烤鯉魚', 'salmon_sushi': '鮭魚壽司', 'tuna_steak': '鮪魚排', 
+            'eel_rice': '鰻魚飯', 'void_soup': '虛空湯', 'sushi_plate': '壽司拼盤'
+        };
+
+        const ITEMS_HP_DESC = ['void_soup', 'elixir', 'potion_max', 'potion_high', 'sushi_plate', 'tuna_steak', 'potion_mid', 'eel_rice', 'grilled_carp', 'potion_hp'];
+        const ITEMS_MP_DESC = ['elixir', 'void_soup', 'potion_mp_high', 'potion_mp_mid', 'eel_rice', 'salmon_sushi', 'potion_mp'];
+
+        let isMyTurn = false; 
+        const params = new URLSearchParams(window.location.search);
+        const roomId = params.get('room');
+        let myPlayer = { mp: 0, hp: 0, maxMp: 100, maxHp: 100, skills: ['fireball'] };
+        let battleTimer = null;
+        let timeLeft = 530;
+
+        let myShortcuts = []; 
+        try {
+            const saved = localStorage.getItem('rpg_shortcuts');
+            if (saved) { myShortcuts = JSON.parse(saved); }
+            const savedConfig = localStorage.getItem('rpg_auto_config');
+            if (savedConfig) { autoConfig = JSON.parse(savedConfig); }
+            const savedMode = localStorage.getItem('rpg_auto_mode');
+            if(savedMode) { 
+                autoMode = savedMode;
+                document.getElementById('auto-mode').value = autoMode;
+                updateAutoMode(); 
+            }
+        } catch(e) { console.error("讀取失敗", e); }
+
+        function updateAutoMode() {
+            autoMode = document.getElementById('auto-mode').value;
+            localStorage.setItem('rpg_auto_mode', autoMode);
+            const configBtn = document.getElementById('btn-config');
+            if (autoMode === 'custom') { configBtn.style.display = 'block'; } else { configBtn.style.display = 'none'; }
+        }
+
+        function toggleAuto() {
+            isAuto = !isAuto;
+            const btn = document.getElementById('auto-btn');
+            rotationIndex = 0; rotationCounter = 0; tankAttackCounter = 0; healerAttackCounter = 0;
+
+            if (isAuto) {
+                btn.innerText = "自動: ON"; btn.style.background = "#2ecc71"; btn.style.border = "1px solid #27ae60";
+                if (isMyTurn) autoPlayLogic(); 
+            } else {
+                btn.innerText = "自動: OFF"; btn.style.background = "#e74c3c"; btn.style.border = "1px solid #555";
+            }
+        }
+
+        // 🟢 核心：AI 邏輯 (支援手動/自動選怪)
+        function autoPlayLogic() {
+            if (!isAuto || !isMyTurn) return;
+            
+            // 1. 安全檢查：如果怪物列表是空的，停止
+            if (!currentMonsters || currentMonsters.length === 0) {
+                return;
+            }
+
+            // 2. 決定目標 (Targeting Strategy)
+            let targetIdx = selectedTargetIndex; // 預設使用當前選中的
+
+            // 檢查當前選中的目標是否有效 (存在且活著)
+            const isCurrentTargetValid = currentMonsters[targetIdx] && currentMonsters[targetIdx].hp > 0;
+
+            if (!isCurrentTargetValid) {
+                // 如果當前目標無效，啟動 AI 自動選擇 (優先打殘血)
+                let minHp = Infinity;
+                let bestIdx = -1;
+
+                currentMonsters.forEach((m, idx) => {
+                    if (m.hp > 0) {
+                        if (m.hp < minHp) {
+                            minHp = m.hp;
+                            bestIdx = idx;
+                        }
+                    }
+                });
+                
+                targetIdx = bestIdx;
+            }
+
+            // 如果還是找不到目標 (全死)，就結束
+            if (targetIdx === -1) return;
+
+            // 3. 更新選定目標 (這樣畫面上的框框也會跟著跳過去)
+            // 這樣玩家可以看到 AI 選了誰，或者自己選了誰
+            if (selectedTargetIndex !== targetIdx) {
+                selectedTargetIndex = targetIdx;
+                selectMonster(targetIdx); 
+            }
+
+            // 4. 執行自訂腳本
+            if (autoMode === 'custom') { runCustomAuto(); return; }
+
+            // 5. 執行職業 AI
+            const delay = Math.random() * 300 + 200; 
+            setTimeout(() => {
+                // 再次確認狀態 (防止延遲期間戰鬥結束或被關閉)
+                if (!isMyTurn || roomId === 'world_boss') { 
+                    if(roomId === 'world_boss' && isAuto) socket.emit('worldBossAction', { type: 'attack' });
+                    return; 
+                }
+
+                // [重要] 再次校正目標 (防止延遲期間怪被打死)
+                validateTarget();
+
+                document.getElementById('current-action-disp').innerText = `AI: ${autoMode}`;
+                const myHpPct = (myPlayer.hp / myPlayer.maxHp) * 100;
+                
+                // [1] 緊急自保 (維持不變)
+                if (autoMode === 'heal' && myHpPct < 50) {
+                    if (attemptSkill('heal_all')) { healerAttackCounter = 0; return; }
+                    if (attemptSkill('full_heal')) return;
+                    if (recoverStat('hp')) return; 
+                } else if (autoMode !== 'heal' && myHpPct < 40) {
+                    if (attemptSkill('heal_all')) return;
+                    if (attemptSkill('drain')) return;
+                    if (attemptSkill('heal_light')) return;
+                    if (recoverStat('hp')) return; 
+                }
+
+                // [2] 職業行為 (維持不變)
+                let skillUsed = false;
+                switch (autoMode) {
+                    case 'heal':
+                        const teamEmergency = allPlayers.some(p => p.id !== myPlayer.id && (p.hp / p.maxHp) < 0.5);
+                        if (teamEmergency) {
+                            if (attemptSkill('heal_all')) { healerAttackCounter = 0; return; }
+                            if (attemptSkill('full_heal')) return;
+                        } 
+                        if (healerAttackCounter > 0) {
+                            healerAttackCounter--;
+                            if (attemptSkill('divine_slash')) return;
+                            if (attemptSkill('thunder')) return; 
+                        } else {
+                            if (attemptSkill('full_heal')) { healerAttackCounter = 2; return; }
+                            if (attemptSkill('god_light')) { healerAttackCounter = 3; return; }
+                            if (attemptSkill('divine_slash')) return; 
+                        }
+                        break;
+                    case 'tank':
+                        if (tankAttackCounter > 0) {
+                            tankAttackCounter--; 
+                            if (attemptSkill('divine_slash')) return;
+                            if (attemptSkill('poison_touch')) return;
+                            if (attemptSkill('drain')) return;
+                        } else {
+                            if (attemptSkill('god_mode')) { tankAttackCounter = 3; return; }
+                            if (attemptSkill('holy_shield')) { tankAttackCounter = 3; return; }
+                            if (attemptSkill('divine_slash')) return;
+                            if (attemptSkill('poison_touch')) return;
+                        }
+                        break;
+                    case 'atk':
+                    default:
+                        for (let skill of SKILL_PRIORITY.atk) {
+                            if (attemptSkill(skill)) { skillUsed = true; break; }
+                        }
+                        break;
+                }
+                
+                // 如果沒使用技能，執行普攻 (打 selectedTargetIndex)
+                if (!skillUsed) doNormalAttack();
+
+            }, delay);
+        }
+
+        function runCustomAuto() {
+            const delay = Math.random() * 300 + 200; 
+            setTimeout(() => {
+                if (!isMyTurn || roomId === 'world_boss') return;
+                
+                validateTarget(); // 校正目標
+
+                const myHpPct = (myPlayer.hp / myPlayer.maxHp) * 100;
+                const myMpPct = (myPlayer.mp / myPlayer.maxMp) * 100;
+                document.getElementById('current-action-disp').innerText = "腳本執行中...";
+
+                for (let rule of autoConfig.triggers) {
+                    let triggered = false;
+                    if (rule.type === 'hp_self' && myHpPct < rule.val) triggered = true;
+                    if (rule.type === 'mp_self' && myMpPct < rule.val) triggered = true;
+                    if (rule.type === 'hp_team' && rule.actionType === 'skill') {
+                        const needHeal = allPlayers.some(p => p.id !== myPlayer.id && (p.hp / p.maxHp * 100) < rule.val);
+                        if (needHeal) triggered = true;
+                    }
+                    if (triggered) {
+                        if (tryExecute(rule.actionType, rule.actionId)) {
+                            document.getElementById('current-action-disp').innerText = `觸發: ${rule.actionId}`;
+                            return;
+                        }
+                    }
+                }
+
+                if (autoConfig.rotation.length === 0) { act('attack'); return; }
+                if (rotationIndex >= autoConfig.rotation.length) rotationIndex = 0;
+                const step = autoConfig.rotation[rotationIndex];
+                let executed = false;
+                
+                if (step.actionType === 'attack') { act('attack'); executed = true; } 
+                else if (step.actionType === 'skill') {
+                    if (canUseSkill(step.actionId)) { useSkill(step.actionId); executed = true; } 
+                    else { handleLowMp(); return; }
+                } 
+                else if (step.actionType === 'item') {
+                    if (hasItem(step.actionId)) { useItem(step.actionId); executed = true; } 
+                    else { executed = true; } 
+                }
+
+                if (executed) {
+                    rotationCounter++;
+                    if (rotationCounter >= step.count) {
+                        rotationCounter = 0; rotationIndex++;
+                        if (rotationIndex >= autoConfig.rotation.length) rotationIndex = 0;
+                    }
+                    document.getElementById('current-action-disp').innerText = `循環: ${step.actionId}`;
+                }
+            }, delay);
+        }
+
+        function attemptSkill(skillId) {
+            if (!myPlayer.skills || !myPlayer.skills.includes(skillId)) return false;
+            const info = SKILL_INFO[skillId];
+            if (!info) return false;
+            if (myPlayer.mp >= info.mp) { useSkill(skillId); return true; } 
+            else { if (recoverStat('mp')) return true; return false; }
+        }
+
+        function recoverStat(type) {
+            const hpPct = myPlayer.hp / myPlayer.maxHp;
+            const mpPct = myPlayer.mp / myPlayer.maxMp;
+            const isDoubleCritical = (hpPct < 0.3 && mpPct < 0.3);
+            const isMpDry = (mpPct < 0.1); 
+            const isHpCritical = (hpPct < 0.15); 
+            const listDesc = (type === 'hp') ? ITEMS_HP_DESC : ITEMS_MP_DESC;
+            let targetList = (type === 'hp' ? hpPct < 0.4 : mpPct < 0.4) ? [...listDesc] : [...listDesc].reverse();
+            let hasVoidSoup = false, hasElixir = false;    
+
+            for (let itemId of targetList) {
+                if (myPlayer.inventory && myPlayer.inventory[itemId] > 0) {
+                    if (itemId === 'void_soup') hasVoidSoup = true;
+                    if (itemId === 'elixir') hasElixir = true;
+                    
+                    if (isDoubleCritical && (itemId === 'void_soup' || itemId === 'elixir')) { useItem(itemId); return true; }
+                    if (type === 'mp' && isMpDry && (itemId === 'void_soup' || itemId === 'elixir')) { useItem(itemId); return true; }
+                    if (type === 'hp' && isHpCritical && (itemId === 'void_soup' || itemId === 'elixir')) { useItem(itemId); return true; }
+                    
+                    if (itemId !== 'void_soup' && itemId !== 'elixir') { useItem(itemId); return true; }
+                }
+            }
+            if ((type === 'hp' && hpPct < 0.4) || (type === 'mp' && mpPct < 0.4)) {
+                if (hasElixir && type === 'mp') { useItem('elixir'); return true; }
+                if (hasVoidSoup) { useItem('void_soup'); return true; }
+            }
+            return false;
+        }
+
+        function doNormalAttack() { act('attack'); }
+
+        function handleLowMp() {
+            const action = autoConfig.lowMp;
+            if (action === 'attack') { act('attack'); document.getElementById('current-action-disp').innerText = "沒魔 -> 普攻"; } 
+            else if (action === 'item') { if (!recoverStat('mp')) act('attack'); } 
+            else { document.getElementById('current-action-disp').innerText = "沒魔 -> 待機"; }
+        }
+
+        function tryExecute(type, id) {
+            if (type === 'skill') { if (canUseSkill(id)) { useSkill(id); return true; } } 
+            else if (type === 'item') { if (hasItem(id)) { useItem(id); return true; } }
+            return false;
+        }
+
+        function canUseSkill(sid) {
+            const info = SKILL_INFO[sid];
+            return info && myPlayer.mp >= info.mp && myPlayer.skills.includes(sid);
+        }
+
+        function hasItem(id) { return myPlayer.inventory && myPlayer.inventory[id] > 0; }
+
+        // 🟢 [新增] 驗證並修正目標 (防呆)
+        function validateTarget() {
+            if (!currentMonsters || currentMonsters.length === 0) return;
+            // 檢查當前目標是否有效
+            if (!currentMonsters[selectedTargetIndex] || currentMonsters[selectedTargetIndex].hp <= 0) {
+                const firstAlive = currentMonsters.findIndex(m => m.hp > 0);
+                if (firstAlive !== -1) {
+                    selectedTargetIndex = firstAlive;
+                    renderMonsters(currentMonsters); 
+                }
+            }
+        }
+
+        window.kickPlayer = function(targetId) {
+            if (!targetId) return;
+            if (confirm("確定要將此玩家踢出房間嗎？")) {
+                socket.emit('kickPlayer', { roomId: roomId, targetId: targetId });
+            }
+        };
+
+        if (!myToken) { window.location.href = 'index.html'; }
+        if (!roomId && roomId !== 'world_boss') { showMsg("無效的房間！"); setTimeout(()=>window.location.href = 'hub.html', 1000); }
+
+        socket.on('connect', () => {
+            socket.emit('joinGame', myToken); 
+            setTimeout(() => {
+                if (roomId === 'world_boss') {
+                    socket.emit('connectToBossRoom');
+                    document.getElementById('turn-bar').innerText = "🔥 世界 BOSS 討伐戰 🔥";
+                    document.getElementById('turn-bar').style.background = "#c0392b";
+                    document.getElementById('teammates-box').style.display = 'none'; 
+                    document.getElementById('lobby-overlay').style.display = 'none';
+                    document.getElementById('countdown-timer').style.display = 'block'; 
+                } else {
+                    socket.emit('connectToRoom', roomId);
+                }
+            }, 100);
+        });
+
+        socket.on('afkCheck', (data) => {
+            document.getElementById('afk-question').innerText = data.question;
+            document.getElementById('afk-answer').value = ''; 
+            document.getElementById('afk-modal').style.display = 'flex';
+            let timeLeftAfk = data.timeout || 60;
+            const timerDisplay = document.getElementById('afk-timer-display');
+            if (afkInterval) clearInterval(afkInterval);
+            afkInterval = setInterval(() => {
+                timeLeftAfk--; timerDisplay.innerText = `剩餘時間: ${timeLeftAfk}s`;
+                if (timeLeftAfk <= 0) { clearInterval(afkInterval); }
+            }, 1000);
+        });
+        socket.on('afkSuccess', () => { 
+            document.getElementById('afk-modal').style.display = 'none'; 
+            if (afkInterval) clearInterval(afkInterval);
+            resetButtons(); toggle(false); log("驗證通過！"); 
+        });
+        function submitAfk() { 
+            const ans = document.getElementById('afk-answer').value; 
+            if(ans) socket.emit('afkResponse', parseInt(ans)); 
+            document.getElementById('afk-modal').style.display = 'none'; 
+            if (afkInterval) clearInterval(afkInterval);
+        }
+
+        setInterval(() => { if (socket.connected) socket.emit('heartbeat'); }, 20000);
+        socket.on('disconnect', () => { showMsg("⚠️ 與伺服器連線中斷..."); });
+
+        function showMsg(text) {
+            const t = document.getElementById('game-toast');
+            t.innerText = text; t.style.top = "30px";
+            setTimeout(() => { t.style.top = "-100px"; }, 3000);
+        }
+
+        function appendChat(name, msg) {
+if (name === '系統') return;
+            if (name === '系統') return;
+            const history = document.getElementById('chat-history');
+            const div = document.createElement('div');
+            const safeName = name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${safeName}]:</span> ${msg}`;
+            history.appendChild(div); history.scrollTop = history.scrollHeight;
+        }
+        socket.on('chatHistory', (history) => { 
+            document.getElementById('chat-history').innerHTML = ''; 
+            history.forEach(data => appendChat(data.name, data.msg)); 
+        });
+        socket.on('chatMessage', (data) => { appendChat(data.name, data.msg); });
+        
+        function sendChat() { 
+            const input = document.getElementById('chat-input'); 
+            if(input.value) { socket.emit('sendChat', input.value); input.value=''; } 
+        }
+        document.getElementById('chat-send').onclick = sendChat;
+        document.getElementById('chat-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChat(); });
+        function toggleChat() { document.getElementById('chat-container').classList.toggle('chat-open'); }
+
+        socket.on('worldBossSync', (data) => {
+            if (!data.active) { showMsg("BOSS 已被擊敗！"); setTimeout(() => window.location.href = 'hub.html', 3000); return; }
+            renderMonsters([{ 
+                id: 'boss', name: data.name, hp: data.hp, maxHp: data.maxHp, level: 999, img: 'entropy_god.png' 
+            }]);
+        });
+
+        socket.on('roomInfoUpdate', (info) => {
+            allPlayers = info.players; 
+            const amIHost = (info.host === socket.id);
+            const lobbyList = document.getElementById('lobby-players');
+            lobbyList.innerHTML = ''; 
+            
+            info.players.forEach(p => {
+                let actionBtn = '';
+                if (amIHost && p.id !== socket.id) {
+                    actionBtn = `<button onclick="kickPlayer('${p.id}')" style="float:right; background:#c0392b; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:10px;">踢出</button>`;
+                }
+                
+                // 🟢 [修改] 顯示轉生稱號
+                const displayName = formatName(p.name, p.rebirth);
+                
+                lobbyList.innerHTML += `
+                    <div style="border-bottom:1px dashed #555; padding:8px 5px; line-height: 20px;">
+                        ${displayName} <span style="color:#aaa; font-size:10px;">(LV.${p.level})</span>
+                        ${actionBtn}
+                    </div>`;
+            });
+
+            const overlay = document.getElementById('lobby-overlay');
+            if (info.status === 'fighting') { 
+                overlay.style.display = 'none'; 
+                document.getElementById('countdown-timer').style.display = 'block'; 
+                
+                if (!battleTimer) {
+                    timeLeft = 530; 
+                    if(info.battleStartTime) {
+                        const elapsed = Math.floor((Date.now() - info.battleStartTime) / 1000);
+                        timeLeft = 530 - elapsed;
+                    }
+                    if(timeLeft < 0) timeLeft = 0;
+                    const timerEl = document.getElementById('countdown-timer');
+                    battleTimer = setInterval(() => {
+                        timeLeft--;
+                        if (timeLeft <= 0) {
+                            timeLeft = 0; clearInterval(battleTimer);
+                            timerEl.innerText = "⚠️ 時間到！";
+                        } else {
+                            const mm = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                            const ss = (timeLeft % 60).toString().padStart(2, '0');
+                            timerEl.innerText = `⚠️ 滅團倒數: ${mm}:${ss}`;
+                        }
+                    }, 1000);
+                }
+            } else { 
+                overlay.style.display = 'flex'; 
+                if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+                document.getElementById('countdown-timer').style.display = 'none';
+            }
+            
+            const teammatesBox = document.getElementById('teammates-box');
+            teammatesBox.innerHTML = '';
+            info.players.forEach(p => {
+                if (p.id !== socket.id) { 
+                    const hpPct = (p.hp / p.maxHp) * 100;
+                    const displayName = formatName(p.name, p.rebirth);
+                    
+                    let kickHtml = '';
+                    if (amIHost) {
+                        kickHtml = `<button onclick="kickPlayer('${p.id}')" style="margin-left:5px; background:#c0392b; color:white; border:none; padding:2px 5px; border-radius:3px; cursor:pointer; font-size:8px;">踢</button>`;
+                    }
+
+                    teammatesBox.innerHTML += `
+                        <div class="mini-box" style="display:flex; flex-direction:column;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div style="font-weight:bold;">${displayName}</div>
+                                ${kickHtml}
+                            </div>
+                            <div class="mini-hp-bar"><div class="mini-hp-fill" style="width:${hpPct}%;"></div></div>
+                        </div>`;
+                }
+            });
+            
+            const startBtn = document.getElementById('start-btn');
+            if (amIHost) { startBtn.style.display = 'block'; startBtn.innerText = `開始 (${info.players.length}人)`; }
+            else { startBtn.style.display = 'none'; }
+
+            const waitingTxt = document.getElementById('waiting-txt');
+            if (waitingTxt) waitingTxt.style.display = amIHost ? 'none' : 'block';
+        });
+
+        socket.on('battleStarted', () => { 
+            document.getElementById('lobby-overlay').style.display = 'none'; 
+            log("戰鬥開始！"); 
+            
+            // 🟢 新增：如果我是房主且開了自動，戰鬥開始時嘗試觸發
+            if (isAuto && isMyTurn) {
+                setTimeout(autoPlayLogic, 1000); 
+            }
+        });
+
+        // 🟢 接收多怪數據更新
+        socket.on('monstersUpdate', (monsters) => {
+            renderMonsters(monsters);
+        });
+
+        // 🟢 [完整版] 雜兵資料庫 (圖片對應名稱)
+        const LOW_LEVEL_MONSTER_IMGS = [
+            { img: 'slime.png', name: '變異史萊姆' },
+            { img: 'rat.png', name: '溝渠老鼠' },
+            { img: 'bee.png', name: '殺人蜂' },
+            { img: 'boar.png', name: '暴躁野豬' },
+            { img: 'thief.png', name: '蒙面盜賊' },
+            { img: 'wolf_king.png', name: '荒原狼' },
+            { img: 'snake.png', name: '劇毒響尾蛇' },
+            { img: 'zombie.png', name: '腐爛殭屍' },
+            { img: 'skeleton.png', name: '骷髏士兵' },
+            { img: 'ghoul.png', name: '食屍鬼爪牙' },
+            { img: 'witch.png', name: '黑森林女巫' },
+            { img: 'hydra.png', name: '九頭蛇幼體' },
+            { img: 'fire_imp.png', name: '火焰小鬼' },
+            { img: 'lava_golem.png', name: '熔岩傀儡' },
+            { img: 'salamander.png', name: '火蜥蜴' },
+            { img: 'fire_mage.png', name: '烈焰學徒' },
+            { img: 'dragon_hatchling.png', name: '幼龍' },
+            { img: 'balrog.png', name: '炎魔分身' },
+            { img: 'snow_wolf.png', name: '極地雪狼' },
+            { img: 'yeti.png', name: '暴怒雪人' },
+            { img: 'ice_spirit.png', name: '冰霜精靈' },
+            { img: 'frost_knight.png', name: '寒冰衛士' },
+            { img: 'ice_dragon.png', name: '冰龍幻影' },
+            { img: 'lich_king.png', name: '巫妖侍從' },
+            { img: 'void_eye.png', name: '虛空凝視者' },
+            { img: 'shadow_assassin.png', name: '暗影行者' },
+            { img: 'dark_paladin.png', name: '墮落騎士' },
+            { img: 'demon_guard.png', name: '地獄守門犬' },
+            { img: 'succubus.png', name: '魅魔僕從' },
+            { img: 'void_lord.png', name: '虛空行者' },
+            { img: 'chaos_beast.png', name: '混沌魔獸' },
+            { img: 'fallen_angel.png', name: '折翼天使' }
+        ];
+
+        // 🟢 [修正] 渲染怪物列表 (第一隻正常，其餘隨機雜兵圖+名)
+        function renderMonsters(monsters) {
+            currentMonsters = monsters;
+            const container = document.getElementById('monsters-container');
+            container.innerHTML = '';
+
+            // 1. 檢查當前目標是否有效
+            if (!currentMonsters[selectedTargetIndex] || currentMonsters[selectedTargetIndex].hp <= 0) {
+                const firstAliveIdx = currentMonsters.findIndex(m => m.hp > 0);
+                if (firstAliveIdx !== -1) {
+                    selectedTargetIndex = firstAliveIdx;
+                }
+            }
+
+            monsters.forEach((m, index) => {
+                const isDead = m.hp <= 0;
+                const hpPct = m.maxHp > 0 ? Math.max(0, (m.hp / m.maxHp) * 100) : 0; 
+                const isSelected = (index === selectedTargetIndex);
+                
+                let imgSrc = 'img/monsters/slime.png'; 
+                let displayName = m.name; // 預設顯示原名
+
+                if (index === 0) {
+                    // 第一隻怪：使用原本設定的圖和名字
+                    if (m.img) imgSrc = `img/monsters/${m.img}`;
+                } else {
+                    // 其他怪：隨機選一張低等怪物圖 + 對應名字
+                    // 使用 index 作為種子，確保同一隻怪不會一直變身
+                    const seed = (index + m.maxHp) % MINION_DB.length;
+                    const minion = MINION_DB[seed];
+                    imgSrc = `img/monsters/${minion.img}`;
+                    displayName = minion.name; // 🟢 替換顯示名稱
+                }
+
+                const clickAction = isDead ? '' : `onclick="selectMonster(${index})"`;
+
+                container.innerHTML += `
+                    <div class="monster-card ${isDead?'dead':''} ${isSelected?'selected':''}" ${clickAction}>
+                        <img class="boss-sprite" src="${imgSrc}" onerror="this.src='img/monsters/slime.png'; this.onerror=null;" alt="${displayName}">
+                        <div class="m-info">${displayName}</div>
+                        <div class="hp-bar" style="height:5px; margin:2px 0;">
+                            <div class="hp-fill" style="width:${hpPct}%;"></div>
+                        </div>
+                        <div class="hp-text">${m.hp}/${m.maxHp}</div>
+                        ${isSelected ? '<div style="font-size:8px; color:#f1c40f; margin-top:2px;">▼ 目標</div>' : ''}
+                    </div>
+                `;
+            });
+        }
+
+        // 🟢 選擇目標
+        function selectMonster(index) {
+            if (currentMonsters[index] && currentMonsters[index].hp > 0) {
+                selectedTargetIndex = index;
+                renderMonsters(currentMonsters); 
+            }
+        }
+
+        // 🟢 [修正] 回合更新 (強制解鎖按鈕)
+        socket.on('turnUpdate', (data) => {
+            const bar = document.getElementById('turn-bar'); 
+            if (roomId === 'world_boss') return;
+            
+            if (data.currentId === 'monster') { 
+                isMyTurn = false; 
+                bar.innerText = `⚠️ ${data.name} 回合...`; 
+                bar.style.background = "#c0392b"; 
+                toggle(true); 
+            }
+            else if (data.currentId === socket.id) { 
+                isMyTurn = true; 
+                bar.innerText = "⚔️ 你的回合"; 
+                bar.style.background = "#2ecc71"; 
+                
+                // 🟢 強制解鎖按鈕
+                toggle(false); 
+                
+                // 自動修正目標
+                validateTarget();
+
+                if (isAuto) autoPlayLogic(); 
+            }
+            else { 
+                isMyTurn = false; 
+                bar.innerText = `⏳ ${data.name}`; 
+                bar.style.background = "#333"; 
+                toggle(true); 
+            }
+        });
+
+        // monsterUpdate 已經被 monstersUpdate 取代，保留此空函式防錯
+        socket.on('monsterUpdate', (m) => {}); 
+
+        socket.on('playerStatsUpdate', (p) => {
+            myPlayer = p;
+            
+            // 🟢 [修改] 顯示玩家自己的轉生稱號
+            document.getElementById('my-name-display').innerHTML = formatName(p.name, p.rebirth);
+            
+            document.getElementById('php').style.width = (p.hp / p.maxHp * 100) + '%';
+            document.getElementById('pmp').style.width = (p.mp / p.maxMp * 100) + '%';
+            document.getElementById('hp-txt').innerText = `HP:${p.hp}/${p.maxHp}  MP:${p.mp}/${p.maxMp}`;
+            if(document.getElementById('atk-val')) document.getElementById('atk-val').innerText = p.atk;
+            if(document.getElementById('def-val')) document.getElementById('def-val').innerText = p.def;
+            updateShortcutStates(p);
+        });
+
+        function updateShortcutStates(p) {
+            const area = document.getElementById('shortcut-area');
+            const skillsOwned = p.skills || []; 
+            if (myShortcuts.length === 0 && skillsOwned.length > 0) {
+                myShortcuts = skillsOwned.slice(0, 4); localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
+            }
+            area.innerHTML = '';
+            myShortcuts.forEach(sid => {
+                const info = SKILL_INFO[sid];
+                if(info && skillsOwned.includes(sid)) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-shortcut'; 
+                    btn.setAttribute('data-mp', info.mp); 
+                    btn.setAttribute('data-sid', sid);
+                    btn.innerHTML = `${info.name} <span style="color:#2980b9">(${info.mp})</span>`;
+                    
+                    // 🟢 檢查 MP 是否足夠
+                    if (p.mp < info.mp) {
+                        btn.disabled = true;
+                        btn.style.opacity = "0.5";
+                        btn.style.cursor = "not-allowed";
+                    }
+                    
+                    // 🟢 [新增] 檢查是否輪到我 (如果在對手回合，強制鎖定)
+                    if (!isMyTurn) {
+                        btn.disabled = true;
+                        btn.style.opacity = "0.5";
+                        btn.style.cursor = "not-allowed";
+                    }
+
+                    btn.onclick = () => { useSkill(sid); }; 
+                    area.appendChild(btn);
+                }
+            });
+        }
+
+        // 🟢 [修正] 戰鬥勝利 (加入掉落物顯示)
+        socket.on('battleWon', (data) => {
+            if(battleTimer) clearInterval(battleTimer); 
+            
+            const bar = document.getElementById('turn-bar'); 
+            bar.innerText = " 勝利！"; 
+            bar.style.background = "gold"; 
+            bar.style.color = "black";
+            
+            // 1. 構建勝利訊息
+            let winMsg = `勝利！獲得 ${data.gold.toLocaleString()} G`;
+            if (data.exp) winMsg += `、${data.exp.toLocaleString()} 經驗`;
+
+            // 2. 顯示掉落物
+            if (data.drops && data.drops.length > 0) {
+                let dropNames = [];
+                data.drops.forEach(itemId => {
+                    // 嘗試從各個設定檔找名字，找不到就用 ID
+                    let name = ITEM_NAMES[itemId];
+                    // 🟢 加入對 MATERIAL_CONFIG 的查詢
+                    if (!name && typeof ITEM_CONFIG !== 'undefined' && ITEM_CONFIG[itemId]) name = ITEM_CONFIG[itemId].name;
+                    if (!name && typeof MATERIAL_CONFIG !== 'undefined' && MATERIAL_CONFIG[itemId]) name = MATERIAL_CONFIG[itemId].name;
+                    
+                    dropNames.push(name || itemId);
+                });
+                
+                // 將掉落物訊息加入 Log (比較詳細)
+                log(`<span style="color:#f1c40f">獲得戰利品: ${dropNames.join(', ')}</span>`);
+                
+                // 將掉落物訊息加入上方 Toast (簡短)
+                winMsg += `\n掉落: ${dropNames.length} 個物品`;
+            }
+
+            // 3. 顯示 Toast
+            showMsg(winMsg); 
+            
+            // 4. 顯示離開按鈕
+            showNormalVictoryBtn();
+            
+            // 5. 自動停止掛機
+            if(isAuto) toggleAuto();
+        });
+
+        function showNormalVictoryBtn() {
+            const btnArea = document.getElementById('btns');
+            document.getElementById('fixed-top-area').style.display = 'none'; 
+            document.getElementById('shortcut-area').style.display = 'none'; 
+            btnArea.style.gridTemplateColumns = '1fr'; 
+            btnArea.innerHTML = `<button class="btn" style="background: linear-gradient(to bottom, #f1c40f, #f39c12); color: #000; font-weight: bold; font-size: 16px; border: 3px solid #fff; height: 60px;" onclick="leaveRoom()">🏆 戰鬥勝利 (點擊離開)</button>`;
+        }
+
+        function leaveRoom() { 
+            if (socket && socket.connected) { socket.emit('leaveRoom', roomId); }
+            setTimeout(() => { window.location.replace('hub.html'); }, 300); 
+        }
+
+        socket.on('playerDead', () => { 
+            if(battleTimer) clearInterval(battleTimer); 
+            log("你被打倒了..."); showMsg("👻 你已經死亡..."); 
+            document.getElementById('btns').innerHTML = `<button class="btn" style="grid-column:span 2; background:red; color:white" onclick="window.location.href='rest.html'"> 去復活</button>`;
+            if(isAuto) toggleAuto();
+        });
+
+        socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
+        socket.on('battleLog', (msg) => log(msg));
+        socket.on('roomLeft', () => { showMsg("你離開了房間"); setTimeout(() => { window.location.href = 'hub.html'; }, 1000); });
+
+        function requestStart() { socket.emit('startBattle', roomId); }
+        
+        // 🟢 [修正] 普通攻擊與物品使用
+        function act(type) {
+            if (roomId === 'world_boss') { 
+                toggle(true); 
+                socket.emit('worldBossAction', { type: 'attack' }); 
+                setTimeout(() => toggle(false), 500); 
+            } else { 
+                if(!isMyTurn) return; 
+                toggle(true); 
+                // 🟢 傳送 targetIndex
+                socket.emit('combatAction', { 
+                    roomId, 
+                    type, 
+                    targetIndex: selectedTargetIndex 
+                }); 
+            }
+        }
+
+        function openSkill() {
+            const btnArea = document.getElementById('btns');
+            document.getElementById('fixed-top-area').style.display = 'block'; 
+            document.getElementById('shortcut-area').style.display = 'none'; 
+            btnArea.innerHTML = ''; btnArea.style.gridTemplateColumns = '1fr';
+
+            const mySkills = myPlayer.skills || ['fireball'];
+            mySkills.forEach(skillId => {
+                const info = SKILL_INFO[skillId];
+                if (info) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn battle-action'; 
+                    btn.style.fontSize = '12px'; btn.style.display = 'flex'; btn.style.justifyContent = 'space-between'; btn.style.alignItems = 'center'; btn.style.padding = '0 15px'; btn.style.minHeight = '45px'; 
+                    let nameColor = "#333";
+                    if (info.cat === 'heal') nameColor = "#27ae60";
+                    if (info.cat === 'buff') nameColor = "#e67e22";
+                    if (skillId === 'void_crush' || skillId === 'big_bang' || skillId === 'entropy_decay') nameColor = "#8e44ad"; 
+
+                    btn.innerHTML = `<div style="font-weight:bold; color:${nameColor};">${info.name}</div><div style="text-align:right; font-size:10px;"><div style="color:#3498db; margin-bottom:2px;">MP-${info.mp}</div><div style="color:#7f8c8d;">${info.desc}</div></div>`;
+
+                    if (myPlayer.mp < info.mp) { btn.disabled = true; btn.style.opacity = 0.5; }
+                    btn.onclick = () => { useSkill(skillId); };
+                    btnArea.appendChild(btn);
+                }
+            });
+        }
+
+        function openBag() {
+            const btnArea = document.getElementById('btns');
+            document.getElementById('fixed-top-area').style.display = 'block'; 
+            document.getElementById('shortcut-area').style.display = 'none'; 
+            btnArea.innerHTML = ''; btnArea.style.gridTemplateColumns = '1fr 1fr';
+            
+            const itemsToShow = ['potion_hp', 'potion_mid', 'potion_high', 'potion_max', 'elixir', 'potion_mp', 'potion_mp_mid', 'potion_mp_high'];
+            itemsToShow.forEach(itemId => {
+                const count = (myPlayer.inventory && myPlayer.inventory[itemId]) || 0;
+                if(count > 0) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn battle-action'; btn.style.fontSize = '10px';
+                    btn.innerText = `${ITEM_NAMES[itemId] || itemId}(${count})`;
+                    btn.onclick = () => { useItem(itemId); };
+                    btnArea.appendChild(btn);
+                }
+            });
+        }
+
+        function resetButtons() {
+            document.getElementById('fixed-top-area').style.display = 'none'; 
+            document.getElementById('shortcut-area').style.display = 'grid'; 
+            const btnArea = document.getElementById('btns');
+            btnArea.style.gridTemplateColumns = '1fr 1fr';
+            btnArea.innerHTML = `<button class="btn battle-action" onclick="act('attack')">攻擊</button><button class="btn battle-action" onclick="openSkill()">魔法</button><button class="btn battle-action" onclick="openBag()">物品</button><button class="btn" onclick="leaveRoom()">逃跑</button>`;
+            if (roomId === 'world_boss') { toggle(false); } else { toggle(!isMyTurn); }
+        }
+
+        // 🟢 [修正] 施放技能 (傳送目標)
+        function useSkill(skillId) {
+            const info = SKILL_INFO[skillId];
+            if (info && myPlayer.mp < info.mp) { showMsg("MP 不足！"); return; }
+            
+            const existingIndex = myShortcuts.indexOf(skillId);
+            if (existingIndex === -1) {
+                myShortcuts.unshift(skillId);
+                if (myShortcuts.length > 4) { myShortcuts.pop(); }
+                localStorage.setItem('rpg_shortcuts', JSON.stringify(myShortcuts));
+                updateShortcutStates(myPlayer);
+            }
+
+            if (roomId === 'world_boss') { 
+                toggle(true); socket.emit('worldBossAction', { type: 'skill', skillId: skillId }); setTimeout(() => toggle(false), 500); 
+            } else { 
+                if(!isMyTurn) return; 
+                toggle(true); 
+                
+                // 🟢 關鍵修正：必須傳送 targetIndex
+                socket.emit('combatAction', { 
+                    roomId, 
+                    type: 'skill', 
+                    skillId: skillId, 
+                    targetIndex: selectedTargetIndex 
+                }); 
+            }
+        }
+
+        function useItem(itemId) {
+            if (roomId === 'world_boss') { showMsg("BOSS 戰無法使用道具！"); resetButtons(); }
+            else { 
+                if(!isMyTurn) return; 
+                toggle(true); 
+                socket.emit('combatAction', { roomId, type: 'item', itemId: itemId }); 
+                resetButtons(); 
+            }
+        }
+
+        // 🟢 [修正] 切換按鈕狀態 (包含快捷鍵)
+        function toggle(disabled) { 
+            // 1. 控制主要按鈕 (攻擊、魔法、物品、逃跑)
+            document.querySelectorAll('.battle-action').forEach(b => { 
+                b.disabled = disabled; 
+                b.style.opacity = disabled ? "0.5" : "1"; 
+            }); 
+
+            // 2. 控制快捷鍵按鈕
+            document.querySelectorAll('.btn-shortcut').forEach(b => {
+                b.disabled = disabled;
+                // 如果已經灰掉了 (因為 MP 不足)，不要把透明度設回 1，保持原樣或設為 disabled 樣式
+                if (disabled) {
+                    b.style.opacity = "0.5";
+                    b.style.cursor = "not-allowed";
+                } else {
+                    // 如果解鎖，檢查 MP 是否足夠 (這部分邏輯可以再優化，目前先簡單恢復)
+                    // 或者我們讓 updateShortcutStates 來負責正確的狀態
+                    // 這裡簡單設回 1，讓 updateShortcutStates 稍後修正
+                    b.style.opacity = "1";
+                    b.style.cursor = "pointer";
+                    
+                    // 再次檢查 MP (確保解鎖後，沒魔的還是灰的)
+                    const mpCost = parseInt(b.getAttribute('data-mp') || 0);
+                    if (myPlayer.mp < mpCost) {
+                        b.disabled = true;
+                        b.style.opacity = "0.5";
+                        b.style.cursor = "not-allowed";
+                    }
+                }
+            });
+        }
+
+        function log(m) { 
+            const box = document.getElementById('log'); const div = document.createElement('div');
+            div.innerHTML = `> ${m}`; box.insertBefore(div, box.firstChild); 
+            if (box.children.length > 20) box.removeChild(box.lastChild);
+        }
+
+        function openConfig() {
+            document.getElementById('config-modal').style.display = 'flex';
+            renderTriggerList();
+            renderRotationList();
+            document.getElementById('low-mp-action').value = autoConfig.lowMp;
+        }
+        function closeConfig() {
+            saveConfig();
+            document.getElementById('config-modal').style.display = 'none';
+        }
+        function saveConfig() {
+            autoConfig.lowMp = document.getElementById('low-mp-action').value;
+            localStorage.setItem('rpg_auto_config', JSON.stringify(autoConfig));
+        }
+        function renderTriggerList() {
+            const div = document.getElementById('trigger-list');
+            div.innerHTML = '';
+            autoConfig.triggers.forEach((t, i) => {
+                div.innerHTML += `
+                    <div class="config-row">
+                        <select onchange="updateTrigger(${i}, 'type', this.value)" class="config-select">
+                            <option value="hp_self" ${t.type=='hp_self'?'selected':''}>HP(自) <</option>
+                            <option value="mp_self" ${t.type=='mp_self'?'selected':''}>MP(自) <</option>
+                            <option value="hp_team" ${t.type=='hp_team'?'selected':''}>HP(隊) <</option>
+                        </select>
+                        <input type="number" class="config-input" value="${t.val}" onchange="updateTrigger(${i}, 'val', this.value)"> %
+                        <span>用</span>
+                        <select onchange="updateTrigger(${i}, 'actionType', this.value)" class="config-select" style="width:60px;">
+                            <option value="item" ${t.actionType=='item'?'selected':''}>物品</option>
+                            <option value="skill" ${t.actionType=='skill'?'selected':''}>技能</option>
+                        </select>
+                        <select class="config-select" onchange="updateTrigger(${i}, 'actionId', this.value)" style="flex:1;">
+                            ${getOptionsHtml(t.actionType, t.actionId)}
+                        </select>
+                        <button class="btn-del" onclick="delTrigger(${i})">X</button>
+                    </div>
+                `;
+            });
+        }
+        function renderRotationList() {
+            const div = document.getElementById('rotation-list');
+            div.innerHTML = '';
+            autoConfig.rotation.forEach((r, i) => {
+                div.innerHTML += `
+                    <div class="config-row">
+                        <span style="color:#aaa; font-weight:bold; margin-right:5px;">${i+1}.</span>
+                        <select onchange="updateRotation(${i}, 'actionType', this.value)" class="config-select" style="width:60px;">
+                            <option value="attack" ${r.actionType=='attack'?'selected':''}>普攻</option>
+                            <option value="skill" ${r.actionType=='skill'?'selected':''}>技能</option>
+                            <option value="item" ${r.actionType=='item'?'selected':''}>物品</option>
+                        </select>
+                        ${r.actionType !== 'attack' ? `
+                        <select class="config-select" onchange="updateRotation(${i}, 'actionId', this.value)" style="flex:1;">
+                            ${getOptionsHtml(r.actionType, r.actionId)}
+                        </select>` : '<span style="flex:1; text-align:center; color:#aaa;">-</span>'}
+                        <input type="number" class="config-input" value="${r.count}" onchange="updateRotation(${i}, 'count', this.value)" min="1"> 回
+                        <button class="btn-del" onclick="delRotation(${i})">X</button>
+                    </div>
+                `;
+            });
+        }
+        function getOptionsHtml(type, currentId) {
+            let html = '';
+            if (type === 'skill') {
+                if(myPlayer.skills) {
+                    myPlayer.skills.forEach(sid => {
+                        const name = SKILL_INFO[sid] ? SKILL_INFO[sid].name : sid;
+                        html += `<option value="${sid}" ${sid===currentId?'selected':''}>${name}</option>`;
+                    });
+                }
+            } else if (type === 'item') {
+                const keys = Object.keys(ITEM_NAMES);
+                keys.forEach(iid => {
+                    html += `<option value="${iid}" ${iid===currentId?'selected':''}>${ITEM_NAMES[iid]}</option>`;
+                });
+            }
+            return html;
+        }
+        function addTrigger() { autoConfig.triggers.push({ type: 'hp_self', val: 50, actionType: 'item', actionId: 'potion_mid' }); renderTriggerList(); }
+        function delTrigger(i) { autoConfig.triggers.splice(i, 1); renderTriggerList(); }
+        function updateTrigger(i, field, val) { autoConfig.triggers[i][field] = val; if (field === 'actionType') renderTriggerList(); }
+        function addRotation() { autoConfig.rotation.push({ actionType: 'attack', actionId: 'normal', count: 1 }); renderRotationList(); }
+        function delRotation(i) { autoConfig.rotation.splice(i, 1); renderRotationList(); }
+        function updateRotation(i, field, val) { autoConfig.rotation[i][field] = val; if (field === 'actionType') renderRotationList(); }
+    </script>
+</body>
+</html>
