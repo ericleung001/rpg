@@ -299,44 +299,40 @@
 </head>
 <body>
     
-    <div id="loading-overlay">
-        <div class="spinner"></div>
-        <div style="font-size:12px; margin-top:10px;">正在讀取玩家資料...</div>
-        <div style="font-size:10px; color:#95a5a6; margin-top:5px;">(請稍候)</div>
-    </div>
+    
 
     <div id="toast-notification"> 訊息提示</div>
     <div id="notice-btn" onclick="openNotice()">📢</div>
 
     <div id="notice-modal">
         <div class="notice-box">
-            <div class="notice-title">Ver 4.0 更新公告</div>
+            <div class="notice-title">Ver 4.1 更新公告</div>
             <div class="notice-content">
-<div style="text-align:center; margin-bottom:10px; font-size:14px; color:#f1c40f; text-shadow: 1px 1px 0 #000;">
-        🚀 Ver 4.0 - 技能覺醒 & 碎片商店
-    </div>
 
-    <b style="color:#3498db;">【⚡ 技能覺醒系統】</b><br>
-    - <b>技能升級</b>：現在可以使用 <span style="color:#f1c40f">✨ 技能碎片</span> 升級你的技能了！
-    - <b>威力提升</b>：每升 1 級，技能傷害/補量顯著提升！(最高 Lv.10)
-    - <b>天神下凡</b>：升級後攻防倍率與持續回合數同步增強！
+<b style="color:#e74c3c;">【🔄 轉生系統 (Rebirth)】</b>
+- <b>開啟條件</b>：等級達到 <span style="color:#f1c40f">Lv.400</span>。
+- <b>轉生效果</b>：全屬性永久提升 <span style="color:#2ecc71">+20%</span> (最高 +10)。
+- <b>榮耀象徵</b>：獲得金色 <span style="color:#f1c40f">名號+1</span>，在聊天、戰鬥與公會中皆可見！
+- <b>⚠️ 硬核模式</b>：轉生後等級重置為 1，<b>清空所有裝備與背包</b>，金幣保留上限 1,000 萬。(技能等級保留)
 
-    <br><br>
-    <b style="color:#9b59b6;">【💎 碎片交換所開張】</b><br>
-    - 新增 <b>10 款專屬飾物</b>，從新手到神話級皆可兌換。
-    - <b>頂級飾物</b>：<span style="color:#e74c3c">👑 無限碎片皇冠</span>、<span style="color:#3498db">🌌 銀河碎片核心</span> 等你來拿！
-    - <b>獲得方式</b>：戰鬥勝利有機率掉落碎片，或透過分解裝備獲得。
+<b style="color:#3498db;">【⚡ 技能覺醒系統】</b>
+- <b>技能升級</b>：現在可以使用 <span style="color:#f1c40f">✨ 技能碎片</span> 升級你的技能了！
+- <b>威力提升</b>：每升 1 級，技能傷害/補量顯著提升！(最高 Lv.10)
+- <b>天神下凡</b>：升級後攻防倍率與持續回合數同步增強！
 
-    <br><br>
-    <b style="color:#e74c3c;">【🔥 神話裝備 & 防爆石】</b><br>
-    - <b>終極裝備</b>：實裝 Lv.500 <span style="color:#f1c40f">奇點·萬象崩壞</span> 系列套裝。
-    - <b>安心強化</b>：新增 <span style="color:#2ecc71">✨ 防爆石</span>，強化失敗不掉級、不破碎，且<b>必定成功</b>！(適用於 +23 以下)
+<b style="color:#9b59b6;">【💎 碎片交換所開張】</b>
+- 新增 <b>10 款專屬飾物</b>，從新手到神話級皆可兌換。
+- <b>頂級飾物</b>：<span style="color:#e74c3c">👑 無限碎片皇冠</span>、<span style="color:#3498db">🌌 銀河碎片核心</span> 等你來拿！
+- <b>獲得方式</b>：戰鬥勝利有機率掉落碎片。
 
-    <br><br>
-    <b style="color:#2ecc71;">【🛠️ 系統優化】</b><br>
-    - <b>背包分類</b>：新增分類按鈕，找裝備更方便。
-    - <b>安全鎖定</b>：碎片兌換的珍貴飾物現在<b>無法被賣給 NPC 或分解</b>，防止手滑。
-    - <b>轉生系統</b>：開放 <b>Lv.580</b> 轉生，全屬性+20%，獲得榮耀稱號！
+<b style="color:#e74c3c;">【🔥 神話裝備 & 防爆石】</b>
+- <b>終極裝備</b>：實裝 Lv.500 <span style="color:#f1c40f">奇點·萬象崩壞</span> 系列套裝。
+- <b>安心強化</b>：新增 <span style="color:#2ecc71">✨ 防爆石</span>，強化失敗不掉級、不破碎，且<b>必定成功</b>！(適用於 +23 以下)
+
+<b style="color:#2ecc71;">【🛠️ 系統優化】</b>
+- <b>背包分類</b>：新增分類按鈕，找裝備更方便。
+- <b>安全鎖定</b>：碎片兌換的珍貴飾物現在<b>無法被賣給 NPC 或分解</b>，防止手滑。
+- <b>轉生系統</b>：開放 <b>Lv.580</b> 轉生，全屬性+20%，獲得榮耀稱號！
 
             </div>
             <button class="close-notice-btn" onclick="closeNotice()">我知道了，立即體驗！</button>
@@ -545,20 +541,12 @@
             return escapeHtml(name);
         }
 
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const overlay = document.getElementById('loading-overlay');
-                overlay.style.opacity = '0';
-                setTimeout(() => { 
-                    overlay.style.display = 'none'; 
-                }, 500);
-            }, 2000); 
-        });
+        
 
         const socket = io('https://mmo.ttctv-105.cc', { 
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         
         let myLevel = 1;
         let myName = ""; 
@@ -1099,7 +1087,7 @@
 
         socket.on('roomJoined', (data) => { 
             const roomId = data.roomId || data; 
-            window.location.href = `battle.html?room=${roomId}`; 
+            window.location.href = `battle_v22.html?room=${roomId}`; 
         });
         
         socket.on('errorMessage', (msg) => { 
@@ -1136,6 +1124,8 @@
 
         // 🟢 [核心修改] 公頻聊天渲染
         function appendChat(name, msg, rebirth) {
+if (name === '系統') return;
+            /* --- 以下舊代碼可以刪除或註解掉 ---
             if (name === '系統') {
                 // 系統訊息
                 const history = document.getElementById('chat-history');
@@ -1145,6 +1135,7 @@
                 history.scrollTop = history.scrollHeight;
                 return;
             }
+            ----------------------------------- */
 
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
