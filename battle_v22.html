@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中v3</title>
+    <title>戰鬥中_v4</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -207,7 +207,7 @@
     </div>
 
     <div id="game-container">
-        <div id="countdown-timer">⚠️ 滅團倒數: 09:00</div>
+        <div id="countdown-timer">⏱️ 戰鬥時間: 00:00</div>
 
         <div id="lobby-overlay">
             <div style="color:#f1c40f; margin-bottom:20px; font-size:18px;">等待隊友...</div>
@@ -456,7 +456,7 @@
         const roomId = params.get('room');
         let myPlayer = { mp: 0, hp: 0, maxMp: 100, maxHp: 100, skills: ['fireball'] };
         let battleTimer = null;
-        let timeLeft = 530;
+        let elapsedSeconds = 0;
 
         let myShortcuts = []; 
         try {
@@ -851,23 +851,16 @@
                 document.getElementById('countdown-timer').style.display = 'block'; 
                 
                 if (!battleTimer) {
-                    timeLeft = 530; 
-                    if(info.battleStartTime) {
-                        const elapsed = Math.floor((Date.now() - info.battleStartTime) / 1000);
-                        timeLeft = 530 - elapsed;
+                    elapsedSeconds = 0;
+                    if (info.battleStartTime) {
+                        elapsedSeconds = Math.floor((Date.now() - info.battleStartTime) / 1000);
                     }
-                    if(timeLeft < 0) timeLeft = 0;
                     const timerEl = document.getElementById('countdown-timer');
                     battleTimer = setInterval(() => {
-                        timeLeft--;
-                        if (timeLeft <= 0) {
-                            timeLeft = 0; clearInterval(battleTimer);
-                            timerEl.innerText = "⚠️ 時間到！";
-                        } else {
-                            const mm = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-                            const ss = (timeLeft % 60).toString().padStart(2, '0');
-                            timerEl.innerText = `⚠️ 滅團倒數: ${mm}:${ss}`;
-                        }
+                        elapsedSeconds++;
+                        const mm = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+                        const ss = (elapsedSeconds % 60).toString().padStart(2, '0');
+                        timerEl.innerText = `⏱️ 戰鬥時間: ${mm}:${ss}`;
                     }, 1000);
                 }
             } else { 
@@ -908,18 +901,28 @@
         });
 
         // 🟢 [修正] 收到戰鬥開始信號時，還原介面
-        socket.on('battleStarted', () => { 
+        socket.on('battleStarted', (data) => { 
             document.getElementById('lobby-overlay').style.display = 'none'; 
-            
-            // 🔴【關鍵修正】加入這一行！
-            // 這會把「準備中」按鈕移除，變回「攻擊/魔法/物品/逃跑」
             resetButtons(); 
 
-            // 還原上方狀態條
             const bar = document.getElementById('turn-bar');
             bar.innerText = "戰鬥開始！";
             bar.style.background = "#333";
             bar.style.color = "white";
+
+            // 啟動正數計時器
+            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+            elapsedSeconds = 0;
+            const startTime = (data && data.startTime) ? data.startTime : Date.now();
+            elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+            const timerEl = document.getElementById('countdown-timer');
+            timerEl.style.display = 'block';
+            battleTimer = setInterval(() => {
+                elapsedSeconds++;
+                const mm = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+                const ss = (elapsedSeconds % 60).toString().padStart(2, '0');
+                timerEl.innerText = `⏱️ 戰鬥時間: ${mm}:${ss}`;
+            }, 1000);
 
             log("⚔️ 戰鬥開始！"); 
             
@@ -1216,8 +1219,10 @@
 
         // 再戰一場：伺服器重置房間後，前端回到等待大廳畫面
         socket.on('battleReset', () => {
-            // 清除倒計時
+            // 清除計時器並重置
             if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+            elapsedSeconds = 0;
+            document.getElementById('countdown-timer').innerText = '⏱️ 戰鬥時間: 00:00';
             isMyTurn = false;
             if (isAuto) toggleAuto();
 
