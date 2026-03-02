@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中_v4</title>
+    <title>戰鬥中_v5</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -802,15 +802,15 @@
             div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${safeName}]:</span> ${msg}`;
             history.appendChild(div); history.scrollTop = history.scrollHeight;
         }
-        socket.on('chatHistory', (history) => { 
-            document.getElementById('chat-history').innerHTML = ''; 
-            history.forEach(data => appendChat(data.name, data.msg)); 
+        socket.on('chatHistory', () => { 
+            // 戰鬥頁面不顯示全服歷史記錄，只顯示房間內對話
+            document.getElementById('chat-history').innerHTML = '';
         });
         socket.on('chatMessage', (data) => { appendChat(data.name, data.msg); });
         
         function sendChat() { 
             const input = document.getElementById('chat-input'); 
-            if(input.value) { socket.emit('sendChat', input.value); input.value=''; } 
+            if(input.value) { socket.emit('sendChat', { msg: input.value, roomId: roomId }); input.value=''; } 
         }
         document.getElementById('chat-send').onclick = sendChat;
         document.getElementById('chat-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChat(); });
