@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中3</title>
+    <title>戰鬥中_v2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -1213,6 +1213,32 @@
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
         socket.on('battleLog', (msg) => log(msg));
         socket.on('roomLeft', () => { showMsg("你離開了房間"); setTimeout(() => { window.location.href = 'hub.html'; }, 1000); });
+
+        // 再戰一場：伺服器重置房間後，前端回到等待大廳畫面
+        socket.on('battleReset', () => {
+            // 清除倒計時
+            if (battleTimer) { clearInterval(battleTimer); battleTimer = null; }
+            isMyTurn = false;
+            if (isAuto) toggleAuto();
+
+            // 還原按鈕區域
+            resetButtons();
+
+            // 顯示等待大廳 overlay
+            document.getElementById('lobby-overlay').style.display = 'flex';
+            document.getElementById('fixed-top-area').style.display = '';
+            document.getElementById('shortcut-area').style.display = '';
+            document.getElementById('countdown-timer').style.display = 'none';
+
+            // 還原 turn bar
+            const bar = document.getElementById('turn-bar');
+            bar.innerText = "等待開始...";
+            bar.style.background = "#333";
+            bar.style.color = "white";
+
+            log("<span style='color:#2ecc71'>⚔️ 房間已重置，等待房主開始新一場！</span>");
+            showMsg("房間已重置！");
+        });
 
         function requestStart() { socket.emit('startBattle', roomId); }
         
