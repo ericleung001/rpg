@@ -240,31 +240,44 @@
             'lucky_bag', 'enhance_stone', 'safe_stone', 'skill_shard'
         ];
 
-        // 耐久度分級（與 server 同步）
-        const DUR_TIERS = [
-            { maxStat: 200,     repairPerPoint: 0.1  },
-            { maxStat: 2000,    repairPerPoint: 0.3  },
-            { maxStat: 10000,   repairPerPoint: 1    },
-            { maxStat: 50000,   repairPerPoint: 3    },
-            { maxStat: 200000,  repairPerPoint: 10   },
-            { maxStat: Infinity,repairPerPoint: 30   },
-        ];
-        const ITEM_MAIN_STAT = {
-            // 從 ITEM_DB 計算，用於判斷分級 (簡化版，前端只需計算維修費顯示)
+        // 裝備等級對照（與 server 同步）
+        const ITEM_LEVEL_MAP_CLIENT = {
+            'wood_sword':10,'copper_dagger':5,'steel_blade':8,'oak_bow':10,'iron_sword':15,
+            'maple_staff':20,'shark_tooth':25,'silver_blade':30,'hero_sword':35,'assassin_dag':40,
+            'spike_club':45,'poison_dag':50,'emerald_staff':55,'flame_staff':60,'gold_axe':70,
+            'obsidian_blade':75,'dragon_spear':80,'frost_bow':85,'mithril_saber':90,
+            'void_reaper':100,'void_reaper_dark':110,'god_slayer':130,'chaos_staff':150,
+            'genesis_weapon':200,'void_blade':230,'galaxy_saber':260,'entropy_sword':300,
+            'infinity_blade':450,'singularity_weapon':500,
+            'cloth_armor':1,'plate_mail':5,'leather_armor':10,'hunt_vest':15,'dragon_mail':20,
+            'chain_mail':25,'iron_armor':35,'magma_plate':45,'ice_robe':55,'yeti_cloak':65,
+            'demon_armor':90,'angel_armor':120,'genesis_armor':200,'void_armor':230,
+            'nebula_plate':260,'entropy_god_armor':300,'event_horizon':450,'singularity_armor':500,
+            'bone_ring':5,'snake_boots':8,'ring_life':10,'ring_magic':12,'fish_ring':15,
+            'ring_str':20,'bracelet_def':22,'necklace_hp':25,'necklace_mp':28,'pearl_necklace':30,
+            'amulet_soul':40,'ring_lord':60,'crown_chaos':100,'ring_galaxy':150,
+            'dimension_ring':280,'mobius_ring':450,'singularity_acc':500,
+            'shard_blade_novice':10,'shard_armor_novice':10,'shard_ring_novice':10,
+            'shard_neck_brave':20,'shard_charm_wind':80,'shard_ring_vampire':100,
+            'shard_earring_holy':120,'shard_belt_titan':150,'shard_axe_crystal':150,'shard_armor_crystal':150,
+            'shard_pendant_dragon':200,'shard_ring_void':250,'shard_scythe_void':350,'shard_robe_void':350,
+            'shard_spear_galaxy':480,'shard_plate_galaxy':480,'shard_core_galaxy':480,
+            'shard_wep_dimension':550,'shard_armor_dimension':550,
+            'shard_wep_origin':600,'shard_armor_origin':600,'shard_crown_infinity':600,
         };
+        const REPAIR_TIERS_CLIENT = [
+            { maxItemLv: 30,   repairPerPoint: 0.05 },
+            { maxItemLv: 80,   repairPerPoint: 0.1  },
+            { maxItemLv: 150,  repairPerPoint: 0.3  },
+            { maxItemLv: 250,  repairPerPoint: 1    },
+            { maxItemLv: 400,  repairPerPoint: 3    },
+            { maxItemLv: Infinity, repairPerPoint: 8 },
+        ];
         function getRepairCostClient(key, curDur) {
-            const item = ITEM_DB[key];
-            if (!item) return 1;
-            // 用 desc 估算主屬性（前端不需精確，server 才是權威）
-            // 用 cost 作為強度代理
-            const cost = item.cost || 0;
-            let tier = DUR_TIERS[0];
-            if (cost >= 50000000) tier = DUR_TIERS[5];
-            else if (cost >= 1000000) tier = DUR_TIERS[4];
-            else if (cost >= 10000) tier = DUR_TIERS[3];
-            else if (cost >= 1000) tier = DUR_TIERS[2];
-            else if (cost >= 100) tier = DUR_TIERS[1];
             const missing = MAX_DURABILITY - Math.max(0, Math.min(MAX_DURABILITY, curDur));
+            if (missing <= 0) return 0;
+            const itemLv = ITEM_LEVEL_MAP_CLIENT[key] || 1;
+            const tier = REPAIR_TIERS_CLIENT.find(t => itemLv <= t.maxItemLv) || REPAIR_TIERS_CLIENT[REPAIR_TIERS_CLIENT.length-1];
             return Math.max(1, Math.ceil(missing * tier.repairPerPoint));
         }
         function getDurColor(dur) {
@@ -619,7 +632,7 @@
                 let repairBtn = '';
                 if (isEquipmentType) {
                     const curDur = (myDurability[key] !== undefined) ? myDurability[key] : MAX_DURABILITY;
-                    const durPct = Math.round((curDur / MAX_DURABILITY) * 100);
+                    const durPct = Math.min(100, Math.round((curDur / MAX_DURABILITY) * 100));
                     const durColor = getDurColor(curDur);
                     durabilityHtml = `
                         <div style="margin:6px 0 4px; font-size:9px; color:#555;">
