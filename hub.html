@@ -1125,6 +1125,8 @@
         });
 
         socket.on('chatMessage', (data) => {
+            // 房間內對話不在公頻顯示
+            if (data.isRoomChat) return;
             if (data.name === '系統' && data.msg.includes('強化') && (data.msg.includes('成功') || data.msg.includes('失敗'))) {
                 return;
             }
