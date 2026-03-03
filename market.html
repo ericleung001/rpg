@@ -215,18 +215,27 @@
                     }
                 }
 
+                const shardCost = item.cost * 100;
                 div.innerHTML = `
                     <div class="item-info">
                         <span class="item-name">${item.name} ${stockHtml}</span>
                         <span class="item-desc">${item.desc}</span>
                     </div>
                     <div class="buy-section">
-                        <div class="price">${item.cost.toLocaleString()} G</div>
-                        <button class="btn ${btnDisabled ? 'sold-out' : ''}" 
-                                onclick="buy('${item.id}')" 
-                                ${btnDisabled ? 'disabled' : ''}>
-                            ${btnText}
-                        </button>
+                        <div class="price">${item.cost.toLocaleString()} G &nbsp;<span style="color:#9b59b6;font-size:10px;">| 💎 ${shardCost.toLocaleString()} 碎片</span></div>
+                        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+                            <button class="btn ${btnDisabled ? 'sold-out' : ''}" 
+                                    onclick="buy('${item.id}', false)" 
+                                    ${btnDisabled ? 'disabled' : ''}>
+                                💰 ${btnText}
+                            </button>
+                            <button class="btn ${btnDisabled ? 'sold-out' : ''}" 
+                                    style="background:#8e44ad;"
+                                    onclick="buy('${item.id}', true)" 
+                                    ${btnDisabled ? 'disabled' : ''}>
+                                💎 碎片
+                            </button>
+                        </div>
                     </div>
                 `;
                 list.appendChild(div);
@@ -240,7 +249,8 @@
             setTimeout(() => { toast.style.top = "-100px"; }, 3000);
         }
 
-        function buy(id) { 
+        function buy(id, useShard) { 
+            useShard = useShard || false;
             if (id === 'enhance_stone') {
                 const input = prompt("請輸入購買數量 (1-100):\n(伺服器限制：約 0.6秒/顆)", "1");
                 if (input === null) return; 
@@ -270,7 +280,7 @@
                     overlayText.innerHTML = `正在購買 (${sent}/${count})...<br><span style="color:#e74c3c; font-weight:bold; font-size:12px;">⚠️ 請勿關閉視窗或上一頁！</span>`;
                 };
 
-                socket.emit('playerBuy', id);
+                socket.emit('playerBuy', { itemId: id, useShardPay: useShard });
                 sent++;
                 updateStatus();
 
@@ -289,7 +299,7 @@
                             return;
                         }
 
-                        socket.emit('playerBuy', id);
+                        socket.emit('playerBuy', { itemId: id, useShardPay: useShard });
                         sent++;
                         updateStatus();
                         
@@ -304,7 +314,7 @@
                 if(!confirm("🧧 確定要花費 10億 G 購買福袋嗎？\n(購買後請至背包使用)")) return;
             }
 
-            socket.emit('playerBuy', id); 
+            socket.emit('playerBuy', { itemId: id, useShardPay: useShard }); 
         }
 
         function finishBulkBuy(msg) {
