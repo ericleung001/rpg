@@ -258,6 +258,7 @@
             history.forEach(data => appendWorldChat(data.name, data.msg, data.rebirth));
         });
         socket.on('chatMessage', (data) => {
+            if (data.isRoomChat) return;
             if (data.name === '系統' && data.msg.includes('強化')) return; 
             appendWorldChat(data.name, data.msg, data.rebirth);
         });
