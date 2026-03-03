@@ -209,34 +209,33 @@
 
         let myInventory = {};
         let myEnhancements = {}; 
+        let myEquipment = { weapon: null, armor: null, acc: null };
         let currentFilter = 'all'; 
         
         let currentItemId = null;
         let currentNpcPrice = 0;
         let currentNpcMax = 0;
 
-        // 🟢 1. 禁止交易/分解列表 (加入碎片與飾物)
+        // 禁止交易（賣店/市集）的物品
         const PROHIBITED_ITEMS = [
-            'lucky_bag',
+            'lucky_bag', 'enhance_stone', 'safe_stone', 'skill_shard',
             'genesis_weapon', 'genesis_armor', 'void_reaper_dark', 'ring_galaxy', 
-            'void_blade', 'void_armor', 
-            'galaxy_saber', 'nebula_plate', 
-            'dimension_ring',
-            'entropy_sword', 'entropy_god_armor',
-            'enhance_stone',
-
-            
-            // 🟢 新增：技能碎片與兌換飾物 (防止誤賣/誤分解)
-            'skill_shard',
+            'void_blade', 'void_armor', 'galaxy_saber', 'nebula_plate', 
+            'dimension_ring', 'entropy_sword', 'entropy_god_armor',
+            'infinity_blade', 'event_horizon', 'mobius_ring',
+            'singularity_weapon', 'singularity_armor', 'singularity_acc',
             'shard_ring_novice', 'shard_neck_brave', 'shard_charm_wind', 
             'shard_ring_vampire', 'shard_earring_holy', 'shard_belt_titan', 
             'shard_pendant_dragon', 'shard_ring_void', 'shard_core_galaxy', 'shard_crown_infinity',
-            // 加入這 6 個 ID：
             'shard_armor_novice', 'shard_armor_crystal', 'shard_robe_void', 
             'shard_plate_galaxy', 'shard_armor_dimension', 'shard_armor_origin',
-            // 加入這 6 個 ID：
             'shard_blade_novice', 'shard_axe_crystal', 'shard_scythe_void', 
             'shard_spear_galaxy', 'shard_wep_dimension', 'shard_wep_origin'
+        ];
+
+        // 禁止分解的物品（消耗品、材料、特殊道具）
+        const PROHIBITED_DISMANTLE = [
+            'lucky_bag', 'enhance_stone', 'safe_stone', 'skill_shard'
         ];
 
         const NPC_SHOP_ALLOW_LIST = [
@@ -447,7 +446,8 @@
         socket.on('playerStatsUpdate', (p) => {
             document.getElementById('my-gold').innerText = p.gold;
             myInventory = p.inventory;
-            myEnhancements = p.enhancements || {}; 
+            myEnhancements = p.enhancements || {};
+            myEquipment = p.equipment || { weapon: null, armor: null, acc: null };
             renderBag(); 
         });
 
@@ -543,16 +543,17 @@
                 let npcPrice = Math.floor((item.cost || 10) * 0.2);
                 if(npcPrice < 1) npcPrice = 1;
 
-                // 判斷是否顯示分解 (碎片飾物不可分解)
-                let showDismantle = false;
+                // 計算裝備中數量 & 可用數量
+                const equippedCount = Object.values(myEquipment).filter(e => e === key).length;
+                const totalCount = myInventory[key] || 0;
+                const availableCount = totalCount - equippedCount;
+                const isEquipped = equippedCount > 0;
+
+                // 判斷是否可分解（裝備類，非消耗品禁分解，有RECIPE才能分解—server會判斷）
                 const kid = key.toLowerCase();
-                const isEquipment = kid.includes('sword') || kid.includes('bow') || kid.includes('staff') || kid.includes('dagger') || kid.includes('axe') || kid.includes('blade') || kid.includes('saber') || kid.includes('slayer') || kid.includes('reaper') || kid.includes('armor') || kid.includes('mail') || kid.includes('plate') || kid.includes('robe') || kid.includes('cloak') || kid.includes('ring') || kid.includes('necklace') || kid.includes('amulet') || kid.includes('crown') || kid.includes('weapon') || kid.includes('_acc');
+                const isEquipmentType = kid.includes('sword') || kid.includes('bow') || kid.includes('staff') || kid.includes('dagger') || kid.includes('axe') || kid.includes('blade') || kid.includes('saber') || kid.includes('slayer') || kid.includes('reaper') || kid.includes('armor') || kid.includes('mail') || kid.includes('plate') || kid.includes('robe') || kid.includes('cloak') || kid.includes('ring') || kid.includes('necklace') || kid.includes('amulet') || kid.includes('crown') || kid.includes('weapon') || kid.includes('_acc') || kid.includes('vest') || kid.includes('boots') || kid.includes('belt') || kid.includes('bracelet') || kid.includes('earring') || kid.includes('charm') || kid.includes('pendant') || kid.includes('spear') || kid.includes('scythe') || kid.includes('club') || kid.includes('dag') || kid.includes('tooth');
                 const isShopItem = NPC_SHOP_ALLOW_LIST.includes(key);
-                
-                // 🟢 檢查是否為禁分解物品
-                if (isEquipment && !isShopItem && !PROHIBITED_ITEMS.includes(key)) {
-                    showDismantle = true;
-                }
+                const showDismantle = isEquipmentType && !isShopItem && !PROHIBITED_DISMANTLE.includes(key) && availableCount > 0;
 
                 let useBtn = '';
                 if (key === 'lucky_bag') { 
@@ -560,34 +561,28 @@
                 }
 
                 let sellBtns = '';
-                if (!PROHIBITED_ITEMS.includes(key)) {
-                    if (key.startsWith('card_')) {
-                        sellBtns = ''; 
-                    } else {
-                        sellBtns = `
-                            <button class="btn btn-npc" onclick="openNPCModal('${key}', '${item.name}', ${npcPrice})">
-                                賣店 (${npcPrice}G)
-                            </button>
-                            <button class="btn btn-market" onclick="openMarketModal('${key}', '${item.name}', ${myInventory[key]})">
-                                上架市集
-                            </button>
-                        `;
-                    }
+                if (!PROHIBITED_ITEMS.includes(key) && !key.startsWith('card_') && availableCount > 0) {
+                    sellBtns = `
+                        <button class="btn btn-npc" onclick="openNPCModal('${key}', '${item.name}', ${npcPrice})">
+                            賣店 (${npcPrice}G)
+                        </button>
+                        <button class="btn btn-market" onclick="openMarketModal('${key}', '${item.name}', ${availableCount})">
+                            上架市集
+                        </button>
+                    `;
                 }
 
                 const lv = myEnhancements[key] || 0;
                 let displayName = item.name;
-                
-                if (lv > 0) {
-                    displayName += `<span class="plus-tag">+${lv}</span>`;
-                }
+                if (lv > 0) displayName += `<span class="plus-tag">+${lv}</span>`;
+                if (isEquipped) displayName += `<span style="color:#27ae60; font-size:10px; margin-left:5px;">[裝備中]</span>`;
 
                 const div = document.createElement('div');
                 div.className = 'item-card';
                 div.innerHTML = `
                     <div class="item-header">
                         <span class="item-name">${displayName}</span>
-                        <span class="item-count">x${myInventory[key]}</span>
+                        <span class="item-count">x${totalCount}${equippedCount > 0 ? ` <span style="color:#27ae60;font-size:10px;">(可用:${availableCount})</span>` : ''}</span>
                     </div>
                     <div class="item-desc">${item.desc}</div>
                     
