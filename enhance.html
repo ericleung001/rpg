@@ -424,7 +424,7 @@
             box.innerHTML = ''; 
             history.forEach(data => appendChat(data.name, data.msg));
         });
-        socket.on('chatMessage', (data) => { appendChat(data.name, data.msg); });
+        socket.on('chatMessage', (data) => { if (data.isRoomChat) return; appendChat(data.name, data.msg); });
         
         function appendChat(name, msg) {
             const history = document.getElementById('chat-history');
