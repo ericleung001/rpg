@@ -210,7 +210,9 @@
         let myInventory = {};
         let myEnhancements = {}; 
         let myEquipment = { weapon: null, armor: null, acc: null };
+        let myDurability = {};
         let currentFilter = 'all'; 
+        const MAX_DURABILITY = 100;
         
         let currentItemId = null;
         let currentNpcPrice = 0;
@@ -237,6 +239,40 @@
         const PROHIBITED_DISMANTLE = [
             'lucky_bag', 'enhance_stone', 'safe_stone', 'skill_shard'
         ];
+
+        // 耐久度分級（與 server 同步）
+        const DUR_TIERS = [
+            { maxStat: 200,     repairPerPoint: 0.1  },
+            { maxStat: 2000,    repairPerPoint: 0.3  },
+            { maxStat: 10000,   repairPerPoint: 1    },
+            { maxStat: 50000,   repairPerPoint: 3    },
+            { maxStat: 200000,  repairPerPoint: 10   },
+            { maxStat: Infinity,repairPerPoint: 30   },
+        ];
+        const ITEM_MAIN_STAT = {
+            // 從 ITEM_DB 計算，用於判斷分級 (簡化版，前端只需計算維修費顯示)
+        };
+        function getRepairCostClient(key, curDur) {
+            const item = ITEM_DB[key];
+            if (!item) return 1;
+            // 用 desc 估算主屬性（前端不需精確，server 才是權威）
+            // 用 cost 作為強度代理
+            const cost = item.cost || 0;
+            let tier = DUR_TIERS[0];
+            if (cost >= 50000000) tier = DUR_TIERS[5];
+            else if (cost >= 1000000) tier = DUR_TIERS[4];
+            else if (cost >= 10000) tier = DUR_TIERS[3];
+            else if (cost >= 1000) tier = DUR_TIERS[2];
+            else if (cost >= 100) tier = DUR_TIERS[1];
+            const missing = MAX_DURABILITY - Math.max(0, Math.min(MAX_DURABILITY, curDur));
+            return Math.max(1, Math.ceil(missing * tier.repairPerPoint));
+        }
+        function getDurColor(dur) {
+            if (dur >= 80) return '#27ae60';
+            if (dur >= 50) return '#f39c12';
+            if (dur >= 20) return '#e67e22';
+            return '#e74c3c';
+        }
 
         const NPC_SHOP_ALLOW_LIST = [
             'potion_hp', 'potion_mid', 'potion_high', 'potion_max', 'elixir',
@@ -448,6 +484,7 @@
             myInventory = p.inventory;
             myEnhancements = p.enhancements || {};
             myEquipment = p.equipment || { weapon: null, armor: null, acc: null };
+            myDurability = p.durability || {};
             renderBag(); 
         });
 
@@ -577,6 +614,26 @@
                 if (lv > 0) displayName += `<span class="plus-tag">+${lv}</span>`;
                 if (isEquipped) displayName += `<span style="color:#27ae60; font-size:10px; margin-left:5px;">[裝備中]</span>`;
 
+                // 耐久度顯示（只對裝備類顯示）
+                let durabilityHtml = '';
+                let repairBtn = '';
+                if (isEquipmentType) {
+                    const curDur = (myDurability[key] !== undefined) ? myDurability[key] : MAX_DURABILITY;
+                    const durPct = Math.round((curDur / MAX_DURABILITY) * 100);
+                    const durColor = getDurColor(curDur);
+                    durabilityHtml = `
+                        <div style="margin:6px 0 4px; font-size:9px; color:#555;">
+                            耐久度：<span style="color:${durColor};font-weight:bold;">${curDur}/${MAX_DURABILITY}</span>
+                            <div style="background:#ccc;border-radius:4px;height:6px;margin-top:3px;">
+                                <div style="background:${durColor};width:${durPct}%;height:6px;border-radius:4px;transition:width 0.3s;"></div>
+                            </div>
+                        </div>`;
+                    if (curDur < MAX_DURABILITY) {
+                        const repCost = getRepairCostClient(key, curDur);
+                        repairBtn = `<button class="btn" style="background:#16a085;" onclick="confirmRepair('${key}', '${item.name}', ${repCost})">🔧 維修 (${repCost}碎片)</button>`;
+                    }
+                }
+
                 const div = document.createElement('div');
                 div.className = 'item-card';
                 div.innerHTML = `
@@ -585,9 +642,10 @@
                         <span class="item-count">x${totalCount}${equippedCount > 0 ? ` <span style="color:#27ae60;font-size:10px;">(可用:${availableCount})</span>` : ''}</span>
                     </div>
                     <div class="item-desc">${item.desc}</div>
-                    
+                    ${durabilityHtml}
                     <div class="action-btns">
                         ${useBtn}
+                        ${repairBtn}
                         ${sellBtns}
                         ${showDismantle ? `<button class="btn btn-dismantle" onclick="confirmDismantle('${key}', '${item.name}')">分解</button>` : ''}
                     </div>
@@ -603,8 +661,19 @@
         }
 
         function confirmDismantle(id, name) {
-            if (confirm(`⚠️ 確定要分解【${name}】嗎？\n\n1. 裝備將會消失。\n2. 僅退還 50% 製作材料。`)) {
+            if (confirm(`⚠️ 確定要分解【${name}】嗎？\n\n1. 裝備將會消失。\n2. 僅退還 50% 製作材料 / 碎片。`)) {
                 socket.emit('dismantleItem', id);
+            }
+        }
+
+        function confirmRepair(id, name, cost) {
+            const owned = myInventory['skill_shard'] || 0;
+            if (owned < cost) {
+                showMsg(`❌ 碎片不足！需要 ${cost} 塊，你只有 ${owned} 塊。`);
+                return;
+            }
+            if (confirm(`🔧 維修【${name}】\n\n需要消耗 ${cost} 塊技能碎片\n你目前有 ${owned} 塊\n\n確定維修嗎？`)) {
+                socket.emit('repairItem', id);
             }
         }
 
