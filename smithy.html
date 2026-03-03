@@ -235,7 +235,9 @@
                 `;
             });
 
-            const goldEnough = myData.gold >= recipe.goldCost;
+            const useShardSmith = document.getElementById('smith-pay-shard') && document.getElementById('smith-pay-shard').checked;
+            const shardCostSmith = Math.ceil(recipe.goldCost * 100);
+            const goldEnough = useShardSmith ? ((myData.inventory['skill_shard']||0) >= shardCostSmith) : (myData.gold >= recipe.goldCost);
             if(!goldEnough) canCraft = false;
 
             panel.innerHTML = `
@@ -248,8 +250,11 @@
                 
                 <div class="mat-row" style="margin-top:15px; border-top:2px solid #555; padding-top:10px;">
                     <span>費用</span>
-                    <span class="${goldEnough ? 'ok' : 'no'}">${recipe.goldCost} G</span>
+                    <span class="${goldEnough ? 'ok' : 'no'}">${recipe.goldCost} G &nbsp;|&nbsp; 💎 ${Math.ceil(recipe.goldCost*100).toLocaleString()} 碎片</span>
                 </div>
+                <label style="font-size:11px; color:#9b59b6; cursor:pointer; margin:8px 0; display:block;">
+                    <input type="checkbox" id="smith-pay-shard" style="margin-right:4px;" onchange="selectRecipe(currentRecipeId)">💎 用碎片付款
+                </label>
 
                 <button class="btn" ${canCraft ? '' : 'disabled'} onclick="doCraft('${id}')">開始鍛造</button>
             `;
@@ -263,7 +268,10 @@
                 toast.style.top = "-100px"; 
             }, 3000);
         }
-        function doCraft(id) { socket.emit('craftItem', id); }
+        function doCraft(id) {
+            const useShard = document.getElementById('smith-pay-shard') && document.getElementById('smith-pay-shard').checked;
+            socket.emit('craftItem', { itemId: id, useShardPay: useShard });
+        }
     </script>
 </body>
 </html>
