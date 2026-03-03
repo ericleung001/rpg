@@ -526,7 +526,8 @@
             let rateString = displayRate < 0.01 ? displayRate.toFixed(4) : (displayRate < 1 ? displayRate.toFixed(2) : Math.floor(displayRate));
             
             document.getElementById('rate-txt').innerText = `${rateString}%`;
-            document.getElementById('cost-txt').innerText = config.cost.toLocaleString() + " G";
+            const shardEquiv = Math.ceil(config.cost * 100);
+            document.getElementById('cost-txt').innerText = config.cost.toLocaleString() + " G  |  💎 " + shardEquiv.toLocaleString() + " 碎片";
             
             const riskEl = document.getElementById('risk-txt');
             riskEl.className = "";
@@ -623,7 +624,11 @@
             const safeStones = myData.inventory['safe_stone'] || 0;
             const useSafe = document.getElementById('use-safe-stone').checked;
 
-            if (myData.gold < config.cost) { alert("金幣不足！"); return false; }
+            const useShards = document.getElementById('pay-with-shard').checked;
+            if (useShards) {
+                const shardNeed = Math.ceil(config.cost * 100);
+                if ((myData.inventory['skill_shard'] || 0) < shardNeed) { alert(`碎片不足！需要 ${shardNeed} 塊技能碎片`); return false; }
+            } else if (myData.gold < config.cost) { alert("金幣不足！"); return false; }
             
             if (useSafe) {
                 if (safeStones < 1) { alert("防爆石不足！"); return false; }
@@ -671,7 +676,8 @@
             }
             // 🟢 傳送包含防爆石狀態的物件
             const useSafe = document.getElementById('use-safe-stone').checked;
-            socket.emit('enhanceItem', { slot: selectedEnhanceSlot, useSafeStone: useSafe });
+            const useShardsPay = document.getElementById('pay-with-shard').checked;
+            socket.emit('enhanceItem', { slot: selectedEnhanceSlot, useSafeStone: useSafe, useShardPay: useShardsPay });
         }
 
         function showMsg(text) {
