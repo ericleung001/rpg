@@ -282,6 +282,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         });
 
         socket.on('chatMessage', (data) => {
+            if (data.isRoomChat) return;
             appendChat(data.name, data.msg);
         });
 
