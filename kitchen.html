@@ -97,6 +97,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         socket.on('playerStatsUpdate', (p) => { 
             myInventory = p.inventory; 
             myGold = p.gold;
+            myInventory = p.inventory || {};
             document.getElementById('my-gold').innerText = myGold;
             renderRecipes(); // 資料更新時重繪介面
         });
@@ -144,14 +145,20 @@ const socket = io('https://mmo.ttctv-105.cc', {
                     `;
                 });
 
-                // 檢查金錢
-                if (myGold < r.goldCost) canCook = false;
-                const goldClass = (myGold >= r.goldCost) ? 'mat-ok' : 'mat-no';
+                // 檢查金錢（同時支援碎片）
+                const shardCostKitchen = Math.ceil(r.goldCost * 100);
+                const myShards = (myInventory && myInventory['skill_shard']) || 0;
+                const goldOk = myGold >= r.goldCost;
+                const shardOk = myShards >= shardCostKitchen;
+                if (!goldOk && !shardOk) canCook = false;
+                const goldClass = goldOk ? 'mat-ok' : 'mat-no';
+                const shardClass = shardOk ? 'mat-ok' : 'mat-no';
 
-                // 🟢 設定按鈕狀態
+                // 設定按鈕狀態
                 let btnHtml = '';
                 if (canCook) {
-                    btnHtml = `<button class="btn-cook btn-ready" onclick="cook('${r.itemId}')">🍳 可以烹飪</button>`;
+                    btnHtml = `<button class="btn-cook btn-ready" onclick="cook('${r.itemId}', false)">💰 金幣烹飪</button>
+                               ${shardOk ? `<button class="btn-cook btn-ready" style="background:#8e44ad;" onclick="cook('${r.itemId}', true)">💎 碎片烹飪</button>` : ''}`;
                 } else {
                     btnHtml = `<button class="btn-cook btn-disabled" disabled>❌ 材料/金錢不足</button>`;
                 }
@@ -164,6 +171,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                         <div class="mat-item" style="border-top:1px dashed #fff; margin-top:4px; padding-top:4px;">
                             <span>製作費用</span>
                             <span class="${goldClass}">${r.goldCost} G</span>
+                            <span style="color:#9b59b6; font-size:10px;">| 💎 <span class="${shardClass}">${shardCostKitchen.toLocaleString()}</span> 碎片</span>
                         </div>
                     </div>
                     ${btnHtml}
@@ -172,8 +180,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
             });
         }
 
-        function cook(id) {
-            socket.emit('craftItem', id);
+        function cook(id, useShard) {
+            socket.emit('craftItem', { itemId: id, useShardPay: useShard || false });
         }
 
         function showToast(msg) {
