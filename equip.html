@@ -125,6 +125,7 @@
             'shard_spear_galaxy':   { name: "星河·貫穿之槍", cost: 0, desc: "ATK+9萬 HP+150萬" },
             'shard_wep_dimension':  { name: "維度·終焉裁決", cost: 0, desc: "ATK+18萬 HP+400萬" },
             'shard_wep_origin':     { name: "原初·萬物歸零", cost: 0, desc: "ATK+35萬 HP+800萬" },
+            'myth_weapon':          { name: "神話·毀滅之刃", cost: 0, desc: "ATK+200萬 DEF+50萬 HP+500萬 MP+100萬" },
 
             // 採集武器
             'oak_bow':          { name: "橡木弓", cost: 200, desc: "ATK+25" },
@@ -161,6 +162,7 @@
             'shard_plate_galaxy':   { name: "星河·不滅壁壘", cost: 0, desc: "DEF+15萬 HP+300萬" },
             'shard_armor_dimension':{ name: "維度·虛數裝甲", cost: 0, desc: "DEF+50萬 HP+800萬" },
             'shard_armor_origin':   { name: "原初·混沌神軀", cost: 0, desc: "DEF+80萬 HP+1500萬" },
+            'myth_armor':           { name: "神話·絕對防禦", cost: 0, desc: "DEF+150萬 HP+1000萬 MP+300萬" },
 
             // === 💍 飾品 ===
             'bone_ring':        { name: "骨戒", cost: 0, desc: "ATK+15 HP+100" }, 
@@ -195,7 +197,8 @@
             'shard_pendant_dragon': { name: "龍魂碎片吊墜", desc: "ATK+5000 DEF+2000 HP+30000" },
             'shard_ring_void':      { name: "虛空碎片之戒", desc: "ATK+15000 MP+5000 HP+50000" },
             'shard_core_galaxy':    { name: "銀河碎片核心", desc: "ATK+100000 DEF+100000 HP+3000000 MP+550000" },
-            'shard_crown_infinity': { name: "無限碎片皇冠", desc: "ATK+150000 DEF+130000 HP+5000000 MP+700000" }
+            'shard_crown_infinity': { name: "無限碎片皇冠", desc: "ATK+150000 DEF+130000 HP+5000000 MP+700000" },
+            'myth_acc':             { name: "神話·命運之環", cost: 0, desc: "ATK+80萬 DEF+80萬 HP+800萬 MP+200萬" }
         };
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
