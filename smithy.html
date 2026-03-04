@@ -236,7 +236,7 @@
             });
 
             const useShardSmith = document.getElementById('smith-pay-shard') && document.getElementById('smith-pay-shard').checked;
-            const shardCostSmith = Math.ceil(recipe.goldCost * 100);
+            const shardCostSmith = Math.ceil(recipe.goldCost * 1);
             const goldEnough = useShardSmith ? ((myData.inventory['skill_shard']||0) >= shardCostSmith) : (myData.gold >= recipe.goldCost);
             if(!goldEnough) canCraft = false;
 
