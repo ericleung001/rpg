@@ -427,6 +427,37 @@
                     <div class="status-item"><span class="label">🛡️ DEF</span> <span id="def" class="val">0</span></div>
                 </div>
 
+                <div id="durability-section" style="margin-top:6px; padding:6px 8px; background:#1a1a2e; border-radius:6px; font-size:10px; display:none;">
+                    <div style="color:#aaa; margin-bottom:4px; font-size:9px;">🔧 裝備耐久度</div>
+                    <div id="dur-weapon" style="margin-bottom:3px; display:none;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                            <span style="color:#e67e22;">⚔️ <span id="dur-weapon-name">武器</span></span>
+                            <span id="dur-weapon-val" style="color:#fff;">100/100</span>
+                        </div>
+                        <div style="background:#333; border-radius:3px; height:4px;">
+                            <div id="dur-weapon-bar" style="background:#27ae60; height:4px; border-radius:3px; width:100%; transition:width 0.3s;"></div>
+                        </div>
+                    </div>
+                    <div id="dur-armor" style="margin-bottom:3px; display:none;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                            <span style="color:#3498db;">🛡️ <span id="dur-armor-name">防具</span></span>
+                            <span id="dur-armor-val" style="color:#fff;">100/100</span>
+                        </div>
+                        <div style="background:#333; border-radius:3px; height:4px;">
+                            <div id="dur-armor-bar" style="background:#27ae60; height:4px; border-radius:3px; width:100%; transition:width 0.3s;"></div>
+                        </div>
+                    </div>
+                    <div id="dur-acc" style="display:none;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                            <span style="color:#9b59b6;">💍 <span id="dur-acc-name">飾品</span></span>
+                            <span id="dur-acc-val" style="color:#fff;">100/100</span>
+                        </div>
+                        <div style="background:#333; border-radius:3px; height:4px;">
+                            <div id="dur-acc-bar" style="background:#27ae60; height:4px; border-radius:3px; width:100%; transition:width 0.3s;"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="exp-container">
                     <div style="display:flex; justify-content:space-between; font-size:8px; color:#bdc3c7; margin-bottom:1px;">
                         <span>EXP</span> <span id="exp-txt">0/100</span>
@@ -1019,6 +1050,40 @@
             document.getElementById('mp-bar-fill').style.width = Math.max(0, Math.min(100, mpPct)) + '%';
             document.getElementById('atk').innerText = (p.atk || 0).toLocaleString();
             document.getElementById('def').innerText = (p.def || 0).toLocaleString();
+
+            // 更新耐久度顯示
+            const dur = p.durability || {};
+            const equip = p.equipment || {};
+            const MAX_DUR = 100;
+            const ITEM_NAMES = window._hubItemNames || {};
+
+            function getDurColor(v) {
+                if (v >= 80) return '#27ae60';
+                if (v >= 50) return '#f39c12';
+                if (v >= 20) return '#e67e22';
+                return '#e74c3c';
+            }
+
+            let anyEquipped = false;
+            [['weapon','dur-weapon'],['armor','dur-armor'],['acc','dur-acc']].forEach(([slot, elId]) => {
+                const itemId = equip[slot];
+                const el = document.getElementById(elId);
+                if (!itemId) { if(el) el.style.display = 'none'; return; }
+                anyEquipped = true;
+                el.style.display = 'block';
+                const curDur = (dur[itemId] !== undefined) ? dur[itemId] : MAX_DUR;
+                const pct = Math.min(100, Math.round((curDur / MAX_DUR) * 100));
+                const col = getDurColor(curDur);
+                document.getElementById(elId+'-val').innerText = curDur + '/' + MAX_DUR;
+                document.getElementById(elId+'-bar').style.width = pct + '%';
+                document.getElementById(elId+'-bar').style.background = col;
+                // item name from server item list if available
+                const nameEl = document.getElementById(elId+'-name');
+                if (nameEl && window._hubItemDB && window._hubItemDB[itemId]) {
+                    nameEl.innerText = window._hubItemDB[itemId];
+                }
+            });
+            document.getElementById('durability-section').style.display = anyEquipped ? 'block' : 'none';
             document.getElementById('exp-txt').innerText = `${p.exp}/${p.maxExp}`;
             document.getElementById('exp-fill').style.width = Math.min(100, (p.exp / p.maxExp * 100)) + '%';
             refreshUI();
