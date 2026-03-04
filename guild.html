@@ -234,7 +234,10 @@
 
         let currentTab = 'members';
         let myGuildData = null;
-        let myInventory = {}; 
+        let myInventory = {};
+        let myFacilities = { temple: 0, expedition: 0, vault: 0 };
+        let guildShard = 0;
+        let myVaultData = {};
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
@@ -309,6 +312,7 @@
             myGuildData = data;
             renderMyGuild();
             if (data.chatHistory) renderChatHistory(data.chatHistory);
+            socket.emit('getGuildFacilities');
         });
 
         function renderMyGuild() {
@@ -389,6 +393,8 @@
 
                 <div class="tabs">
                     <button class="tab-btn ${currentTab==='members'?'tab-active':''}" onclick="setTab('members')">成員</button>
+                    <button class="tab-btn ${currentTab==='building'?'tab-active':''}" onclick="setTab('building')">🏰 建設</button>
+                    <button class="tab-btn ${currentTab==='vault'?'tab-active':''}" onclick="setTab('vault')">🏦 倉庫</button>
                     ${canManage ? `<button class="tab-btn ${currentTab==='distribute'?'tab-active':''}" onclick="setTab('distribute')">🎁 派發</button>` : ''}
                     ${canManage ? `<button class="tab-btn ${currentTab==='apply'?'tab-active':''}" onclick="setTab('apply')">審核 <span style="background:red; color:white; padding:1px 4px; border-radius:4px; font-size:8px;">${myGuildData.applicants.length}</span></button>` : ''}
                 </div>
@@ -434,6 +440,79 @@
                             </div>
                         </div>`;
                 });
+            } else if (currentTab === 'building') {
+                const fac = myFacilities || { temple: 0, expedition: 0, vault: 0 };
+                const FACILITY_CFG = [
+                    { id: 'temple',     icon: '⛪', name: '聖殿',  desc: '增加成員上限 (+5人/級)', maxLv: 10,
+                      costFn: lv => ({ gold: lv*500000, shard: lv*5000 }), effectFn: lv => `成員上限 ${20+lv*5} 人` },
+                    { id: 'expedition', icon: '⚔️', name: '遠征營', desc: '戰鬥/採集金幣EXP加成 (+2%/級)', maxLv: 10,
+                      costFn: lv => ({ gold: lv*800000, shard: lv*8000 }), effectFn: lv => `獎勵加成 +${lv*2}%` },
+                    { id: 'vault',      icon: '🏦', name: '寶庫',  desc: '共享倉庫格數 (+10格/級)', maxLv: 10,
+                      costFn: lv => ({ gold: lv*300000, shard: lv*3000 }), effectFn: lv => `倉庫 ${10+lv*10} 格` },
+                ];
+                html += `<div style="font-size:10px; color:#aaa; margin-bottom:8px;">公會金庫：💰 ${(myGuildData.gold||0).toLocaleString()} G　💎 ${(guildShard||0).toLocaleString()} 碎片</div>`;
+                html += `<div style="font-size:10px; color:#888; margin-bottom:10px;">捐贈碎片：<input id="shard-donate-amt" type="number" min="1" placeholder="數量" style="width:80px;padding:3px;background:#222;border:1px solid #444;color:#fff;border-radius:4px;"> <button onclick="depositShard()" style="padding:3px 8px;background:#8e44ad;border:none;color:#fff;border-radius:4px;cursor:pointer;font-size:11px;">💎 捐贈</button></div>`;
+                FACILITY_CFG.forEach(fc => {
+                    const curLv = fac[fc.id] || 0;
+                    const isMax = curLv >= fc.maxLv;
+                    const nextLv = curLv + 1;
+                    const cost = isMax ? null : fc.costFn(nextLv);
+                    html += \`<div style="background:#1a1a2e;border:1px solid #2a2a45;border-radius:8px;padding:12px;margin-bottom:8px;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                            <span style="font-size:20px;">\${fc.icon}</span>
+                            <div style="flex:1;">
+                                <div style="font-size:13px;font-weight:bold;color:#ecf0f1;">\${fc.name} <span style="color:#f1c40f;">Lv.\${curLv}</span></div>
+                                <div style="font-size:10px;color:#888;">\${fc.desc}</div>
+                            </div>
+                            <div style="font-size:11px;color:#27ae60;">\${fc.effectFn(curLv)}</div>
+                        </div>
+                        \${isMax ? '<div style="font-size:11px;color:#f1c40f;text-align:center;">✅ 已達最高等級</div>' :
+                          \`<div style="font-size:10px;color:#888;margin-bottom:6px;">升級費用：💰 \${cost.gold.toLocaleString()} G　💎 \${cost.shard.toLocaleString()} 碎片</div>
+                          \${canManage ? \`<button onclick="upgradeFacility('\${fc.id}')" style="width:100%;padding:7px;background:linear-gradient(135deg,#2c3e50,#3d5166);border:1px solid #4a6080;color:#ecf0f1;border-radius:5px;cursor:pointer;font-size:11px;">🔨 升級至 Lv.\${nextLv}</button>\` : '<div style="font-size:10px;color:#666;text-align:center;">只有會長/副長可升級</div>'}\`
+                        }
+                    </div>\`;
+                });
+                // Guild Boss section
+                const templeLv = fac.temple || 0;
+                html += \`<div style="margin-top:14px;border-top:1px dashed #333;padding-top:10px;">
+                    <div style="font-size:11px;color:#e74c3c;font-weight:bold;margin-bottom:8px;">⚔️ 公會BOSS</div>
+                    \${templeLv >= 5 ? \`<button onclick="startGuildBoss('guild_beast')" style="width:100%;padding:8px;background:linear-gradient(135deg,#4a0000,#8b0000);border:1px solid #cc0000;color:#fff;border-radius:5px;cursor:pointer;font-size:11px;margin-bottom:6px;">⚔️ 召喚 守護獸 (Lv.120)  [24hr冷卻]</button>\` : \`<div style="padding:8px;background:#111;border:1px solid #333;border-radius:5px;text-align:center;font-size:11px;color:#555;">🔒 守護獸 (需聖殿 Lv.5，現在 Lv.\${templeLv})</div>\`}
+                    \${templeLv >= 10 ? \`<button onclick="startGuildBoss('guild_titan')" style="width:100%;padding:8px;background:linear-gradient(135deg,#1a0030,#4a0080);border:1px solid #8b00ff;color:#fff;border-radius:5px;cursor:pointer;font-size:11px;">⚡ 召喚 公會泰坦 (Lv.300)  [72hr冷卻]</button>\` : \`<div style="padding:8px;background:#111;border:1px solid #333;border-radius:5px;text-align:center;font-size:11px;color:#555;">🔒 公會泰坦 (需聖殿 Lv.10，現在 Lv.\${templeLv})</div>\`}
+                </div>\`;
+
+            } else if (currentTab === 'vault') {
+                const vaultItems = myVaultData || {};
+                const vaultFacLv = (myFacilities && myFacilities.vault) || 0;
+                const maxSlots = 10 + vaultFacLv * 10;
+                const usedSlots = Object.keys(vaultItems).length;
+                html += \`<div style="font-size:10px;color:#aaa;margin-bottom:8px;">倉庫容量：\${usedSlots}/\${maxSlots} 格</div>\`;
+                // Deposit section
+                let vaultOpts = '<option value="">(選擇物品)</option>';
+                for (let k in myInventory) {
+                    const name = ITEM_NAME_MAP[k] || k;
+                    vaultOpts += \`<option value="\${k}">\${name} (背包:\${myInventory[k]})</option>\`;
+                }
+                html += \`<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+                    <select id="vault-item-sel" style="flex:1;min-width:120px;padding:5px;background:#222;border:1px solid #444;color:#fff;border-radius:4px;font-size:11px;">\${vaultOpts}</select>
+                    <input id="vault-qty" type="number" min="1" value="1" style="width:60px;padding:5px;background:#222;border:1px solid #444;color:#fff;border-radius:4px;font-size:11px;">
+                    <button onclick="vaultDeposit()" style="padding:5px 12px;background:#27ae60;border:none;color:#fff;border-radius:4px;cursor:pointer;font-size:11px;">存入</button>
+                </div>\`;
+                // Vault contents
+                if (usedSlots === 0) {
+                    html += '<div style="text-align:center;color:#555;padding:20px;font-size:12px;">倉庫是空的</div>';
+                } else {
+                    for (const [itemId, qty] of Object.entries(vaultItems)) {
+                        const name = ITEM_NAME_MAP[itemId] || itemId;
+                        html += \`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:#1a1a2e;border-radius:5px;margin-bottom:4px;">
+                            <span style="font-size:12px;">\${name}</span>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <span style="color:#f1c40f;font-size:11px;">x\${qty}</span>
+                                <button onclick="vaultWithdraw('\${itemId}',1)" style="padding:2px 8px;background:#c0392b;border:none;color:#fff;border-radius:3px;cursor:pointer;font-size:10px;">取出</button>
+                            </div>
+                        </div>\`;
+                    }
+                }
+
             } else if (currentTab === 'distribute' && canManage) {
                 let itemOptions = '<option value="">(不發送物品)</option>';
                 for(let k in myInventory) {
@@ -568,7 +647,10 @@
             }
         }
 
-        socket.on('guildOpSuccess', (msg) => { alert("✅ " + msg); });
+        socket.on('guildOpSuccess', (msg) => {
+            alert('✅ ' + msg);
+            socket.emit('getGuildFacilities');
+        });
         socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
     </script>
 </body>
