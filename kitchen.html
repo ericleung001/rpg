@@ -146,7 +146,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 });
 
                 // 檢查金錢（同時支援碎片）
-                const shardCostKitchen = Math.ceil(r.goldCost * 100);
+                const shardCostKitchen = Math.ceil(r.goldCost * 1);
                 const myShards = (myInventory && myInventory['skill_shard']) || 0;
                 const goldOk = myGold >= r.goldCost;
                 const shardOk = myShards >= shardCostKitchen;
