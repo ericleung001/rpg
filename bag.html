@@ -232,7 +232,10 @@
             'shard_armor_novice', 'shard_armor_crystal', 'shard_robe_void', 
             'shard_plate_galaxy', 'shard_armor_dimension', 'shard_armor_origin',
             'shard_blade_novice', 'shard_axe_crystal', 'shard_scythe_void', 
-            'shard_spear_galaxy', 'shard_wep_dimension', 'shard_wep_origin'
+            'shard_spear_galaxy', 'shard_wep_dimension', 'shard_wep_origin',
+            'myth_weapon', 'myth_armor', 'myth_acc',
+            'myth_essence_fire', 'myth_essence_ice', 'myth_essence_dark', 'myth_essence_light', 'myth_essence_chaos',
+            'myth_core', 'myth_dragon_soul', 'myth_void_crystal'
         ];
 
         // 禁止分解的物品（消耗品、材料、特殊道具）
@@ -264,6 +267,7 @@
             'shard_spear_galaxy':480,'shard_plate_galaxy':480,'shard_core_galaxy':480,
             'shard_wep_dimension':550,'shard_armor_dimension':550,
             'shard_wep_origin':600,'shard_armor_origin':600,'shard_crown_infinity':600,
+            'myth_weapon':700,'myth_armor':700,'myth_acc':700,
         };
         const REPAIR_TIERS_CLIENT = [
             { maxItemLv: 30,   repairPerPoint: 0.05 },
@@ -485,7 +489,18 @@
             'shard_pendant_dragon': { name: "龍魂碎片吊墜", cost: 0, desc: "ATK+5000 DEF+2000 HP+30000 (碎片兌換)" },
             'shard_ring_void': { name: "虛空碎片之戒", cost: 0, desc: "ATK+15000 MP+5000 HP+50000 (碎片兌換)" },
             'shard_core_galaxy': { name: "銀河碎片核心", cost: 0, desc: "ATK+100000 DEF+100000 HP+3000000 MP+550000 (碎片兌換)" },
-            'shard_crown_infinity': { name: "無限碎片皇冠", cost: 0, desc: "ATK+150000 DEF+130000 HP+5000000 MP+700000 (碎片兌換)" }
+            'shard_crown_infinity': { name: "無限碎片皇冠", cost: 0, desc: "ATK+150000 DEF+130000 HP+5000000 MP+700000 (碎片兌換)" },
+            'myth_weapon': { name: "神話·毀滅之刃", cost: 0, desc: "Lv.700 [神話] ATK+200萬 DEF+50萬 HP+500萬 MP+100萬" },
+            'myth_armor':  { name: "神話·絕對防禦", cost: 0, desc: "Lv.700 [神話] DEF+150萬 HP+1000萬 MP+300萬" },
+            'myth_acc':    { name: "神話·命運之環", cost: 0, desc: "Lv.700 [神話] ATK+80萬 DEF+80萬 HP+800萬 MP+200萬" },
+            'myth_essence_fire':  { name: "烈焰精華",   cost: 0, desc: "神話鍛造素材 (第一層)" },
+            'myth_essence_ice':   { name: "永恆冰精華", cost: 0, desc: "神話鍛造素材 (第一層)" },
+            'myth_essence_dark':  { name: "暗淵精華",   cost: 0, desc: "神話鍛造素材 (第一層)" },
+            'myth_essence_light': { name: "神聖精華",   cost: 0, desc: "神話鍛造素材 (第一層)" },
+            'myth_essence_chaos': { name: "混沌精華",   cost: 0, desc: "神話鍛造素材 (第二層)" },
+            'myth_core':         { name: "神話核心",   cost: 0, desc: "神話鍛造素材 (第三層)" },
+            'myth_dragon_soul':  { name: "龍魂結晶",   cost: 0, desc: "神話鍛造素材 (第三層)" },
+            'myth_void_crystal': { name: "虛空神晶",   cost: 0, desc: "神話鍛造素材 (第三層)" }
         };
 
         socket.on('connect', () => {
