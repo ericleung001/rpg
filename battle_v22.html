@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中_v5</title>
+    <title>戰鬥中_v6</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -271,7 +271,7 @@
                     <button class="btn battle-action" onclick="act('attack')">攻擊</button>
                     <button class="btn battle-action" onclick="openSkill()">魔法</button>
                     <button class="btn battle-action" onclick="openBag()">物品</button>
-                    <button class="btn" onclick="leaveRoom()">逃跑</button>
+                    <button class="btn" onclick="tryFlee()">逃跑</button>
                 </div>
             </div>
         </div>
@@ -1201,6 +1201,16 @@
             showMsg("正在重置戰場...");
         }
         
+        function tryFlee() {
+            if (!roomId) return;
+            socket.emit('flee', roomId);
+        }
+
+        socket.on('fleeSuccess', () => {
+            showMsg('🏃 成功逃脫！');
+            setTimeout(() => { window.location.replace('hub.html'); }, 800);
+        });
+
         function leaveRoom() { 
             if (socket && socket.connected) { socket.emit('leaveRoom', roomId); }
             setTimeout(() => { window.location.replace('hub.html'); }, 300); 
@@ -1316,7 +1326,7 @@
             document.getElementById('shortcut-area').style.display = 'grid'; 
             const btnArea = document.getElementById('btns');
             btnArea.style.gridTemplateColumns = '1fr 1fr';
-            btnArea.innerHTML = `<button class="btn battle-action" onclick="act('attack')">攻擊</button><button class="btn battle-action" onclick="openSkill()">魔法</button><button class="btn battle-action" onclick="openBag()">物品</button><button class="btn" onclick="leaveRoom()">逃跑</button>`;
+            btnArea.innerHTML = `<button class="btn battle-action" onclick="act('attack')">攻擊</button><button class="btn battle-action" onclick="openSkill()">魔法</button><button class="btn battle-action" onclick="openBag()">物品</button><button class="btn" onclick="tryFlee()">逃跑</button>`;
             if (roomId === 'world_boss') { toggle(false); } else { toggle(!isMyTurn); }
         }
 
