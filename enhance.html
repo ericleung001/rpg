@@ -532,7 +532,7 @@
             let rateString = displayRate < 0.01 ? displayRate.toFixed(4) : (displayRate < 1 ? displayRate.toFixed(2) : Math.floor(displayRate));
             
             document.getElementById('rate-txt').innerText = `${rateString}%`;
-            const shardEquiv = Math.ceil(config.cost * 100);
+            const shardEquiv = Math.ceil(config.cost * 1);
             document.getElementById('cost-txt').innerText = config.cost.toLocaleString() + " G  |  💎 " + shardEquiv.toLocaleString() + " 碎片";
             
             const riskEl = document.getElementById('risk-txt');
@@ -632,7 +632,7 @@
 
             const useShards = (document.getElementById('pay-with-shard') || {}).checked || false;
             if (useShards) {
-                const shardNeed = Math.ceil(config.cost * 100);
+                const shardNeed = Math.ceil(config.cost * 1);
                 if ((myData.inventory['skill_shard'] || 0) < shardNeed) { alert(`碎片不足！需要 ${shardNeed} 塊技能碎片`); return false; }
             } else if (myData.gold < config.cost) { alert("金幣不足！"); return false; }
             
