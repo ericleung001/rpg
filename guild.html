@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>公會大廳</title>
+    <title>公會大廳2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -669,6 +669,51 @@
             socket.emit('getGuildFacilities');
         });
         socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
+
+        // ── 公會建設功能 ──────────────────────────────
+        function upgradeFacility(facilityId) {
+            socket.emit('guildUpgradeFacility', { facilityId });
+        }
+
+        function depositShard() {
+            const amt = parseInt(document.getElementById('shard-donate-amt').value);
+            if (!amt || amt < 1) { alert('請輸入有效數量'); return; }
+            socket.emit('guildDepositShard', { amount: amt });
+        }
+
+        function startGuildBoss(bossId) {
+            if (!confirm('確定要召喚公會BOSS？冷卻期間無法再次召喚！')) return;
+            socket.emit('startGuildBoss', { bossId });
+        }
+
+        function vaultDeposit() {
+            const itemId = document.getElementById('vault-item-sel').value;
+            const count = parseInt(document.getElementById('vault-qty').value) || 1;
+            if (!itemId) { alert('請選擇物品'); return; }
+            socket.emit('guildVaultDeposit', { itemId, count });
+        }
+
+        function vaultWithdraw(itemId, count) {
+            socket.emit('guildVaultWithdraw', { itemId, count });
+        }
+
+        // ── 公會設施/倉庫 socket events ───────────────
+        socket.on('guildFacilitiesData', (data) => {
+            myFacilities = data.facilities || { temple: 0, expedition: 0, vault: 0 };
+            guildShard = data.guildShard || 0;
+            myVaultData = (data.vault && data.vault.items) || {};
+            renderMyGuild();
+        });
+
+        socket.on('guildFacilityUpdate', (fac) => {
+            myFacilities = fac;
+            renderMyGuild();
+        });
+
+        socket.on('guildVaultUpdate', (vault) => {
+            myVaultData = (vault && vault.items) || {};
+            renderMyGuild();
+        });
     </script>
 </body>
 </html>
