@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中_v6</title>
+    <title>戰鬥中_v7</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -755,6 +755,12 @@
                     document.getElementById('teammates-box').style.display = 'none'; 
                     document.getElementById('lobby-overlay').style.display = 'none';
                     document.getElementById('countdown-timer').style.display = 'block'; 
+                } else if (roomId && roomId.startsWith('guild_boss_')) {
+                    socket.emit('connectToGuildBoss', roomId);
+                    document.getElementById('turn-bar').innerText = "⚔️ 公會BOSS戰 ⚔️";
+                    document.getElementById('turn-bar').style.background = "#6a0dad";
+                    document.getElementById('lobby-overlay').style.display = 'none';
+                    document.getElementById('countdown-timer').style.display = 'block';
                 } else {
                     socket.emit('connectToRoom', roomId);
                 }
