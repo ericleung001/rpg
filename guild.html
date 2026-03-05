@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>公會大廳</title>
+    <title>公會大廳2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -665,6 +665,12 @@
                 socket.emit('distributeGuildRewards', { targets, gold, itemId, itemCount });
             }
         }
+
+        socket.on('guildBossReady', ({ roomId, bossName }) => {
+            if (confirm(`⚔️ 公會BOSS【${bossName}】已召喚！\n立即前往戰鬥？`)) {
+                window.location.href = `battle_v22.html?room=${encodeURIComponent(roomId)}`;
+            }
+        });
 
         socket.on('guildOpSuccess', (msg) => {
             alert('✅ ' + msg);
