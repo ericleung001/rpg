@@ -408,7 +408,6 @@
                     let kickBtn = (isLeader && m.rank !== '會長') ? `<button class="btn-action btn-red" onclick="kick('${escapeHtml(m.name)}')">踢出</button>` : '';
                     
                     let roleBtn = '';
-                    // 🟢 [修正] 傳送名字而不是ID，支援離線玩家
                     if (isLeader && m.rank !== '會長') {
                         if (m.rank === '副會長') {
                             roleBtn = `<button class="btn-action btn-orange" onclick="demoteVice('${escapeHtml(m.name)}')">降職</button>`;
@@ -485,22 +484,6 @@
                           + inner
                           + '</div>';
                 });
-                // Guild Boss section
-                const templeLv = fac.temple || 0;
-                let bossHtml = '<div style="margin-top:14px;border-top:1px dashed #333;padding-top:10px;">'
-                             + '<div style="font-size:11px;color:#e74c3c;font-weight:bold;margin-bottom:8px;">⚔️ 公會BOSS</div>';
-                if (templeLv >= 5) {
-                    bossHtml += '<button onclick="startGuildBoss(\'guild_beast\')" style="width:100%;padding:8px;background:linear-gradient(135deg,#4a0000,#8b0000);border:1px solid #cc0000;color:#fff;border-radius:5px;cursor:pointer;font-size:11px;margin-bottom:6px;">⚔️ 召喚 守護獸 (Lv.120) [24hr冷卻]</button>';
-                } else {
-                    bossHtml += '<div style="padding:8px;background:#111;border:1px solid #333;border-radius:5px;text-align:center;font-size:11px;color:#555;">🔒 守護獸 (需聖殿 Lv.5，現在 Lv.' + templeLv + ')</div>';
-                }
-                if (templeLv >= 10) {
-                    bossHtml += '<button onclick="startGuildBoss(\'guild_titan\')" style="width:100%;padding:8px;background:linear-gradient(135deg,#1a0030,#4a0080);border:1px solid #8b00ff;color:#fff;border-radius:5px;cursor:pointer;font-size:11px;">⚡ 召喚 公會泰坦 (Lv.300) [72hr冷卻]</button>';
-                } else {
-                    bossHtml += '<div style="padding:8px;background:#111;border:1px solid #333;border-radius:5px;text-align:center;font-size:11px;color:#555;">🔒 公會泰坦 (需聖殿 Lv.10，現在 Lv.' + templeLv + ')</div>';
-                }
-                bossHtml += '</div>';
-                html += bossHtml;
 
             } else if (currentTab === 'vault') {
                 const vaultItems = myVaultData || {};
@@ -639,14 +622,12 @@
         function kick(targetName) { if(confirm(`確定踢出 [${targetName}]？`)) socket.emit('kickGuildMember', targetName); }
         function toggleSelectAll() { const cbs = document.querySelectorAll('.dist-checkbox'); const all = Array.from(cbs).every(c=>c.checked); cbs.forEach(c=>c.checked=!all); }
         
-        // 🟢 [修改] 改為傳送名字 (支援離線玩家)
         function appointVice(targetName) {
             if (confirm(`確定要任命 [${targetName}] 為副會長嗎？\n(舊的副會長將會自動卸任)`)) {
                 socket.emit('guildAppointVice', targetName);
             }
         }
 
-        // 🟢 [修改] 改為傳送名字
         function demoteVice(targetName) {
             if (confirm(`確定要解除 [${targetName}] 的副會長職務，將其降為普通會員嗎？`)) {
                 socket.emit('guildDemoteVice', targetName);
@@ -666,19 +647,12 @@
             }
         }
 
-        socket.on('guildBossReady', ({ roomId, bossName }) => {
-            if (confirm(`⚔️ 公會BOSS【${bossName}】已召喚！\n立即前往戰鬥？`)) {
-                window.location.href = `battle_v22.html?room=${encodeURIComponent(roomId)}`;
-            }
-        });
-
         socket.on('guildOpSuccess', (msg) => {
             alert('✅ ' + msg);
             socket.emit('getGuildFacilities');
         });
         socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
 
-        // ── 公會建設功能 ──────────────────────────────
         function upgradeFacility(facilityId) {
             socket.emit('guildUpgradeFacility', { facilityId });
         }
@@ -687,11 +661,6 @@
             const amt = parseInt(document.getElementById('shard-donate-amt').value);
             if (!amt || amt < 1) { alert('請輸入有效數量'); return; }
             socket.emit('guildDepositShard', { amount: amt });
-        }
-
-        function startGuildBoss(bossId) {
-            if (!confirm('確定要召喚公會BOSS？冷卻期間無法再次召喚！')) return;
-            socket.emit('startGuildBoss', { bossId });
         }
 
         function vaultDeposit() {
@@ -705,7 +674,6 @@
             socket.emit('guildVaultWithdraw', { itemId, count });
         }
 
-        // ── 公會設施/倉庫 socket events ───────────────
         socket.on('guildFacilitiesData', (data) => {
             myFacilities = data.facilities || { temple: 0, expedition: 0, vault: 0 };
             guildShard = data.guildShard || 0;
