@@ -201,9 +201,43 @@
             'myth_acc':             { name: "神話·命運之環", cost: 0, desc: "ATK+80萬 DEF+80萬 HP+800萬 MP+200萬" }
         };
 
+        // 裝備等級限制 (同 server EQUIP_REQ_LV)
+        const EQUIP_REQ_LV = {
+            'wood_sword':1,'copper_dagger':1,'oak_bow':1,'steel_blade':1,'hero_sword':1,
+            'iron_sword':10,'maple_staff':10,'shark_tooth':10,'silver_blade':20,
+            'spike_club':25,'poison_dag':25,'assassin_dag':25,'emerald_staff':30,
+            'flame_staff':40,'gold_axe':40,'obsidian_blade':50,
+            'frost_bow':60,'dragon_spear':60,'mithril_saber':80,
+            'void_reaper':95,'void_reaper_dark':100,
+            'god_slayer':120,'chaos_staff':120,'genesis_weapon':200,
+            'void_blade':230,'galaxy_saber':260,'entropy_sword':300,
+            'infinity_blade':450,'singularity_weapon':500,
+            'shard_blade_novice':10,'shard_axe_crystal':150,'shard_scythe_void':350,
+            'shard_spear_galaxy':480,'shard_wep_dimension':550,'shard_wep_origin':600,
+            'cloth_armor':1,'plate_mail':1,'leather_armor':5,'hunt_vest':5,
+            'dragon_mail':15,'chain_mail':25,'iron_armor':35,
+            'magma_plate':50,'ice_robe':60,'yeti_cloak':70,
+            'demon_armor':90,'angel_armor':120,'genesis_armor':200,
+            'void_armor':230,'nebula_plate':260,'entropy_god_armor':300,
+            'event_horizon':450,'singularity_armor':500,
+            'shard_armor_novice':10,'shard_armor_crystal':150,'shard_robe_void':350,
+            'shard_plate_galaxy':480,'shard_armor_dimension':550,'shard_armor_origin':600,
+            'bone_ring':1,'ring_life':1,'ring_magic':1,
+            'ring_str':5,'bracelet_def':5,'necklace_hp':5,'necklace_mp':5,
+            'fish_ring':10,'snake_boots':10,'pearl_necklace':20,
+            'amulet_soul':80,'ring_lord':100,'crown_chaos':150,
+            'ring_galaxy':200,'dimension_ring':280,'mobius_ring':450,'singularity_acc':500,
+            'shard_ring_novice':10,'shard_neck_brave':30,'shard_charm_wind':60,
+            'shard_ring_vampire':100,'shard_earring_holy':150,'shard_belt_titan':200,
+            'shard_pendant_dragon':300,'shard_ring_void':400,'shard_core_galaxy':450,'shard_crown_infinity':500
+        };
+
+        let myLevel = 1;
+
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
         
         socket.on('playerStatsUpdate', (p) => { 
+            myLevel = p.level || 1;
             renderStats(p); 
             renderSlots(p.equipment, p.enhancements); 
             renderInventory(p.inventory, p.enhancements); 
@@ -263,12 +297,25 @@
 
                     const div = document.createElement('div');
                     div.className = 'inv-item';
+                    
+                    // 等級限制顯示
+                    const reqLv = EQUIP_REQ_LV[key] || 0;
+                    const canEquip = myLevel >= reqLv;
+                    let reqTag = '';
+                    if (reqLv > 1) {
+                        const reqColor = canEquip ? '#27ae60' : '#e74c3c';
+                        reqTag = `<span style="font-size:9px;color:${reqColor};margin-left:5px;">[Lv.${reqLv}]</span>`;
+                    }
+                    
                     div.innerHTML = `
                         <div>
-                            <div class="inv-name">${nameDisplay}</div>
+                            <div class="inv-name">${nameDisplay}${reqTag}</div>
                             <div class="inv-desc">${item.desc}</div>
                         </div>
-                        <button class="btn" onclick="equip('${key}')">裝備</button>
+                        ${canEquip 
+                            ? `<button class="btn" onclick="equip('${key}')">裝備</button>` 
+                            : `<button class="btn" style="background:#95a5a6;cursor:not-allowed;" disabled>Lv.${reqLv}</button>`
+                        }
                     `;
                     list.appendChild(div);
                 }
