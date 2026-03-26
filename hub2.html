@@ -109,37 +109,24 @@
         }
         
         .facility-btn {
+            position: relative; 
             padding: 0; 
-            font-family: inherit; 
-            font-size: 10px; 
-            font-weight: bold;
-            cursor: pointer; 
-            border: 2px solid #bdc3c7; color: white; text-decoration: none; 
+            font-family: inherit; font-size: 10px; font-weight: bold;
+            cursor: pointer; border: 2px solid #bdc3c7; color: white; text-decoration: none; 
             display: flex; align-items: center; justify-content: center;
-            background: #34495e; 
-            border-radius: 6px;
-            height: 38px; 
-            white-space: nowrap; 
+            background: #34495e; border-radius: 6px; height: 38px; white-space: nowrap; 
             box-shadow: 2px 2px 0 rgba(0,0,0,0.3); 
-            touch-action: manipulation; 
-            -webkit-tap-highlight-color: transparent; 
-            transition: transform 0.05s;
+            touch-action: manipulation; transition: transform 0.05s;
         }
         .facility-btn:active { transform: scale(0.95); box-shadow: none; filter: brightness(0.9); }
         
-        .map-container {
-            padding-right: 5px;
-            padding-bottom: 60px; 
-        }
-
+        .map-container { padding-right: 5px; padding-bottom: 60px; }
         .btn { 
             padding: 12px 8px; font-family: inherit; font-size: 12px; cursor: pointer; 
             border: 2px solid #bdc3c7; color: white; text-decoration: none; 
             display: block; text-shadow: 1px 1px 0 #000; background: #34495e; 
             position: relative; text-align: left; margin-bottom: 8px; border-radius: 6px;
-            touch-action: manipulation; 
-            -webkit-tap-highlight-color: transparent;
-            transition: transform 0.05s, background-color 0.1s; 
+            touch-action: manipulation; transition: transform 0.05s, background-color 0.1s; 
         }
         .btn:active { transform: scale(0.98); filter: brightness(0.8); background: #2980b9; }
         .locked { background: #555; color: #888; border-color: #555; pointer-events: none; }
@@ -157,13 +144,11 @@
             transition: height 0.3s ease-in-out;
             height: 30px; 
         }
-        
         #chat-header {
             height: 30px; background: #34495e; color: #fff; line-height: 30px; 
             cursor: pointer; font-weight: bold; border-bottom: 1px solid #555;
             display: flex; justify-content: center; align-items: center;
-            touch-action: manipulation;
-            flex-shrink: 0; 
+            touch-action: manipulation; flex-shrink: 0; 
         }
         #chat-header:hover { background: #2c3e50; }
 
@@ -180,12 +165,12 @@
             position: fixed; top: -60px; left: 50%; transform: translateX(-50%);
             background: #f1c40f; color: #000; border: 3px solid #fff;
             padding: 10px 20px; border-radius: 30px; font-size: 12px; font-weight: bold;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.6); z-index: 1000;
-            transition: top 0.5s ease-in-out; white-space: nowrap;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.6); z-index: 2000;
+            transition: top 0.5s ease-in-out; white-space: nowrap; pointer-events: none;
         }
 
         #notice-btn {
-            position: fixed; top: 50px; left: 10px;
+            position: fixed; top: 80px; left: 10px;
             width: 40px; height: 40px;
             background: #e67e22; border: 2px solid #fff;
             border-radius: 50%; cursor: pointer;
@@ -217,143 +202,197 @@
             color: white; border: none; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 12px;
         }
 
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); 
+            display: none;
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;        
+            z-index: 9999;
+        }
+        
+        .modal-box {
+            background: #fff; color: #2c3e50; width: 85%; max-width: 400px;
+            border: 4px solid #f1c40f; border-radius: 10px; padding: 20px; text-align: left;
+            font-family: 'Press Start 2P', monospace; max-height: 70vh; overflow-y: auto;
+            position: relative;
+            margin: auto; 
+        }
+        .close-btn-x {
+            position: absolute; top: 10px; right: 10px;
+            background: #e74c3c; color: white; border: none;
+            width: 25px; height: 25px; border-radius: 50%;
+            cursor: pointer; font-weight: bold;
+        }
+        
         /* 英雄榜樣式 */
         .ranking-box {
             width: 100%; max-width: 600px;
             background: rgba(0, 0, 0, 0.6);
             border: 2px solid #f1c40f;
-            border-radius: 8px;
-            padding: 10px;
-            margin: 10px 0;
-            text-align: left;
-            box-sizing: border-box;
-            box-shadow: 0 0 10px rgba(241, 196, 15, 0.2);
-            flex-shrink: 0; 
+            border-radius: 8px; padding: 10px; margin: 10px 0; text-align: left;
+            box-sizing: border-box; box-shadow: 0 0 10px rgba(241, 196, 15, 0.2); flex-shrink: 0; 
         }
-        .rank-title {
-            color: #f1c40f; font-size: 12px; font-weight: bold; 
-            text-align: center; margin-bottom: 8px; border-bottom: 1px dashed #555; padding-bottom: 5px;
-        }
-        .rank-row {
-            display: flex; justify-content: space-between; 
-            font-size: 10px; margin-bottom: 4px; padding: 4px 5px;
-        }
+        .rank-title { color: #f1c40f; font-size: 12px; font-weight: bold; text-align: center; margin-bottom: 8px; border-bottom: 1px dashed #555; padding-bottom: 5px; }
+        .rank-row { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; padding: 4px 5px; }
         .rank-row:nth-child(odd) { background: rgba(255,255,255,0.05); }
         .rank-1 { color: #ffd700; font-weight: bold; text-shadow: 0 0 5px #ffd700; }
         .rank-2 { color: #c0c0c0; font-weight: bold; }
         .rank-3 { color: #cd7f32; font-weight: bold; }
 
-        @media (min-width: 1024px) {
-            body {
-                background-color: #222; 
-            }
+        /* 好友列表樣式 */
+        .friend-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px; border-bottom: 1px solid #eee; font-size: 10px;
+        }
+        .friend-name { font-weight: bold; }
+        .friend-status { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .status-on { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
+        .status-off { background: #95a5a6; }
+        .friend-actions button {
+            font-size: 9px; padding: 4px 8px; margin-left: 5px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc;
+        }
+        .btn-pm { background: #3498db; color: white; border-color: #2980b9; }
+        .btn-del { background: #e74c3c; color: white; border-color: #c0392b; }
 
-            #app-layout {
-                flex-direction: row; 
-                max-width: 1000px; 
-                background-color: #2c3e50;
-                box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            }
+        /* 私訊專用視窗樣式 */
+        #pm-modal { z-index: 10000; }
+        #pm-history {
+            background: #f9f9f9; border: 1px solid #ddd; height: 250px; 
+            overflow-y: auto; padding: 10px; margin-bottom: 10px; border-radius: 5px;
+            font-size: 10px; display: flex; flex-direction: column; gap: 8px;
+        }
+        .pm-msg { padding: 8px; border-radius: 8px; max-width: 80%; word-break: break-all; }
+        .pm-mine { align-self: flex-end; background: #3498db; color: white; border-bottom-right-radius: 0; }
+        .pm-other { align-self: flex-start; background: #eec5a9; color: #2c3e50; border-bottom-left-radius: 0; }
+        .pm-time { font-size: 8px; opacity: 0.7; margin-top: 2px; text-align: right; }
 
-            #game-view {
-                width: 600px; 
-                border-right: 4px solid #bdc3c7;
-            }
-
-            #chat-container {
-                position: static; 
-                width: 400px;
-                height: 100% !important; 
-                border-top: none;
-                background: #34495e;
-            }
-
-            #chat-header {
-                cursor: default;
-                background: #2c3e50;
-            }
-            #chat-header:active { pointer-events: none; }
-
-            #chat-body {
-                display: flex !important;
-                height: calc(100% - 30px);
-            }
-
-            .main-content {
-                margin-bottom: 0;
-            }
-            
-            #notice-btn {
-                left: calc(50% - 540px); 
-            }
+        /* 未讀紅點樣式 */
+        .unread-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: #e74c3c; color: white;
+            border-radius: 50%; width: 18px; height: 18px;
+            font-size: 9px; display: flex; justify-content: center; align-items: center;
+            border: 2px solid white; font-weight: bold;
+            display: none; /* 預設隱藏 */
+            z-index: 10;
+        }
+        .friend-badge {
+            background: #e74c3c; color: white;
+            border-radius: 10px; padding: 2px 6px;
+            font-size: 8px; margin-left: 5px;
         }
 
+        @media (min-width: 1024px) {
+            body { background-color: #222; }
+            #app-layout { flex-direction: row; max-width: 1000px; background-color: #2c3e50; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+            #game-view { width: 600px; border-right: 4px solid #bdc3c7; }
+            #chat-container { position: static; width: 400px; height: 100% !important; border-top: none; background: #34495e; }
+            #chat-header { cursor: default; background: #2c3e50; }
+            #chat-header:active { pointer-events: none; }
+            #chat-body { display: flex !important; height: calc(100% - 30px); }
+            .main-content { margin-bottom: 0; }
+            #notice-btn { left: calc(50% - 540px); }
+        }
     </style>
 </head>
 <body>
     
-    <div id="loading-overlay">
-        <div class="spinner"></div>
-        <div style="font-size:12px; margin-top:10px;">正在讀取玩家資料...</div>
-        <div style="font-size:10px; color:#95a5a6; margin-top:5px;">(請稍候)</div>
-    </div>
+    
 
     <div id="toast-notification"> 訊息提示</div>
     <div id="notice-btn" onclick="openNotice()">📢</div>
 
     <div id="notice-modal">
         <div class="notice-box">
-            <div class="notice-title">📜 公會公告</div>
+            <div class="notice-title">Ver 4.1 更新公告</div>
             <div class="notice-content">
-<b style="color:#c0392b;">【最新更新 v2.6 終焉之戰】</b>
-注意：分解暫時有bug, 如身上有多件相同裝備，
-但該裝備有裝備上身的話，
-會分解不到，如需分解，請將裝備除下。
 
-1. 採集解鎖
-- 熟練度上限提升至 Lv.150。
-- 新增 Lv.100 - Lv.150 高等採集點，產出傳說級新材料。
+<b style="color:#e74c3c;">【🔄 轉生系統 (Rebirth)】</b>
+- <b>開啟條件</b>：等級達到 <span style="color:#f1c40f">Lv.400</span>。
+- <b>轉生效果</b>：全屬性永久提升 <span style="color:#2ecc71">+20%</span> (最高 +10)。
+- <b>榮耀象徵</b>：獲得金色 <span style="color:#f1c40f">名號+1</span>，在聊天、戰鬥與公會中皆可見！
+- <b>⚠️ 硬核模式</b>：轉生後等級重置為 1，<b>清空所有裝備與背包</b>，金幣保留上限 1,000 萬。(技能等級保留)
 
-3. 交易所防掛
-- 買嘢要入數學驗證碼。
-- Lv.200 以上神裝 及 福袋 改為綁定 (不可上架)。
-- 每人最多上架90件物品。
-- 物品放售價格上限放寬999999999。
+<b style="color:#3498db;">【⚡ 技能覺醒系統】</b>
+- <b>技能升級</b>：現在可以使用 <span style="color:#f1c40f">✨ 技能碎片</span> 升級你的技能了！
+- <b>威力提升</b>：每升 1 級，技能傷害/補量顯著提升！(最高 Lv.10)
+- <b>天神下凡</b>：升級後攻防倍率與持續回合數同步增強！
 
-4. 便捷功能
-- 背包新增批量上架。
-- 背包新增「分解」按鈕，武器/防具或飾品可進行分解，但會扣起50%材料
+<b style="color:#9b59b6;">【💎 碎片交換所開張】</b>
+- 新增 <b>10 款專屬飾物</b>，從新手到神話級皆可兌換。
+- <b>頂級飾物</b>：<span style="color:#e74c3c">👑 無限碎片皇冠</span>、<span style="color:#3498db">🌌 銀河碎片核心</span> 等你來拿！
+- <b>獲得方式</b>：戰鬥勝利有機率掉落碎片。
 
-<b style="color:#2980b9;">【其他通知】</b>
-🔥 歡迎加入<a href="https://discord.com/invite/7kKwf5yb" style="color:#f1c40f;">DC Group</a>
+<b style="color:#e74c3c;">【🔥 神話裝備 & 防爆石】</b>
+- <b>終極裝備</b>：實裝 Lv.500 <span style="color:#f1c40f">奇點·萬象崩壞</span> 系列套裝。
+- <b>安心強化</b>：新增 <span style="color:#2ecc71">✨ 防爆石</span>，強化失敗不掉級、不破碎，且<b>必定成功</b>！(適用於 +23 以下)
 
-<b style="color:#27ae60;">【維護提醒】</b>
-2026/01/05 9:00am 進行更新
+<b style="color:#2ecc71;">【🛠️ 系統優化】</b>
+- <b>背包分類</b>：新增分類按鈕，找裝備更方便。
+- <b>安全鎖定</b>：碎片兌換的珍貴飾物現在<b>無法被賣給 NPC 或分解</b>，防止手滑。
+- <b>轉生系統</b>：開放 <b>Lv.580</b> 轉生，全屬性+20%，獲得榮耀稱號！
 
-<b style="color:#8e44ad;">【🌌 神話技能指南 (Lv.200+)】</b>
-突破凡人極限，掌握宇宙真理的力量！
-
-🟣 <b>[Lv.200] 虛空碎擊 (1000 MP)</b>
-<span style="font-size:9px; color:#aaa;">"凝聚虛空之力，粉碎萬物。"</span>
-造成 <b>10倍</b> 傷害。
-這是踏入神話領域的入門磚，威力遠超次元斬。
-
-⚫ <b>[Lv.240] 熱寂·衰變 (2500 MP)</b>
-<span style="font-size:9px; color:#aaa;">"萬物終將歸於虛無，防禦毫無意義。"</span>
-<b>BOSS剋星！</b>造成目標最大生命 <b>5%</b> 的<span style="color:#e74c3c">真實傷害</span>。
-無視防禦力，專門對付百億血量的神級怪物。
-
-✨ <b>[Lv.280] 宇宙大爆炸 (5000 MP)</b>
-<span style="font-size:9px; color:#aaa;">"模擬宇宙誕生的奇異點，毀滅一切。"</span>
-造成 <b>25倍</b> 的極致毀滅傷害。
-耗魔巨大，但能瞬間蒸發敵人的最強奧義。
             </div>
-            <button class="close-notice-btn" onclick="closeNotice()">我知道了</button>
+            <button class="close-notice-btn" onclick="closeNotice()">我知道了，立即體驗！</button>
+        </div>
+    </div>
+
+    <div id="quest-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+        <div style="background:#2c3e50; padding:20px; border:4px solid #fff; border-radius:10px; width:85%; max-width:400px; color:white; text-align:center;">
+            <h2 style="color:#f1c40f; margin-top:0;">📜 每日委託</h2>
+            <div style="font-size:10px; color:#aaa; margin-bottom:10px;">(每天 00:00 重置)</div>
+            
+            <div id="quest-list" style="text-align:left; max-height:300px; overflow-y:auto; margin-bottom:10px;">
+                <div style="padding:10px; text-align:center;">載入中...</div>
+            </div>
+
+            <button class="btn" style="background:#c0392b; width:100%;" onclick="document.getElementById('quest-modal').style.display='none'">關閉</button>
+        </div>
+    </div>
+
+    <div id="friends-modal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="close-btn-x" onclick="document.getElementById('friends-modal').style.display='none'">×</button>
+            <div style="font-size:16px; font-weight:bold; color:#d35400; margin-bottom:15px; text-align:center;">👥 好友系統</div>
+            
+            <div style="display:flex; gap:5px; margin-bottom:15px; border-bottom:1px dashed #ccc; padding-bottom:10px;">
+                <input type="text" id="friend-input" placeholder="輸入玩家名字" style="flex:1; padding:8px; font-size:10px;">
+                <button onclick="sendRequest()" style="background:#27ae60; color:white; border:none; padding:8px; cursor:pointer; font-size:10px; border-radius:4px;">申請</button>
+            </div>
+            
+            <div id="request-section" style="display:none; margin-bottom:10px;">
+                <div style="font-size:12px; color:#e67e22; margin-bottom:5px;">📩 好友申請</div>
+                <div id="request-list-content" style="max-height:100px; overflow-y:auto; border:1px solid #f39c12; padding:5px; background:#fffbf0; border-radius:4px;"></div>
+            </div>
+
+            <div style="font-size:12px; color:#3498db; margin-bottom:5px;">📋 好友名單</div>
+            <div id="friend-list-content" style="min-height:150px; max-height:250px; overflow-y:auto; border:1px solid #eee; padding:5px;">
+                <div style="text-align:center; color:#aaa; font-size:10px; margin-top:20px;">載入中...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pm-modal" class="modal-overlay">
+        <div class="modal-box" style="display:flex; flex-direction:column; height: 70vh;">
+            <button class="close-btn-x" onclick="closePM()">×</button>
+            <div style="font-size:14px; font-weight:bold; color:#3498db; margin-bottom:10px; text-align:center; border-bottom:1px solid #ccc; padding-bottom:5px;">
+                與 <span id="pm-target-name">...</span> 的對話
+            </div>
+            
+            <div id="pm-history">
+                <div style="text-align:center; color:#aaa; margin-top:20px;">載入記錄中...</div>
+            </div>
+
+            <div style="display:flex; gap:5px; margin-top:auto;">
+                <input type="text" id="pm-input" placeholder="輸入訊息..." style="flex:1; padding:10px; font-size:12px; border:1px solid #ccc; border-radius:4px;">
+                <button onclick="sendPM()" style="background:#2980b9; color:white; border:none; padding:10px 15px; border-radius:4px; font-weight:bold; cursor:pointer;">發送</button>
+            </div>
         </div>
     </div>
 
     <div id="app-layout">
-        
         <div id="game-view">
             <div class="top-bar">
                 <div class="logout-btn" onclick="logout()">登出</div>
@@ -386,6 +425,39 @@
                 <div class="status-row-stats">
                     <div class="status-item"><span class="label">⚔️ ATK</span> <span id="atk" class="val">0</span></div>
                     <div class="status-item"><span class="label">🛡️ DEF</span> <span id="def" class="val">0</span></div>
+                </div>
+
+                <div id="durability-section" style="margin-top:6px; padding:5px 8px; background:#1a1a2e; border-radius:6px; font-size:9px; display:none;">
+                    <div style="color:#666; margin-bottom:4px; font-size:8px; letter-spacing:1px;">🔧 耐久度</div>
+                    <div style="display:flex; gap:6px;">
+                        <div id="dur-weapon" style="flex:1; display:none;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                <span style="color:#e67e22;">⚔️</span>
+                                <span id="dur-weapon-val" style="color:#ccc;">100</span>
+                            </div>
+                            <div style="background:#333; border-radius:2px; height:3px;">
+                                <div id="dur-weapon-bar" style="background:#27ae60; height:3px; border-radius:2px; width:100%; transition:width 0.3s;"></div>
+                            </div>
+                        </div>
+                        <div id="dur-armor" style="flex:1; display:none;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                <span style="color:#3498db;">🛡️</span>
+                                <span id="dur-armor-val" style="color:#ccc;">100</span>
+                            </div>
+                            <div style="background:#333; border-radius:2px; height:3px;">
+                                <div id="dur-armor-bar" style="background:#27ae60; height:3px; border-radius:2px; width:100%; transition:width 0.3s;"></div>
+                            </div>
+                        </div>
+                        <div id="dur-acc" style="flex:1; display:none;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                <span style="color:#9b59b6;">💍</span>
+                                <span id="dur-acc-val" style="color:#ccc;">100</span>
+                            </div>
+                            <div style="background:#333; border-radius:2px; height:3px;">
+                                <div id="dur-acc-bar" style="background:#27ae60; height:3px; border-radius:2px; width:100%; transition:width 0.3s;"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="exp-container">
@@ -430,10 +502,32 @@
                     <a href="market.html" class="facility-btn" style="background:#f39c12; border-color:#d35400;">🏪 道具</a>
                     <a href="auction.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">⚖️ 市集</a>
                     <a href="smithy.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔨 鍛造</a>
+                    <a href="myth.html" class="facility-btn" style="background:#4a0080; border-color:#8b00ff;">⚗️ 神話</a>
+                    <a href="enhance.html" class="facility-btn" style="background:#d35400; border-color:#e67e22;">🔥 強化</a>
                     <a href="gathering.html" class="facility-btn" style="background:#27ae60; border-color:#2ecc71;">🌲 採集</a>
                     <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;">🏨 旅館</a>
                     <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🍳 廚房</a>
+                    <a href="lottery.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🎱 彩票</a>
+                    <a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;">📜 圖鑑</a>
+                    
+                    <div class="facility-btn" style="background:#3498db; border-color:#2980b9;" onclick="openFriends()">
+                        👥 好友
+                        <div id="main-unread-badge" class="unread-badge">0</div>
+                    </div>
+
+                    <div class="facility-btn" style="background:#d35400; border-color:#e67e22;" onclick="openDailyQuests()">
+                        📜 每日任務
+                    </div>
+                    <div class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;" onclick="window.location.href='guild.html'">🏰 創造自家公會</div>
+                    <a href="skills.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">⚡ 技能升級</a>
+                    <a href="shard_shop.html" class="facility-btn" style="background:#9b59b6; border-color:#8e44ad;">💎 碎片交換</a>
+                    <a href="rebirth.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">
+                        🔄 轉生神殿
+                    </a>
                 </div>
+                
+
+                
 
                 <div id="list-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px; flex-shrink: 0;">世界地圖</div>
                 <div class="map-container" id="map-list">
@@ -453,143 +547,466 @@
             </div>
         </div>
 
-    </div> <script src="socket.io.js"></script>
+    </div> 
+    
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        // Loading 控制 (2秒強制冷卻)
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const overlay = document.getElementById('loading-overlay');
-                overlay.style.opacity = '0';
-                setTimeout(() => { overlay.style.display = 'none'; }, 500);
-            }, 2000); 
-        });
+        function escapeHtml(text) {
+            if (!text) return text;
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
-        const _0x5a1b = "aHR0cHM6Ly9ycGdnYW1lc2VyLmNj"; 
-        const BACKEND_URL = atob(_0x5a1b);
+        function hasForbiddenChars(str) {
+            const regex = /[\x00-\x1F\x7F\u200B\u2028-\u202F\u2060-\u2064\uFEFF]/;
+            return regex.test(str);
+        }
+
+        // 🟢 [核心] 轉生稱號格式化工具
+        function formatName(name, rebirth) {
+            if (rebirth && rebirth > 0) {
+                // 顯示為：名字+1 (金色)
+                return `${escapeHtml(name)}<span style="color:#f1c40f; font-weight:bold; margin-left:2px;">+${rebirth}</span>`;
+            }
+            return escapeHtml(name);
+        }
+
         
-        const socket = io(BACKEND_URL, {
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+
+        const socket = io('https://mmo.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
+        
         let myLevel = 1;
+        let myName = ""; 
+        let currentChatTarget = null;
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) { window.location.href = 'index.html'; }
 
-        // 公告功能
         function openNotice() {
-            document.getElementById('notice-modal').style.display = 'flex';
+            document.getElementById('notice-modal').style.display = 'flex'; 
         }
         function closeNotice() {
             document.getElementById('notice-modal').style.display = 'none';
         }
 
-        // 🟢 [更新] 完整的世界地圖 (包含 Lv.201 - Lv.300)
-        const WORLD_MAP = [
-            { 
-                id: 'city_1', name: '曙光平原', reqLv: 1, desc: '冒險的起點 (Lv.1-20)', 
-                monsters: [
-                    { id: 'slime', name: '史萊姆', lv: 1 }, 
-                    { id: 'rat', name: '大老鼠', lv: 3 },
-                    { id: 'bee', name: '殺人蜂', lv: 5 },
-                    { id: 'boar', name: '野豬', lv: 8 },
-                    { id: 'thief', name: '盜賊', lv: 12 },
-                    { id: 'wolf_king', name: '🐺 狼王 (BOSS)', lv: 15 }
-                ] 
-            },
-            { 
-                id: 'city_2', name: '迷霧沼澤', reqLv: 1, desc: '充滿毒氣與亡靈 (Lv.20-40)', 
-                monsters: [
-                    { id: 'snake', name: '毒蛇', lv: 22 }, 
-                    { id: 'zombie', name: '腐屍', lv: 25 },
-                    { id: 'skeleton', name: '骷髏兵', lv: 28 },
-                    { id: 'ghoul', name: '食屍鬼', lv: 32 },
-                    { id: 'witch', name: '沼澤女巫', lv: 35 },
-                    { id: 'hydra', name: '🐍 九頭蛇 (BOSS)', lv: 40 }
-                ] 
-            },
-            { 
-                id: 'city_3', name: '灼熱峽谷', reqLv: 1, desc: '烈火與熔岩 (Lv.40-60)', 
-                monsters: [
-                    { id: 'fire_imp', name: '火焰小鬼', lv: 42 }, 
-                    { id: 'lava_golem', name: '熔岩戈侖', lv: 45 },
-                    { id: 'salamander', name: '火蜥蜴', lv: 48 },
-                    { id: 'fire_mage', name: '烈焰法師', lv: 52 },
-                    { id: 'dragon_hatchling', name: '幼龍', lv: 55 },
-                    { id: 'balrog', name: '🔥 炎魔 (BOSS)', lv: 60 }
-                ] 
-            },
-            { 
-                id: 'city_4', name: '極寒凍土', reqLv: 1, desc: '永冬之地 (Lv.60-80)', 
-                monsters: [
-                    { id: 'snow_wolf', name: '雪原狼', lv: 62 }, 
-                    { id: 'yeti', name: '雪人', lv: 65 },
-                    { id: 'ice_spirit', name: '冰精靈', lv: 68 },
-                    { id: 'frost_knight', name: '寒霜騎士', lv: 72 },
-                    { id: 'ice_dragon', name: '冰霜龍', lv: 75 },
-                    { id: 'lich_king', name: '❄️ 巫妖王 (BOSS)', lv: 80 }
-                ] 
-            },
-            { 
-                id: 'city_5', name: '虛空要塞', reqLv: 1, desc: '接近魔界的地方 (Lv.80-100)', 
-                monsters: [
-                    { id: 'void_eye', name: '虛空之眼', lv: 82 }, 
-                    { id: 'shadow_assassin', name: '暗影刺客', lv: 85 },
-                    { id: 'dark_paladin', name: '墮落聖騎', lv: 88 },
-                    { id: 'demon_guard', name: '惡魔守衛', lv: 92 },
-                    { id: 'succubus', name: '魅魔', lv: 95 },
-                    { id: 'void_lord', name: '👁️ 虛空領主 (BOSS)', lv: 99 }
-                ] 
-            },
-            { 
-                id: 'city_6', name: '魔界王座', reqLv: 1, desc: '☠️ 最終決戰 (Lv.100-150)', 
-                monsters: [
-                    { id: 'chaos_beast', name: '混沌巨獸', lv: 105 },
-                    { id: 'fallen_angel', name: '墮天使', lv: 110 },
-                    { id: 'demon_king', name: '👑 魔王撒旦', lv: 150 }
-                ] 
-            },
-            {
-                id: 'city_7', name: '虛空裂縫', reqLv: 1, desc: '🟣 扭曲的次元 (Lv.160-180)',
-                monsters: [
-                    { id: 'void_walker', name: '虛空行者', lv: 160 },
-                    { id: 'chaos_knight', name: '混沌騎士', lv: 170 },
-                    { id: 'abyss_dragon', name: '🐉 深淵魔龍 (BOSS)', lv: 180 }
-                ]
-            },
-            {
-                id: 'city_8', name: '眾神墓地', reqLv: 1, desc: '💀 神話終結之地 (Lv.190-200)',
-                monsters: [
-                    { id: 'fallen_titan', name: '墮落泰坦', lv: 190 },
-                    { id: 'genesis_god', name: '☠️ 創世破壞神 (FINAL)', lv: 200 }
-                ]
-            },
+        function openDailyQuests() {
+            document.getElementById('quest-modal').style.display = 'flex';
+            socket.emit('getDailyQuests');
+        }
+
+        function claimQuest(key) {
+            socket.emit('claimDailyReward', key);
+        }
+
+        const ITEM_NAME_MAP = {
+            'potion_hp': '生命藥水',
+            'potion_mp': '魔力藥水',
+            'potion_mid': '中級藥水',
+            'scroll_exp': '經驗卷軸',
+            'lucky_bag': '奇蹟福袋',
+            'enhance_stone': '強化石',
+            'elixir': '萬能藥',
+            'gem_atk': '攻擊寶石',
+            'god_stone': '神之石',
+            'void_soup': "虛空海鮮湯",
+            'copper_ore': '銅礦石',
+            'soft_fur': '柔軟皮毛',
+            'beast_fang': '野獸尖牙',
+            'slime_gel': '黏液',
+            'iron_ore': '鐵礦石',
+            'leather': '皮革',
+            'tough_hide': '硬皮革',
+            'magic_dust': '魔粉',
+            'poison_sac': '毒囊',
+            'bone_shard': '碎骨片',
+            'silver_ore': '銀礦石',
+            'fire_core': '火焰核心',
+            'lava_rock': '熔岩石',
+            'coal': '煤炭',
+            'dragon_scale': '龍鱗',
+            'gold_ore': '金礦石',
+            'ice_crystal': '永恆冰晶',
+            'yeti_fur': '雪怪毛皮',
+            'spirit_dust': '靈魂粉末',
+            'mithril': '秘銀',
+            'void_dust': '虛空之塵',
+            'demon_horn': '惡魔之角',
+            'dark_essence': '暗之精華',
+            'adamantite': '精金',
+            'ruby': '紅寶石',
+            'diamond': '鑽石',
+            'god_blood': '神之血',
+            'chaos_orb': '混沌寶珠',
+            'angel_feather': '天使之羽',
+            'titan_steel': '泰坦神鋼',
+            'star_fragment': '星之碎片',
+            'void_shard': '虛空碎片',
+            'dark_matter': '暗物質',
+            'cosmic_steel': '宇宙鋼',
+            'star_core': '恆星核心',
+            'time_sand': '時光之沙',
+            'dimension_gem': '維度寶石',
+            'entropy_origin': '熱寂原點',
+            'oak_log': '橡木原木',
+            'maple_log': '楓木原木',
+            'yew_log': '紫杉原木',
+            'ancient_log': '遠古神木',
+            'spirit_wood': '靈木',
+            'dragon_wood': '龍骨木',
+            'void_wood': '虛空木',
+            'chaos_wood': '混沌神木',
+            'carp': '鯉魚',
+            'salmon': '鮭魚',
+            'koi': '錦鯉',
+            'magic_fish': '魔力魚',
+            'tuna': '黑鮪魚',
+            'shark': '大白鯊',
+            'lava_eel': '熔岩鰻',
+            'void_squid': '虛空烏賊',
+            'god_carp': '神之鯉',
+            'pearl': '珍珠',
+            'quantum_residue': '量子殘渣',
+            'multiverse_shard': '多元宇宙碎片',
+            'divinity_core': '創世神格',
+            'singularity_weapon':'奇點·萬象崩壞',
+            'void_reaper':"虛空收割者",
+            'demon_armor':"惡魔戰甲",
+            'singularity_armor': '奇點·絕對防禦',
+
+            // 🟢 新增碎片
+            'skill_shard': '✨ 技能碎片',
+            'shard_ring_novice': '學徒碎片戒指',
+            'shard_neck_brave': '勇者碎片項鍊',
+            'shard_charm_wind': '疾風碎片護符',
+            'shard_ring_vampire': '吸血鬼碎片指環',
+            'shard_earring_holy': '神聖碎片耳環',
+            'shard_belt_titan': '泰坦碎片腰帶',
+            'shard_pendant_dragon': '龍魂碎片吊墜',
+            'shard_ring_void': '虛空碎片之戒',
+            'shard_core_galaxy': '銀河碎片核心',
+            'shard_crown_infinity': '無限碎片皇冠'
+        };
+        
+        socket.on('dailyQuestData', (data) => {
+            const listDiv = document.getElementById('quest-list');
+            listDiv.innerHTML = ''; 
+
+            const { config, progress, claimed } = data;
+
+            if (!config || Object.keys(config).length === 0) {
+                listDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">暫無任務，請稍後再試</div>';
+                return;
+            }
+
+            for (const [key, quest] of Object.entries(config)) {
+                const cur = progress[key] || 0;
+                const target = quest.target;
+                const displayCur = cur > target ? target : cur;
+                
+                const isDone = cur >= target;
+                const isClaimed = claimed.includes(key);
+
+                let rewardText = `💰${quest.reward.gold} ✨${quest.reward.exp}`;
+                
+                if (quest.reward.item) {
+                    const itemName = ITEM_NAME_MAP[quest.reward.item] || quest.reward.item;
+                    const qty = quest.reward.itemCount || 1;
+                    const qtyText = qty > 1 ? ` x${qty}` : "";
+                    rewardText += ` <span style="color:#e67e22; font-weight:bold;">🎁${itemName}${qtyText}</span>`;
+                }
+
+                let btnHtml = '';
+                if (isClaimed) {
+                    btnHtml = `<button disabled style="background:#7f8c8d; color:#fff; border:1px solid #555; padding:5px; width:100px; border-radius:4px;">已領取</button>`;
+                } else if (isDone) {
+                    btnHtml = `<button onclick="claimQuest('${key}')" style="background:#2ecc71; color:#fff; border:1px solid #27ae60; padding:5px; cursor:pointer; font-weight:bold; width:100px; border-radius:4px; box-shadow:0 2px 5px rgba(0,0,0,0.2);">領取</button>`;
+                } else {
+                    btnHtml = `<button disabled style="background:#34495e; color:#7f8c8d; border:1px solid #2c3e50; padding:5px; width:100px; border-radius:4px;">未完成</button>`;
+                }
+
+                const itemDiv = document.createElement('div');
+                itemDiv.style.background = 'rgba(0,0,0,0.3)';
+                itemDiv.style.marginBottom = '8px';
+                itemDiv.style.padding = '10px';
+                itemDiv.style.borderRadius = '8px';
+                itemDiv.style.border = '1px solid #444';
+
+                if (isDone && !isClaimed) itemDiv.style.borderColor = '#2ecc71';
+
+                itemDiv.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <span style="font-weight:bold; color:#f1c40f; font-size:12px;">${quest.name}</span>
+                        <span style="font-size:10px; color:${isDone ? '#2ecc71' : '#aaa'}; font-weight:bold;">
+                            ${displayCur}/${target}
+                        </span>
+                    </div>
+                    <div style="font-size:10px; color:#bdc3c7; margin-bottom:8px;">${quest.desc}</div>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-size:10px; color:#3498db;">${rewardText}</div>
+                        <div>${btnHtml}</div>
+                    </div>
+                `;
+                listDiv.appendChild(itemDiv);
+            }
+        });
+
+        socket.on('questResult', (res) => {
+            showToast(res.msg);
+        });
+
+        function openFriends() {
+            document.getElementById('friends-modal').style.display = 'flex';
+            socket.emit('getFriends'); 
+        }
+
+        function sendRequest() {
+            const input = document.getElementById('friend-input');
+            const name = input.value.trim();
+            if(!name) return;
             
-            // 🟢 [新增] Lv.201 - Lv.230 虛空之界
-            {
-                id: 'city_9', name: '虛空之界', reqLv: 1, desc: '⚫ 虛無的盡頭 (Lv.210-225)',
-                monsters: [
-                    { id: 'void_worm', name: '虛空吞噬蟲', lv: 210 },
-                    { id: 'shadow_phantom', name: '👻 虚影夢魘 (BOSS)', lv: 225 }
-                ]
-            },
+            if (hasForbiddenChars(name)) {
+                alert("❌ 名稱包含非法隱藏字元！");
+                return;
+            }
 
-            // 🟢 [新增] Lv.231 - Lv.260 星際航道
-            {
-                id: 'city_10', name: '星際航道', reqLv: 1, desc: '🌌 穿越星辰 (Lv.245-260)',
-                monsters: [
-                    { id: 'star_eater', name: '吞星巨獸', lv: 245 },
-                    { id: 'nebula_dragon', name: '🐲 星雲幻龍 (BOSS)', lv: 260 }
-                ]
-            },
+            socket.emit('sendFriendRequest', name);
+            input.value = '';
+        }
 
-            // 🟢 [新增] Lv.261 - Lv.300 維度盡頭
-            {
-                id: 'city_11', name: '維度盡頭', reqLv: 1, desc: '⏳ 時間與空間的終點 (Lv.280-300)',
+        function answerRequest(name, action) {
+            socket.emit('handleFriendRequest', { requesterName: name, action: action });
+        }
+
+        function removeFriend(name) {
+            if(confirm(`確定要刪除好友 [${name}] 嗎？`)) {
+                socket.emit('removeFriend', name);
+            }
+        }
+
+        function startPM(name) {
+            currentChatTarget = name;
+            document.getElementById('friends-modal').style.display = 'none';
+            document.getElementById('pm-modal').style.display = 'flex';
+            document.getElementById('pm-target-name').innerText = name;
+            document.getElementById('pm-history').innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">載入記錄中...</div>';
+            
+            socket.emit('getPrivateHistory', name); 
+            socket.emit('markAsRead', name);
+            socket.emit('getFriends');
+        }
+
+        function closePM() {
+            document.getElementById('pm-modal').style.display = 'none';
+            currentChatTarget = null;
+        }
+
+        function sendPM() {
+            const input = document.getElementById('pm-input');
+            const msg = input.value.trim();
+            if (!msg || !currentChatTarget) return;
+            
+            if (hasForbiddenChars(msg)) {
+                alert("❌ 訊息包含非法隱藏字元，請移除後重試！");
+                return;
+            }
+            
+            socket.emit('privateMessage', { targetName: currentChatTarget, msg: msg });
+            input.value = '';
+        }
+        
+        document.getElementById('pm-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendPM();
+        });
+
+        socket.on('privateHistoryUpdate', (data) => {
+            if (currentChatTarget !== data.targetName) return;
+            
+            const historyDiv = document.getElementById('pm-history');
+            historyDiv.innerHTML = '';
+            
+            if (!data.history || data.history.length === 0) {
+                historyDiv.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">無對話記錄</div>';
+            } else {
+                data.history.forEach(row => {
+                    const rawTime = row.created_at || row.time || Date.now();
+                    const dateObj = new Date(rawTime);
+                    const timeStr = dateObj.toLocaleTimeString('en-GB', { hour12: false }); 
+
+                    appendPM(row.sender, row.message || row.msg, timeStr);
+                });
+            }
+            
+            setTimeout(() => { historyDiv.scrollTop = historyDiv.scrollHeight; }, 100);
+        });
+
+        socket.on('receivePrivateChat', (data) => {
+            const time = data.time ? new Date(data.time) : new Date();
+            const timeStr = time.toLocaleTimeString('en-GB', { hour12: false });
+
+            if (currentChatTarget && (data.fromName === currentChatTarget || data.fromName === myName)) {
+                const isSelf = (data.fromName === myName);
+                const senderName = isSelf ? myName : data.fromName;
+                
+                appendPM(senderName, data.msg, timeStr);
+
+                if (!isSelf) {
+                    socket.emit('markAsRead', data.fromName);
+                }
+            } 
+            else if (data.fromName !== myName) {
+                showToast(`📩 收到來自 [${escapeHtml(data.fromName)}] 的私訊`);
+                socket.emit('getFriends'); 
+            }
+        });
+
+        socket.on('pmNotification', (senderName) => {
+            if (currentChatTarget !== senderName) {
+                showToast(`📩 ${escapeHtml(senderName)} 傳送了私訊給你！`);
+                socket.emit('getFriends');
+            }
+        });
+
+        function appendPM(sender, msg, time = "") {
+            const box = document.getElementById('pm-history');
+            if (!box) return;
+
+            const div = document.createElement('div');
+            div.style.marginBottom = "8px";
+            
+            const isMe = (sender === myName); 
+            
+            if (isMe) {
+                div.style.textAlign = "right";
+                div.innerHTML = `
+                    <span style="font-size:8px; color:#aaa; margin-right:5px;">${time}</span>
+                    <span style="background:#3498db; color:white; padding:6px 10px; border-radius:10px; border-bottom-right-radius:0; font-size:12px;">${escapeHtml(msg)}</span>
+                `;
+            } else {
+                div.style.textAlign = "left";
+                div.innerHTML = `
+                    <div style="font-size:10px; color:#f1c40f; margin-bottom:2px;">${escapeHtml(sender)}</div>
+                    <span style="background:#e67e22; color:white; padding:6px 10px; border-radius:10px; border-bottom-left-radius:0; font-size:12px;">${escapeHtml(msg)}</span>
+                    <span style="font-size:8px; color:#aaa; margin-left:5px;">${time}</span>
+                `;
+            }
+
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        socket.on('friendListUpdate', (data) => {
+            const friends = data.friends || [];
+            const requests = data.requests || [];
+            const totalUnread = data.totalUnread || 0;
+
+            const mainBadge = document.getElementById('main-unread-badge');
+            if (totalUnread > 0) {
+                mainBadge.innerText = totalUnread > 99 ? '99+' : totalUnread;
+                mainBadge.style.display = 'flex';
+            } else {
+                mainBadge.style.display = 'none';
+            }
+
+            const reqSection = document.getElementById('request-section');
+            const reqContainer = document.getElementById('request-list-content');
+            reqContainer.innerHTML = '';
+            
+            if (requests && requests.length > 0) {
+                reqSection.style.display = 'block';
+                requests.forEach(name => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px dashed #ccc; font-size:10px;";
+                    div.innerHTML = `
+                        <span style="font-weight:bold;">${escapeHtml(name)}</span>
+                        <div>
+                            <button onclick="answerRequest('${escapeHtml(name)}', 'accept')" style="background:#2ecc71; border:none; color:white; cursor:pointer; padding:2px 5px; border-radius:3px;">✔</button>
+                            <button onclick="answerRequest('${escapeHtml(name)}', 'reject')" style="background:#e74c3c; border:none; color:white; cursor:pointer; padding:2px 5px; border-radius:3px;">✘</button>
+                        </div>
+                    `;
+                    reqContainer.appendChild(div);
+                });
+            } else {
+                reqSection.style.display = 'none';
+            }
+
+            const friendContainer = document.getElementById('friend-list-content');
+            friendContainer.innerHTML = '';
+            
+            if (friends.length === 0) {
+                friendContainer.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">還沒有好友，快去加人吧！</div>';
+            } else {
+                friends.sort((a, b) => (a.isOnline === b.isOnline) ? 0 : a.isOnline ? -1 : 1);
+                friends.forEach(f => {
+                    const div = document.createElement('div');
+                    div.className = 'friend-row';
+                    const statusClass = f.isOnline ? 'status-on' : 'status-off';
+                    const color = f.isOnline ? '#2c3e50' : '#aaa';
+                    
+                    let badgeHtml = '';
+                    if (f.unread > 0) {
+                        badgeHtml = `<span class="friend-badge">${f.unread}</span>`;
+                    }
+
+                    div.innerHTML = `
+                        <div style="display:flex; align-items:center; color:${color}">
+                            <div class="friend-status ${statusClass}"></div>
+                            <span class="friend-name">${escapeHtml(f.name)}</span>
+                            ${badgeHtml}
+                        </div>
+                        <div class="friend-actions">
+                            <button class="btn-pm" onclick="startPM('${escapeHtml(f.name)}')">私訊</button>
+                            <button class="btn-del" onclick="removeFriend('${escapeHtml(f.name)}')">刪除</button>
+                        </div>
+                    `;
+                    friendContainer.appendChild(div);
+                });
+            }
+        });
+
+        socket.on('updateFriendListRequest', () => {
+            socket.emit('getFriends'); 
+        });
+
+        const WORLD_MAP = [
+            { id: 'city_1', name: '曙光平原', reqLv: 1, desc: '冒險的起點 (Lv.1-20)', monsters: [{ id: 'slime', name: '史萊姆', lv: 1 }, { id: 'rat', name: '大老鼠', lv: 3 }, { id: 'bee', name: '殺人蜂', lv: 5 }, { id: 'boar', name: '野豬', lv: 8 }, { id: 'thief', name: '盜賊', lv: 12 }, { id: 'wolf_king', name: '🐺 狼王 (BOSS)', lv: 15 }] },
+            { id: 'city_2', name: '迷霧沼澤', reqLv: 1, desc: '充滿毒氣與亡靈 (Lv.20-40)', monsters: [{ id: 'snake', name: '毒蛇', lv: 22 }, { id: 'zombie', name: '腐屍', lv: 25 }, { id: 'skeleton', name: '骷髏兵', lv: 28 }, { id: 'ghoul', name: '食屍鬼', lv: 32 }, { id: 'witch', name: '沼澤女巫', lv: 35 }, { id: 'hydra', name: '🐍 九頭蛇 (BOSS)', lv: 40 }] },
+            { id: 'city_3', name: '灼熱峽谷', reqLv: 1, desc: '烈火與熔岩 (Lv.40-60)', monsters: [{ id: 'fire_imp', name: '火焰小鬼', lv: 42 }, { id: 'lava_golem', name: '熔岩戈侖', lv: 45 }, { id: 'salamander', name: '火蜥蜴', lv: 48 }, { id: 'fire_mage', name: '烈焰法師', lv: 52 }, { id: 'dragon_hatchling', name: '幼龍', lv: 55 }, { id: 'balrog', name: '🔥 炎魔 (BOSS)', lv: 60 }] },
+            { id: 'city_4', name: '極寒凍土', reqLv: 1, desc: '永冬之地 (Lv.60-80)', monsters: [{ id: 'snow_wolf', name: '雪原狼', lv: 62 }, { id: 'yeti', name: '雪人', lv: 65 }, { id: 'ice_spirit', name: '冰精靈', lv: 68 }, { id: 'frost_knight', name: '寒霜騎士', lv: 72 }, { id: 'ice_dragon', name: '冰霜龍', lv: 75 }, { id: 'lich_king', name: '❄️ 巫妖王 (BOSS)', lv: 80 }] },
+            { id: 'city_5', name: '虛空要塞', reqLv: 1, desc: '接近魔界的地方 (Lv.80-100)', monsters: [{ id: 'void_eye', name: '虛空之眼', lv: 82 }, { id: 'shadow_assassin', name: '暗影刺客', lv: 85 }, { id: 'dark_paladin', name: '墮落聖騎', lv: 88 }, { id: 'demon_guard', name: '惡魔守衛', lv: 92 }, { id: 'succubus', name: '魅魔', lv: 95 }, { id: 'void_lord', name: '👁️ 虛空領主 (BOSS)', lv: 99 }] },
+            { id: 'city_6', name: '魔界王座', reqLv: 1, desc: '💀 最終決戰 (Lv.100-150)', monsters: [{ id: 'chaos_beast', name: '混沌巨獸', lv: 105 }, { id: 'fallen_angel', name: '墮天使', lv: 110 }, { id: 'demon_king', name: '👑 魔王撒旦', lv: 150 }] },
+            { id: 'city_7', name: '虛空裂縫', reqLv: 1, desc: '🟣 扭曲的次元 (Lv.160-180)', monsters: [{ id: 'void_walker', name: '虛空行者', lv: 160 }, { id: 'chaos_knight', name: '混沌騎士', lv: 170 }, { id: 'abyss_dragon', name: '🐉 深淵魔龍 (BOSS)', lv: 180 }] },
+            { id: 'city_8', name: '眾神墓地', reqLv: 1, desc: '💀 神話終結之地 (Lv.190-200)', monsters: [{ id: 'fallen_titan', name: '墮落泰坦', lv: 190 }, { id: 'genesis_god', name: '☠️ 創世破壞神 (FINAL)', lv: 200 }] },
+            { id: 'city_9', name: '虛空之界', reqLv: 200, desc: '⚫ 虛無的盡頭 (Lv.210-225)', monsters: [{ id: 'void_worm', name: '虛空吞噬蟲', lv: 210 }, { id: 'shadow_phantom', name: '👻 虚影夢魘 (BOSS)', lv: 225 }] },
+            { id: 'city_10', name: '星際航道', reqLv: 200, desc: '🌌 穿越星辰 (Lv.245-260)', monsters: [{ id: 'star_eater', name: '吞星巨獸', lv: 245 }, { id: 'nebula_dragon', name: '🐲 星雲幻龍 (BOSS)', lv: 260 }] },
+            { id: 'city_11', name: '維度盡頭', reqLv: 200, desc: '⏳ 時間與空間的終點 (Lv.280-300)', monsters: [{ id: 'time_keeper', name: '時空裁決者', lv: 280 }, { id: 'dimension_breaker', name: '維度粉碎者', lv: 290 }, { id: 'entropy_god', name: '👑 終焉·熱寂之神 (GOD)', lv: 300 }] },
+            
+            // 🟢 新增地圖
+            { 
+                id: 'city_12', 
+                name: '終焉奇點', 
+                reqLv: 230, 
+                desc: '⚛️ 宇宙重啟之地 (Lv.450-500)', 
                 monsters: [
-                    { id: 'time_keeper', name: '時空裁決者', lv: 280 },
-                    { id: 'dimension_breaker', name: '維度粉碎者', lv: 290 },
-                    { id: 'entropy_god', name: '👑 終焉·熱寂之神 (GOD)', lv: 300 }
-                ]
+                    { id: 'chaos_boss', name: '🌀 混沌幻影 (隨機)', lv: '350+' },
+                    { id: 'akashic_record', name: '👁️ 全知者·阿卡西 (BOSS)', lv: 550 }
+                ] 
+            },
+            // 🟢 新增 Lv.600 地圖
+            { 
+                id: 'city_13', 
+                name: '零之領域', 
+                reqLv: 450, 
+                desc: '☠️ 宇宙的終焉 (Lv.580+)', 
+                monsters: [
+                    { id: 'void_devourer_god', name: '🌌 零界·虛無吞噬者 (GOD)', lv: 580}
+                ] 
             }
         ];
 
@@ -598,19 +1015,13 @@
         let selectedMonster = null;
         let cityData = {}; 
         let activeRooms = []; 
-        let bossHubTimer = null; // 大廳的計時器
+        let bossHubTimer = null;
 
         socket.on('connect', () => {
             const status = document.getElementById('conn-status');
             status.innerHTML = " 已連線";
             status.style.color = "#2ecc71";
-            
-            const delay = Math.floor(Math.random() * 1400) + 100;
-            console.log(`[系統] 隨機延遲: ${delay}ms`);
-            
-            setTimeout(() => {
-                socket.emit('joinGame', myToken);
-            }, delay);
+            socket.emit('joinGame', myToken);
         });
 
         socket.on('disconnect', () => {
@@ -621,33 +1032,63 @@
 
         socket.on('tokenExpired', () => {
             alert("⚠️ 登入憑證已失效 (可能密碼已更改)，請重新登入！");
-            localStorage.removeItem('rpg_token'); 
+            localStorage.removeItem('rpg_token');  
             window.location.href = 'index.html';  
         });
         
-        // 🟢 [修改] 更新玩家數值，包含 ATK, DEF, HP Bar, MP Bar
         socket.on('playerStatsUpdate', (p) => {
             myLevel = p.level;
-            document.getElementById('pid').innerText = p.name || "Unknown";
-            document.getElementById('lvl').innerText = p.level;
-            document.getElementById('gold').innerText = p.gold.toLocaleString();
-
-            // HP
-            document.getElementById('hp').innerText = `${p.hp}/${p.maxHp}`;
-            document.getElementById('hp-bar-fill').style.width = Math.max(0, Math.min(100, (p.hp / p.maxHp * 100))) + '%';
-
-            // MP
-            document.getElementById('mp').innerText = `${p.mp}/${p.maxMp}`;
-            document.getElementById('mp-bar-fill').style.width = Math.max(0, Math.min(100, (p.mp / p.maxMp * 100))) + '%';
-
-            // ATK & DEF
-            document.getElementById('atk').innerText = p.atk || 0;
-            document.getElementById('def').innerText = p.def || 0;
-
-            // EXP
-            document.getElementById('exp-txt').innerText = `${p.exp}/${p.maxExp}`;
-            document.getElementById('exp-fill').style.width = (p.exp / p.maxExp * 100) + '%';
+            myName = p.name;
             
+            // 🟢 [修改] 左上角顯示轉生格式
+            document.getElementById('pid').innerHTML = formatName(p.name, p.rebirth);
+            
+            document.getElementById('lvl').innerText = p.level;
+            document.getElementById('gold').innerText = (p.gold || 0).toLocaleString();
+            let hpPct = (p.hp / p.maxHp) * 100;
+            document.getElementById('hp').innerText = `${p.hp}/${p.maxHp}`;
+            document.getElementById('hp-bar-fill').style.width = Math.max(0, Math.min(100, hpPct)) + '%';
+            let mpPct = (p.mp / p.maxMp) * 100;
+            document.getElementById('mp').innerText = `${p.mp}/${p.maxMp}`;
+            document.getElementById('mp-bar-fill').style.width = Math.max(0, Math.min(100, mpPct)) + '%';
+            document.getElementById('atk').innerText = (p.atk || 0).toLocaleString();
+            document.getElementById('def').innerText = (p.def || 0).toLocaleString();
+
+            // 更新耐久度顯示
+            const dur = p.durability || {};
+            const equip = p.equipment || {};
+            const MAX_DUR = 100;
+            const ITEM_NAMES = window._hubItemNames || {};
+
+            function getDurColor(v) {
+                if (v >= 80) return '#27ae60';
+                if (v >= 50) return '#f39c12';
+                if (v >= 20) return '#e67e22';
+                return '#e74c3c';
+            }
+
+            let anyEquipped = false;
+            [['weapon','dur-weapon'],['armor','dur-armor'],['acc','dur-acc']].forEach(([slot, elId]) => {
+                const itemId = equip[slot];
+                const el = document.getElementById(elId);
+                if (!itemId) { if(el) el.style.display = 'none'; return; }
+                anyEquipped = true;
+                el.style.display = 'block';
+                const curDur = (dur[itemId] !== undefined) ? dur[itemId] : MAX_DUR;
+                const pct = Math.min(100, Math.round((curDur / MAX_DUR) * 100));
+                const col = getDurColor(curDur);
+                document.getElementById(elId+'-val').innerText = curDur;
+                document.getElementById(elId+'-bar').style.width = pct + '%';
+                document.getElementById(elId+'-bar').style.background = col;
+                // item name from server item list if available
+                const nameEl = document.getElementById(elId+'-name');
+                if (nameEl && window._hubItemDB && window._hubItemDB[itemId]) {
+                    nameEl.innerText = window._hubItemDB[itemId];
+                }
+            });
+            document.getElementById('durability-section').style.display = anyEquipped ? 'block' : 'none';
+            document.getElementById('exp-txt').innerText = `${p.exp}/${p.maxExp}`;
+            document.getElementById('exp-fill').style.width = Math.min(100, (p.exp / p.maxExp * 100)) + '%';
             refreshUI();
         });
 
@@ -657,7 +1098,6 @@
             refreshUI(); 
         });
 
-        // 🟢 [修改] 監聽世界 BOSS 狀態 (包含倒數邏輯)
         socket.on('worldBossUpdate', (data) => {
             const banner = document.getElementById('boss-banner');
             if (data.active) {
@@ -665,61 +1105,41 @@
                 const pct = (data.hp / data.maxHp) * 100;
                 document.getElementById('boss-hp-bar').style.width = pct + "%";
                 document.getElementById('boss-hp-text').innerText = `${(data.hp/100000000).toFixed(1)}億 / ${(data.maxHp/100000000).toFixed(1)}億`;
-
-                // 啟動大廳倒數
                 if (data.remainingTime !== undefined) {
                     let timeLeft = Math.floor(data.remainingTime / 1000);
                     const timerSpan = document.getElementById('boss-timer');
-                    
                     if (bossHubTimer) clearInterval(bossHubTimer);
-                    
-                    // 立即更新一次
                     updateHubTimer(timerSpan, timeLeft);
-                    
                     bossHubTimer = setInterval(() => {
                         timeLeft--;
                         updateHubTimer(timerSpan, timeLeft);
                         if (timeLeft <= 0) clearInterval(bossHubTimer);
                     }, 1000);
                 }
-
             } else {
                 banner.style.display = 'none';
                 if (bossHubTimer) clearInterval(bossHubTimer);
             }
         });
 
-        // 🟢 接收排名更新
         socket.on('updateHubRanking', (ranking) => {
             const box = document.getElementById('boss-ranking-area');
             const list = document.getElementById('ranking-list');
-            
-            if (!ranking || ranking.length === 0) {
-                box.style.display = 'none'; 
-                return;
-            }
-
+            if (!ranking || ranking.length === 0) { box.style.display = 'none'; return; }
             box.style.display = 'block';
             list.innerHTML = '';
-
             ranking.forEach((r, index) => {
                 const div = document.createElement('div');
                 div.className = 'rank-row';
-                
                 let medal = `#${index + 1}`;
                 let rankClass = '';
                 if (index === 0) { medal = '🥇'; rankClass = 'rank-1'; }
                 else if (index === 1) { medal = '🥈'; rankClass = 'rank-2'; }
                 else if (index === 2) { medal = '🥉'; rankClass = 'rank-3'; }
-
                 let dmgText = (r.dmg / 100000000).toFixed(2) + "億";
                 if (r.dmg < 100000000) dmgText = (r.dmg / 10000).toFixed(0) + "萬";
-
-                // 🔥 [核心修改] 在數字前加上 "輸出能力: "
-                div.innerHTML = `
-                    <span class="${rankClass}">${medal} ${r.name}</span>
-                    <span style="color:#ccc;">輸出: ${dmgText}</span>
-                `;
+                
+                div.innerHTML = `<span class="${rankClass}">${medal} ${escapeHtml(r.name)}</span><span style="color:#ccc;">輸出: ${dmgText}</span>`;
                 list.appendChild(div);
             });
         });
@@ -731,9 +1151,7 @@
             el.innerText = `${m}:${s}`;
         }
 
-        function joinBoss() {
-            socket.emit('joinWorldBoss');
-        }
+        function joinBoss() { socket.emit('joinWorldBoss'); }
 
         socket.on('marketResult', (res) => { if (res.success) { showToast(res.msg); } });
         socket.on('bagResult', (res) => { if (res.success) { showToast(res.msg); } });
@@ -747,35 +1165,65 @@
 
         socket.on('roomJoined', (data) => { 
             const roomId = data.roomId || data; 
-            window.location.href = `battle.html?room=${roomId}`; 
+            window.location.href = `battle_v22.html?room=${roomId}`; 
         });
         
-        socket.on('errorMessage', (msg) => { alert("❌ " + msg); });
+        socket.on('errorMessage', (msg) => { 
+            if (msg.includes('【') && msg.includes('】')) {
+                document.querySelector('#notice-modal .notice-title').innerText = "📬 系統通知";
+                document.querySelector('#notice-modal .notice-content').innerHTML = msg.replace(/\n/g, '<br>');
+                document.getElementById('notice-modal').style.display = 'flex';
+            } else {
+                showToast("❌ " + msg); 
+            }
+        });
+        
+        socket.on('battleLog', (msg) => {
+            if (msg.includes('強化') && (msg.includes('成功') || msg.includes('失敗') || msg.includes('破碎'))) {
+                return;
+            }
+            appendChat('系統', msg);
+        });
 
-        // --- 聊天邏輯 ---
         socket.on('chatHistory', (history) => {
             const box = document.getElementById('chat-history');
             box.innerHTML = ''; 
-            history.forEach(data => appendChat(data.name, data.msg));
+            // 歷史訊息可能沒有 rebirth 屬性，所以暫時不處理舊訊息的顏色
+            history.forEach(data => appendChat(data.name, data.msg, data.rebirth));
         });
 
         socket.on('chatMessage', (data) => {
-            appendChat(data.name, data.msg);
+            // 房間內對話不在公頻顯示
+            if (data.isRoomChat) return;
+            if (data.name === '系統' && data.msg.includes('強化') && (data.msg.includes('成功') || data.msg.includes('失敗'))) {
+                return;
+            }
+            // 🟢 [修改] 傳入 rebirth
+            appendChat(data.name, data.msg, data.rebirth);
         });
 
-        function appendChat(name, msg) {
+        // 🟢 [核心修改] 公頻聊天渲染
+        function appendChat(name, msg, rebirth) {
+if (name === '系統') return;
+            /* --- 以下舊代碼可以刪除或註解掉 ---
+            if (name === '系統') {
+                // 系統訊息
+                const history = document.getElementById('chat-history');
+                const div = document.createElement('div');
+                div.innerHTML = `<span style="color:#e74c3c; font-weight:bold;">[系統]:</span> <span style="color:#bdc3c7;">${msg}</span>`;
+                history.appendChild(div);
+                history.scrollTop = history.scrollHeight;
+                return;
+            }
+            ----------------------------------- */
+
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
             
-            const nameSpan = document.createElement('span');
-            nameSpan.style.color = '#f1c40f';
-            nameSpan.style.fontWeight = 'bold';
-            nameSpan.textContent = `[${name}]: `;
+            // 使用工具函式格式化名字
+            const displayName = formatName(name, rebirth);
 
-            const msgNode = document.createTextNode(msg);
-
-            div.appendChild(nameSpan);
-            div.appendChild(msgNode);
+            div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${displayName}]:</span> ${escapeHtml(msg)}`;
             
             history.appendChild(div);
             history.scrollTop = history.scrollHeight;
@@ -789,21 +1237,23 @@
         function sendChat() {
             const input = document.getElementById('chat-input');
             const msg = input.value.trim();
-            if (msg) { socket.emit('sendChat', msg); input.value = ''; }
+            if (!msg) return;
+
+            if (hasForbiddenChars(msg)) {
+                alert("❌ 訊息包含非法隱藏字元，請移除後重試！");
+                return;
+            }
+
+            socket.emit('sendChat', msg); 
+            input.value = '';
         }
 
         function toggleChat() {
             const chat = document.getElementById('chat-container');
             const header = document.getElementById('chat-header');
-            
             if (window.innerWidth >= 1024) return;
-
             chat.classList.toggle('chat-open');
-            if(chat.classList.contains('chat-open')) {
-                header.innerText = " 點擊收起";
-            } else {
-                header.innerText = " 公頻聊天室 (點擊展開)";
-            }
+            header.innerText = chat.classList.contains('chat-open') ? " 點擊收起" : " 公頻聊天室 (點擊展開)";
         }
 
         window.logout = function() {
@@ -814,23 +1264,66 @@
         };
 
         let isProcessing = false;
+        let pendingMobId = null;
         
+        // ==========================================
+        //  [改版] 開房時選擇房間類型 (單人/公開/私人)
+        // ==========================================
         window.triggerCreateRoom = function(mobId) {
             if (isProcessing) return; 
             if (!socket.connected) { showToast("錯誤：未連線到伺服器！"); return; }
-        
-            isProcessing = true; 
+            pendingMobId = mobId;
+            document.getElementById('room-type-modal').style.display = 'flex';
+        };
+
+        window.closeRoomTypeModal = function() {
+            document.getElementById('room-type-modal').style.display = 'none';
+            document.getElementById('private-pw-section').style.display = 'none';
+            document.getElementById('room-pw-input').value = '';
+            pendingMobId = null;
+        };
+
+        window.selectRoomType = function(type) {
+            if (type === 'private') {
+                document.getElementById('private-pw-section').style.display = 'block';
+                return;
+            }
+            confirmCreateRoom(type, null);
+        };
+
+        window.confirmPrivateRoom = function() {
+            const pw = document.getElementById('room-pw-input').value.trim();
+            if (!pw) { showToast("請輸入房間密碼！"); return; }
+            if (pw.length > 20) { showToast("密碼不能超過 20 字！"); return; }
+            confirmCreateRoom('private', pw);
+        };
+
+        function confirmCreateRoom(roomType, password) {
+            if (!pendingMobId || isProcessing) return;
+            isProcessing = true;
             document.getElementById('list-title').innerText = "正在建立房間...";
-            
-            socket.emit('createRoom', mobId);
-        
+            socket.emit('createRoom', { monsterKey: pendingMobId, roomType: roomType, password: password });
+            closeRoomTypeModal();
             setTimeout(() => {
                 isProcessing = false;
                 if(selectedMonster) document.getElementById('list-title').innerText = `${selectedMonster.name} - 房間`;
             }, 2000);
-        };
+        }
         
-        window.triggerJoinRoom = function(roomId) { socket.emit('joinRoom', roomId); };
+        window.triggerJoinRoom = function(roomId, roomType) { 
+            if (roomType === 'solo') {
+                showToast("❌ 這是單人房間，無法加入！");
+                return;
+            }
+            if (roomType === 'private') {
+                // 顯示密碼輸入彈窗
+                const pw = prompt("🔒 此為私人房間，請輸入密碼：");
+                if (pw === null || pw.trim() === '') return; // 取消或空白
+                socket.emit('joinRoom', { roomId: roomId, password: pw.trim() });
+            } else {
+                socket.emit('joinRoom', { roomId: roomId });
+            }
+        };
         window.triggerEnterCity = function(cityId) {
             let city = WORLD_MAP.find(c => c.id === cityId);
             if (city) { selectedCity = city; currentView = 'monsters'; socket.emit('enterCity', cityId); refreshUI(); }
@@ -842,6 +1335,12 @@
         };
         window.goBack = function(view) { currentView = view; refreshUI(); };
 
+        function triggerSelectChaosBoss() {
+            selectedMonster = { id: 'chaos_boss', name: '🔮 混沌裂縫', lv: '350-500' };
+            currentView = 'rooms'; 
+            refreshUI();
+        }
+
         function refreshUI() {
             const container = document.getElementById('map-list');
             let html = '';
@@ -852,10 +1351,8 @@
                     const isLowLevel = myLevel < city.reqLv;
                     const count = cityData[city.id] || 0;
                     const warnText = isLowLevel ? `<span style="color:#e74c3c">(LV${city.reqLv})</span>` : '';
-                    
                     const lockClass = isLowLevel ? 'locked' : '';
                     const action = isLowLevel ? '' : `onclick="triggerEnterCity('${city.id}')"`;
-
                     html += `<div class="btn ${lockClass}" style="border-color:#3498db" ${action}>
                         <div style="display:flex; justify-content:space-between;"><span style="font-size:12px; font-weight:bold;">${city.name} ${warnText}</span><span class="info-tag">${count}人</span></div>
                         <div style="font-size:10px; color:#bdc3c7; margin-top:5px;">${city.desc}</div></div>`;
@@ -866,7 +1363,6 @@
                     const rooms = activeRooms.filter(r => r.monsterKey === mob.id);
                     const fighting = rooms.filter(r => r.status === 'fighting').length;
                     const waiting = rooms.filter(r => r.status === 'waiting').length;
-                    
                     html += `<div class="btn" style="border-color:#c0392b" onclick="triggerSelectMonster('${mob.id}')">
                         <span style="font-size:12px; font-weight:bold;">${mob.name} (LV.${mob.lv})</span>
                         <div style="margin-top:5px; font-size:10px;"><span class="info-tag" style="color:#2ecc71">等:${waiting}</span><span class="info-tag" style="color:#e74c3c; margin-right:10px;">戰:${fighting}</span></div></div>`;
@@ -875,42 +1371,107 @@
             } else if (currentView === 'rooms') {
                 document.getElementById('list-title').innerText = `${selectedMonster.name} - 房間`;
                 html += `<div class="btn" style="background:#27ae60; text-align:center; font-weight:bold; font-size:12px;" onclick="triggerCreateRoom('${selectedMonster.id}')">➕ 開新房間</div>`;
-                
                 const myRooms = activeRooms.filter(r => r.monsterKey === selectedMonster.id);
-                
                 if (myRooms.length === 0) html += `<div style="font-size:10px; color:#aaa; margin:10px;">目前沒有房間...</div>`;
-                
                 myRooms.forEach((room, index) => { 
                     const isFighting = room.status === 'fighting';
-                    const clickAction = isFighting ? '' : `onclick="triggerJoinRoom('${room.id}')"`;
-                    
+                    const isSolo = room.roomType === 'solo';
+                    const isPrivate = room.roomType === 'private';
+                    const canJoin = !isFighting && !isSolo;
+                    const clickAction = canJoin ? `onclick="triggerJoinRoom('${room.id}', '${room.roomType || 'public'}')"` : '';
                     let statusTag = '<span class="room-tag status-waiting">等待中</span>';
                     let lockClass = '';
-                    
-                    if (isFighting) {
-                        statusTag = '<span class="room-tag status-fighting">戰鬥中</span>';
-                        lockClass = 'locked'; 
-                    } else if (room.playerCount >= 5) { 
-                        statusTag = '<span class="room-tag" style="background:#e67e22; color:white">已滿員</span>';
-                    }
+                    if (isFighting) { statusTag = '<span class="room-tag status-fighting">戰鬥中</span>'; lockClass = 'locked'; }
+                    else if (isSolo) { statusTag = '<span class="room-tag" style="background:#9b59b6; color:white">單人</span>'; lockClass = 'locked'; }
+                    else if (room.playerCount >= 6) { statusTag = '<span class="room-tag" style="background:#e67e22; color:white">已滿員</span>'; }
 
+                    // 房間類型圖示
+                    let typeIcon = '🌐'; // 公開
+                    if (isSolo) typeIcon = '👤';
+                    else if (isPrivate) typeIcon = '🔒';
+                    
                     html += `<div class="btn ${lockClass}" ${clickAction}>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:12px; font-weight:bold; color:#f1c40f;">
-                                🚩 ${room.hostName} 的隊伍
-                            </span>
+                            <span style="font-size:12px; font-weight:bold; color:#f1c40f;">${typeIcon} ${escapeHtml(room.hostName)} 的隊伍</span>
                             <span style="font-size:10px; color:#bdc3c7;">#${index + 1}</span>
                         </div>
-                        <div style="margin-top:5px; display:flex; justify-content:space-between;">
-                            ${statusTag}
-                            <span class="info-tag">${room.playerCount}/5 人</span>
-                        </div>
+                        <div style="margin-top:5px; display:flex; justify-content:space-between;">${statusTag}<span class="info-tag">${room.playerCount}/${isSolo ? '1' : '5'} 人</span></div>
+                        ${room.monsterKey === 'chaos_boss' ? `<div style="font-size:9px; color:#aaa; margin-top:2px;">目標: ${room.monsterName}</div>` : ''}
                     </div>`;
                 });
-                html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('monsters')">◀ 返回列表</div>`;
+                if (selectedMonster.id === 'chaos_boss') {
+                    html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('cities')">◀ 返回大廳</div>`;
+                } else {
+                    html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('monsters')">◀ 返回列表</div>`;
+                }
             }
             container.innerHTML = html;
         }
     </script>
+
+    <!-- ==========================================
+         房間類型選擇彈窗
+    ========================================== -->
+    <div id="room-type-modal" style="
+        display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+        background:rgba(0,0,0,0.7); z-index:9999;
+        justify-content:center; align-items:center;
+    ">
+        <div style="
+            background:#2c3e50; border:2px solid #3498db; border-radius:12px;
+            padding:20px; width:280px; max-width:90%; text-align:center;
+            box-shadow:0 0 20px rgba(52,152,219,0.4);
+        ">
+            <div style="font-size:14px; font-weight:bold; color:#ecf0f1; margin-bottom:15px;">
+                ⚔️ 選擇房間類型
+            </div>
+            
+            <div onclick="selectRoomType('solo')" style="
+                background:#9b59b6; color:white; padding:12px; border-radius:8px;
+                margin-bottom:8px; cursor:pointer; font-size:12px; font-weight:bold;
+            ">
+                👤 單人模式
+                <div style="font-size:10px; font-weight:normal; margin-top:3px; opacity:0.8;">自己一個人挑戰</div>
+            </div>
+            
+            <div onclick="selectRoomType('public')" style="
+                background:#27ae60; color:white; padding:12px; border-radius:8px;
+                margin-bottom:8px; cursor:pointer; font-size:12px; font-weight:bold;
+            ">
+                🌐 公開房間
+                <div style="font-size:10px; font-weight:normal; margin-top:3px; opacity:0.8;">任何人都可以加入</div>
+            </div>
+            
+            <div onclick="selectRoomType('private')" style="
+                background:#e67e22; color:white; padding:12px; border-radius:8px;
+                margin-bottom:8px; cursor:pointer; font-size:12px; font-weight:bold;
+            ">
+                🔒 私人房間
+                <div style="font-size:10px; font-weight:normal; margin-top:3px; opacity:0.8;">需要密碼才能加入</div>
+            </div>
+
+            <!-- 私人房間密碼輸入區 -->
+            <div id="private-pw-section" style="display:none; margin-top:10px;">
+                <input id="room-pw-input" type="text" maxlength="20" placeholder="輸入房間密碼..." style="
+                    width:90%; padding:8px; border-radius:6px; border:1px solid #7f8c8d;
+                    background:#34495e; color:#ecf0f1; font-size:12px; text-align:center;
+                    outline:none;
+                " />
+                <div onclick="confirmPrivateRoom()" style="
+                    background:#e74c3c; color:white; padding:10px; border-radius:8px;
+                    margin-top:8px; cursor:pointer; font-size:12px; font-weight:bold;
+                ">
+                    ✅ 確認建立
+                </div>
+            </div>
+
+            <div onclick="closeRoomTypeModal()" style="
+                color:#95a5a6; margin-top:12px; cursor:pointer; font-size:11px;
+            ">
+                ✖ 取消
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
