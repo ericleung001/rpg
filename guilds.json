@@ -1,0 +1,59 @@
+{
+  "g_1768982620148": {
+    "id": "g_1768982620148",
+    "name": "ERIC",
+    "leaderId": "iZoWDbB2YSIBQIJYAAAF",
+    "leaderName": "test6",
+    "gold": 487409502,
+    "members": [
+      "test6",
+      "test9",
+      "test4",
+      "test10"
+    ],
+    "applicants": [],
+    "notice": "歡迎加入",
+    "chatHistory": [
+      {
+        "name": "test6",
+        "msg": "hi",
+        "time": "16:47"
+      },
+      {
+        "name": "test9",
+        "msg": "hi",
+        "time": "16:47"
+      },
+      {
+        "name": "test9",
+        "msg": "hi",
+        "time": "14:11"
+      },
+      {
+        "name": "test9",
+        "msg": "hi",
+        "time": "14:16"
+      }
+    ],
+    "memberContribution": {
+      "test9": 148003,
+      "test4": 0,
+      "test10": 12
+    },
+    "viceLeader": null,
+    "viceLeaderName": "test9",
+    "facilities": {
+      "temple": 5,
+      "expedition": 3,
+      "vault": 1
+    },
+    "shard": 12012,
+    "vault": {
+      "items": {
+        "shard_ring_novice": 16,
+        "elixir": 11,
+        "soft_fur": 6
+      }
+    }
+  }
+}

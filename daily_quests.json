@@ -1,0 +1,166 @@
+{
+  "test9": {
+    "date": "2026-03-26",
+    "active": [
+      "login_1",
+      "win_2000",
+      "win_500",
+      "win_30",
+      "use_3"
+    ],
+    "progress": {
+      "login_1": 1,
+      "win_2000": 5,
+      "win_500": 6,
+      "win_30": 3,
+      "use_3": 0
+    },
+    "claimed": [
+      "login_1"
+    ]
+  },
+  "test10": {
+    "date": "2026-03-26",
+    "active": [
+      "login_1",
+      "kill_lv50",
+      "legend",
+      "win_1000",
+      "rampage"
+    ],
+    "progress": {
+      "login_1": 1,
+      "kill_lv50": 6,
+      "legend": 6,
+      "win_1000": 0,
+      "rampage": 14
+    },
+    "claimed": []
+  },
+  "test8": {
+    "date": "2026-03-02",
+    "active": [
+      "login_1",
+      "use_3",
+      "rampage",
+      "kill_lv400",
+      "kill_lv200"
+    ],
+    "progress": {
+      "login_1": 1,
+      "use_3": 0,
+      "rampage": 0,
+      "kill_lv400": 0,
+      "kill_lv200": 0
+    },
+    "claimed": []
+  },
+  "test6": {
+    "date": "2026-01-27",
+    "active": [
+      "login_1",
+      "rampage",
+      "win_100",
+      "survivor",
+      "win_500"
+    ],
+    "progress": {
+      "login_1": 1,
+      "rampage": 0,
+      "win_100": 0,
+      "survivor": 0,
+      "win_500": 0
+    },
+    "claimed": []
+  },
+  "test4": {
+    "date": "2026-01-29",
+    "active": [
+      "login_1",
+      "win_2000",
+      "kill_lv400",
+      "rampage",
+      "kill_lv100"
+    ],
+    "progress": {
+      "login_1": 1,
+      "win_2000": 0,
+      "kill_lv400": 0,
+      "rampage": 2,
+      "kill_lv100": 0
+    },
+    "claimed": []
+  },
+  "test15": {
+    "date": "2026-01-26",
+    "active": [
+      "login_1",
+      "hard_work",
+      "lucky_day",
+      "kill_lv200",
+      "rampage"
+    ],
+    "progress": {
+      "login_1": 1,
+      "hard_work": 1,
+      "lucky_day": 1,
+      "kill_lv200": 0,
+      "rampage": 1
+    },
+    "claimed": []
+  },
+  "test13": {
+    "date": "2026-03-05",
+    "active": [
+      "login_1",
+      "survivor",
+      "win_100",
+      "rampage",
+      "win_30"
+    ],
+    "progress": {
+      "login_1": 1,
+      "survivor": 0,
+      "win_100": 0,
+      "rampage": 0,
+      "win_30": 0
+    },
+    "claimed": []
+  },
+  "test11": {
+    "date": "2026-03-02",
+    "active": [
+      "login_1",
+      "legend",
+      "veteran",
+      "kill_lv50",
+      "win_2000"
+    ],
+    "progress": {
+      "login_1": 1,
+      "legend": 0,
+      "veteran": 0,
+      "kill_lv50": 0,
+      "win_2000": 0
+    },
+    "claimed": []
+  },
+  "test12": {
+    "date": "2026-03-02",
+    "active": [
+      "login_1",
+      "kill_lv550",
+      "win_500",
+      "win_2000",
+      "survivor"
+    ],
+    "progress": {
+      "login_1": 1,
+      "kill_lv550": 0,
+      "win_500": 0,
+      "win_2000": 0,
+      "survivor": 0
+    },
+    "claimed": []
+  }
+}
