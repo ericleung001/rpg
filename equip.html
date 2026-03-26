@@ -202,34 +202,40 @@
         };
 
         // 裝備等級限制 (同 server EQUIP_REQ_LV)
+        // 神話系列 = Lv.450 (最強)，其他 ≤ Lv.400
         const EQUIP_REQ_LV = {
+            // 武器
             'wood_sword':1,'copper_dagger':1,'oak_bow':1,'steel_blade':1,'hero_sword':1,
             'iron_sword':10,'maple_staff':10,'shark_tooth':10,'silver_blade':20,
-            'spike_club':25,'poison_dag':25,'assassin_dag':25,'emerald_staff':30,
+            'spike_club':20,'poison_dag':20,'assassin_dag':20,'emerald_staff':30,
             'flame_staff':40,'gold_axe':40,'obsidian_blade':50,
             'frost_bow':60,'dragon_spear':60,'mithril_saber':80,
-            'void_reaper':95,'void_reaper_dark':100,
-            'god_slayer':120,'chaos_staff':120,'genesis_weapon':200,
-            'void_blade':230,'galaxy_saber':260,'entropy_sword':300,
-            'infinity_blade':450,'singularity_weapon':500,
-            'shard_blade_novice':10,'shard_axe_crystal':150,'shard_scythe_void':350,
-            'shard_spear_galaxy':480,'shard_wep_dimension':550,'shard_wep_origin':600,
+            'void_reaper':100,'void_reaper_dark':100,
+            'god_slayer':130,'chaos_staff':130,'genesis_weapon':180,
+            'void_blade':220,'galaxy_saber':260,'entropy_sword':300,
+            'infinity_blade':350,'singularity_weapon':400,
+            'shard_blade_novice':10,'shard_axe_crystal':100,'shard_scythe_void':200,
+            'shard_spear_galaxy':300,'shard_wep_dimension':380,'shard_wep_origin':400,
+            // 防具
             'cloth_armor':1,'plate_mail':1,'leather_armor':5,'hunt_vest':5,
             'dragon_mail':15,'chain_mail':25,'iron_armor':35,
             'magma_plate':50,'ice_robe':60,'yeti_cloak':70,
-            'demon_armor':90,'angel_armor':120,'genesis_armor':200,
-            'void_armor':230,'nebula_plate':260,'entropy_god_armor':300,
-            'event_horizon':450,'singularity_armor':500,
-            'shard_armor_novice':10,'shard_armor_crystal':150,'shard_robe_void':350,
-            'shard_plate_galaxy':480,'shard_armor_dimension':550,'shard_armor_origin':600,
+            'demon_armor':100,'angel_armor':130,'genesis_armor':180,
+            'void_armor':220,'nebula_plate':260,'entropy_god_armor':300,
+            'event_horizon':350,'singularity_armor':400,
+            'shard_armor_novice':10,'shard_armor_crystal':100,'shard_robe_void':200,
+            'shard_plate_galaxy':300,'shard_armor_dimension':380,'shard_armor_origin':400,
+            // 飾品
             'bone_ring':1,'ring_life':1,'ring_magic':1,
             'ring_str':5,'bracelet_def':5,'necklace_hp':5,'necklace_mp':5,
             'fish_ring':10,'snake_boots':10,'pearl_necklace':20,
             'amulet_soul':80,'ring_lord':100,'crown_chaos':150,
-            'ring_galaxy':200,'dimension_ring':280,'mobius_ring':450,'singularity_acc':500,
+            'ring_galaxy':200,'dimension_ring':280,'mobius_ring':350,'singularity_acc':400,
             'shard_ring_novice':10,'shard_neck_brave':30,'shard_charm_wind':60,
             'shard_ring_vampire':100,'shard_earring_holy':150,'shard_belt_titan':200,
-            'shard_pendant_dragon':300,'shard_ring_void':400,'shard_core_galaxy':450,'shard_crown_infinity':500
+            'shard_pendant_dragon':280,'shard_ring_void':350,'shard_core_galaxy':380,'shard_crown_infinity':400,
+            // 神話 (最強 = Lv.450)
+            'myth_weapon':450,'myth_armor':450,'myth_acc':450
         };
 
         let myLevel = 1;
