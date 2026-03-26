@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>冒險者公會 - 僱員探險</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #1a1a2e; color: #ecf0f1; font-family: 'Press Start 2P', monospace; font-size: 10px; min-height: 100dvh; }
+        
+        .header { background: #16213e; padding: 10px; text-align: center; border-bottom: 3px solid #e67e22; }
+        .header h1 { font-size: 14px; color: #e67e22; }
+        .header .back { position: absolute; left: 10px; top: 10px; color: #95a5a6; cursor: pointer; font-size: 10px; text-decoration: none; }
+        .header .info { font-size: 9px; color: #aaa; margin-top: 5px; }
+
+        .container { max-width: 500px; margin: 0 auto; padding: 10px; }
+        
+        .section { background: #16213e; border: 2px solid #2c3e50; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+        .section-title { font-size: 11px; color: #f39c12; margin-bottom: 8px; border-bottom: 1px dashed #34495e; padding-bottom: 5px; }
+
+        .hireling-card {
+            background: #0f3460; border: 2px solid #1a5276; border-radius: 8px; padding: 10px; margin-bottom: 8px;
+            position: relative; transition: border-color 0.2s;
+        }
+        .hireling-card.exploring { border-color: #27ae60; }
+        .hireling-card.resting { border-color: #f39c12; }
+        .hireling-card.selected { border-color: #3498db; background: #1a3a5c; }
+
+        .h-name { font-size: 11px; color: #ecf0f1; font-weight: bold; }
+        .h-level { font-size: 9px; color: #3498db; margin-left: 5px; }
+        .h-status { font-size: 9px; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; }
+        .h-status.idle { background: #27ae60; color: white; }
+        .h-status.exploring { background: #2980b9; color: white; }
+        .h-status.resting { background: #f39c12; color: white; }
+
+        .exp-bar { height: 6px; background: #2c3e50; border-radius: 3px; margin-top: 5px; overflow: hidden; }
+        .exp-bar-fill { height: 100%; background: linear-gradient(90deg, #8e44ad, #3498db); border-radius: 3px; transition: width 0.3s; }
+
+        .timer { font-size: 9px; color: #f39c12; margin-top: 4px; }
+
+        .zone-card {
+            background: #1a1a2e; border: 2px solid #34495e; border-radius: 6px; padding: 8px; margin-bottom: 6px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .zone-card:hover { border-color: #3498db; }
+        .zone-card.selected { border-color: #e67e22; background: #2c2c4a; }
+        .zone-card.locked { opacity: 0.4; cursor: not-allowed; }
+        .zone-name { font-size: 10px; color: #ecf0f1; }
+        .zone-info { font-size: 8px; color: #95a5a6; margin-top: 3px; }
+        .zone-req { font-size: 8px; color: #e74c3c; }
+
+        .btn { padding: 10px 15px; border: 2px solid #000; cursor: pointer; font-family: inherit; font-size: 10px; font-weight: bold; border-radius: 6px; transition: all 0.1s; display: inline-block; text-align: center; }
+        .btn:active { transform: translateY(2px); }
+        .btn-hire { background: #27ae60; color: white; width: 100%; margin-top: 8px; }
+        .btn-send { background: #2980b9; color: white; width: 100%; margin-top: 8px; }
+        .btn-collect { background: #e67e22; color: white; font-size: 9px; margin-top: 5px; }
+        .btn-dismiss { background: #c0392b; color: white; font-size: 8px; padding: 4px 8px; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .select-cb { width: 16px; height: 16px; margin-right: 8px; vertical-align: middle; cursor: pointer; }
+
+        .reward-box { background: #1a3a1a; border: 2px solid #27ae60; border-radius: 8px; padding: 10px; margin-top: 10px; }
+        .reward-box .title { color: #2ecc71; font-size: 11px; margin-bottom: 5px; }
+        .reward-item { font-size: 9px; color: #bdc3c7; line-height: 1.8; }
+
+        .slots-info { font-size: 9px; color: #aaa; text-align: right; }
+        .shard-info { font-size: 9px; color: #9b59b6; }
+
+        #loading { text-align: center; padding: 40px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header" style="position:relative;">
+        <a href="hub.html" class="back">◀ 返回</a>
+        <h1>🏢 僱員探險</h1>
+        <div class="info">
+            <span class="shard-info">💎 碎片: <span id="shard-count">0</span></span>
+            &nbsp;|&nbsp;
+            <span class="slots-info">👤 僱員: <span id="hire-count">0</span>/<span id="hire-max">1</span></span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="loading">載入中...</div>
+
+        <!-- 僱員列表 -->
+        <div id="hireling-section" class="section" style="display:none;">
+            <div class="section-title">👤 我的僱員</div>
+            <div id="hireling-list"></div>
+            <button class="btn btn-hire" id="btn-hire" onclick="hireNew()">➕ 雇用新僱員 (100 碎片)</button>
+        </div>
+
+        <!-- 探險派遣 -->
+        <div id="expedition-section" class="section" style="display:none;">
+            <div class="section-title">🗺️ 選擇探險區域</div>
+            <div id="zone-list"></div>
+            <button class="btn btn-send" id="btn-send" onclick="sendExpedition()" disabled>
+                ⚔️ 派遣探險 (每人 50 碎片)
+            </button>
+        </div>
+
+        <!-- 探險結果 -->
+        <div id="result-box" class="reward-box" style="display:none;">
+            <div class="title">🎉 探險完成！</div>
+            <div id="result-content"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script>
+const socket = io('https://mmo.ttctv-105.cc', { transports: ['websocket', 'polling'], secure: true });
+const myToken = localStorage.getItem('rpg_token');
+if (!myToken) window.location.href = 'index.html';
+
+let hirelings = [];
+let zones = [];
+let maxSlots = 1;
+let selectedHirelings = new Set();
+let selectedZone = null;
+let timerInterval = null;
+
+socket.on('connect', () => {
+    socket.emit('joinGame', myToken);
+    setTimeout(() => socket.emit('getHirelings'), 500);
+});
+
+socket.on('tokenExpired', () => { localStorage.removeItem('rpg_token'); window.location.href = 'index.html'; });
+socket.on('forceLogout', () => { localStorage.removeItem('rpg_token'); window.location.href = 'index.html'; });
+
+socket.on('hirelingsData', (data) => {
+    hirelings = data.hirelings || [];
+    maxSlots = data.maxSlots || 1;
+    zones = data.zones || [];
+    
+    document.getElementById('shard-count').innerText = (data.shards || 0).toLocaleString();
+    document.getElementById('hire-count').innerText = hirelings.length;
+    document.getElementById('hire-max').innerText = maxSlots;
+    
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('hireling-section').style.display = 'block';
+    document.getElementById('expedition-section').style.display = 'block';
+    
+    // 隱藏雇用按鈕如果已滿
+    document.getElementById('btn-hire').style.display = hirelings.length >= maxSlots ? 'none' : 'block';
+    
+    renderHirelings();
+    renderZones();
+    updateSendButton();
+    startTimers();
+});
+
+socket.on('expeditionResult', (data) => {
+    const box = document.getElementById('result-box');
+    box.style.display = 'block';
+    let html = `<div class="reward-item">👤 <b>${data.hirelingName}</b> 回來了！`;
+    if (data.newLevel) html += ` (現在 Lv.${data.newLevel})`;
+    html += `</div>`;
+    html += `<div class="reward-item">💰 金幣: +${data.gold.toLocaleString()}</div>`;
+    html += `<div class="reward-item">⭐ 僱員經驗: +${data.exp.toLocaleString()}</div>`;
+    if (data.itemsText && data.itemsText !== '(無)') {
+        html += `<div class="reward-item">🎁 物品: ${data.itemsText}</div>`;
+    }
+    document.getElementById('result-content').innerHTML = html;
+    
+    // 3 秒後隱藏
+    setTimeout(() => { box.style.display = 'none'; }, 5000);
+});
+
+socket.on('errorMessage', (msg) => {
+    // 簡單 toast
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#000;color:#fff;padding:15px 20px;border-radius:8px;border:2px solid #f39c12;z-index:9999;font-size:10px;text-align:center;max-width:280px;white-space:pre-line;';
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+});
+
+// ==================== 渲染 ====================
+function renderHirelings() {
+    const container = document.getElementById('hireling-list');
+    if (hirelings.length === 0) {
+        container.innerHTML = '<div style="color:#666;text-align:center;padding:15px;">還沒有僱員，點擊下方雇用</div>';
+        return;
+    }
+
+    const now = Date.now();
+    let html = '';
+    hirelings.forEach(h => {
+        const isExploring = h.status === 'exploring';
+        const isResting = h.status === 'resting' && h.restUntil && now < h.restUntil;
+        const isIdle = !isExploring && !isResting;
+        const statusClass = isExploring ? 'exploring' : isResting ? 'resting' : '';
+        const isSelected = selectedHirelings.has(h.id);
+        
+        let statusHtml = '';
+        if (isExploring) {
+            const elapsed = now - h.startTime;
+            const total = 3 * 60 * 60 * 1000;
+            const remaining = Math.max(0, total - elapsed);
+            const pct = Math.min(100, (elapsed / total) * 100);
+            const hrs = Math.floor(remaining / 3600000);
+            const mins = Math.ceil((remaining % 3600000) / 60000);
+            const zoneName = zones.find(z => z.id === h.zone)?.name || h.zone;
+            
+            statusHtml = `<span class="h-status exploring">探險中 ${zoneName}</span>`;
+            statusHtml += `<div class="timer" data-type="expedition" data-end="${h.startTime + total}">⏳ 剩餘 ${hrs}h ${mins}m</div>`;
+            statusHtml += `<div class="exp-bar"><div class="exp-bar-fill" style="width:${pct}%; background:linear-gradient(90deg,#27ae60,#2ecc71);"></div></div>`;
+            
+            if (remaining <= 0) {
+                statusHtml += `<button class="btn btn-collect" onclick="collectExpedition('${h.id}')">📦 收取成果</button>`;
+            }
+        } else if (isResting) {
+            const remaining = h.restUntil - now;
+            const mins = Math.ceil(remaining / 60000);
+            statusHtml = `<span class="h-status resting">休息中</span>`;
+            statusHtml += `<div class="timer" data-type="rest" data-end="${h.restUntil}">💤 剩餘 ${mins} 分鐘</div>`;
+        } else {
+            statusHtml = `<span class="h-status idle">空閒</span>`;
+        }
+
+        const expPct = h.maxExp > 0 ? Math.floor((h.exp / h.maxExp) * 100) : 0;
+        const canSelect = isIdle;
+        
+        html += `<div class="hireling-card ${statusClass} ${isSelected ? 'selected' : ''}" ${canSelect ? `onclick="toggleSelect('${h.id}')"` : ''}>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    ${canSelect ? `<input type="checkbox" class="select-cb" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation();toggleSelect('${h.id}')">` : ''}
+                    <span class="h-name">${h.name}</span>
+                    <span class="h-level">Lv.${h.level}</span>
+                </div>
+                ${isIdle ? `<button class="btn btn-dismiss" onclick="event.stopPropagation();dismissHireling('${h.id}')">解雇</button>` : ''}
+            </div>
+            <div style="margin-top:4px;">
+                ${statusHtml}
+            </div>
+            <div style="margin-top:5px;font-size:8px;color:#888;">
+                EXP: ${h.exp}/${h.maxExp} (${expPct}%)
+                <div class="exp-bar"><div class="exp-bar-fill" style="width:${expPct}%"></div></div>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function renderZones() {
+    const container = document.getElementById('zone-list');
+    // 找出所有選中僱員的最高等級
+    let maxHirelingLv = 0;
+    selectedHirelings.forEach(hid => {
+        const h = hirelings.find(x => x.id === hid);
+        if (h) maxHirelingLv = Math.max(maxHirelingLv, h.level);
+    });
+    // 找出最低等級（用於判斷哪些區域全員能去）
+    let minHirelingLv = Infinity;
+    selectedHirelings.forEach(hid => {
+        const h = hirelings.find(x => x.id === hid);
+        if (h) minHirelingLv = Math.min(minHirelingLv, h.level);
+    });
+    if (selectedHirelings.size === 0) minHirelingLv = 0;
+
+    let html = '';
+    zones.forEach(z => {
+        const locked = selectedHirelings.size > 0 && minHirelingLv < z.reqLv;
+        const isSelected = selectedZone === z.id;
+        
+        html += `<div class="zone-card ${locked ? 'locked' : ''} ${isSelected ? 'selected' : ''}" 
+                      ${!locked ? `onclick="selectZone('${z.id}')"` : ''}>
+            <div style="display:flex;justify-content:space-between;">
+                <span class="zone-name">${z.name}</span>
+                <span class="zone-req">需要僱員 Lv.${z.reqLv}+</span>
+            </div>
+            <div class="zone-info">💰 ${z.goldMin.toLocaleString()}~${z.goldMax.toLocaleString()} G　⭐ ${z.expMin}~${z.expMax} EXP</div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+// ==================== 操作 ====================
+function toggleSelect(hid) {
+    if (selectedHirelings.has(hid)) {
+        selectedHirelings.delete(hid);
+    } else {
+        selectedHirelings.add(hid);
+    }
+    renderHirelings();
+    renderZones();
+    updateSendButton();
+}
+
+function selectZone(zid) {
+    selectedZone = selectedZone === zid ? null : zid;
+    renderZones();
+    updateSendButton();
+}
+
+function updateSendButton() {
+    const btn = document.getElementById('btn-send');
+    const count = selectedHirelings.size;
+    if (count > 0 && selectedZone) {
+        btn.disabled = false;
+        btn.innerText = `⚔️ 派遣 ${count} 人探險 (${count * 50} 碎片)`;
+    } else {
+        btn.disabled = true;
+        btn.innerText = '⚔️ 請選擇僱員和區域';
+    }
+}
+
+function hireNew() {
+    socket.emit('hireNew');
+}
+
+function sendExpedition() {
+    if (selectedHirelings.size === 0 || !selectedZone) return;
+    const ids = Array.from(selectedHirelings);
+    socket.emit('sendExpedition', { hirelingIds: ids, zoneId: selectedZone });
+    selectedHirelings.clear();
+    selectedZone = null;
+}
+
+function collectExpedition(hid) {
+    socket.emit('collectExpedition', hid);
+}
+
+function dismissHireling(hid) {
+    const h = hirelings.find(x => x.id === hid);
+    if (!h) return;
+    if (!confirm(`確定要解雇 ${h.name} 嗎？此操作不可撤回！`)) return;
+    socket.emit('dismissHireling', hid);
+}
+
+// ==================== 計時器 ====================
+function startTimers() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        const now = Date.now();
+        document.querySelectorAll('.timer').forEach(el => {
+            const end = parseInt(el.dataset.end);
+            const remaining = Math.max(0, end - now);
+            
+            if (el.dataset.type === 'expedition') {
+                if (remaining <= 0) {
+                    el.innerHTML = '✅ 探險完成！點擊收取';
+                    el.style.color = '#2ecc71';
+                    // 重新渲染以顯示收取按鈕
+                    socket.emit('getHirelings');
+                    return;
+                }
+                const hrs = Math.floor(remaining / 3600000);
+                const mins = Math.floor((remaining % 3600000) / 60000);
+                const secs = Math.floor((remaining % 60000) / 1000);
+                el.innerText = `⏳ 剩餘 ${hrs}h ${mins}m ${secs}s`;
+            } else if (el.dataset.type === 'rest') {
+                if (remaining <= 0) {
+                    el.innerHTML = '✅ 休息完畢';
+                    el.style.color = '#2ecc71';
+                    socket.emit('getHirelings');
+                    return;
+                }
+                const mins = Math.floor(remaining / 60000);
+                const secs = Math.floor((remaining % 60000) / 1000);
+                el.innerText = `💤 休息中 ${mins}m ${secs}s`;
+            }
+        });
+    }, 1000);
+}
+    </script>
+</body>
+</html>
