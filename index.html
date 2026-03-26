@@ -28,39 +28,50 @@
             max-width: 400px;
         }
 
-        h1 { font-size: 24px; margin-bottom: 30px; color: #e74c3c; text-shadow: 2px 2px 0 #000; }
+        h1 { font-size: 24px; margin-bottom: 20px; color: #e74c3c; text-shadow: 2px 2px 0 #000; }
 
         input {
-            width: 100%; padding: 15px; margin: 10px 0; 
-            font-family: inherit; font-size: 14px; 
+            width: 100%; padding: 12px; margin: 6px 0; 
+            font-family: inherit; font-size: 12px; 
             border: 2px solid #333; background: #eee;
             box-sizing: border-box;
             outline: none;
         }
         input:focus { background: #fff; border-color: #3498db; }
 
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        .btn-group { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
 
         button {
-            flex: 1; padding: 15px; 
-            font-family: inherit; font-size: 14px; font-weight: bold; 
+            flex: 1; padding: 12px; 
+            font-family: inherit; font-size: 12px; font-weight: bold; 
             cursor: pointer; border: 2px solid #000; 
             transition: all 0.1s;
             min-width: 80px;
         }
-
-        #btn-login { background: #2ecc71; color: white; }
-        #btn-reg { background: #f1c40f; color: black; }
-        #btn-change { background: #3498db; color: white; width: 100%; margin-top: 5px; }
-
         button:active { transform: translateY(3px); box-shadow: none; }
         
-        #msg { margin-top: 15px; font-size: 12px; min-height: 20px; color: #c0392b; white-space: pre-line; }
+        #msg { margin-top: 12px; font-size: 10px; min-height: 20px; color: #c0392b; white-space: pre-line; line-height: 1.6; }
         
         .footer { margin-top: 30px; font-size: 10px; color: #bdc3c7; }
 
-        /* 修改密碼專用欄位 (預設隱藏) */
-        #new-pass-area { display: none; margin-top: 10px; border-top: 2px dashed #ccc; padding-top: 10px; }
+        .panel { display: none; margin-top: 10px; }
+        .panel.active { display: block; }
+
+        .tab-bar { display: flex; gap: 0; margin-bottom: 15px; border-bottom: 2px solid #333; }
+        .tab-bar button {
+            flex: 1; padding: 10px 5px; font-size: 10px; border: 2px solid #333;
+            background: #ddd; color: #666; cursor: pointer; border-bottom: none;
+            border-radius: 6px 6px 0 0; margin-bottom: -2px;
+        }
+        .tab-bar button.active { background: #fff; color: #333; font-weight: bold; }
+
+        .verify-row { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
+        .verify-row input { flex: 1; }
+        .verify-row .countdown { font-size: 9px; color: #999; min-width: 50px; text-align: center; }
+
+        .hint { font-size: 9px; color: #999; margin-top: 8px; }
+        .step-info { font-size: 10px; color: #333; margin-bottom: 8px; background: #f0f0f0; padding: 8px; border-radius: 6px; }
+        .step-info b { color: #e74c3c; }
     </style>
 </head>
 <body>
@@ -68,38 +79,98 @@
     <div class="container">
         <h1>⚔️ 冒險者公會</h1>
         
-        <input type="text" id="user" placeholder="帳號 或 Email" maxlength="100">
-        <input type="password" id="pass" placeholder="密碼 (Password)" maxlength="20">
-        
-        <!-- 註冊時才顯示的 Email 欄位 -->
-        <div id="email-area" style="display:none;">
-            <input type="email" id="reg-email" placeholder="Email (註冊必填)" maxlength="100">
+        <!-- Tab 切換 -->
+        <div class="tab-bar">
+            <button id="tab-login" class="active" onclick="switchTab('login')">📧 登入</button>
+            <button id="tab-register" onclick="switchTab('register')">📝 註冊</button>
+            <button id="tab-bind" onclick="switchTab('bind')">🔗 綁定Email</button>
         </div>
 
-        <div id="new-pass-area">
-            <input type="password" id="new-pass" placeholder="新密碼 (8位+大寫+小寫+數字)" maxlength="30">
-            <button onclick="doChangePass()" style="background:#8e44ad; color:white; width:100%;">確認修改</button>
-            <button onclick="toggleChangeMode()" style="background:#95a5a6; color:white; width:100%; margin-top:5px;">取消</button>
-        </div>
-
-        <!-- 綁定 Email 區域 -->
-        <div id="bind-email-area" style="display:none;">
-            <div style="font-size:10px; color:#666; margin-bottom:8px;">
-                舊玩家綁定 Email 後可用 Email 登入
+        <!-- ==================== 登入面板 ==================== -->
+        <div id="panel-login" class="panel active">
+            <input type="email" id="login-email" placeholder="📧 Email" maxlength="100">
+            <input type="password" id="login-pass" placeholder="🔑 密碼" maxlength="20">
+            <div class="btn-group">
+                <button style="background:#2ecc71; color:white;" onclick="doLogin()">登入</button>
             </div>
-            <input type="email" id="bind-email" placeholder="輸入你的 Email" maxlength="100">
-            <button onclick="doBindEmail()" style="background:#e67e22; color:white; width:100%; margin-top:5px;">確認綁定</button>
-            <button onclick="toggleBindMode()" style="background:#95a5a6; color:white; width:100%; margin-top:5px;">取消</button>
+            <div class="hint">💡 必須使用已驗證的 Email 登入</div>
         </div>
 
-        <div class="btn-group" id="main-btns">
-            <button id="btn-login" onclick="doAuth('login')">登入</button>
-            <button id="btn-reg" onclick="showRegisterMode()">註冊</button>
-            <button id="btn-change" onclick="toggleChangeMode()">修改密碼</button>
-            <button id="btn-bind" onclick="toggleBindMode()" style="background:#e67e22; color:white; width:100%; margin-top:5px;">📧 綁定 Email (舊玩家)</button>
+        <!-- ==================== 註冊面板 ==================== -->
+        <div id="panel-register" class="panel">
+            <!-- Step 1: 填資料 -->
+            <div id="reg-step1">
+                <input type="text" id="reg-user" placeholder="👤 帳號 (5字以上，僅英數)" maxlength="20">
+                <input type="password" id="reg-pass" placeholder="🔑 密碼 (8位+大寫+小寫+數字)" maxlength="20">
+                <input type="email" id="reg-email" placeholder="📧 Email (用來驗證和登入)" maxlength="100">
+                <div class="btn-group">
+                    <button style="background:#f1c40f; color:black;" onclick="doRegister()">📧 發送驗證碼</button>
+                </div>
+                <div class="hint">註冊後必須用 Email 登入</div>
+            </div>
+            <!-- Step 2: 輸入驗證碼 -->
+            <div id="reg-step2" style="display:none;">
+                <div class="step-info">
+                    📧 驗證碼已發送至 <b id="reg-sent-email"></b>
+                </div>
+                <div class="verify-row">
+                    <input type="text" id="reg-code" placeholder="輸入 6 位驗證碼" maxlength="6" style="font-size:18px; text-align:center; letter-spacing:6px;">
+                    <span class="countdown" id="reg-countdown"></span>
+                </div>
+                <div class="btn-group">
+                    <button style="background:#2ecc71; color:white;" onclick="doVerifyRegister()">✅ 確認註冊</button>
+                    <button style="background:#95a5a6; color:white;" onclick="resetRegister()">◀ 返回</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 綁定 Email 面板 (舊玩家) ==================== -->
+        <div id="panel-bind" class="panel">
+            <div class="step-info" style="background:#fff3e0;">
+                ⚠️ 舊玩家必須綁定並驗證 Email<br>
+                綁定後請改用 Email 登入
+            </div>
+            <!-- Step 1 -->
+            <div id="bind-step1">
+                <input type="text" id="bind-user" placeholder="👤 帳號 (Username)" maxlength="20">
+                <input type="password" id="bind-pass" placeholder="🔑 密碼" maxlength="20">
+                <input type="email" id="bind-email" placeholder="📧 要綁定的 Email" maxlength="100">
+                <div class="btn-group">
+                    <button style="background:#e67e22; color:white;" onclick="doBindEmail()">📧 發送驗證碼</button>
+                </div>
+            </div>
+            <!-- Step 2 -->
+            <div id="bind-step2" style="display:none;">
+                <div class="step-info">
+                    📧 驗證碼已發送至 <b id="bind-sent-email"></b>
+                </div>
+                <div class="verify-row">
+                    <input type="text" id="bind-code" placeholder="輸入 6 位驗證碼" maxlength="6" style="font-size:18px; text-align:center; letter-spacing:6px;">
+                    <span class="countdown" id="bind-countdown"></span>
+                </div>
+                <div class="btn-group">
+                    <button style="background:#2ecc71; color:white;" onclick="doVerifyBind()">✅ 確認綁定</button>
+                    <button style="background:#95a5a6; color:white;" onclick="resetBind()">◀ 返回</button>
+                </div>
+            </div>
         </div>
 
         <div id="msg"></div>
+        
+        <div style="margin-top:10px;">
+            <span style="font-size:9px; color:#3498db; cursor:pointer; text-decoration:underline;" onclick="switchTab('changepw')">修改密碼</span>
+        </div>
+
+        <!-- ==================== 修改密碼 (隱藏面板) ==================== -->
+        <div id="panel-changepw" class="panel">
+            <input type="text" id="chpw-user" placeholder="👤 帳號" maxlength="20">
+            <input type="password" id="chpw-old" placeholder="🔑 舊密碼" maxlength="20">
+            <input type="password" id="chpw-new" placeholder="🔑 新密碼 (8位+大寫+小寫+數字)" maxlength="30">
+            <div class="btn-group">
+                <button style="background:#8e44ad; color:white;" onclick="doChangePass()">確認修改</button>
+                <button style="background:#95a5a6; color:white;" onclick="switchTab('login')">◀ 返回</button>
+            </div>
+        </div>
     </div>
 
     <div class="footer">Server Status: <span id="status" style="color:red">Connecting...</span></div>
@@ -110,7 +181,7 @@
         
 const socket = io('https://mmo.ttctv-105.cc', { 
     transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
+    secure: true
 });
 
         const statusSpan = document.getElementById('status');
@@ -122,16 +193,14 @@ const socket = io('https://mmo.ttctv-105.cc', {
         }
 
         socket.on('connect', () => {
-            console.log("✅ 連線成功！Socket ID:", socket.id);
             statusSpan.innerText = "Online";
             statusSpan.style.color = "#2ecc71";
             if (savedToken) window.location.href = 'hub.html';
         });
 
-        socket.on('connect_error', (err) => {
-            console.error("❌ 連線失敗:", err);
+        socket.on('connect_error', () => {
             statusSpan.innerText = "Error";
-            msgDiv.innerText = "無法連線伺服器，請稍後再試";
+            showMsg("無法連線伺服器，請稍後再試");
         });
 
         socket.on('disconnect', () => {
@@ -139,191 +208,231 @@ const socket = io('https://mmo.ttctv-105.cc', {
             statusSpan.style.color = "red";
         });
 
-        socket.on('authResult', (res) => {
-            if (res.success) {
-                msgDiv.style.color = "#27ae60";
-                msgDiv.innerText = "✅ " + res.msg;
-                
-                if (res.token) {
-                    localStorage.setItem('rpg_token', res.token);
-                    setTimeout(() => window.location.href = 'hub.html', 1000);
-                } else {
-                    // 修改密碼成功後，重置介面
-                    if (document.getElementById('new-pass-area').style.display === 'block') {
-                        toggleChangeMode();
-                        document.getElementById('user').value = '';
-                        document.getElementById('pass').value = '';
-                        document.getElementById('new-pass').value = '';
-                    }
-                }
-            } else {
-                msgDiv.style.color = "#c0392b";
-                msgDiv.innerText = "❌ " + res.msg;
-            }
-        });
+        // ==================== Tab 切換 ====================
+        let currentTab = 'login';
+        function switchTab(tab) {
+            currentTab = tab;
+            // 隱藏所有面板
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            // 取消所有 tab 高亮
+            document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+            
+            // 啟動目標面板
+            const panel = document.getElementById('panel-' + tab);
+            if (panel) panel.classList.add('active');
+            
+            // 高亮 tab (修改密碼沒有 tab 按鈕)
+            const tabBtn = document.getElementById('tab-' + tab);
+            if (tabBtn) tabBtn.classList.add('active');
+            
+            msgDiv.innerText = "";
+        }
 
-        // 綁定 Email 結果
-        socket.on('bindEmailResult', (res) => {
-            if (res.success) {
-                msgDiv.style.color = "#27ae60";
-                msgDiv.innerText = "✅ " + res.msg;
-                setTimeout(() => toggleBindMode(), 2000);
-            } else {
-                msgDiv.style.color = "#c0392b";
-                msgDiv.innerText = "❌ " + res.msg;
-            }
-        });
-
-        // 強密碼驗證 (8位, 大寫, 小寫, 數字)
+        // ==================== 工具函式 ====================
         function validatePassword(pw) {
             if (pw.length < 8) return "密碼長度需至少 8 位";
             if (!/[A-Z]/.test(pw)) return "密碼需包含大寫英文 (A-Z)";
             if (!/[a-z]/.test(pw)) return "密碼需包含小寫英文 (a-z)";
             if (!/[0-9]/.test(pw)) return "密碼需包含數字 (0-9)";
-            return null; // 通過
+            return null;
         }
 
-        let isRegisterMode = false;
-
-        // 顯示註冊模式（展開 Email 欄位）
-        function showRegisterMode() {
-            if (isRegisterMode) {
-                // 已在註冊模式 → 執行註冊
-                doAuth('register');
-            } else {
-                // 切換到註冊模式
-                isRegisterMode = true;
-                document.getElementById('email-area').style.display = 'block';
-                document.getElementById('btn-reg').innerText = '確認註冊';
-                document.getElementById('btn-login').innerText = '◀ 返回登入';
-                document.getElementById('btn-login').onclick = function() { hideRegisterMode(); };
-                document.getElementById('btn-change').style.display = 'none';
-                document.getElementById('btn-bind').style.display = 'none';
-                document.getElementById('user').placeholder = '帳號 (Username)';
-                msgDiv.innerText = "📧 新帳號需要填寫 Email";
-                msgDiv.style.color = "#3498db";
-            }
+        function showMsg(txt, color) {
+            msgDiv.style.color = color || "#c0392b";
+            msgDiv.innerText = txt;
         }
 
-        function hideRegisterMode() {
-            isRegisterMode = false;
-            document.getElementById('email-area').style.display = 'none';
-            document.getElementById('btn-reg').innerText = '註冊';
-            document.getElementById('btn-login').innerText = '登入';
-            document.getElementById('btn-login').onclick = function() { doAuth('login'); };
-            document.getElementById('btn-change').style.display = '';
-            document.getElementById('btn-bind').style.display = '';
-            document.getElementById('user').placeholder = '帳號 或 Email';
+        // 倒計時
+        let countdownTimers = {};
+        function startCountdown(elementId, seconds) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            if (countdownTimers[elementId]) clearInterval(countdownTimers[elementId]);
+            
+            let remaining = seconds;
+            el.innerText = `${remaining}s`;
+            countdownTimers[elementId] = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(countdownTimers[elementId]);
+                    el.innerText = "已過期";
+                    el.style.color = "#e74c3c";
+                } else {
+                    const min = Math.floor(remaining / 60);
+                    const sec = remaining % 60;
+                    el.innerText = min > 0 ? `${min}:${String(sec).padStart(2,'0')}` : `${sec}s`;
+                }
+            }, 1000);
+        }
+
+        // ==================== 登入 ====================
+        function doLogin() {
+            const email = document.getElementById('login-email').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            
+            if (!socket.connected) return showMsg("⚠️ 無法連線到伺服器");
+            if (!email) return showMsg("⚠️ 請輸入 Email");
+            if (!pass) return showMsg("⚠️ 請輸入密碼");
+
+            showMsg("處理中...", "#666");
+            socket.emit('login', { user: email, pass });
+        }
+
+        // Enter 鍵登入
+        document.getElementById('login-pass').addEventListener('keyup', (e) => { if (e.key === 'Enter') doLogin(); });
+        document.getElementById('login-email').addEventListener('keyup', (e) => { if (e.key === 'Enter') document.getElementById('login-pass').focus(); });
+
+        // ==================== 註冊 ====================
+        let pendingRegEmail = null;
+
+        function doRegister() {
+            const user = document.getElementById('reg-user').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+
+            if (!socket.connected) return showMsg("⚠️ 無法連線到伺服器");
+            if (user.length < 5) return showMsg("⚠️ 帳號至少需 5 字元");
+            
+            const pwErr = validatePassword(pass);
+            if (pwErr) return showMsg("⚠️ " + pwErr);
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) return showMsg("⚠️ 請填寫正確的 Email");
+
+            showMsg("正在發送驗證碼...", "#666");
+            socket.emit('register', { user, pass, email });
+        }
+
+        function doVerifyRegister() {
+            const code = document.getElementById('reg-code').value.trim();
+            if (!code || code.length !== 6) return showMsg("⚠️ 請輸入 6 位驗證碼");
+            if (!pendingRegEmail) return showMsg("⚠️ 請重新註冊");
+
+            showMsg("驗證中...", "#666");
+            socket.emit('verifyRegister', { email: pendingRegEmail, code });
+        }
+
+        function resetRegister() {
+            document.getElementById('reg-step1').style.display = 'block';
+            document.getElementById('reg-step2').style.display = 'none';
+            document.getElementById('reg-code').value = '';
+            pendingRegEmail = null;
             msgDiv.innerText = "";
         }
 
-        function doAuth(type) {
-            const user = document.getElementById('user').value.trim();
-            const pass = document.getElementById('pass').value.trim();
-            
-            if (!socket.connected) return showMsg("⚠️ 無法連線到伺服器");
-            if (user.length < 3) return showMsg("⚠️ 帳號/Email 太短");
+        // ==================== 綁定 Email ====================
+        let pendingBindEmail = null;
 
-            if (type === 'register') {
-                const err = validatePassword(pass);
-                if (err) return showMsg("⚠️ " + err);
-
-                // 註冊需要 email
-                const email = document.getElementById('reg-email').value.trim();
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!email || !emailRegex.test(email)) {
-                    return showMsg("⚠️ 請填寫正確的 Email 地址");
-                }
-
-                msgDiv.innerText = "處理中...";
-                socket.emit('register', { user, pass, email });
-            } else {
-                // 登入：帳號或 email 都可以
-                if (pass.length < 1) return showMsg("⚠️ 請輸入密碼");
-                msgDiv.innerText = "處理中...";
-                socket.emit('login', { user, pass });
-            }
-        }
-
-        // 切換修改密碼模式
-        function toggleChangeMode() {
-            const area = document.getElementById('new-pass-area');
-            const btns = document.getElementById('main-btns');
-            
-            // 同時關閉綁定模式
-            document.getElementById('bind-email-area').style.display = 'none';
-            
-            if (area.style.display === 'none' || area.style.display === '') {
-                area.style.display = 'block';
-                btns.style.display = 'none';
-                document.getElementById('user').placeholder = '帳號 (Username)';
-                msgDiv.innerText = "請輸入帳號、舊密碼 與 新密碼";
-                msgDiv.style.color = "#3498db";
-            } else {
-                area.style.display = 'none';
-                btns.style.display = 'flex';
-                document.getElementById('user').placeholder = '帳號 或 Email';
-                msgDiv.innerText = "";
-            }
-        }
-
-        // 切換綁定 Email 模式
-        function toggleBindMode() {
-            const area = document.getElementById('bind-email-area');
-            const btns = document.getElementById('main-btns');
-            
-            // 同時關閉改密碼模式
-            document.getElementById('new-pass-area').style.display = 'none';
-            
-            if (area.style.display === 'none' || area.style.display === '') {
-                area.style.display = 'block';
-                btns.style.display = 'none';
-                document.getElementById('user').placeholder = '帳號 (Username)';
-                msgDiv.innerText = "請輸入帳號、密碼，再填 Email";
-                msgDiv.style.color = "#e67e22";
-            } else {
-                area.style.display = 'none';
-                btns.style.display = 'flex';
-                document.getElementById('user').placeholder = '帳號 或 Email';
-                msgDiv.innerText = "";
-            }
-        }
-
-        // 執行綁定 Email
         function doBindEmail() {
-            const user = document.getElementById('user').value.trim();
-            const pass = document.getElementById('pass').value.trim();
+            const user = document.getElementById('bind-user').value.trim();
+            const pass = document.getElementById('bind-pass').value.trim();
             const email = document.getElementById('bind-email').value.trim();
 
-            if (!user || !pass || !email) return showMsg("請填寫所有欄位");
+            if (!socket.connected) return showMsg("⚠️ 無法連線到伺服器");
+            if (!user || !pass) return showMsg("⚠️ 請填寫帳號和密碼");
             
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) return showMsg("⚠️ Email 格式不正確");
+            if (!emailRegex.test(email)) return showMsg("⚠️ 請填寫正確的 Email");
 
-            msgDiv.innerText = "綁定中...";
+            showMsg("正在發送驗證碼...", "#666");
             socket.emit('bindEmail', { user, pass, email });
         }
 
-        // 執行修改密碼
+        function doVerifyBind() {
+            const code = document.getElementById('bind-code').value.trim();
+            if (!code || code.length !== 6) return showMsg("⚠️ 請輸入 6 位驗證碼");
+            if (!pendingBindEmail) return showMsg("⚠️ 請重新操作");
+
+            showMsg("驗證中...", "#666");
+            socket.emit('verifyBindEmail', { email: pendingBindEmail, code });
+        }
+
+        function resetBind() {
+            document.getElementById('bind-step1').style.display = 'block';
+            document.getElementById('bind-step2').style.display = 'none';
+            document.getElementById('bind-code').value = '';
+            pendingBindEmail = null;
+            msgDiv.innerText = "";
+        }
+
+        // ==================== 修改密碼 ====================
         function doChangePass() {
-            const user = document.getElementById('user').value.trim();
-            const oldPass = document.getElementById('pass').value.trim();
-            const newPass = document.getElementById('new-pass').value.trim();
+            const user = document.getElementById('chpw-user').value.trim();
+            const oldPass = document.getElementById('chpw-old').value.trim();
+            const newPass = document.getElementById('chpw-new').value.trim();
 
             if (!user || !oldPass || !newPass) return showMsg("請填寫所有欄位");
-            
-            // 驗證新密碼強度
             const err = validatePassword(newPass);
             if (err) return showMsg("⚠️ " + err);
 
-            msgDiv.innerText = "修改中...";
+            showMsg("修改中...", "#666");
             socket.emit('changePassword', { user, oldPass, newPass });
         }
 
-        function showMsg(txt) {
-            msgDiv.style.color = "#c0392b";
-            msgDiv.innerText = txt;
-        }
+        // ==================== Socket 事件處理 ====================
+        
+        // 驗證碼已發送
+        socket.on('emailCodeSent', (res) => {
+            if (!res.success) return;
+
+            if (res.type === 'register') {
+                pendingRegEmail = res.email;
+                document.getElementById('reg-step1').style.display = 'none';
+                document.getElementById('reg-step2').style.display = 'block';
+                document.getElementById('reg-sent-email').innerText = res.email;
+                document.getElementById('reg-code').focus();
+                startCountdown('reg-countdown', 600);
+                showMsg(res.msg, "#27ae60");
+            } else if (res.type === 'bind') {
+                pendingBindEmail = res.email;
+                document.getElementById('bind-step1').style.display = 'none';
+                document.getElementById('bind-step2').style.display = 'block';
+                document.getElementById('bind-sent-email').innerText = res.email;
+                document.getElementById('bind-code').focus();
+                startCountdown('bind-countdown', 600);
+                showMsg(res.msg, "#27ae60");
+            }
+        });
+
+        // 登入/註冊結果
+        socket.on('authResult', (res) => {
+            if (res.success) {
+                showMsg("✅ " + res.msg, "#27ae60");
+                if (res.token) {
+                    localStorage.setItem('rpg_token', res.token);
+                    setTimeout(() => window.location.href = 'hub.html', 1000);
+                }
+            } else {
+                showMsg("❌ " + res.msg);
+            }
+        });
+
+        // 綁定結果
+        socket.on('bindEmailResult', (res) => {
+            if (res.success) {
+                showMsg("✅ " + res.msg, "#27ae60");
+                setTimeout(() => {
+                    resetBind();
+                    switchTab('login');
+                    showMsg("✅ 綁定成功！現在可以用 Email 登入了", "#27ae60");
+                }, 2000);
+            } else {
+                showMsg("❌ " + res.msg);
+            }
+        });
+
+        // 舊玩家未綁定 Email → 自動跳轉到綁定面板
+        socket.on('needBindEmail', (data) => {
+            switchTab('bind');
+            if (data.username) {
+                document.getElementById('bind-user').value = data.username;
+            }
+            if (data.hasUnverifiedEmail) {
+                showMsg("⚠️ 你的 Email 尚未驗證\n請重新綁定並完成驗證", "#e67e22");
+            } else {
+                showMsg("⚠️ 你的帳號尚未綁定 Email\n請在此綁定後用 Email 登入", "#e67e22");
+            }
+        });
     </script>
 </body>
 </html>
