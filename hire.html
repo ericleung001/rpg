@@ -120,6 +120,23 @@ let selectedHirelings = new Set();
 let selectedZone = null;
 let timerInterval = null;
 
+// 物品名稱對照表 (同 server ITEM_NAMES)
+const ITEM_NAMES = {
+    'copper_ore':'銅礦石','soft_fur':'柔軟皮毛','beast_fang':'野獸尖牙','slime_gel':'黏液',
+    'iron_ore':'鐵礦石','leather':'皮革','tough_hide':'硬皮革','magic_dust':'魔粉',
+    'poison_sac':'毒囊','bone_shard':'碎骨片','silver_ore':'銀礦石','fire_core':'火焰核心',
+    'lava_rock':'熔岩石','dragon_scale':'龍鱗','gold_ore':'金礦石','ice_crystal':'永恆冰晶',
+    'yeti_fur':'雪怪毛皮','spirit_dust':'靈魂粉末','mithril':'秘銀','void_dust':'虛空之塵',
+    'demon_horn':'惡魔之角','dark_essence':'暗之精華','adamantite':'精金','god_blood':'神之血',
+    'chaos_orb':'混沌寶珠','angel_feather':'天使之羽','titan_steel':'泰坦神鋼','star_fragment':'星之碎片',
+    'oak_log':'橡木原木','maple_log':'楓木原木','ancient_log':'遠古神木',
+    'coal':'煤炭','ruby':'紅寶石','diamond':'鑽石','pearl':'珍珠',
+    'potion_hp':'HP藥水','potion_mid':'中級HP藥水',
+    'void_shard':'虛空碎片','dark_matter':'暗物質','star_core':'恆星核心',
+    'cosmic_steel':'宇宙鋼','time_sand':'時光之沙','dimension_gem':'維度寶石',
+    'entropy_origin':'熱寂原點','divinity_core':'創世神格'
+};
+
 socket.on('connect', () => {
     socket.emit('joinGame', myToken);
     setTimeout(() => socket.emit('getHirelings'), 500);
@@ -158,13 +175,22 @@ socket.on('expeditionResult', (data) => {
     html += `</div>`;
     html += `<div class="reward-item">💰 金幣: +${data.gold.toLocaleString()}</div>`;
     html += `<div class="reward-item">⭐ 僱員經驗: +${data.exp.toLocaleString()}</div>`;
-    if (data.itemsText && data.itemsText !== '(無)') {
-        html += `<div class="reward-item">🎁 物品: ${data.itemsText}</div>`;
-    }
-    document.getElementById('result-content').innerHTML = html;
     
-    // 3 秒後隱藏
-    setTimeout(() => { box.style.display = 'none'; }, 5000);
+    // 顯示物品（用中文名）
+    if (data.items && Object.keys(data.items).length > 0) {
+        let itemLines = Object.entries(data.items).map(([id, qty]) => {
+            const name = ITEM_NAMES[id] || id;
+            return `${name} ×${qty}`;
+        });
+        html += `<div class="reward-item">🎁 獲得物品：</div>`;
+        itemLines.forEach(line => {
+            html += `<div class="reward-item" style="padding-left:15px;">• ${line}</div>`;
+        });
+    }
+    html += `<div style="margin-top:8px;font-size:8px;color:#27ae60;border-top:1px dashed #2ecc71;padding-top:5px;">✅ 金幣及物品已自動存入你的背包</div>`;
+    
+    document.getElementById('result-content').innerHTML = html;
+    setTimeout(() => { box.style.display = 'none'; }, 8000);
 });
 
 socket.on('errorMessage', (msg) => {
@@ -245,13 +271,6 @@ function renderHirelings() {
 
 function renderZones() {
     const container = document.getElementById('zone-list');
-    // 找出所有選中僱員的最高等級
-    let maxHirelingLv = 0;
-    selectedHirelings.forEach(hid => {
-        const h = hirelings.find(x => x.id === hid);
-        if (h) maxHirelingLv = Math.max(maxHirelingLv, h.level);
-    });
-    // 找出最低等級（用於判斷哪些區域全員能去）
     let minHirelingLv = Infinity;
     selectedHirelings.forEach(hid => {
         const h = hirelings.find(x => x.id === hid);
@@ -264,13 +283,32 @@ function renderZones() {
         const locked = selectedHirelings.size > 0 && minHirelingLv < z.reqLv;
         const isSelected = selectedZone === z.id;
         
+        // 掉落物顯示 (按稀有度分色)
+        let dropsHtml = '';
+        if (z.drops && z.drops.length > 0) {
+            dropsHtml = '<div style="margin-top:4px;font-size:8px;line-height:1.6;">';
+            z.drops.forEach(d => {
+                const name = ITEM_NAMES[d.id] || d.id;
+                let color = '#95a5a6'; // 普通灰
+                let tag = '';
+                if (d.rate <= 0.01) { color = '#e74c3c'; tag = '★'; }       // 極稀有 紅
+                else if (d.rate <= 0.03) { color = '#f39c12'; tag = '◆'; }   // 稀有 橙
+                else if (d.rate <= 0.08) { color = '#9b59b6'; tag = '●'; }   // 珍貴 紫
+                else if (d.rate <= 0.2) { color = '#3498db'; }                // 少見 藍
+                const pct = (d.rate * 100).toFixed(1);
+                dropsHtml += `<span style="color:${color};margin-right:6px;">${tag}${name}(${pct}%)</span>`;
+            });
+            dropsHtml += '</div>';
+        }
+        
         html += `<div class="zone-card ${locked ? 'locked' : ''} ${isSelected ? 'selected' : ''}" 
                       ${!locked ? `onclick="selectZone('${z.id}')"` : ''}>
             <div style="display:flex;justify-content:space-between;">
                 <span class="zone-name">${z.name}</span>
-                <span class="zone-req">需要僱員 Lv.${z.reqLv}+</span>
+                <span class="zone-req">僱員 Lv.${z.reqLv}+</span>
             </div>
             <div class="zone-info">💰 ${z.goldMin.toLocaleString()}~${z.goldMax.toLocaleString()} G　⭐ ${z.expMin}~${z.expMax} EXP</div>
+            ${dropsHtml}
         </div>`;
     });
     container.innerHTML = html;
