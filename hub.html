@@ -526,6 +526,14 @@
                         🔄 轉生神殿
                     </a>
                 </div>
+
+                <!-- 僱員探險狀態面板 -->
+                <div id="hireling-panel" style="display:none; background:#1a1a2e; border:2px solid #e67e22; border-radius:8px; padding:8px; margin-bottom:8px;">
+                    <div style="font-size:10px; color:#e67e22; margin-bottom:5px; cursor:pointer;" onclick="window.location.href='hire.html'">
+                        🏢 僱員狀態 <span style="color:#666; font-size:8px;">(點擊管理)</span>
+                    </div>
+                    <div id="hireling-status-list" style="font-size:9px;"></div>
+                </div>
                 
 
                 
@@ -1092,6 +1100,62 @@
             document.getElementById('exp-fill').style.width = Math.min(100, (p.exp / p.maxExp * 100)) + '%';
             refreshUI();
         });
+
+        // ==========================================
+        //  僱員狀態顯示 (hub.html)
+        // ==========================================
+        socket.on('hirelingsData', (data) => {
+            const panel = document.getElementById('hireling-panel');
+            const list = document.getElementById('hireling-status-list');
+            const hirelings = data.hirelings || [];
+            
+            if (hirelings.length === 0) {
+                panel.style.display = 'none';
+                return;
+            }
+            
+            panel.style.display = 'block';
+            const now = Date.now();
+            let html = '';
+            
+            hirelings.forEach(h => {
+                let statusHtml = '';
+                let icon = '';
+                
+                if (h.status === 'exploring') {
+                    const total = 3 * 60 * 60 * 1000;
+                    const remaining = Math.max(0, (h.startTime + total) - now);
+                    if (remaining <= 0) {
+                        icon = '📦';
+                        statusHtml = `<span style="color:#2ecc71;">探險完成！待收取</span>`;
+                    } else {
+                        const hrs = Math.floor(remaining / 3600000);
+                        const mins = Math.floor((remaining % 3600000) / 60000);
+                        icon = '⚔️';
+                        statusHtml = `<span style="color:#3498db;">探險中 ${hrs}h${mins}m</span>`;
+                    }
+                } else if (h.status === 'resting' && h.restUntil && now < h.restUntil) {
+                    const remaining = h.restUntil - now;
+                    const mins = Math.ceil(remaining / 60000);
+                    icon = '💤';
+                    statusHtml = `<span style="color:#f39c12;">休息 ${mins}m</span>`;
+                } else {
+                    icon = '✅';
+                    statusHtml = `<span style="color:#27ae60;">空閒</span>`;
+                }
+                
+                html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:2px 0;border-bottom:1px solid #2c3e50;">
+                    <span>${icon} ${h.name} <span style="color:#3498db;">Lv.${h.level}</span></span>
+                    ${statusHtml}
+                </div>`;
+            });
+            
+            list.innerHTML = html;
+        });
+
+        // 請求僱員數據 + 定時刷新
+        setTimeout(() => socket.emit('getHirelings'), 800);
+        setInterval(() => { if (socket.connected) socket.emit('getHirelings'); }, 30000);
 
         socket.on('hubDataUpdate', (data) => {
             cityData = data.cityCounts;
