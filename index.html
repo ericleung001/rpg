@@ -158,18 +158,20 @@
         <div id="msg"></div>
         
         <div style="margin-top:10px;">
-            <span style="font-size:9px; color:#3498db; cursor:pointer; text-decoration:underline;" onclick="switchTab('changepw')">修改密碼</span>
+            <span style="font-size:9px; color:#3498db; cursor:pointer; text-decoration:underline;" onclick="switchTab('forgotpw')">忘記密碼？</span>
         </div>
 
-        <!-- ==================== 修改密碼 (隱藏面板) ==================== -->
-        <div id="panel-changepw" class="panel">
-            <input type="text" id="chpw-user" placeholder="👤 帳號" maxlength="20">
-            <input type="password" id="chpw-old" placeholder="🔑 舊密碼" maxlength="20">
-            <input type="password" id="chpw-new" placeholder="🔑 新密碼 (8位+大寫+小寫+數字)" maxlength="30">
+        <!-- ==================== 忘記密碼 (Email 重設) ==================== -->
+        <div id="panel-forgotpw" class="panel">
+            <div class="step-info">
+                🔑 輸入你的 Email，我們會發送密碼重設連結
+            </div>
+            <input type="email" id="reset-email" placeholder="📧 已綁定的 Email" maxlength="100">
             <div class="btn-group">
-                <button style="background:#8e44ad; color:white;" onclick="doChangePass()">確認修改</button>
+                <button style="background:#e74c3c; color:white;" onclick="doRequestReset()">📧 發送重設連結</button>
                 <button style="background:#95a5a6; color:white;" onclick="switchTab('login')">◀ 返回</button>
             </div>
+            <div class="hint">💡 連結將在 30 分鐘內有效<br>密碼需 8 位以上，含大小寫英文及數字</div>
         </div>
     </div>
 
@@ -355,18 +357,17 @@ const socket = io('https://mmo.ttctv-105.cc', {
             msgDiv.innerText = "";
         }
 
-        // ==================== 修改密碼 ====================
-        function doChangePass() {
-            const user = document.getElementById('chpw-user').value.trim();
-            const oldPass = document.getElementById('chpw-old').value.trim();
-            const newPass = document.getElementById('chpw-new').value.trim();
+        // ==================== 忘記密碼 (發送 Email 重設連結) ====================
+        function doRequestReset() {
+            const email = document.getElementById('reset-email').value.trim();
 
-            if (!user || !oldPass || !newPass) return showMsg("請填寫所有欄位");
-            const err = validatePassword(newPass);
-            if (err) return showMsg("⚠️ " + err);
+            if (!socket.connected) return showMsg("⚠️ 無法連線到伺服器");
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) return showMsg("⚠️ 請填寫正確的 Email");
 
-            showMsg("修改中...", "#666");
-            socket.emit('changePassword', { user, oldPass, newPass });
+            showMsg("正在發送重設連結...", "#666");
+            socket.emit('requestPasswordReset', { email });
         }
 
         // ==================== Socket 事件處理 ====================
