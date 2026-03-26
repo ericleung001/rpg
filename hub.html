@@ -1264,20 +1264,66 @@ if (name === '系統') return;
         };
 
         let isProcessing = false;
+        let pendingMobId = null;
         
+        // ==========================================
+        //  [改版] 開房時選擇房間類型 (單人/公開/私人)
+        // ==========================================
         window.triggerCreateRoom = function(mobId) {
             if (isProcessing) return; 
             if (!socket.connected) { showToast("錯誤：未連線到伺服器！"); return; }
-            isProcessing = true; 
+            pendingMobId = mobId;
+            document.getElementById('room-type-modal').style.display = 'flex';
+        };
+
+        window.closeRoomTypeModal = function() {
+            document.getElementById('room-type-modal').style.display = 'none';
+            document.getElementById('private-pw-section').style.display = 'none';
+            document.getElementById('room-pw-input').value = '';
+            pendingMobId = null;
+        };
+
+        window.selectRoomType = function(type) {
+            if (type === 'private') {
+                document.getElementById('private-pw-section').style.display = 'block';
+                return;
+            }
+            confirmCreateRoom(type, null);
+        };
+
+        window.confirmPrivateRoom = function() {
+            const pw = document.getElementById('room-pw-input').value.trim();
+            if (!pw) { showToast("請輸入房間密碼！"); return; }
+            if (pw.length > 20) { showToast("密碼不能超過 20 字！"); return; }
+            confirmCreateRoom('private', pw);
+        };
+
+        function confirmCreateRoom(roomType, password) {
+            if (!pendingMobId || isProcessing) return;
+            isProcessing = true;
             document.getElementById('list-title').innerText = "正在建立房間...";
-            socket.emit('createRoom', mobId);
+            socket.emit('createRoom', { monsterKey: pendingMobId, roomType: roomType, password: password });
+            closeRoomTypeModal();
             setTimeout(() => {
                 isProcessing = false;
                 if(selectedMonster) document.getElementById('list-title').innerText = `${selectedMonster.name} - 房間`;
             }, 2000);
-        };
+        }
         
-        window.triggerJoinRoom = function(roomId) { socket.emit('joinRoom', roomId); };
+        window.triggerJoinRoom = function(roomId, roomType) { 
+            if (roomType === 'solo') {
+                showToast("❌ 這是單人房間，無法加入！");
+                return;
+            }
+            if (roomType === 'private') {
+                // 顯示密碼輸入彈窗
+                const pw = prompt("🔒 此為私人房間，請輸入密碼：");
+                if (pw === null || pw.trim() === '') return; // 取消或空白
+                socket.emit('joinRoom', { roomId: roomId, password: pw.trim() });
+            } else {
+                socket.emit('joinRoom', { roomId: roomId });
+            }
+        };
         window.triggerEnterCity = function(cityId) {
             let city = WORLD_MAP.find(c => c.id === cityId);
             if (city) { selectedCity = city; currentView = 'monsters'; socket.emit('enterCity', cityId); refreshUI(); }
@@ -1329,23 +1375,27 @@ if (name === '系統') return;
                 if (myRooms.length === 0) html += `<div style="font-size:10px; color:#aaa; margin:10px;">目前沒有房間...</div>`;
                 myRooms.forEach((room, index) => { 
                     const isFighting = room.status === 'fighting';
-                    const clickAction = isFighting ? '' : `onclick="triggerJoinRoom('${room.id}')"`;
+                    const isSolo = room.roomType === 'solo';
+                    const isPrivate = room.roomType === 'private';
+                    const canJoin = !isFighting && !isSolo;
+                    const clickAction = canJoin ? `onclick="triggerJoinRoom('${room.id}', '${room.roomType || 'public'}')"` : '';
                     let statusTag = '<span class="room-tag status-waiting">等待中</span>';
                     let lockClass = '';
                     if (isFighting) { statusTag = '<span class="room-tag status-fighting">戰鬥中</span>'; lockClass = 'locked'; }
+                    else if (isSolo) { statusTag = '<span class="room-tag" style="background:#9b59b6; color:white">單人</span>'; lockClass = 'locked'; }
                     else if (room.playerCount >= 6) { statusTag = '<span class="room-tag" style="background:#e67e22; color:white">已滿員</span>'; }
-                    
-                    // 🟢 [修改] 顯示轉生稱號 (格式化房主名字)
-                    // 注意：room.hostName 只有名字，我們需要從 rebirth 資訊中組合
-                    // 因為 broadcastHubData 目前只傳了 hostName，為了簡單，這裡暫時不加轉生顯示
-                    // 如果你想在房間列表也看到轉生，需要修改 server.js 的 broadcastHubData
+
+                    // 房間類型圖示
+                    let typeIcon = '🌐'; // 公開
+                    if (isSolo) typeIcon = '👤';
+                    else if (isPrivate) typeIcon = '🔒';
                     
                     html += `<div class="btn ${lockClass}" ${clickAction}>
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:12px; font-weight:bold; color:#f1c40f;">🚩 ${escapeHtml(room.hostName)} 的隊伍</span>
+                            <span style="font-size:12px; font-weight:bold; color:#f1c40f;">${typeIcon} ${escapeHtml(room.hostName)} 的隊伍</span>
                             <span style="font-size:10px; color:#bdc3c7;">#${index + 1}</span>
                         </div>
-                        <div style="margin-top:5px; display:flex; justify-content:space-between;">${statusTag}<span class="info-tag">${room.playerCount}/5 人</span></div>
+                        <div style="margin-top:5px; display:flex; justify-content:space-between;">${statusTag}<span class="info-tag">${room.playerCount}/${isSolo ? '1' : '5'} 人</span></div>
                         ${room.monsterKey === 'chaos_boss' ? `<div style="font-size:9px; color:#aaa; margin-top:2px;">目標: ${room.monsterName}</div>` : ''}
                     </div>`;
                 });
@@ -1358,5 +1408,70 @@ if (name === '系統') return;
             container.innerHTML = html;
         }
     </script>
+
+    <!-- ==========================================
+         房間類型選擇彈窗
+    ========================================== -->
+    <div id="room-type-modal" style="
+        display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+        background:rgba(0,0,0,0.7); z-index:9999;
+        justify-content:center; align-items:center;
+    ">
+        <div style="
+            background:#2c3e50; border:2px solid #3498db; border-radius:12px;
+            padding:20px; width:280px; max-width:90%; text-align:center;
+            box-shadow:0 0 20px rgba(52,152,219,0.4);
+        ">
+            <div style="font-size:14px; font-weight:bold; color:#ecf0f1; margin-bottom:15px;">
+                ⚔️ 選擇房間類型
+            </div>
+            
+            <div onclick="selectRoomType('solo')" style="
+                background:#9b59b6; color:white; padding:12px; border-radius:8px;
+                margin-bottom:8px; cursor:pointer; font-size:12px; font-weight:bold;
+            ">
+                👤 單人模式
+                <div style="font-size:10px; font-weight:normal; margin-top:3px; opacity:0.8;">自己一個人挑戰</div>
+            </div>
+            
+            <div onclick="selectRoomType('public')" style="
+                background:#27ae60; color:white; padding:12px; border-radius:8px;
+                margin-bottom:8px; cursor:pointer; font-size:12px; font-weight:bold;
+            ">
+                🌐 公開房間
+                <div style="font-size:10px; font-weight:normal; margin-top:3px; opacity:0.8;">任何人都可以加入</div>
+            </div>
+            
+            <div onclick="selectRoomType('private')" style="
+                background:#e67e22; color:white; padding:12px; border-radius:8px;
+                margin-bottom:8px; cursor:pointer; font-size:12px; font-weight:bold;
+            ">
+                🔒 私人房間
+                <div style="font-size:10px; font-weight:normal; margin-top:3px; opacity:0.8;">需要密碼才能加入</div>
+            </div>
+
+            <!-- 私人房間密碼輸入區 -->
+            <div id="private-pw-section" style="display:none; margin-top:10px;">
+                <input id="room-pw-input" type="text" maxlength="20" placeholder="輸入房間密碼..." style="
+                    width:90%; padding:8px; border-radius:6px; border:1px solid #7f8c8d;
+                    background:#34495e; color:#ecf0f1; font-size:12px; text-align:center;
+                    outline:none;
+                " />
+                <div onclick="confirmPrivateRoom()" style="
+                    background:#e74c3c; color:white; padding:10px; border-radius:8px;
+                    margin-top:8px; cursor:pointer; font-size:12px; font-weight:bold;
+                ">
+                    ✅ 確認建立
+                </div>
+            </div>
+
+            <div onclick="closeRoomTypeModal()" style="
+                color:#95a5a6; margin-top:12px; cursor:pointer; font-size:11px;
+            ">
+                ✖ 取消
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
