@@ -208,12 +208,11 @@
 
             <button class="btn-sell-trigger" onclick="openInventoryModal()">+ 上架物品</button>
 
-            <div class="category-bar">
+            <div class="category-bar" style="grid-template-columns: repeat(5, 1fr);">
                 <button class="cat-btn" onclick="selectCategory('weapon')">⚔️武器</button>
                 <button class="cat-btn" onclick="selectCategory('armor')">🛡️防具/飾品</button>
                 <button class="cat-btn" onclick="selectCategory('consumable')">🧪消耗</button>
                 <button class="cat-btn" onclick="selectCategory('material')">🪵材料</button>
-                <button class="cat-btn" onclick="selectCategory('card')">🃏卡片</button>
                 <button class="cat-btn" onclick="selectCategory('mine')">📦我的</button>
             </div>
 
@@ -421,9 +420,45 @@
         };
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
+        
+        let myLevel = 1;
+
+        // 裝備等級限制 (同 server)
+        const EQUIP_REQ_LV = {
+            'wood_sword':1,'copper_dagger':1,'oak_bow':1,'steel_blade':1,'hero_sword':1,
+            'iron_sword':10,'maple_staff':10,'shark_tooth':10,'silver_blade':20,
+            'spike_club':20,'poison_dag':20,'assassin_dag':20,'emerald_staff':30,
+            'flame_staff':40,'gold_axe':40,'obsidian_blade':50,
+            'frost_bow':60,'dragon_spear':60,'mithril_saber':80,
+            'void_reaper':100,'void_reaper_dark':100,
+            'god_slayer':130,'chaos_staff':130,'genesis_weapon':180,
+            'void_blade':220,'galaxy_saber':260,'entropy_sword':300,
+            'infinity_blade':350,'singularity_weapon':400,
+            'shard_blade_novice':10,'shard_axe_crystal':100,'shard_scythe_void':200,
+            'shard_spear_galaxy':300,'shard_wep_dimension':380,'shard_wep_origin':400,
+            'cloth_armor':1,'plate_mail':1,'leather_armor':5,'hunt_vest':5,
+            'dragon_mail':15,'chain_mail':25,'iron_armor':35,
+            'magma_plate':50,'ice_robe':60,'yeti_cloak':70,
+            'demon_armor':100,'angel_armor':130,'genesis_armor':180,
+            'void_armor':220,'nebula_plate':260,'entropy_god_armor':300,
+            'event_horizon':350,'singularity_armor':400,
+            'shard_armor_novice':10,'shard_armor_crystal':100,'shard_robe_void':200,
+            'shard_plate_galaxy':300,'shard_armor_dimension':380,'shard_armor_origin':400,
+            'bone_ring':1,'ring_life':1,'ring_magic':1,
+            'ring_str':5,'bracelet_def':5,'necklace_hp':5,'necklace_mp':5,
+            'fish_ring':10,'snake_boots':10,'pearl_necklace':20,
+            'amulet_soul':80,'ring_lord':100,'crown_chaos':150,
+            'ring_galaxy':200,'dimension_ring':280,'mobius_ring':350,'singularity_acc':400,
+            'shard_ring_novice':10,'shard_neck_brave':30,'shard_charm_wind':60,
+            'shard_ring_vampire':100,'shard_earring_holy':150,'shard_belt_titan':200,
+            'shard_pendant_dragon':280,'shard_ring_void':350,'shard_core_galaxy':380,'shard_crown_infinity':400,
+            'myth_weapon':450,'myth_armor':450,'myth_acc':450
+        };
+
         socket.on('playerStatsUpdate', (p) => {
             document.getElementById('my-gold').innerText = p.gold;
             myInventory = p.inventory;
+            myLevel = p.level || 1;
         });
 
         // 聊天室 (略) - 與先前版本相同
@@ -472,9 +507,6 @@
                 document.getElementById('listings-list').innerHTML = '<div style="padding:10px;">載入中...</div>';
                 document.getElementById('listings-area').style.display = 'flex';
                 socket.emit('getMyListings');
-            } else if (cat === 'card') {
-                document.getElementById('status-msg').innerText = "搜尋市場卡片...";
-                socket.emit('getMarketItems', 'all'); 
             } else {
                 document.getElementById('status-msg').innerText = "讀取物品清單...";
                 socket.emit('getMarketItems', cat);
@@ -485,20 +517,8 @@
             const area = document.getElementById('item-select-area');
             area.innerHTML = '';
             
-            // 排除不可交易物品 (這是「瀏覽市場」時的過濾)
+            // 排除不可交易物品
             let filteredItems = items.filter(item => !PROHIBITED_ITEMS.includes(item.id));
-
-            if (currentCategory === 'card') {
-                filteredItems = filteredItems.filter(item => 
-                    item.id.startsWith('card_') || 
-                    (item.name && item.name.indexOf('卡片') !== -1)
-                );
-            } else if (currentCategory !== 'mine' && currentCategory !== 'all') {
-                filteredItems = filteredItems.filter(item => 
-                    !item.id.startsWith('card_') && 
-                    (!item.name || item.name.indexOf('卡片') === -1)
-                );
-            }
 
             if (filteredItems.length === 0) { 
                 document.getElementById('status-msg').innerText = "此分類暫無可交易物品"; 
@@ -512,15 +532,15 @@
                 const btn = document.createElement('div');
                 btn.className = 'item-btn';
                 
-                if (item.id.startsWith('card_')) {
-                    const cardKey = item.id.replace('card_', '');
-                    const cardName = CARD_NAME_MAP[cardKey] || cardKey;
-                    btn.innerText = `卡片: ${cardName}`;
-                } else {
-                    btn.innerText = item.name;
+                const reqLv = EQUIP_REQ_LV[item.id] || 0;
+                let lvTag = '';
+                if (reqLv > 0) {
+                    const ok = myLevel >= reqLv;
+                    lvTag = ` <span style="font-size:8px;color:${ok ? '#27ae60' : '#e74c3c'};">[Lv.${reqLv}]</span>`;
                 }
+                btn.innerHTML = item.name + lvTag;
                 
-                btn.onclick = () => loadListings(item.id, btn.innerText);
+                btn.onclick = () => loadListings(item.id, item.name);
                 area.appendChild(btn);
             });
         });
@@ -564,13 +584,15 @@
                     }
                     
                     let displayItemName = row.itemName;
-                    if (displayItemName.startsWith('card_')) {
-                         const k = displayItemName.replace('card_', '');
-                         displayItemName = `卡片: ${CARD_NAME_MAP[k] || k}`;
+                    const reqLv = EQUIP_REQ_LV[row.item_key || ''] || 0;
+                    let lvTag = '';
+                    if (reqLv > 0) {
+                        const ok = myLevel >= reqLv;
+                        lvTag = `<span style="font-size:8px;color:${ok ? '#27ae60' : '#e74c3c'};">[Lv.${reqLv}]</span> `;
                     }
 
                     div.innerHTML = `
-                        <div class="col-name">${displayItemName} ${row.count > 1 ? `(x${row.count})` : ''}</div>
+                        <div class="col-name">${lvTag}${displayItemName} ${row.count > 1 ? `(x${row.count})` : ''}</div>
                         <div class="col-price">$${row.price}</div>
                         <div class="col-seller">${row.seller}</div>
                         <div class="col-action">${actionBtn}</div>
@@ -742,9 +764,9 @@
             if (isBulkSelling) return "正在批量上架中，確定要離開嗎？";
         };
 
-        // 購買與驗證碼相關 (與之前相同)
+        // 購買流程（含驗證碼）
         function buyItem(id, price, count) {
-            if(confirm(`確定要花費 ${price} G 購買 ${count || 1} 個嗎？`)) {
+            if(confirm(`確定要花費 ${price.toLocaleString()} G 購買 ${count || 1} 個嗎？`)) {
                 pendingBuyId = id; 
                 socket.emit('requestCaptcha'); 
             }
