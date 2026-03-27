@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的背包</title>
+    <title>我的背包v2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -270,12 +270,12 @@
             'myth_weapon':700,'myth_armor':700,'myth_acc':700,
         };
         const REPAIR_TIERS_CLIENT = [
-            { maxItemLv: 30,   repairPerPoint: 0.05 },
-            { maxItemLv: 80,   repairPerPoint: 0.1  },
-            { maxItemLv: 150,  repairPerPoint: 0.3  },
-            { maxItemLv: 250,  repairPerPoint: 1    },
-            { maxItemLv: 400,  repairPerPoint: 3    },
-            { maxItemLv: Infinity, repairPerPoint: 8 },
+            { maxItemLv: 30,   repairPerPoint: 0.01 },
+            { maxItemLv: 80,   repairPerPoint: 0.03 },
+            { maxItemLv: 150,  repairPerPoint: 0.05 },
+            { maxItemLv: 250,  repairPerPoint: 0.07 },
+            { maxItemLv: 400,  repairPerPoint: 0.09 },
+            { maxItemLv: Infinity, repairPerPoint: 0.1 },
         ];
         function getRepairCostClient(key, curDur) {
             const missing = MAX_DURABILITY - Math.max(0, Math.min(MAX_DURABILITY, curDur));
