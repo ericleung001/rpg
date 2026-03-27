@@ -181,7 +181,19 @@
         if (!myToken) window.location.href = 'index.html';
 
         let currentTab = 'all';
-        let playerData = null; // 暫存玩家資料，切換 Tab 時不用重整
+        let playerData = null;
+        let myLevel = 1;
+
+        // 裝備等級限制 (同 server)
+        const EQUIP_REQ_LV = {
+            'shard_ring_novice':10,'shard_neck_brave':30,'shard_charm_wind':60,
+            'shard_ring_vampire':100,'shard_earring_holy':150,'shard_belt_titan':200,
+            'shard_pendant_dragon':280,'shard_ring_void':350,'shard_core_galaxy':380,'shard_crown_infinity':400,
+            'shard_blade_novice':10,'shard_axe_crystal':100,'shard_scythe_void':200,
+            'shard_spear_galaxy':300,'shard_wep_dimension':380,'shard_wep_origin':400,
+            'shard_armor_novice':10,'shard_armor_crystal':100,'shard_robe_void':200,
+            'shard_plate_galaxy':300,'shard_armor_dimension':380,'shard_armor_origin':400
+        };
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
@@ -190,9 +202,9 @@
         socket.on('errorMessage', (msg) => { showToast(msg); });
         socket.on('shopResult', (res) => { if(res.success) showToast(res.msg); });
 
-        // 接收玩家數據更新
         socket.on('playerStatsUpdate', (p) => {
             playerData = p;
+            myLevel = p.level || 1;
             renderShop();
         });
 
@@ -241,10 +253,17 @@
                 const btnText = canAfford ? '立即兌換' : '碎片不足';
                 const clickAction = canAfford ? `onclick="buyItem('${item.id}', '${item.name}', ${item.cost})"` : '';
 
+                const reqLv = EQUIP_REQ_LV[item.id] || 0;
+                let lvTag = '';
+                if (reqLv > 0) {
+                    const ok = myLevel >= reqLv;
+                    lvTag = `<span style="font-size:9px;color:${ok ? '#27ae60' : '#e74c3c'};margin-left:4px;">[Lv.${reqLv}]</span>`;
+                }
+
                 const html = `
                     <div class="${cardClass}">
                         <div class="item-top">
-                            <div class="item-name">${item.name}</div>
+                            <div class="item-name">${item.name}${lvTag}</div>
                             <div style="font-size:10px; color:#f1c40f;">✨ ${item.cost}</div>
                         </div>
                         <div class="item-stats">
