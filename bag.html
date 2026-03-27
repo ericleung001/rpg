@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的背包v2</title>
+    <title>我的背包</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -662,13 +662,11 @@
                     }
                 }
 
-                // 棄置按鈕：僅對裝備類，且耐久 < 30 時顯示
+                // 棄置按鈕：所有裝備類均可顯示（不限耐久度）
                 let discardBtn = '';
                 if (isEquipmentType) {
                     const curDurForDiscard = (myDurability[key] !== undefined) ? myDurability[key] : MAX_DURABILITY;
-                    if (curDurForDiscard < 30) {
-                        discardBtn = `<button class="btn" style="background:#c0392b; font-size:9px;" onclick="confirmDiscard('${key}', '${item.name}', ${curDurForDiscard})">🗑️ 棄置</button>`;
-                    }
+                    discardBtn = `<button class="btn" style="background:#c0392b; font-size:9px;" onclick="confirmDiscard('${key}', '${item.name}', ${curDurForDiscard})">🗑️ 棄置</button>`;
                 }
 
                 const div = document.createElement('div');
