@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的背包</title>
+    <title>我的背包v2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -662,6 +662,15 @@
                     }
                 }
 
+                // 棄置按鈕：僅對裝備類，且耐久 < 30 時顯示
+                let discardBtn = '';
+                if (isEquipmentType) {
+                    const curDurForDiscard = (myDurability[key] !== undefined) ? myDurability[key] : MAX_DURABILITY;
+                    if (curDurForDiscard < 30) {
+                        discardBtn = `<button class="btn" style="background:#c0392b; font-size:9px;" onclick="confirmDiscard('${key}', '${item.name}', ${curDurForDiscard})">🗑️ 棄置</button>`;
+                    }
+                }
+
                 const div = document.createElement('div');
                 div.className = 'item-card';
                 div.innerHTML = `
@@ -674,6 +683,7 @@
                     <div class="action-btns">
                         ${useBtn}
                         ${repairBtn}
+                        ${discardBtn}
                         ${sellBtns}
                         ${showDismantle ? `<button class="btn btn-dismantle" onclick="confirmDismantle('${key}', '${item.name}')">分解</button>` : ''}
                     </div>
@@ -702,6 +712,26 @@
             }
             if (confirm(`🔧 維修【${name}】\n\n需要消耗 ${cost} 塊技能碎片\n你目前有 ${owned} 塊\n\n確定維修嗎？`)) {
                 socket.emit('repairItem', id);
+            }
+        }
+
+        function confirmDiscard(id, name, curDur) {
+            const totalCount = myInventory[id] || 0;
+            const isEquipped = Object.values(myEquipment || {}).includes(id);
+            const backupCount = isEquipped ? totalCount : totalCount;
+
+            let msg = `🗑️ 棄置【${name}】\n\n目前耐久度：${curDur}/100\n`;
+            if (isEquipped) {
+                if (backupCount <= 0) {
+                    showMsg(`❌ 棄置失敗！【${name}】正在裝備中，背包無備用件。請先購買備用品。`);
+                    return;
+                }
+                msg += `裝備中：換上備用件（背包剩 ${backupCount} 件），耐久重置為 100。\n\n⚠️ 損壞件將永久消失，確定棄置嗎？`;
+            } else {
+                msg += `背包中共 ${totalCount} 件，將棄置1件（耐久記錄清除）。\n\n⚠️ 此操作不可撤銷，確定棄置嗎？`;
+            }
+            if (confirm(msg)) {
+                socket.emit('discardEquipment', id);
             }
         }
 
