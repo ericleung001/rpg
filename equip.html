@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>裝備管理</title>
+    <title>裝備管理v2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -262,9 +262,9 @@
             'dimension_ring':280,'mobius_ring':450,'singularity_acc':500,'myth_acc':600
         };
         const REPAIR_TIERS = [
-            { maxItemLv: 30, rate: 0.05 }, { maxItemLv: 80, rate: 0.1 },
-            { maxItemLv: 150, rate: 0.3 }, { maxItemLv: 250, rate: 1 },
-            { maxItemLv: 400, rate: 3 }, { maxItemLv: Infinity, rate: 8 }
+            { maxItemLv: 30, rate: 0.01 }, { maxItemLv: 80, rate: 0.03 },
+            { maxItemLv: 150, rate: 0.05 }, { maxItemLv: 250, rate: 0.07 },
+            { maxItemLv: 400, rate: 0.09 }, { maxItemLv: Infinity, rate: 0.1 }
         ];
         function getRepairCost(itemId, curDur) {
             const missing = DURABILITY_MAX - Math.max(0, curDur);
