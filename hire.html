@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會 - 僱員探險</title>
+    <title>冒險者公會 - 僱員探險v2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -68,6 +68,25 @@
         .shard-info { font-size: 9px; color: #9b59b6; }
 
         #loading { text-align: center; padding: 40px; color: #666; }
+
+        .h-reward {
+            background: #1a3a1a; border: 1px solid #27ae60; border-radius: 6px;
+            padding: 8px; margin-top: 6px; position: relative;
+            animation: rewardFadeIn 0.4s ease;
+        }
+        @keyframes rewardFadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .h-reward .reward-header { font-size: 9px; color: #2ecc71; margin-bottom: 4px; font-weight: bold; }
+        .h-reward .reward-line { font-size: 8px; color: #bdc3c7; line-height: 1.8; }
+        .h-reward .reward-items { font-size: 8px; color: #f39c12; line-height: 1.8; padding-left: 8px; }
+        .h-reward .reward-close {
+            position: absolute; top: 4px; right: 6px; font-size: 10px; color: #666;
+            cursor: pointer; background: none; border: none; font-family: inherit; padding: 2px 4px;
+        }
+        .h-reward .reward-close:hover { color: #e74c3c; }
+        .h-reward .reward-note { font-size: 7px; color: #27ae60; margin-top: 4px; border-top: 1px dashed #2ecc71; padding-top: 3px; }
     </style>
 </head>
 <body>
@@ -108,16 +127,11 @@
             </button>
         </div>
 
-        <!-- 探險結果 -->
-        <div id="result-box" class="reward-box" style="display:none;">
-            <div class="title">🎉 探險完成！</div>
-            <div id="result-content"></div>
-        </div>
     </div>
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { transports: ['websocket', 'polling'], secure: true });
+const socket = io(window.location.origin, { transports: ['websocket', 'polling'], secure: true });
 const myToken = localStorage.getItem('rpg_token');
 if (!myToken) window.location.href = 'index.html';
 
@@ -128,6 +142,7 @@ let selectedHirelings = new Set();
 let selectedZone = null;
 let timerInterval = null;
 let payType = 'shard'; // 'shard' or 'gold'
+let hirelingRewards = {}; // 儲存每個僱員的探險獎勵結果
 
 // 物品名稱對照表 (同 server ITEM_NAMES)
 const ITEM_NAMES = {
@@ -178,29 +193,17 @@ socket.on('hirelingsData', (data) => {
 });
 
 socket.on('expeditionResult', (data) => {
-    const box = document.getElementById('result-box');
-    box.style.display = 'block';
-    let html = `<div class="reward-item">👤 <b>${data.hirelingName}</b> 回來了！`;
-    if (data.newLevel) html += ` (現在 Lv.${data.newLevel})`;
-    html += `</div>`;
-    html += `<div class="reward-item">💰 金幣: +${data.gold.toLocaleString()}</div>`;
-    html += `<div class="reward-item">⭐ 僱員經驗: +${data.exp.toLocaleString()}</div>`;
-    
-    // 顯示物品（用中文名）
-    if (data.items && Object.keys(data.items).length > 0) {
-        let itemLines = Object.entries(data.items).map(([id, qty]) => {
-            const name = ITEM_NAMES[id] || id;
-            return `${name} ×${qty}`;
-        });
-        html += `<div class="reward-item">🎁 獲得物品：</div>`;
-        itemLines.forEach(line => {
-            html += `<div class="reward-item" style="padding-left:15px;">• ${line}</div>`;
-        });
-    }
-    html += `<div style="margin-top:8px;font-size:8px;color:#27ae60;border-top:1px dashed #2ecc71;padding-top:5px;">✅ 金幣及物品已自動存入你的背包</div>`;
-    
-    document.getElementById('result-content').innerHTML = html;
-    setTimeout(() => { box.style.display = 'none'; }, 8000);
+    // 儲存獎勵到對應僱員，顯示在僱員卡片上
+    hirelingRewards[data.hirelingId || data.hirelingName] = {
+        hirelingName: data.hirelingName,
+        gold: data.gold,
+        exp: data.exp,
+        items: data.items || {},
+        newLevel: data.newLevel,
+        time: Date.now()
+    };
+    // 刷新僱員列表以顯示獎勵
+    socket.emit('getHirelings');
 });
 
 socket.on('errorMessage', (msg) => {
@@ -258,6 +261,29 @@ function renderHirelings() {
         const expPct = h.maxExp > 0 ? Math.floor((h.exp / h.maxExp) * 100) : 0;
         const canSelect = isIdle;
         
+        // 檢查是否有獎勵要顯示（用 id 或 name 匹配）
+        const reward = hirelingRewards[h.id] || hirelingRewards[h.name];
+        let rewardHtml = '';
+        if (reward) {
+            let itemsHtml = '';
+            if (reward.items && Object.keys(reward.items).length > 0) {
+                Object.entries(reward.items).forEach(([id, qty]) => {
+                    const name = ITEM_NAMES[id] || id;
+                    itemsHtml += `<div class="reward-items">🎁 ${name} ×${qty}</div>`;
+                });
+            }
+            const rewardKey = h.id in hirelingRewards ? h.id : h.name;
+            rewardHtml = `
+            <div class="h-reward">
+                <button class="reward-close" onclick="event.stopPropagation();clearReward('${rewardKey}')" title="關閉">✕</button>
+                <div class="reward-header">🎉 探險完成！${reward.newLevel ? ' 升級至 Lv.' + reward.newLevel + '！' : ''}</div>
+                <div class="reward-line">💰 金幣: +${reward.gold.toLocaleString()}</div>
+                <div class="reward-line">⭐ 經驗: +${reward.exp.toLocaleString()}</div>
+                ${itemsHtml}
+                <div class="reward-note">✅ 金幣及物品已自動存入你的背包</div>
+            </div>`;
+        }
+
         html += `<div class="hireling-card ${statusClass} ${isSelected ? 'selected' : ''}" ${canSelect ? `onclick="toggleSelect('${h.id}')"` : ''}>
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div>
@@ -274,6 +300,7 @@ function renderHirelings() {
                 EXP: ${h.exp}/${h.maxExp} (${expPct}%)
                 <div class="exp-bar"><div class="exp-bar-fill" style="width:${expPct}%"></div></div>
             </div>
+            ${rewardHtml}
         </div>`;
     });
     container.innerHTML = html;
@@ -387,6 +414,11 @@ function sendExpedition() {
 
 function collectExpedition(hid) {
     socket.emit('collectExpedition', hid);
+}
+
+function clearReward(key) {
+    delete hirelingRewards[key];
+    renderHirelings();
 }
 
 function dismissHireling(hid) {
