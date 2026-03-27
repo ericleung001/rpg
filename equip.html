@@ -239,17 +239,54 @@
         };
 
         let myLevel = 1;
+        let myDurability = {};
+        let myShards = 0;
+
+        // 耐久度維修費計算 (同 server)
+        const DURABILITY_MAX = 100;
+        const ITEM_LEVEL_MAP = {
+            'wood_sword':10,'copper_dagger':5,'steel_blade':8,'oak_bow':10,'iron_sword':15,
+            'maple_staff':20,'shark_tooth':25,'silver_blade':30,'hero_sword':35,'assassin_dag':40,
+            'spike_club':45,'poison_dag':50,'emerald_staff':55,'flame_staff':60,'gold_axe':70,
+            'obsidian_blade':75,'dragon_spear':80,'frost_bow':85,'mithril_saber':90,
+            'void_reaper':100,'void_reaper_dark':110,'god_slayer':130,'chaos_staff':150,
+            'genesis_weapon':200,'void_blade':230,'galaxy_saber':260,'entropy_sword':300,
+            'infinity_blade':450,'singularity_weapon':500,'myth_weapon':600,
+            'cloth_armor':1,'plate_mail':5,'leather_armor':10,'hunt_vest':15,'dragon_mail':20,
+            'chain_mail':25,'iron_armor':35,'magma_plate':45,'ice_robe':55,'yeti_cloak':65,
+            'demon_armor':90,'angel_armor':120,'genesis_armor':200,'void_armor':230,
+            'nebula_plate':260,'entropy_god_armor':300,'event_horizon':450,'singularity_armor':500,'myth_armor':600,
+            'bone_ring':5,'snake_boots':8,'ring_life':10,'ring_magic':12,'fish_ring':15,
+            'ring_str':20,'bracelet_def':22,'necklace_hp':25,'necklace_mp':28,'pearl_necklace':30,
+            'amulet_soul':80,'ring_lord':100,'crown_chaos':150,'ring_galaxy':200,
+            'dimension_ring':280,'mobius_ring':450,'singularity_acc':500,'myth_acc':600
+        };
+        const REPAIR_TIERS = [
+            { maxItemLv: 30, rate: 0.05 }, { maxItemLv: 80, rate: 0.1 },
+            { maxItemLv: 150, rate: 0.3 }, { maxItemLv: 250, rate: 1 },
+            { maxItemLv: 400, rate: 3 }, { maxItemLv: Infinity, rate: 8 }
+        ];
+        function getRepairCost(itemId, curDur) {
+            const missing = DURABILITY_MAX - Math.max(0, curDur);
+            if (missing <= 0) return 0;
+            const itemLv = ITEM_LEVEL_MAP[itemId] || 1;
+            const tier = REPAIR_TIERS.find(t => itemLv <= t.maxItemLv);
+            return Math.max(1, Math.ceil(missing * tier.rate));
+        }
 
         socket.on('connect', () => { socket.emit('joinGame', myToken); });
         
         socket.on('playerStatsUpdate', (p) => { 
             myLevel = p.level || 1;
+            myDurability = p.durability || {};
+            myShards = (p.inventory && p.inventory.skill_shard) || 0;
             renderStats(p); 
             renderSlots(p.equipment, p.enhancements); 
             renderInventory(p.inventory, p.enhancements); 
         });
         
         socket.on('equipResult', (msg) => { showMsg(msg); });
+        socket.on('bagResult', (data) => { if (data && data.msg) showMsg(data.msg); });
         socket.on('errorMessage', (msg) => { showMsg("❌ " + msg); });
 
         function renderStats(p) {
@@ -272,9 +309,32 @@
                     let displayName = ITEM_MAP[itemId].name;
                     if (lv > 0) displayName += ` <span style="color:#f1c40f; font-weight:bold;">+${lv}</span>`;
 
+                    // 耐久度
+                    const curDur = (myDurability[itemId] !== undefined) ? myDurability[itemId] : DURABILITY_MAX;
+                    const durPct = Math.round((curDur / DURABILITY_MAX) * 100);
+                    let durColor = '#27ae60';
+                    if (durPct < 20) durColor = '#e74c3c';
+                    else if (durPct < 50) durColor = '#e67e22';
+                    else if (durPct < 80) durColor = '#f39c12';
+
+                    let repairHtml = '';
+                    if (curDur < DURABILITY_MAX) {
+                        const cost = getRepairCost(itemId, curDur);
+                        repairHtml = `<button class="btn" style="background:#16a085; font-size:9px; padding:4px 8px; margin-left:5px;" onclick="repairItem('${itemId}')">🔧 維修 (${cost}碎片)</button>`;
+                    }
+
                     div.innerHTML = `
                         <div style="color:#2ecc71; margin-bottom:5px;">${displayName}</div>
-                        <button class="btn btn-unequip" onclick="unequip('${type}')">卸下</button>
+                        <div style="display:flex; align-items:center; gap:5px; margin-bottom:5px;">
+                            <div style="flex:1; height:6px; background:#2c3e50; border-radius:3px; overflow:hidden;">
+                                <div style="height:100%; width:${durPct}%; background:${durColor}; border-radius:3px;"></div>
+                            </div>
+                            <span style="font-size:9px; color:${durColor};">${curDur}/${DURABILITY_MAX}</span>
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <button class="btn btn-unequip" onclick="unequip('${type}')">卸下</button>
+                            ${repairHtml}
+                        </div>
                     `;
                 } else {
                     div.innerHTML = `<span style="color:#7f8c8d">無</span>`;
@@ -332,6 +392,7 @@
 
         function equip(id) { socket.emit('equipItem', id); }
         function unequip(slot) { socket.emit('unequipItem', slot); }
+        function repairItem(itemId) { socket.emit('repairItem', itemId); }
         
         function showMsg(text) {
             const toast = document.getElementById('game-toast');
