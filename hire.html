@@ -95,8 +95,16 @@
         <div id="expedition-section" class="section" style="display:none;">
             <div class="section-title">🗺️ 選擇探險區域</div>
             <div id="zone-list"></div>
+            <div style="margin-top:8px; display:flex; gap:8px; align-items:center; justify-content:center;">
+                <label style="font-size:9px; cursor:pointer; padding:6px 12px; border-radius:6px; border:2px solid #9b59b6;" id="pay-shard-label" onclick="setPayType('shard')">
+                    💎 碎片 (每人 5)
+                </label>
+                <label style="font-size:9px; cursor:pointer; padding:6px 12px; border-radius:6px; border:2px solid #f1c40f;" id="pay-gold-label" onclick="setPayType('gold')">
+                    💰 金幣 (每人 500)
+                </label>
+            </div>
             <button class="btn btn-send" id="btn-send" onclick="sendExpedition()" disabled>
-                ⚔️ 派遣探險 (每人 50 碎片)
+                ⚔️ 請選擇僱員和區域
             </button>
         </div>
 
@@ -119,6 +127,7 @@ let maxSlots = 1;
 let selectedHirelings = new Set();
 let selectedZone = null;
 let timerInterval = null;
+let payType = 'shard'; // 'shard' or 'gold'
 
 // 物品名稱對照表 (同 server ITEM_NAMES)
 const ITEM_NAMES = {
@@ -333,12 +342,31 @@ function selectZone(zid) {
     updateSendButton();
 }
 
+function setPayType(type) {
+    payType = type;
+    const shardLabel = document.getElementById('pay-shard-label');
+    const goldLabel = document.getElementById('pay-gold-label');
+    if (type === 'shard') {
+        shardLabel.style.background = '#9b59b6'; shardLabel.style.color = 'white';
+        goldLabel.style.background = 'transparent'; goldLabel.style.color = '#f1c40f';
+    } else {
+        goldLabel.style.background = '#f1c40f'; goldLabel.style.color = '#000';
+        shardLabel.style.background = 'transparent'; shardLabel.style.color = '#9b59b6';
+    }
+    updateSendButton();
+}
+// 預設選中碎片
+setTimeout(() => setPayType('shard'), 100);
+
 function updateSendButton() {
     const btn = document.getElementById('btn-send');
     const count = selectedHirelings.size;
     if (count > 0 && selectedZone) {
         btn.disabled = false;
-        btn.innerText = `⚔️ 派遣 ${count} 人探險 (${count * 50} 碎片)`;
+        const costPer = payType === 'shard' ? 5 : 500;
+        const icon = payType === 'shard' ? '💎' : '💰';
+        const unit = payType === 'shard' ? '碎片' : 'G';
+        btn.innerText = `⚔️ 派遣 ${count} 人探險 (${icon} ${count * costPer} ${unit})`;
     } else {
         btn.disabled = true;
         btn.innerText = '⚔️ 請選擇僱員和區域';
@@ -352,7 +380,7 @@ function hireNew() {
 function sendExpedition() {
     if (selectedHirelings.size === 0 || !selectedZone) return;
     const ids = Array.from(selectedHirelings);
-    socket.emit('sendExpedition', { hirelingIds: ids, zoneId: selectedZone });
+    socket.emit('sendExpedition', { hirelingIds: ids, zoneId: selectedZone, payType: payType });
     selectedHirelings.clear();
     selectedZone = null;
 }
