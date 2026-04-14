@@ -291,9 +291,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
 
         // 🟢 [核心] 轉生稱號格式化工具 (新增)
         function formatName(name, rebirth) {
@@ -808,9 +808,10 @@
             div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${safeName}]:</span> ${msg}`;
             history.appendChild(div); history.scrollTop = history.scrollHeight;
         }
-        socket.on('chatHistory', () => { 
-            // 戰鬥頁面不顯示全服歷史記錄，只顯示房間內對話
-            document.getElementById('chat-history').innerHTML = '';
+        socket.on('chatHistory', (history) => {
+            const box = document.getElementById('chat-history');
+            box.innerHTML = ''; 
+            history.forEach(data => appendChat(data.name, data.msg));
         });
         socket.on('chatMessage', (data) => { appendChat(data.name, data.msg); });
         
