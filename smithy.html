@@ -126,33 +126,33 @@
         // 裝備等級限制 (同 server)
         const EQUIP_REQ_LV = {
             'wood_sword':1,'copper_dagger':1,'oak_bow':1,'steel_blade':1,'hero_sword':1,
-            'iron_sword':10,'maple_staff':10,'shark_tooth':10,'silver_blade':20,
-            'spike_club':20,'poison_dag':20,'assassin_dag':20,'emerald_staff':30,
-            'flame_staff':40,'gold_axe':40,'obsidian_blade':50,
-            'frost_bow':60,'dragon_spear':60,'mithril_saber':80,
-            'void_reaper':100,'void_reaper_dark':100,
-            'god_slayer':130,'chaos_staff':130,'genesis_weapon':180,
-            'void_blade':220,'galaxy_saber':260,'entropy_sword':300,
-            'infinity_blade':350,'singularity_weapon':400,
-            'shard_blade_novice':10,'shard_axe_crystal':100,'shard_scythe_void':200,
-            'shard_spear_galaxy':300,'shard_wep_dimension':380,'shard_wep_origin':400,
-            'cloth_armor':1,'plate_mail':1,'leather_armor':5,'hunt_vest':5,
-            'dragon_mail':15,'chain_mail':25,'iron_armor':35,
-            'magma_plate':50,'ice_robe':60,'yeti_cloak':70,
-            'demon_armor':100,'angel_armor':130,'genesis_armor':180,
-            'void_armor':220,'nebula_plate':260,'entropy_god_armor':300,
-            'event_horizon':350,'singularity_armor':400,
-            'shard_armor_novice':10,'shard_armor_crystal':100,'shard_robe_void':200,
-            'shard_plate_galaxy':300,'shard_armor_dimension':380,'shard_armor_origin':400,
+            'iron_sword':1,'maple_staff':1,'shark_tooth':1,'silver_blade':1,
+            'spike_club':1,'poison_dag':1,'assassin_dag':1,'emerald_staff':1,
+            'flame_staff':1,'gold_axe':1,'obsidian_blade':1,
+            'frost_bow':1,'dragon_spear':1,'mithril_saber':1,
+            'void_reaper':1,'void_reaper_dark':1,
+            'god_slayer':1,'chaos_staff':1,'genesis_weapon':1,
+            'void_blade':1,'galaxy_saber':1,'entropy_sword':1,
+            'infinity_blade':1,'singularity_weapon':1,
+            'shard_blade_novice':1,'shard_axe_crystal':1,'shard_scythe_void':1,
+            'shard_spear_galaxy':1,'shard_wep_dimension':1,'shard_wep_origin':1,
+            'cloth_armor':1,'plate_mail':1,'leather_armor':1,'hunt_vest':1,
+            'dragon_mail':1,'chain_mail':1,'iron_armor':1,
+            'magma_plate':1,'ice_robe':1,'yeti_cloak':1,
+            'demon_armor':1,'angel_armor':1,'genesis_armor':1,
+            'void_armor':1,'nebula_plate':1,'entropy_god_armor':1,
+            'event_horizon':1,'singularity_armor':1,
+            'shard_armor_novice':1,'shard_armor_crystal':1,'shard_robe_void':1,
+            'shard_plate_galaxy':1,'shard_armor_dimension':1,'shard_armor_origin':1,
             'bone_ring':1,'ring_life':1,'ring_magic':1,
-            'ring_str':5,'bracelet_def':5,'necklace_hp':5,'necklace_mp':5,
-            'fish_ring':10,'snake_boots':10,'pearl_necklace':20,
-            'amulet_soul':80,'ring_lord':100,'crown_chaos':150,
-            'ring_galaxy':200,'dimension_ring':280,'mobius_ring':350,'singularity_acc':400,
-            'shard_ring_novice':10,'shard_neck_brave':30,'shard_charm_wind':60,
-            'shard_ring_vampire':100,'shard_earring_holy':150,'shard_belt_titan':200,
-            'shard_pendant_dragon':280,'shard_ring_void':350,'shard_core_galaxy':380,'shard_crown_infinity':400,
-            'myth_weapon':450,'myth_armor':450,'myth_acc':450
+            'ring_str':1,'bracelet_def':1,'necklace_hp':1,'necklace_mp':1,
+            'fish_ring':1,'snake_boots':1,'pearl_necklace':1,
+            'amulet_soul':1,'ring_lord':1,'crown_chaos':1,
+            'ring_galaxy':1,'dimension_ring':1,'mobius_ring':1,'singularity_acc':1,
+            'shard_ring_novice':1,'shard_neck_brave':1,'shard_charm_wind':1,
+            'shard_ring_vampire':1,'shard_earring_holy':1,'shard_belt_titan':1,
+            'shard_pendant_dragon':1,'shard_ring_void':1,'shard_core_galaxy':1,'shard_crown_infinity':1,
+            'myth_weapon':200,'myth_armor':200,'myth_acc':200
         };
 
         socket.on('connect', () => {
@@ -272,7 +272,7 @@
             });
 
             const useShardSmith = document.getElementById('smith-pay-shard') && document.getElementById('smith-pay-shard').checked;
-            const shardCostSmith = Math.ceil(recipe.goldCost * 1);
+            const shardCostSmith = Math.ceil(recipe.goldCost * 0.01);
             const goldEnough = useShardSmith ? ((myData.inventory['skill_shard']||0) >= shardCostSmith) : (myData.gold >= recipe.goldCost);
             if(!goldEnough) canCraft = false;
 
