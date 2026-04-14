@@ -271,11 +271,11 @@
         };
         const REPAIR_TIERS_CLIENT = [
             { maxItemLv: 30,   repairPerPoint: 0.01 },
-            { maxItemLv: 80,   repairPerPoint: 0.03 },
-            { maxItemLv: 150,  repairPerPoint: 0.05 },
-            { maxItemLv: 250,  repairPerPoint: 0.07 },
-            { maxItemLv: 400,  repairPerPoint: 0.09 },
-            { maxItemLv: Infinity, repairPerPoint: 0.1 },
+            { maxItemLv: 80,   repairPerPoint: 0.01 },
+            { maxItemLv: 150,  repairPerPoint: 0.01 },
+            { maxItemLv: 250,  repairPerPoint: 0.01 },
+            { maxItemLv: 400,  repairPerPoint: 0.01 },
+            { maxItemLv: Infinity, repairPerPoint: 0.01 },
         ];
         function getRepairCostClient(key, curDur) {
             const missing = MAX_DURABILITY - Math.max(0, Math.min(MAX_DURABILITY, curDur));
