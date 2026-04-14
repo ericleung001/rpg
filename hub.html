@@ -315,7 +315,7 @@
 - <b>8 大區域</b>：從迷霧森林到 <span style="color:#e74c3c">⚛️ 量子領域 (Lv.300)</span>，越高級區域獎勵越豐厚。
 - <b>僱員升級</b>：探險獲得經驗，等級越高掉落率和獎勵加成越多。
 - <b>背景運行</b>：探險期間可以做其他事，完成後回來收取即可。
-- <b>費用</b>：每人每次 <span style="color:#9b59b6">50 碎片</span>，雇用費 100 碎片。
+- <b>費用</b>：每人每次 <span style="color:#9b59b6">5 碎片/500 金錢</span>，雇用費 100 碎片。
 
 <b style="color:#e74c3c;">【🔒 裝備等級限制 — 全新！】</b>
 - 所有裝備現在有 <b>等級需求</b>，必須達到指定等級才可裝備。
@@ -341,7 +341,7 @@
 - <b>耐久歸零</b>：裝備不會消失，但屬性加成降至 <span style="color:#e74c3c">0</span>。
 - <b>維修方式</b>：前往 <span style="color:#16a085">🎒 背包</span>，點擊裝備旁的「🔧 維修」按鈕。
 - <b>維修費用</b>（碎片）：按裝備等級分級 ——
-  <span style="color:#aaa;">入門 0.05/點 → 初階 0.1/點 → 中階 0.3/點 → 高階 1/點 → 神話 3/點 → 頂級 8/點</span>
+  <span style="color:#aaa;">入門 0.01/點 → 初階 0.03/點 → 中階 0.05/點 → 高階 0.07/點 → 神話 0.09/點 → 頂級 0.1/點</span>
 - 大廳角色面板可隨時查看三件裝備的耐久度。
 
 <b style="color:#8e44ad;">【🏰 公會系統】</b>
@@ -360,6 +360,8 @@
 - 有任何問題、建議或 Bug 回報，歡迎加入我們的 Discord！
 - <a href="https://discord.gg/4daAT5uu" target="_blank" style="color:#7289da; font-weight:bold; text-decoration:underline;">👉 https://discord.gg/4daAT5uu</a>
 
+<b style="color:#f39c12;">【🛠️ 其他優化】</b>
+- 大廳可直接查看僱員探險剩餘時間及休息狀態。
 
             </div>
             <button class="close-notice-btn" onclick="closeNotice()">我知道了，立即體驗！</button>
@@ -585,7 +587,7 @@
 
     </div> 
     
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         function escapeHtml(text) {
             if (!text) return text;
@@ -613,7 +615,7 @@
 
         
 
-        const socket = io('https://mmo.ttctv-105.cc', { 
+       const socket = io('https://mmo.ttctv-105.cc', { 
     transports: ['websocket', 'polling'],
     secure: true // 因為你用 https，建議加呢個
 });
@@ -1556,3 +1558,14 @@ if (name === '系統') return;
                     ✅ 確認建立
                 </div>
             </div>
+
+            <div onclick="closeRoomTypeModal()" style="
+                color:#95a5a6; margin-top:12px; cursor:pointer; font-size:11px;
+            ">
+                ✖ 取消
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
