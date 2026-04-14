@@ -535,7 +535,7 @@
             let rateString = displayRate < 0.01 ? displayRate.toFixed(4) : (displayRate < 1 ? displayRate.toFixed(2) : Math.floor(displayRate));
             
             document.getElementById('rate-txt').innerText = `${rateString}%`;
-            const shardEquiv = Math.ceil(config.cost * 1);
+            const shardEquiv = Math.ceil(config.cost * 0.01);
             document.getElementById('cost-txt').innerText = config.cost.toLocaleString() + " G  |  💎 " + shardEquiv.toLocaleString() + " 碎片";
             
             const riskEl = document.getElementById('risk-txt');
