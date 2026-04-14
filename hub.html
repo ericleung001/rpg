@@ -317,11 +317,9 @@
 - <b>背景運行</b>：探險期間可以做其他事，完成後回來收取即可。
 - <b>費用</b>：每人每次 <span style="color:#9b59b6">5 碎片/500 金錢</span>，雇用費 100 碎片。
 
-<b style="color:#e74c3c;">【🔒 裝備等級限制 — 全新！】</b>
-- 所有裝備現在有 <b>等級需求</b>，必須達到指定等級才可裝備。
-- <span style="color:#f1c40f">🔥 神話系列</span> (遊戲最強) → 需要 <b style="color:#e74c3c;">Lv.450</b>
-- <span style="color:#3498db">⭐ 奇點/原初系列</span> → 需要 <b>Lv.400</b>
-- 其他裝備按強度分布在 Lv.1 ~ Lv.400 之間。
+<b style="color:#e74c3c;">【🔒 裝備等級限制 】</b>
+- 大部分裝備現在沒有 <b>等級需求</b>
+- <span style="color:#f1c40f">🔥 神話系列</span> (遊戲最強) → 需要 <b style="color:#e74c3c;">Lv.200</b>
 - 裝備頁面會顯示等級標籤，不夠等級嘅裝備會變灰色。
 
 <b style="color:#3498db;">【📧 Email 登入系統 — 全新！】</b>
@@ -340,8 +338,8 @@
 - 耐久度越低，裝備 <b>屬性加成越少</b>（耐久 50% = 屬性只剩一半）。
 - <b>耐久歸零</b>：裝備不會消失，但屬性加成降至 <span style="color:#e74c3c">0</span>。
 - <b>維修方式</b>：前往 <span style="color:#16a085">🎒 背包</span>，點擊裝備旁的「🔧 維修」按鈕。
-- <b>維修費用</b>（碎片）：按裝備等級分級 ——
-  <span style="color:#aaa;">入門 0.01/點 → 初階 0.03/點 → 中階 0.05/點 → 高階 0.07/點 → 神話 0.09/點 → 頂級 0.1/點</span>
+- <b>維修費用</b>（碎片）：統一裝備等級 ——
+  <span style="color:#aaa;">全部 0.01/點</span>
 - 大廳角色面板可隨時查看三件裝備的耐久度。
 
 <b style="color:#8e44ad;">【🏰 公會系統】</b>
@@ -649,7 +647,7 @@
             'scroll_exp': '經驗卷軸',
             'lucky_bag': '奇蹟福袋',
             'enhance_stone': '強化石',
-            'elixir': '萬能藥',
+            'elixir': '神之甘露',
             'gem_atk': '攻擊寶石',
             'god_stone': '神之石',
             'void_soup': "虛空海鮮湯",
@@ -750,7 +748,7 @@
                 const isDone = cur >= target;
                 const isClaimed = claimed.includes(key);
 
-                let rewardText = `💰${quest.reward.gold} ✨${quest.reward.exp}`;
+                let rewardText = `💰金錢:${quest.reward.gold} ✨EXP:${quest.reward.exp}`;
                 
                 if (quest.reward.item) {
                     const itemName = ITEM_NAME_MAP[quest.reward.item] || quest.reward.item;
