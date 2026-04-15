@@ -260,25 +260,31 @@
                     const ok = myLevel >= reqLv;
                     lvTag = `<span style="font-size:9px;color:${ok ? '#27ae60' : '#e74c3c'};margin-left:4px;">[Lv.${reqLv}]</span>`;
                 }
+                // 修改碎片按鈕邏輯
+                let shardBtnHtml = '';
+                if (item.type !== 'buff') {
+                    shardBtnHtml = `<button class="btn ${btnDisabled ? 'sold-out' : ''}" 
+                                            style="background:#8e44ad;"
+                                            onclick="buy('${item.id}', true)" 
+                                            ${btnDisabled ? 'disabled' : ''}>
+                                        💎 碎片
+                                    </button>`;
+                }
+
                 div.innerHTML = `
                     <div class="item-info">
                         <span class="item-name">${item.name}${lvTag} ${stockHtml}</span>
                         <span class="item-desc">${item.desc}</span>
                     </div>
                     <div class="buy-section">
-                        <div class="price">${item.cost.toLocaleString()} G &nbsp;<span style="color:#9b59b6;font-size:10px;">| 💎 ${shardCost.toLocaleString()} 碎片</span></div>
+                        <div class="price">${item.cost.toLocaleString()} G ${item.type !== 'buff' ? `&nbsp;<span style="color:#9b59b6;font-size:10px;">| 💎 ${shardCost.toLocaleString()} 碎片</span>` : ''}</div>
                         <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
                             <button class="btn ${btnDisabled ? 'sold-out' : ''}" 
                                     onclick="buy('${item.id}', false)" 
                                     ${btnDisabled ? 'disabled' : ''}>
                                 💰 ${btnText}
                             </button>
-                            <button class="btn ${btnDisabled ? 'sold-out' : ''}" 
-                                    style="background:#8e44ad;"
-                                    onclick="buy('${item.id}', true)" 
-                                    ${btnDisabled ? 'disabled' : ''}>
-                                💎 碎片
-                            </button>
+                            ${shardBtnHtml}
                         </div>
                     </div>
                 `;
