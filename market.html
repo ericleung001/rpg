@@ -98,7 +98,19 @@
         <button class="cat-btn" onclick="filterShop('consumable')">消耗/料理</button>
         <button class="cat-btn" onclick="filterShop('equipment')">裝備</button>
         <button class="cat-btn" onclick="filterShop('accessory')">飾品</button>
-        <button class="cat-btn" style="background:#e74c3c; border-color:#c0392b;" onclick="filterShop('buff')">🔥特權</button>
+    </div>
+
+    <!-- 專用優惠區域 -->
+    <div id="special-offers-section" style="width: 100%; max-width: 600px; margin-bottom: 10px;">
+        <div style="background: linear-gradient(135deg, #1a0a00 0%, #2d1a00 40%, #1a0a00 100%); border: 2px solid #f1c40f; border-radius: 10px; padding: 10px; box-shadow: 0 0 10px rgba(241,196,15,0.3);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid rgba(241,196,15,0.3); padding-bottom: 8px;">
+                <span style="color: #f1c40f; font-size: 12px; font-weight: bold;">⭐ 專用優惠 (10億 G/項)</span>
+                <span style="color: #f39c12; font-size: 9px;">效果持續 6 小時</span>
+            </div>
+            <div id="special-offers-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div style="text-align: center; padding: 10px; color: #aaa;">載入中...</div>
+            </div>
+        </div>
     </div>
 
     <div class="container">
@@ -108,21 +120,11 @@
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const socket = io('https://mmo.ttctv-105.cc', { transports: ['websocket', 'polling'], secure: true });
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
         const SHOP_ITEMS = [
-
-            // 👇 新增特權商品
-            { id: 'buff_atk_x2', name: "⚔️ 攻擊力 x2 (6小時)", cost: 1000000000, desc: "購買後立刻生效！6小時內所有攻擊力加倍", type: 'buff' },
-            { id: 'buff_def_x2', name: "🛡️ 防禦力 x2 (6小時)", cost: 1000000000, desc: "購買後立刻生效！6小時內所有防禦力加倍", type: 'buff' },
-            { id: 'buff_exp_x2', name: "✨ 雙倍經驗 (6小時)", cost: 1000000000, desc: "購買後立刻生效！6小時內戰鬥獲得經驗 x2", type: 'buff' },
-            { id: 'buff_shard_drop', name: "💎 碎片狂熱 (6小時)", cost: 1000000000, desc: "購買後立刻生效！每次戰鬥勝利額外掉落 10 塊碎片", type: 'buff' },
-            // 👆 新增結束
             { id: 'safe_stone', name: "防爆石", cost: 5000000000, desc: "強化失敗不掉級，且必定成功！", type: 'consumable' },
             { id: 'enhance_stone', name: "強化石", cost: 50000, desc: "用於強化裝備 (成功率+)", type: 'consumable' },
             { id: 'potion_hp', name: "小紅藥水", cost: 50, desc: "恢復 50 HP", type: 'consumable' },
@@ -253,38 +255,32 @@
                     }
                 }
 
-                const shardCost = item.cost * 0.01;
+                const shardCost = Math.ceil(item.cost * 0.01);
                 const reqLv = EQUIP_REQ_LV[item.id] || 0;
                 let lvTag = '';
                 if (reqLv > 0) {
                     const ok = myLevel >= reqLv;
                     lvTag = `<span style="font-size:9px;color:${ok ? '#27ae60' : '#e74c3c'};margin-left:4px;">[Lv.${reqLv}]</span>`;
                 }
-                // 修改碎片按鈕邏輯
-                let shardBtnHtml = '';
-                if (item.type !== 'buff') {
-                    shardBtnHtml = `<button class="btn ${btnDisabled ? 'sold-out' : ''}" 
-                                            style="background:#8e44ad;"
-                                            onclick="buy('${item.id}', true)" 
-                                            ${btnDisabled ? 'disabled' : ''}>
-                                        💎 碎片
-                                    </button>`;
-                }
-
                 div.innerHTML = `
                     <div class="item-info">
                         <span class="item-name">${item.name}${lvTag} ${stockHtml}</span>
                         <span class="item-desc">${item.desc}</span>
                     </div>
                     <div class="buy-section">
-                        <div class="price">${item.cost.toLocaleString()} G ${item.type !== 'buff' ? `&nbsp;<span style="color:#9b59b6;font-size:10px;">| 💎 ${shardCost.toLocaleString()} 碎片</span>` : ''}</div>
+                        <div class="price">${item.cost.toLocaleString()} G &nbsp;<span style="color:#9b59b6;font-size:10px;">| 💎 ${shardCost.toLocaleString()} 碎片</span></div>
                         <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
                             <button class="btn ${btnDisabled ? 'sold-out' : ''}" 
                                     onclick="buy('${item.id}', false)" 
                                     ${btnDisabled ? 'disabled' : ''}>
                                 💰 ${btnText}
                             </button>
-                            ${shardBtnHtml}
+                            <button class="btn ${btnDisabled ? 'sold-out' : ''}" 
+                                    style="background:#8e44ad;"
+                                    onclick="buy('${item.id}', true)" 
+                                    ${btnDisabled ? 'disabled' : ''}>
+                                💎 碎片
+                            </button>
                         </div>
                     </div>
                 `;
@@ -372,6 +368,109 @@
             document.getElementById('bulk-overlay').style.display = 'none';
             showMsg(msg);
         }
+        
+        // ==========================================
+        //  專用優惠系統
+        // ==========================================
+        let specialOffersData = {};
+        
+        // 請求專用優惠資料
+        socket.on('connect', () => {
+            socket.emit('getSpecialOffers');
+        });
+        
+        // 接收專用優惠資料
+        socket.on('specialOffersData', (data) => {
+            specialOffersData = data;
+            renderSpecialOffers();
+        });
+        
+        // 購買結果
+        socket.on('specialOfferResult', (result) => {
+            showMsg(result.message);
+            if (result.success) {
+                socket.emit('getSpecialOffers');
+            }
+        });
+        
+        // 格式化剩餘時間
+        function formatTime(ms) {
+            if (ms <= 0) return '';
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // 渲染專用優惠列表
+        function renderSpecialOffers() {
+            const list = document.getElementById('special-offers-list');
+            list.innerHTML = '';
+            
+            const offers = [
+                { id: 'atk_boost', name: '⚔️ 攻擊 x2', desc: '戰鬥攻擊力翻倍' },
+                { id: 'def_boost', name: '🛡️ 防禦 x2', desc: '戰鬥防禦力翻倍' },
+                { id: 'skill_shard_drop', name: '✨ 技能碎片', desc: '每場戰鬥+10碎片' },
+                { id: 'exp_boost', name: '📈 經驗 x2', desc: '戰鬥經驗值翻倍' }
+            ];
+            
+            offers.forEach(offer => {
+                const data = specialOffersData[offer.id] || {};
+                const isActive = data.isActive || false;
+                const remainingTime = data.remainingTime || 0;
+                const cooldownRemaining = data.cooldownRemaining || 0;
+                const canBuy = data.canBuy !== false;
+                
+                const div = document.createElement('div');
+                div.style.cssText = 'background: #34495e; border-radius: 8px; padding: 8px; text-align: center;';
+                
+                let statusHtml = '';
+                let btnHtml = '';
+                
+                if (isActive) {
+                    statusHtml = `<div style="color: #2ecc71; font-size: 9px; margin-top: 4px;">生效中: ${formatTime(remainingTime)}</div>`;
+                    btnHtml = `<button style="background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 9px; cursor: default; font-family: inherit;">生效中</button>`;
+                } else if (cooldownRemaining > 0) {
+                    statusHtml = `<div style="color: #e74c3c; font-size: 9px; margin-top: 4px;">冷卻中: ${formatTime(cooldownRemaining)}</div>`;
+                    btnHtml = `<button style="background: #7f8c8d; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 9px; cursor: default; font-family: inherit;">冷卻中</button>`;
+                } else {
+                    btnHtml = `<button onclick="buySpecialOffer('${offer.id}')" style="background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 9px; cursor: pointer; font-family: inherit;">💰 購買</button>`;
+                }
+                
+                div.innerHTML = `
+                    <div style="color: #f1c40f; font-size: 10px; font-weight: bold;">${offer.name}</div>
+                    <div style="color: #bdc3c7; font-size: 8px;">${offer.desc}</div>
+                    ${statusHtml}
+                    <div style="margin-top: 6px;">${btnHtml}</div>
+                `;
+                
+                list.appendChild(div);
+            });
+        }
+        
+        // 購買專用優惠
+        function buySpecialOffer(offerId) {
+            const names = {
+                'atk_boost': '攻擊力 x2',
+                'def_boost': '防禦力 x2',
+                'skill_shard_drop': '技能碎片掉落',
+                'exp_boost': '經驗值 x2'
+            };
+            
+            if (!confirm(`確定要花費 10億 G 購買【${names[offerId]}】嗎？\n效果持續 6 小時，使用後需等待效果結束才能再次購買。`)) {
+                return;
+            }
+            
+            socket.emit('buySpecialOffer', offerId);
+        }
+        
+        // 定時更新顯示
+        setInterval(() => {
+            if (Object.keys(specialOffersData).length > 0) {
+                renderSpecialOffers();
+            }
+        }, 1000);
     </script>
 </body>
 </html>
