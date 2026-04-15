@@ -512,6 +512,7 @@
     <div id="notice-modal">
         <div class="notice-box">
             <div class="notice-title">📢 Ver 5.1 更新公告</div>
+<button class="close-notice-btn" onclick="closeNotice()">我知道了，立即體驗！</button>
             <div class="notice-content">
 <b style="color:#8e44ad;">新增【期間限定活動】</b>
 - <b>期間限定活動</b>：不定期會有限時活動出現。
@@ -655,8 +656,6 @@
                     <div class="status-item"><span class="label">⚔️ ATK</span> <span id="atk" class="val">0</span></div>
                     <div class="status-item"><span class="label">🛡️ DEF</span> <span id="def" class="val">0</span></div>
                 </div>
-                
-                <div id="active-buffs" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;"></div>
 
                 <div id="durability-section" style="margin-top:6px; padding:5px 8px; background:#1a1a2e; border-radius:6px; font-size:9px; display:none;">
                     <div style="color:#666; margin-bottom:4px; font-size:8px; letter-spacing:1px;">🔧 耐久度</div>
@@ -696,6 +695,12 @@
                         <span>EXP</span> <span id="exp-txt">0/100</span>
                     </div>
                     <div class="exp-bar"><div id="exp-fill" class="exp-fill"></div></div>
+                </div>
+                
+                <!-- 專用優惠狀態 -->
+                <div id="special-offers-panel" style="margin-top:6px; padding:5px 8px; background:linear-gradient(135deg, #1a0a00 0%, #2d1a00 50%, #1a0a00 100%); border-radius:6px; font-size:8px; display:none; border: 1px solid rgba(241,196,15,0.3);">
+                    <div style="color:#f1c40f; margin-bottom:4px; font-weight:bold;">⭐ 專用優惠生效中</div>
+                    <div id="special-offers-timers" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
                 </div>
             </div>
 
@@ -794,10 +799,10 @@
             return escapeHtml(name);
         }
 
-       const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+       const socket = io(window.location.origin, { 
+            transports: ['websocket', 'polling'],
+            secure: true
+        });
         
         let myLevel = 1;
         let myName = ""; 
@@ -1347,33 +1352,81 @@
             document.getElementById('durability-section').style.display = anyEquipped ? 'block' : 'none';
             document.getElementById('exp-txt').innerText = `${p.exp}/${p.maxExp}`;
             document.getElementById('exp-fill').style.width = Math.min(100, (p.exp / p.maxExp * 100)) + '%';
-
-            // 👇 新增：計算與顯示特權倒數時間
-            const buffsDiv = document.getElementById('active-buffs');
-            if (buffsDiv) {
-                buffsDiv.innerHTML = '';
-                if (p.activeBuffs) {
-                    const now = Date.now();
-                    const buffNames = {
-                        'atk_x2': '⚔️ 攻x2',
-                        'def_x2': '🛡️ 防x2',
-                        'exp_x2': '✨ 雙倍EXP',
-                        'shard_drop': '💎 碎片狂熱'
-                    };
-                    for (let key in p.activeBuffs) {
-                        if (p.activeBuffs[key] > now) {
-                            const minsLeft = Math.ceil((p.activeBuffs[key] - now) / 60000);
-                            let hrs = Math.floor(minsLeft / 60);
-                            let mins = minsLeft % 60;
-                            let timeStr = hrs > 0 ? `${hrs}h${mins}m` : `${mins}m`;
-                            buffsDiv.innerHTML += `<div style="background:#e74c3c; color:white; font-size:9px; padding:3px 6px; border-radius:4px; border:1px solid #c0392b;">${buffNames[key]} (${timeStr})</div>`;
-                        }
-                    }
-                }
-            }
+            
+            // 更新專用優惠狀態
+            updateSpecialOffersDisplay(p.specialOffers);
             
             refreshUI();
         });
+        
+        // ==========================================
+        //  專用優惠系統
+        // ==========================================
+        let hubSpecialOffers = {};
+        
+        // 格式化時間
+        function formatOfferTime(ms) {
+            if (ms <= 0) return '00:00:00';
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // 更新專用優惠顯示
+        function updateSpecialOffersDisplay(offers) {
+            hubSpecialOffers = offers || {};
+            renderSpecialOffersTimers();
+        }
+        
+        // 渲染專用優惠計時器
+        function renderSpecialOffersTimers() {
+            const panel = document.getElementById('special-offers-panel');
+            const timers = document.getElementById('special-offers-timers');
+            
+            const now = Date.now();
+            const activeOffers = [];
+            
+            const offerNames = {
+                'atk_boost': { name: '⚔️ 攻x2', color: '#e74c3c' },
+                'def_boost': { name: '🛡️ 防x2', color: '#3498db' },
+                'skill_shard_drop': { name: '✨ 技能碎片', color: '#9b59b6' },
+                'exp_boost': { name: '📈 經驗x2', color: '#2ecc71' }
+            };
+            
+            for (const offerId in hubSpecialOffers) {
+                const offer = hubSpecialOffers[offerId];
+                if (offer.activeUntil && offer.activeUntil > now) {
+                    const info = offerNames[offerId] || { name: offerId, color: '#f1c40f' };
+                    activeOffers.push({
+                        id: offerId,
+                        name: info.name,
+                        color: info.color,
+                        remaining: offer.activeUntil - now
+                    });
+                }
+            }
+            
+            if (activeOffers.length === 0) {
+                panel.style.display = 'none';
+                return;
+            }
+            
+            panel.style.display = 'block';
+            timers.innerHTML = activeOffers.map(o => 
+                `<div style="background:rgba(0,0,0,0.3); padding:3px 6px; border-radius:4px; color:${o.color};">
+                    ${o.name}: <span id="timer-${o.id}">${formatOfferTime(o.remaining)}</span>
+                </div>`
+            ).join('');
+        }
+        
+        // 定時更新計時器
+        setInterval(() => {
+            if (Object.keys(hubSpecialOffers).length > 0) {
+                renderSpecialOffersTimers();
+            }
+        }, 1000);
 
         socket.on('hirelingsData', (data) => {
             const panel = document.getElementById('hireling-panel');
