@@ -655,6 +655,8 @@
                     <div class="status-item"><span class="label">⚔️ ATK</span> <span id="atk" class="val">0</span></div>
                     <div class="status-item"><span class="label">🛡️ DEF</span> <span id="def" class="val">0</span></div>
                 </div>
+                
+                <div id="active-buffs" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;"></div>
 
                 <div id="durability-section" style="margin-top:6px; padding:5px 8px; background:#1a1a2e; border-radius:6px; font-size:9px; display:none;">
                     <div style="color:#666; margin-bottom:4px; font-size:8px; letter-spacing:1px;">🔧 耐久度</div>
@@ -1345,6 +1347,31 @@
             document.getElementById('durability-section').style.display = anyEquipped ? 'block' : 'none';
             document.getElementById('exp-txt').innerText = `${p.exp}/${p.maxExp}`;
             document.getElementById('exp-fill').style.width = Math.min(100, (p.exp / p.maxExp * 100)) + '%';
+
+            // 👇 新增：計算與顯示特權倒數時間
+            const buffsDiv = document.getElementById('active-buffs');
+            if (buffsDiv) {
+                buffsDiv.innerHTML = '';
+                if (p.activeBuffs) {
+                    const now = Date.now();
+                    const buffNames = {
+                        'atk_x2': '⚔️ 攻x2',
+                        'def_x2': '🛡️ 防x2',
+                        'exp_x2': '✨ 雙倍EXP',
+                        'shard_drop': '💎 碎片狂熱'
+                    };
+                    for (let key in p.activeBuffs) {
+                        if (p.activeBuffs[key] > now) {
+                            const minsLeft = Math.ceil((p.activeBuffs[key] - now) / 60000);
+                            let hrs = Math.floor(minsLeft / 60);
+                            let mins = minsLeft % 60;
+                            let timeStr = hrs > 0 ? `${hrs}h${mins}m` : `${mins}m`;
+                            buffsDiv.innerHTML += `<div style="background:#e74c3c; color:white; font-size:9px; padding:3px 6px; border-radius:4px; border:1px solid #c0392b;">${buffNames[key]} (${timeStr})</div>`;
+                        }
+                    }
+                }
+            }
+            
             refreshUI();
         });
 
