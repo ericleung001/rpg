@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>道具屋2</title>
+    <title>道具屋</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -160,6 +160,8 @@
         let currentStock = { 'lucky_bag': 0 };
         let isBulkBuying = false;
         let myLevel = 1;
+        let specialOffersData = {};
+        let hasRequestedOffers = false;
 
         // 裝備等級限制 (同 server)
         const EQUIP_REQ_LV = {
@@ -191,6 +193,11 @@
             myLevel = p.level || 1;
             document.getElementById('my-gold').innerText = p.gold.toLocaleString(); 
             renderShop();
+            // 在登入成功後請求專用優惠資料（只請求一次）
+            if (!hasRequestedOffers) {
+                hasRequestedOffers = true;
+                socket.emit('getSpecialOffers');
+            }
         });
         socket.on('buyResult', (res) => { 
             if(!isBulkBuying) showMsg(res.message); 
@@ -372,12 +379,6 @@
         // ==========================================
         //  專用優惠系統
         // ==========================================
-        let specialOffersData = {};
-        
-        // 請求專用優惠資料
-        socket.on('connect', () => {
-            socket.emit('getSpecialOffers');
-        });
         
         // 接收專用優惠資料
         socket.on('specialOffersData', (data) => {
