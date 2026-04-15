@@ -98,6 +98,7 @@
         <button class="cat-btn" onclick="filterShop('consumable')">消耗/料理</button>
         <button class="cat-btn" onclick="filterShop('equipment')">裝備</button>
         <button class="cat-btn" onclick="filterShop('accessory')">飾品</button>
+        <button class="cat-btn" style="background:#e74c3c; border-color:#c0392b;" onclick="filterShop('buff')">🔥特權</button>
     </div>
 
     <div class="container">
@@ -115,6 +116,13 @@
         if (!myToken) window.location.href = 'index.html';
 
         const SHOP_ITEMS = [
+
+            // 👇 新增特權商品
+            { id: 'buff_atk_x2', name: "⚔️ 攻擊力 x2 (6小時)", cost: 1000000000, desc: "購買後立刻生效！6小時內所有攻擊力加倍", type: 'buff' },
+            { id: 'buff_def_x2', name: "🛡️ 防禦力 x2 (6小時)", cost: 1000000000, desc: "購買後立刻生效！6小時內所有防禦力加倍", type: 'buff' },
+            { id: 'buff_exp_x2', name: "✨ 雙倍經驗 (6小時)", cost: 1000000000, desc: "購買後立刻生效！6小時內戰鬥獲得經驗 x2", type: 'buff' },
+            { id: 'buff_shard_drop', name: "💎 碎片狂熱 (6小時)", cost: 1000000000, desc: "購買後立刻生效！每次戰鬥勝利額外掉落 10 塊碎片", type: 'buff' },
+            // 👆 新增結束
             { id: 'safe_stone', name: "防爆石", cost: 5000000000, desc: "強化失敗不掉級，且必定成功！", type: 'consumable' },
             { id: 'enhance_stone', name: "強化石", cost: 50000, desc: "用於強化裝備 (成功率+)", type: 'consumable' },
             { id: 'potion_hp', name: "小紅藥水", cost: 50, desc: "恢復 50 HP", type: 'consumable' },
