@@ -100,25 +100,62 @@
             -webkit-overflow-scrolling: touch;
         }
 
-        .facility-grid { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 4px; 
-            margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px dashed #7f8c8d; 
+        /* ==================== 側邊欄選單系統 ==================== */
+        #sidebar-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 10000;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        #sidebar-overlay.active { opacity: 1; pointer-events: auto; }
+
+        #sidebar-menu {
+            position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
+            background: #2c3e50; border-right: 4px solid #f1c40f;
+            z-index: 10001; transition: left 0.3s ease-in-out;
+            display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.8);
+            text-align: left;
+        }
+        #sidebar-menu.open { left: 0; }
+
+        .sidebar-header {
+            padding: 15px; background: #222; color: #f1c40f; font-size: 14px;
+            font-weight: bold; border-bottom: 2px solid #555;
+            display: flex; justify-content: space-between; align-items: center;
             flex-shrink: 0;
         }
         
+        .close-sidebar-btn {
+            background: transparent; border: none; color: #e74c3c; font-size: 24px;
+            cursor: pointer; font-weight: bold; font-family: inherit; padding: 0 5px;
+        }
+
+        .sidebar-content {
+            flex: 1; overflow-y: auto; padding: 15px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start;
+            padding-bottom: 80px;
+        }
+
+        .menu-toggle-btn {
+            background: #34495e; border: 2px solid #bdc3c7; color: white;
+            font-size: 10px; cursor: pointer; padding: 6px 8px; border-radius: 6px;
+            margin-right: 10px; font-family: inherit; box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+            white-space: nowrap;
+        }
+        .menu-toggle-btn:active { transform: scale(0.95); box-shadow: none; }
+
+        /* 原本的 grid 樣式已轉移至 sidebar-content */
         .facility-btn {
             position: relative; 
             padding: 0; 
             font-family: inherit; font-size: 10px; font-weight: bold;
             cursor: pointer; border: 2px solid #bdc3c7; color: white; text-decoration: none; 
             display: flex; align-items: center; justify-content: center;
-            background: #34495e; border-radius: 6px; height: 38px; white-space: nowrap; 
+            background: #34495e; border-radius: 6px; height: 42px; white-space: nowrap; 
             box-shadow: 2px 2px 0 rgba(0,0,0,0.3); 
             touch-action: manipulation; transition: transform 0.05s;
         }
         .facility-btn:active { transform: scale(0.95); box-shadow: none; filter: brightness(0.9); }
+        /* ======================================================= */
         
         .map-container { padding-right: 5px; padding-bottom: 60px; }
         .btn { 
@@ -321,138 +358,156 @@
             #notice-btn { left: calc(50% - 540px); }
         }
 
-
         /* 活動橫幅 */
-@keyframes event-glow {
-    0%, 100% { box-shadow: 0 0 8px rgba(241,196,15,0.4), inset 0 0 8px rgba(241,196,15,0.05); }
-    50% { box-shadow: 0 0 18px rgba(241,196,15,0.8), inset 0 0 12px rgba(241,196,15,0.1); }
-}
-@keyframes event-shimmer {
-    0% { background-position: -200% center; }
-    100% { background-position: 200% center; }
-}
-@keyframes event-star {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    25% { transform: scale(1.2) rotate(-5deg); }
-    75% { transform: scale(0.9) rotate(5deg); }
-}
- 
-#event-banner {
-    display: none;
-    width: 100%;
-    background: linear-gradient(135deg, #1a0a00 0%, #2d1a00 40%, #1a0a00 100%);
-    border: 2px solid #f1c40f;
-    border-radius: 10px;
-    padding: 0;
-    margin-bottom: 10px;
-    overflow: hidden;
-    position: relative;
-    animation: event-glow 2.5s ease-in-out infinite;
-    flex-shrink: 0;
-}
- 
-#event-banner::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgba(241,196,15,0.06) 40%,
-        rgba(241,196,15,0.12) 50%,
-        rgba(241,196,15,0.06) 60%,
-        transparent 100%
-    );
-    background-size: 200% 100%;
-    animation: event-shimmer 3s linear infinite;
-    pointer-events: none;
-}
- 
-.event-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 12px 4px;
-    border-bottom: 1px solid rgba(241,196,15,0.2);
-}
- 
-.event-title-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
- 
-.event-star-icon {
-    font-size: 16px;
-    animation: event-star 2s ease-in-out infinite;
-    display: inline-block;
-}
- 
-.event-name-text {
-    font-size: 11px;
-    font-weight: bold;
-    color: #f1c40f;
-    text-shadow: 0 0 8px rgba(241,196,15,0.6);
-    letter-spacing: 0.5px;
-}
- 
-.event-date-badge {
-    font-size: 8px;
-    color: #f39c12;
-    background: rgba(243,156,18,0.15);
-    border: 1px solid rgba(243,156,18,0.3);
-    padding: 2px 6px;
-    border-radius: 10px;
-    white-space: nowrap;
-}
- 
-.event-rewards-row {
-    display: flex;
-    gap: 6px;
-    padding: 6px 12px 8px;
-    flex-wrap: wrap;
-    align-items: center;
-}
- 
-.event-reward-chip {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 9px;
-    border-radius: 20px;
-    font-size: 9px;
-    font-weight: bold;
-    white-space: nowrap;
-    border: 1px solid;
-}
- 
-.chip-exp {
-    background: rgba(52,152,219,0.2);
-    border-color: rgba(52,152,219,0.5);
-    color: #5dade2;
-}
- 
-.chip-shard {
-    background: rgba(155,89,182,0.2);
-    border-color: rgba(155,89,182,0.5);
-    color: #a569bd;
-}
- 
-.chip-item {
-    background: rgba(230,126,34,0.2);
-    border-color: rgba(230,126,34,0.5);
-    color: #e59866;
-}
+        @keyframes event-glow {
+            0%, 100% { box-shadow: 0 0 8px rgba(241,196,15,0.4), inset 0 0 8px rgba(241,196,15,0.05); }
+            50% { box-shadow: 0 0 18px rgba(241,196,15,0.8), inset 0 0 12px rgba(241,196,15,0.1); }
+        }
+        @keyframes event-shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        @keyframes event-star {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.2) rotate(-5deg); }
+            75% { transform: scale(0.9) rotate(5deg); }
+        }
+        
+        #event-banner {
+            display: none;
+            width: 100%;
+            background: linear-gradient(135deg, #1a0a00 0%, #2d1a00 40%, #1a0a00 100%);
+            border: 2px solid #f1c40f;
+            border-radius: 10px;
+            padding: 0;
+            margin-bottom: 10px;
+            overflow: hidden;
+            position: relative;
+            animation: event-glow 2.5s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        
+        #event-banner::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(241,196,15,0.06) 40%,
+                rgba(241,196,15,0.12) 50%,
+                rgba(241,196,15,0.06) 60%,
+                transparent 100%
+            );
+            background-size: 200% 100%;
+            animation: event-shimmer 3s linear infinite;
+            pointer-events: none;
+        }
+        
+        .event-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px 4px;
+            border-bottom: 1px solid rgba(241,196,15,0.2);
+        }
+        
+        .event-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .event-star-icon {
+            font-size: 16px;
+            animation: event-star 2s ease-in-out infinite;
+            display: inline-block;
+        }
+        
+        .event-name-text {
+            font-size: 11px;
+            font-weight: bold;
+            color: #f1c40f;
+            text-shadow: 0 0 8px rgba(241,196,15,0.6);
+            letter-spacing: 0.5px;
+        }
+        
+        .event-date-badge {
+            font-size: 8px;
+            color: #f39c12;
+            background: rgba(243,156,18,0.15);
+            border: 1px solid rgba(243,156,18,0.3);
+            padding: 2px 6px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+        
+        .event-rewards-row {
+            display: flex;
+            gap: 6px;
+            padding: 6px 12px 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .event-reward-chip {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 9px;
+            border-radius: 20px;
+            font-size: 9px;
+            font-weight: bold;
+            white-space: nowrap;
+            border: 1px solid;
+        }
+        
+        .chip-exp { background: rgba(52,152,219,0.2); border-color: rgba(52,152,219,0.5); color: #5dade2; }
+        .chip-shard { background: rgba(155,89,182,0.2); border-color: rgba(155,89,182,0.5); color: #a569bd; }
+        .chip-item { background: rgba(230,126,34,0.2); border-color: rgba(230,126,34,0.5); color: #e59866; }
     </style>
 </head>
 <body>
-    
-    
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div id="sidebar-menu">
+        <div class="sidebar-header">
+            🏰 城鎮設施
+            <button class="close-sidebar-btn" onclick="toggleSidebar()">×</button>
+        </div>
+        <div class="sidebar-content">
+            <a href="bag.html" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">🎒 背包</a>
+            <a href="equip.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🛡️ 裝備</a>
+            <a href="market.html" class="facility-btn" style="background:#f39c12; border-color:#d35400;">🏪 道具</a>
+            <a href="auction.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">⚖️ 市集</a>
+            <a href="smithy.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔨 鍛造</a>
+            <a href="myth.html" class="facility-btn" style="background:#4a0080; border-color:#8b00ff;">⚗️ 神話</a>
+            <a href="enhance.html" class="facility-btn" style="background:#d35400; border-color:#e67e22;">🔥 強化</a>
+            <a href="gathering.html" class="facility-btn" style="background:#27ae60; border-color:#2ecc71;">🌲 採集</a>
+            <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;">🏨 旅館</a>
+            <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🍳 廚房</a>
+            <a href="lottery.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🎱 彩票</a>
+            <a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;">📜 圖鑑</a>
+            
+            <div class="facility-btn" style="background:#3498db; border-color:#2980b9;" onclick="openFriends(); toggleSidebar();">
+                👥 好友
+                <div id="main-unread-badge" class="unread-badge">0</div>
+            </div>
 
+            <div class="facility-btn" style="background:#d35400; border-color:#e67e22;" onclick="openDailyQuests(); toggleSidebar();">
+                📜 每日任務
+            </div>
+            <div class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;" onclick="window.location.href='guild.html'">🏰 創造公會</div>
+            <a href="skills.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">⚡ 技能升級</a>
+            <a href="shard_shop.html" class="facility-btn" style="background:#9b59b6; border-color:#8e44ad;">💎 碎片交換</a>
+            <a href="hire.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🏢 僱員探險</a>
+            <a href="rebirth.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔄 轉生神殿</a>
+        </div>
+    </div>
+    
     <div id="toast-notification"> 訊息提示</div>
     <div id="notice-container" onclick="openNotice()">
-    <div id="notice-btn">📢</div>
-    <div class="notice-text">最新更新內容</div>
-</div>
+        <div id="notice-btn">📢</div>
+        <div class="notice-text">最新更新內容</div>
+    </div>
 
     <div id="notice-modal">
         <div class="notice-box">
@@ -579,7 +634,10 @@
     <div id="app-layout">
         <div id="game-view">
             <div class="top-bar">
-                <div class="logout-btn" onclick="logout()">登出</div>
+                <div style="display:flex; align-items:center;">
+                    <button class="menu-toggle-btn" onclick="toggleSidebar()">☰ 選單</button>
+                    <div class="logout-btn" onclick="logout()">登出</div>
+                </div>
                 <h1> 公會大廳</h1>
                 <div id="conn-status" style="color:#e74c3c"> 未連線</div>
             </div>
@@ -654,15 +712,15 @@
 
             <div class="main-content">
                 <div id="event-banner">
-    <div class="event-header">
-        <div class="event-title-row">
-            <span class="event-star-icon">🎉</span>
-            <span class="event-name-text" id="event-banner-name">特別限定活動</span>
-        </div>
-        <span class="event-date-badge" id="event-banner-date"></span>
-    </div>
-    <div class="event-rewards-row" id="event-banner-rewards"></div>
-</div>
+                    <div class="event-header">
+                        <div class="event-title-row">
+                            <span class="event-star-icon">🎉</span>
+                            <span class="event-name-text" id="event-banner-name">特別限定活動</span>
+                        </div>
+                        <span class="event-date-badge" id="event-banner-date"></span>
+                    </div>
+                    <div class="event-rewards-row" id="event-banner-rewards"></div>
+                </div>
                 
                 <div id="boss-banner" style="display:none; background: linear-gradient(90deg, #2c3e50, #c0392b); padding: 15px; border-radius: 8px; border: 2px solid #e74c3c; margin-bottom: 15px; text-align: left; box-shadow: 0 0 15px #c0392b; animation: pulse 2s infinite; flex-shrink: 0;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -688,40 +746,6 @@
                         </div>
                 </div>
 
-                <div class="section-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px; flex-shrink: 0;">城鎮設施</div>
-                
-                <div class="facility-grid">
-                    <a href="bag.html" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">🎒 背包</a>
-                    <a href="equip.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🛡️ 裝備</a>
-                    <a href="market.html" class="facility-btn" style="background:#f39c12; border-color:#d35400;">🏪 道具</a>
-                    <a href="auction.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">⚖️ 市集</a>
-                    <a href="smithy.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔨 鍛造</a>
-                    <a href="myth.html" class="facility-btn" style="background:#4a0080; border-color:#8b00ff;">⚗️ 神話</a>
-                    <a href="enhance.html" class="facility-btn" style="background:#d35400; border-color:#e67e22;">🔥 強化</a>
-                    <a href="gathering.html" class="facility-btn" style="background:#27ae60; border-color:#2ecc71;">🌲 採集</a>
-                    <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;">🏨 旅館</a>
-                    <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🍳 廚房</a>
-                    <a href="lottery.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🎱 彩票</a>
-                    <a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;">📜 圖鑑</a>
-                    
-                    <div class="facility-btn" style="background:#3498db; border-color:#2980b9;" onclick="openFriends()">
-                        👥 好友
-                        <div id="main-unread-badge" class="unread-badge">0</div>
-                    </div>
-
-                    <div class="facility-btn" style="background:#d35400; border-color:#e67e22;" onclick="openDailyQuests()">
-                        📜 每日任務
-                    </div>
-                    <div class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;" onclick="window.location.href='guild.html'">🏰 創造自家公會</div>
-                    <a href="skills.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">⚡ 技能升級</a>
-                    <a href="shard_shop.html" class="facility-btn" style="background:#9b59b6; border-color:#8e44ad;">💎 碎片交換</a>
-                    <a href="hire.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🏢 僱員探險</a>
-                    <a href="rebirth.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">
-                        🔄 轉生神殿
-                    </a>
-                </div>
-
-                <!-- 僱員探險狀態面板 -->
                 <div id="hireling-panel" style="display:none; background:#1a1a2e; border:2px solid #e67e22; border-radius:8px; padding:8px; margin-bottom:8px;">
                     <div style="font-size:10px; color:#e67e22; margin-bottom:5px; cursor:pointer;" onclick="window.location.href='hire.html'">
                         🏢 僱員狀態 <span style="color:#666; font-size:8px;">(點擊管理)</span>
@@ -729,9 +753,6 @@
                     <div id="hireling-status-list" style="font-size:9px;"></div>
                 </div>
                 
-
-                
-
                 <div id="list-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px; flex-shrink: 0;">世界地圖</div>
                 <div class="map-container" id="map-list">
                     <div class="btn locked">讀取中...</div>
@@ -754,6 +775,14 @@
     
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
+        // 開關側邊欄選單
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar-menu');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        };
+
         function escapeHtml(text) {
             if (!text) return text;
             return text
@@ -769,21 +798,17 @@
             return regex.test(str);
         }
 
-        // 🟢 [核心] 轉生稱號格式化工具
         function formatName(name, rebirth) {
             if (rebirth && rebirth > 0) {
-                // 顯示為：名字+1 (金色)
                 return `${escapeHtml(name)}<span style="color:#f1c40f; font-weight:bold; margin-left:2px;">+${rebirth}</span>`;
             }
             return escapeHtml(name);
         }
 
-        
-
        const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true
+        });
         
         let myLevel = 1;
         let myName = ""; 
@@ -881,8 +906,6 @@
             'void_reaper':"虛空收割者",
             'demon_armor':"惡魔戰甲",
             'singularity_armor': '奇點·絕對防禦',
-
-            // 🟢 新增碎片
             'skill_shard': '✨ 技能碎片',
             'shard_ring_novice': '學徒碎片戒指',
             'shard_neck_brave': '勇者碎片項鍊',
@@ -1189,28 +1212,8 @@
             { id: 'city_9', name: '虛空之界', reqLv: 1, desc: '⚫ 虛無的盡頭 (Lv.210-225)', monsters: [{ id: 'void_worm', name: '虛空吞噬蟲', lv: 210 }, { id: 'shadow_phantom', name: '👻 虚影夢魘 (BOSS)', lv: 225 }] },
             { id: 'city_10', name: '星際航道', reqLv: 1, desc: '🌌 穿越星辰 (Lv.245-260)', monsters: [{ id: 'star_eater', name: '吞星巨獸', lv: 245 }, { id: 'nebula_dragon', name: '🐲 星雲幻龍 (BOSS)', lv: 260 }] },
             { id: 'city_11', name: '維度盡頭', reqLv: 1, desc: '⏳ 時間與空間的終點 (Lv.280-300)', monsters: [{ id: 'time_keeper', name: '時空裁決者', lv: 280 }, { id: 'dimension_breaker', name: '維度粉碎者', lv: 290 }, { id: 'entropy_god', name: '👑 終焉·熱寂之神 (GOD)', lv: 300 }] },
-            
-            // 🟢 新增地圖
-            { 
-                id: 'city_12', 
-                name: '終焉奇點', 
-                reqLv: 1, 
-                desc: '⚛️ 宇宙重啟之地 (Lv.450-500)', 
-                monsters: [
-                    { id: 'chaos_boss', name: '🌀 混沌幻影 (隨機)', lv: '350+' },
-                    { id: 'akashic_record', name: '👁️ 全知者·阿卡西 (BOSS)', lv: 550 }
-                ] 
-            },
-            // 🟢 新增 Lv.600 地圖
-            { 
-                id: 'city_13', 
-                name: '零之領域', 
-                reqLv: 1, 
-                desc: '☠️ 宇宙的終焉 (Lv.580+)', 
-                monsters: [
-                    { id: 'void_devourer_god', name: '🌌 零界·虛無吞噬者 (GOD)', lv: 580}
-                ] 
-            }
+            { id: 'city_12', name: '終焉奇點', reqLv: 1, desc: '⚛️ 宇宙重啟之地 (Lv.450-500)', monsters: [{ id: 'chaos_boss', name: '🌀 混沌幻影 (隨機)', lv: '350+' }, { id: 'akashic_record', name: '👁️ 全知者·阿卡西 (BOSS)', lv: 550 }] },
+            { id: 'city_13', name: '零之領域', reqLv: 1, desc: '☠️ 宇宙的終焉 (Lv.580+)', monsters: [{ id: 'void_devourer_god', name: '🌌 零界·虛無吞噬者 (GOD)', lv: 580}] }
         ];
 
         let currentView = 'cities'; 
@@ -1239,96 +1242,81 @@
             window.location.href = 'index.html';  
         });
 
-
-        // ==========================================
-//  活動橫幅系統
-// ==========================================
-const ITEM_DISPLAY_NAMES = {
-    'elixir': '神之甘露', 'enhance_stone': '強化石', 'safe_stone': '防爆石',
-    'lucky_bag': '奇蹟福袋', 'potion_max': '特級秘藥', 'void_soup': '虛空海鮮湯',
-    'skill_shard': '技能碎片', 'divinity_core': '創世神格',
-    'multiverse_shard': '多元宇宙碎片', 'quantum_residue': '量子殘渣',
-    'singularity_weapon': '奇點武器', 'singularity_armor': '奇點防具',
-    'singularity_acc': '奇點飾品', 'titan_steel': '泰坦神鋼',
-    'star_fragment': '星之碎片', 'entropy_origin': '熱寂原點'
-};
- 
-function renderEventBanner(eventInfo) {
-    const banner = document.getElementById('event-banner');
-    if (!eventInfo || !eventInfo.active || !eventInfo.rewards) {
-        banner.style.display = 'none';
-        return;
-    }
- 
-    banner.style.display = 'block';
- 
-    // 名稱
-    document.getElementById('event-banner-name').textContent = eventInfo.name || '特別限定活動';
- 
-    // 日期
-    const dateBadge = document.getElementById('event-banner-date');
-    if (eventInfo.startDate && eventInfo.endDate) {
-        dateBadge.textContent = `${eventInfo.startDate} ~ ${eventInfo.endDate}`;
-        dateBadge.style.display = 'inline';
-    } else if (eventInfo.endDate) {
-        dateBadge.textContent = `至 ${eventInfo.endDate}`;
-        dateBadge.style.display = 'inline';
-    } else {
-        dateBadge.style.display = 'none';
-    }
- 
-    // 獎勵 chips
-    const rewardsRow = document.getElementById('event-banner-rewards');
-    rewardsRow.innerHTML = '';
-    const r = eventInfo.rewards;
- 
-    // EXP 倍率
-    if (r.expMultiplier && r.expMultiplier > 1) {
-        const chip = document.createElement('div');
-        chip.className = 'event-reward-chip chip-exp';
-        chip.innerHTML = `⭐ EXP <strong style="color:#3498db;">${r.expMultiplier}倍</strong>`;
-        rewardsRow.appendChild(chip);
-    }
- 
-    // 技能碎片
-    if (r.shardBonus && r.shardBonus > 0) {
-        const chip = document.createElement('div');
-        chip.className = 'event-reward-chip chip-shard';
-        chip.innerHTML = `💎 勝利+<strong style="color:#9b59b6;">${r.shardBonus}</strong>碎片`;
-        rewardsRow.appendChild(chip);
-    }
- 
-    // 額外物品
-    if (Array.isArray(r.bonusItems)) {
-        r.bonusItems.forEach(item => {
-            if (!item || !item.id) return;
-            const name = ITEM_DISPLAY_NAMES[item.id] || item.id;
-            const chip = document.createElement('div');
-            chip.className = 'event-reward-chip chip-item';
-            chip.innerHTML = `🎁 ${name} x<strong style="color:#e67e22;">${item.count}</strong>`;
-            rewardsRow.appendChild(chip);
+        const ITEM_DISPLAY_NAMES = {
+            'elixir': '神之甘露', 'enhance_stone': '強化石', 'safe_stone': '防爆石',
+            'lucky_bag': '奇蹟福袋', 'potion_max': '特級秘藥', 'void_soup': '虛空海鮮湯',
+            'skill_shard': '技能碎片', 'divinity_core': '創世神格',
+            'multiverse_shard': '多元宇宙碎片', 'quantum_residue': '量子殘渣',
+            'singularity_weapon': '奇點武器', 'singularity_armor': '奇點防具',
+            'singularity_acc': '奇點飾品', 'titan_steel': '泰坦神鋼',
+            'star_fragment': '星之碎片', 'entropy_origin': '熱寂原點'
+        };
+         
+        function renderEventBanner(eventInfo) {
+            const banner = document.getElementById('event-banner');
+            if (!eventInfo || !eventInfo.active || !eventInfo.rewards) {
+                banner.style.display = 'none';
+                return;
+            }
+         
+            banner.style.display = 'block';
+            document.getElementById('event-banner-name').textContent = eventInfo.name || '特別限定活動';
+         
+            const dateBadge = document.getElementById('event-banner-date');
+            if (eventInfo.startDate && eventInfo.endDate) {
+                dateBadge.textContent = `${eventInfo.startDate} ~ ${eventInfo.endDate}`;
+                dateBadge.style.display = 'inline';
+            } else if (eventInfo.endDate) {
+                dateBadge.textContent = `至 ${eventInfo.endDate}`;
+                dateBadge.style.display = 'inline';
+            } else {
+                dateBadge.style.display = 'none';
+            }
+         
+            const rewardsRow = document.getElementById('event-banner-rewards');
+            rewardsRow.innerHTML = '';
+            const r = eventInfo.rewards;
+         
+            if (r.expMultiplier && r.expMultiplier > 1) {
+                const chip = document.createElement('div');
+                chip.className = 'event-reward-chip chip-exp';
+                chip.innerHTML = `⭐ EXP <strong style="color:#3498db;">${r.expMultiplier}倍</strong>`;
+                rewardsRow.appendChild(chip);
+            }
+         
+            if (r.shardBonus && r.shardBonus > 0) {
+                const chip = document.createElement('div');
+                chip.className = 'event-reward-chip chip-shard';
+                chip.innerHTML = `💎 勝利+<strong style="color:#9b59b6;">${r.shardBonus}</strong>碎片`;
+                rewardsRow.appendChild(chip);
+            }
+         
+            if (Array.isArray(r.bonusItems)) {
+                r.bonusItems.forEach(item => {
+                    if (!item || !item.id) return;
+                    const name = ITEM_DISPLAY_NAMES[item.id] || item.id;
+                    const chip = document.createElement('div');
+                    chip.className = 'event-reward-chip chip-item';
+                    chip.innerHTML = `🎁 ${name} x<strong style="color:#e67e22;">${item.count}</strong>`;
+                    rewardsRow.appendChild(chip);
+                });
+            }
+         
+            if (rewardsRow.children.length === 0) {
+                banner.style.display = 'none';
+            }
+        }
+         
+        socket.on('eventUpdate', (eventInfo) => {
+            renderEventBanner(eventInfo);
         });
-    }
- 
-    // 如果沒有任何獎勵 chip，隱藏 banner
-    if (rewardsRow.children.length === 0) {
-        banner.style.display = 'none';
-    }
-}
- 
-// 接收活動更新
-socket.on('eventUpdate', (eventInfo) => {
-    renderEventBanner(eventInfo);
-});
- 
-// 登入後主動請求
-setTimeout(() => socket.emit('getEventInfo'), 1000);
+         
+        setTimeout(() => socket.emit('getEventInfo'), 1000);
         
         socket.on('playerStatsUpdate', (p) => {
             myLevel = p.level;
             myName = p.name;
             
-            // 🟢 [修改] 左上角顯示轉生格式
             document.getElementById('pid').innerHTML = formatName(p.name, p.rebirth);
             
             document.getElementById('lvl').innerText = p.level;
@@ -1342,11 +1330,9 @@ setTimeout(() => socket.emit('getEventInfo'), 1000);
             document.getElementById('atk').innerText = (p.atk || 0).toLocaleString();
             document.getElementById('def').innerText = (p.def || 0).toLocaleString();
 
-            // 更新耐久度顯示
             const dur = p.durability || {};
             const equip = p.equipment || {};
             const MAX_DUR = 100;
-            const ITEM_NAMES = window._hubItemNames || {};
 
             function getDurColor(v) {
                 if (v >= 80) return '#27ae60';
@@ -1368,11 +1354,6 @@ setTimeout(() => socket.emit('getEventInfo'), 1000);
                 document.getElementById(elId+'-val').innerText = curDur;
                 document.getElementById(elId+'-bar').style.width = pct + '%';
                 document.getElementById(elId+'-bar').style.background = col;
-                // item name from server item list if available
-                const nameEl = document.getElementById(elId+'-name');
-                if (nameEl && window._hubItemDB && window._hubItemDB[itemId]) {
-                    nameEl.innerText = window._hubItemDB[itemId];
-                }
             });
             document.getElementById('durability-section').style.display = anyEquipped ? 'block' : 'none';
             document.getElementById('exp-txt').innerText = `${p.exp}/${p.maxExp}`;
@@ -1380,9 +1361,6 @@ setTimeout(() => socket.emit('getEventInfo'), 1000);
             refreshUI();
         });
 
-        // ==========================================
-        //  僱員狀態顯示 (hub.html)
-        // ==========================================
         socket.on('hirelingsData', (data) => {
             const panel = document.getElementById('hireling-panel');
             const list = document.getElementById('hireling-status-list');
@@ -1432,7 +1410,6 @@ setTimeout(() => socket.emit('getEventInfo'), 1000);
             list.innerHTML = html;
         });
 
-        // 請求僱員數據 + 定時刷新
         setTimeout(() => socket.emit('getHirelings'), 800);
         setInterval(() => { if (socket.connected) socket.emit('getHirelings'); }, 30000);
 
@@ -1532,39 +1509,22 @@ setTimeout(() => socket.emit('getEventInfo'), 1000);
         socket.on('chatHistory', (history) => {
             const box = document.getElementById('chat-history');
             box.innerHTML = ''; 
-            // 歷史訊息可能沒有 rebirth 屬性，所以暫時不處理舊訊息的顏色
             history.forEach(data => appendChat(data.name, data.msg, data.rebirth));
         });
 
         socket.on('chatMessage', (data) => {
-            // 房間內對話不在公頻顯示
             if (data.isRoomChat) return;
             if (data.name === '系統' && data.msg.includes('強化') && (data.msg.includes('成功') || data.msg.includes('失敗'))) {
                 return;
             }
-            // 🟢 [修改] 傳入 rebirth
             appendChat(data.name, data.msg, data.rebirth);
         });
 
-        // 🟢 [核心修改] 公頻聊天渲染
         function appendChat(name, msg, rebirth) {
-if (name === '系統') return;
-            /* --- 以下舊代碼可以刪除或註解掉 ---
-            if (name === '系統') {
-                // 系統訊息
-                const history = document.getElementById('chat-history');
-                const div = document.createElement('div');
-                div.innerHTML = `<span style="color:#e74c3c; font-weight:bold;">[系統]:</span> <span style="color:#bdc3c7;">${msg}</span>`;
-                history.appendChild(div);
-                history.scrollTop = history.scrollHeight;
-                return;
-            }
-            ----------------------------------- */
-
+            if (name === '系統') return;
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
             
-            // 使用工具函式格式化名字
             const displayName = formatName(name, rebirth);
 
             div.innerHTML = `<span style="color:#f1c40f; font-weight:bold;">[${displayName}]:</span> ${escapeHtml(msg)}`;
@@ -1610,9 +1570,6 @@ if (name === '系統') return;
         let isProcessing = false;
         let pendingMobId = null;
         
-        // ==========================================
-        //  [改版] 開房時選擇房間類型 (單人/公開/私人)
-        // ==========================================
         window.triggerCreateRoom = function(mobId) {
             if (isProcessing) return; 
             if (!socket.connected) { showToast("錯誤：未連線到伺服器！"); return; }
@@ -1660,9 +1617,8 @@ if (name === '系統') return;
                 return;
             }
             if (roomType === 'private') {
-                // 顯示密碼輸入彈窗
                 const pw = prompt("🔒 此為私人房間，請輸入密碼：");
-                if (pw === null || pw.trim() === '') return; // 取消或空白
+                if (pw === null || pw.trim() === '') return; 
                 socket.emit('joinRoom', { roomId: roomId, password: pw.trim() });
             } else {
                 socket.emit('joinRoom', { roomId: roomId });
@@ -1729,8 +1685,7 @@ if (name === '系統') return;
                     else if (isSolo) { statusTag = '<span class="room-tag" style="background:#9b59b6; color:white">單人</span>'; lockClass = 'locked'; }
                     else if (room.playerCount >= 6) { statusTag = '<span class="room-tag" style="background:#e67e22; color:white">已滿員</span>'; }
 
-                    // 房間類型圖示
-                    let typeIcon = '🌐'; // 公開
+                    let typeIcon = '🌐'; 
                     if (isSolo) typeIcon = '👤';
                     else if (isPrivate) typeIcon = '🔒';
                     
@@ -1753,69 +1708,27 @@ if (name === '系統') return;
         }
     </script>
 
-    <!-- ==========================================
-         房間類型選擇彈窗
-    ========================================== -->
-    <div id="room-type-modal" style="
-        display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-        background:rgba(0,0,0,0.7); z-index:9999;
-        justify-content:center; align-items:center;
-    ">
-        <div style="
-            background:#2c3e50; border:2px solid #3498db; border-radius:12px;
-            padding:20px; width:280px; max-width:90%; text-align:center;
-            box-shadow:0 0 20px rgba(52,152,219,0.4);
-        ">
-            <div style="font-size:14px; font-weight:bold; color:#ecf0f1; margin-bottom:15px;">
-                ⚔️ 選擇房間類型
-            </div>
-            
-            <div onclick="selectRoomType('solo')" style="
-                background:#9b59b6; color:white; padding:12px; border-radius:8px;
-                margin-bottom:8px; cursor:pointer; font-size:12px; font-weight:bold;
-            ">
+    <div id="room-type-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
+        <div style="background:#2c3e50; border:2px solid #3498db; border-radius:12px; padding:20px; width:280px; max-width:90%; text-align:center; box-shadow:0 0 20px rgba(52,152,219,0.4);">
+            <div style="font-size:14px; font-weight:bold; color:#ecf0f1; margin-bottom:15px;">⚔️ 選擇房間類型</div>
+            <div onclick="selectRoomType('solo')" style="background:#9b59b6; color:white; padding:12px; border-radius:8px; margin-bottom:8px; cursor:pointer; font-size:12px; font-weight:bold;">
                 👤 單人模式
                 <div style="font-size:10px; font-weight:normal; margin-top:3px; opacity:0.8;">自己一個人挑戰</div>
             </div>
-            
-            <div onclick="selectRoomType('public')" style="
-                background:#27ae60; color:white; padding:12px; border-radius:8px;
-                margin-bottom:8px; cursor:pointer; font-size:12px; font-weight:bold;
-            ">
+            <div onclick="selectRoomType('public')" style="background:#27ae60; color:white; padding:12px; border-radius:8px; margin-bottom:8px; cursor:pointer; font-size:12px; font-weight:bold;">
                 🌐 公開房間
                 <div style="font-size:10px; font-weight:normal; margin-top:3px; opacity:0.8;">任何人都可以加入</div>
             </div>
-            
-            <div onclick="selectRoomType('private')" style="
-                background:#e67e22; color:white; padding:12px; border-radius:8px;
-                margin-bottom:8px; cursor:pointer; font-size:12px; font-weight:bold;
-            ">
+            <div onclick="selectRoomType('private')" style="background:#e67e22; color:white; padding:12px; border-radius:8px; margin-bottom:8px; cursor:pointer; font-size:12px; font-weight:bold;">
                 🔒 私人房間
                 <div style="font-size:10px; font-weight:normal; margin-top:3px; opacity:0.8;">需要密碼才能加入</div>
             </div>
-
-            <!-- 私人房間密碼輸入區 -->
             <div id="private-pw-section" style="display:none; margin-top:10px;">
-                <input id="room-pw-input" type="text" maxlength="20" placeholder="輸入房間密碼..." style="
-                    width:90%; padding:8px; border-radius:6px; border:1px solid #7f8c8d;
-                    background:#34495e; color:#ecf0f1; font-size:12px; text-align:center;
-                    outline:none;
-                " />
-                <div onclick="confirmPrivateRoom()" style="
-                    background:#e74c3c; color:white; padding:10px; border-radius:8px;
-                    margin-top:8px; cursor:pointer; font-size:12px; font-weight:bold;
-                ">
-                    ✅ 確認建立
-                </div>
+                <input id="room-pw-input" type="text" maxlength="20" placeholder="輸入房間密碼..." style="width:90%; padding:8px; border-radius:6px; border:1px solid #7f8c8d; background:#34495e; color:#ecf0f1; font-size:12px; text-align:center; outline:none;" />
+                <div onclick="confirmPrivateRoom()" style="background:#e74c3c; color:white; padding:10px; border-radius:8px; margin-top:8px; cursor:pointer; font-size:12px; font-weight:bold;">✅ 確認建立</div>
             </div>
-
-            <div onclick="closeRoomTypeModal()" style="
-                color:#95a5a6; margin-top:12px; cursor:pointer; font-size:11px;
-            ">
-                ✖ 取消
-            </div>
+            <div onclick="closeRoomTypeModal()" style="color:#95a5a6; margin-top:12px; cursor:pointer; font-size:11px;">✖ 取消</div>
         </div>
     </div>
-
 </body>
 </html>
