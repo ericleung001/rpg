@@ -799,10 +799,7 @@
             return escapeHtml(name);
         }
 
-       const socket = io(window.location.origin, { 
-            transports: ['websocket', 'polling'],
-            secure: true
-        });
+       const socket = io('https://mmo.ttctv-105.cc', { transports: ['websocket', 'polling'], secure: true });
         
         let myLevel = 1;
         let myName = ""; 
