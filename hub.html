@@ -320,6 +320,128 @@
             .main-content { margin-bottom: 0; }
             #notice-btn { left: calc(50% - 540px); }
         }
+
+
+        /* 活動橫幅 */
+@keyframes event-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(241,196,15,0.4), inset 0 0 8px rgba(241,196,15,0.05); }
+    50% { box-shadow: 0 0 18px rgba(241,196,15,0.8), inset 0 0 12px rgba(241,196,15,0.1); }
+}
+@keyframes event-shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+@keyframes event-star {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.2) rotate(-5deg); }
+    75% { transform: scale(0.9) rotate(5deg); }
+}
+ 
+#event-banner {
+    display: none;
+    width: 100%;
+    background: linear-gradient(135deg, #1a0a00 0%, #2d1a00 40%, #1a0a00 100%);
+    border: 2px solid #f1c40f;
+    border-radius: 10px;
+    padding: 0;
+    margin-bottom: 10px;
+    overflow: hidden;
+    position: relative;
+    animation: event-glow 2.5s ease-in-out infinite;
+    flex-shrink: 0;
+}
+ 
+#event-banner::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(241,196,15,0.06) 40%,
+        rgba(241,196,15,0.12) 50%,
+        rgba(241,196,15,0.06) 60%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: event-shimmer 3s linear infinite;
+    pointer-events: none;
+}
+ 
+.event-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px 4px;
+    border-bottom: 1px solid rgba(241,196,15,0.2);
+}
+ 
+.event-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+ 
+.event-star-icon {
+    font-size: 16px;
+    animation: event-star 2s ease-in-out infinite;
+    display: inline-block;
+}
+ 
+.event-name-text {
+    font-size: 11px;
+    font-weight: bold;
+    color: #f1c40f;
+    text-shadow: 0 0 8px rgba(241,196,15,0.6);
+    letter-spacing: 0.5px;
+}
+ 
+.event-date-badge {
+    font-size: 8px;
+    color: #f39c12;
+    background: rgba(243,156,18,0.15);
+    border: 1px solid rgba(243,156,18,0.3);
+    padding: 2px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+ 
+.event-rewards-row {
+    display: flex;
+    gap: 6px;
+    padding: 6px 12px 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+ 
+.event-reward-chip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    font-size: 9px;
+    font-weight: bold;
+    white-space: nowrap;
+    border: 1px solid;
+}
+ 
+.chip-exp {
+    background: rgba(52,152,219,0.2);
+    border-color: rgba(52,152,219,0.5);
+    color: #5dade2;
+}
+ 
+.chip-shard {
+    background: rgba(155,89,182,0.2);
+    border-color: rgba(155,89,182,0.5);
+    color: #a569bd;
+}
+ 
+.chip-item {
+    background: rgba(230,126,34,0.2);
+    border-color: rgba(230,126,34,0.5);
+    color: #e59866;
+}
     </style>
 </head>
 <body>
@@ -531,6 +653,16 @@
             </div>
 
             <div class="main-content">
+                <div id="event-banner">
+    <div class="event-header">
+        <div class="event-title-row">
+            <span class="event-star-icon">🎉</span>
+            <span class="event-name-text" id="event-banner-name">特別限定活動</span>
+        </div>
+        <span class="event-date-badge" id="event-banner-date"></span>
+    </div>
+    <div class="event-rewards-row" id="event-banner-rewards"></div>
+</div>
                 
                 <div id="boss-banner" style="display:none; background: linear-gradient(90deg, #2c3e50, #c0392b); padding: 15px; border-radius: 8px; border: 2px solid #e74c3c; margin-bottom: 15px; text-align: left; box-shadow: 0 0 15px #c0392b; animation: pulse 2s infinite; flex-shrink: 0;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -1106,6 +1238,91 @@
             localStorage.removeItem('rpg_token');  
             window.location.href = 'index.html';  
         });
+
+
+        // ==========================================
+//  活動橫幅系統
+// ==========================================
+const ITEM_DISPLAY_NAMES = {
+    'elixir': '神之甘露', 'enhance_stone': '強化石', 'safe_stone': '防爆石',
+    'lucky_bag': '奇蹟福袋', 'potion_max': '特級秘藥', 'void_soup': '虛空海鮮湯',
+    'skill_shard': '技能碎片', 'divinity_core': '創世神格',
+    'multiverse_shard': '多元宇宙碎片', 'quantum_residue': '量子殘渣',
+    'singularity_weapon': '奇點武器', 'singularity_armor': '奇點防具',
+    'singularity_acc': '奇點飾品', 'titan_steel': '泰坦神鋼',
+    'star_fragment': '星之碎片', 'entropy_origin': '熱寂原點'
+};
+ 
+function renderEventBanner(eventInfo) {
+    const banner = document.getElementById('event-banner');
+    if (!eventInfo || !eventInfo.active || !eventInfo.rewards) {
+        banner.style.display = 'none';
+        return;
+    }
+ 
+    banner.style.display = 'block';
+ 
+    // 名稱
+    document.getElementById('event-banner-name').textContent = eventInfo.name || '特別限定活動';
+ 
+    // 日期
+    const dateBadge = document.getElementById('event-banner-date');
+    if (eventInfo.startDate && eventInfo.endDate) {
+        dateBadge.textContent = `${eventInfo.startDate} ~ ${eventInfo.endDate}`;
+        dateBadge.style.display = 'inline';
+    } else if (eventInfo.endDate) {
+        dateBadge.textContent = `至 ${eventInfo.endDate}`;
+        dateBadge.style.display = 'inline';
+    } else {
+        dateBadge.style.display = 'none';
+    }
+ 
+    // 獎勵 chips
+    const rewardsRow = document.getElementById('event-banner-rewards');
+    rewardsRow.innerHTML = '';
+    const r = eventInfo.rewards;
+ 
+    // EXP 倍率
+    if (r.expMultiplier && r.expMultiplier > 1) {
+        const chip = document.createElement('div');
+        chip.className = 'event-reward-chip chip-exp';
+        chip.innerHTML = `⭐ EXP <strong style="color:#3498db;">${r.expMultiplier}倍</strong>`;
+        rewardsRow.appendChild(chip);
+    }
+ 
+    // 技能碎片
+    if (r.shardBonus && r.shardBonus > 0) {
+        const chip = document.createElement('div');
+        chip.className = 'event-reward-chip chip-shard';
+        chip.innerHTML = `💎 勝利+<strong style="color:#9b59b6;">${r.shardBonus}</strong>碎片`;
+        rewardsRow.appendChild(chip);
+    }
+ 
+    // 額外物品
+    if (Array.isArray(r.bonusItems)) {
+        r.bonusItems.forEach(item => {
+            if (!item || !item.id) return;
+            const name = ITEM_DISPLAY_NAMES[item.id] || item.id;
+            const chip = document.createElement('div');
+            chip.className = 'event-reward-chip chip-item';
+            chip.innerHTML = `🎁 ${name} x<strong style="color:#e67e22;">${item.count}</strong>`;
+            rewardsRow.appendChild(chip);
+        });
+    }
+ 
+    // 如果沒有任何獎勵 chip，隱藏 banner
+    if (rewardsRow.children.length === 0) {
+        banner.style.display = 'none';
+    }
+}
+ 
+// 接收活動更新
+socket.on('eventUpdate', (eventInfo) => {
+    renderEventBanner(eventInfo);
+});
+ 
+// 登入後主動請求
+setTimeout(() => socket.emit('getEventInfo'), 1000);
         
         socket.on('playerStatsUpdate', (p) => {
             myLevel = p.level;
