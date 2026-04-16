@@ -464,6 +464,71 @@
         .chip-exp { background: rgba(52,152,219,0.2); border-color: rgba(52,152,219,0.5); color: #5dade2; }
         .chip-shard { background: rgba(155,89,182,0.2); border-color: rgba(155,89,182,0.5); color: #a569bd; }
         .chip-item { background: rgba(230,126,34,0.2); border-color: rgba(230,126,34,0.5); color: #e59866; }
+
+        /* 系統訊息廣播 bar */
+        #sys-msg-bar {
+            display: none;
+            width: 100%;
+            background: linear-gradient(90deg, #1a5276, #2e86c1, #1a5276);
+            border: 2px solid #f1c40f;
+            border-radius: 8px;
+            padding: 0;
+            margin-bottom: 10px;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+            box-shadow: 0 0 12px rgba(241,196,15,0.4);
+        }
+        #sys-msg-bar-inner {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            gap: 10px;
+        }
+        .sys-msg-icon {
+            font-size: 14px;
+            animation: sys-msg-pulse 1.5s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        @keyframes sys-msg-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        .sys-msg-text {
+            flex: 1;
+            font-size: 10px;
+            color: #fff;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            position: relative;
+        }
+        .sys-msg-scroll {
+            display: inline-block;
+            animation: sys-msg-scroll-anim 15s linear infinite;
+            padding-left: 100%;
+        }
+        @keyframes sys-msg-scroll-anim {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        .sys-msg-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: #fff;
+            font-size: 14px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sys-msg-close:hover { background: rgba(255,255,255,0.4); }
+        .sys-msg-close:active { transform: scale(0.9); }
     </style>
 </head>
 <body>
@@ -514,6 +579,10 @@
             <div class="notice-title">📢 Ver 5.1 更新公告</div>
 <button class="close-notice-btn" onclick="closeNotice()">我知道了，立即體驗！</button>
             <div class="notice-content">
+<b style="color:#8e44ad;">新增【專用優惠】</b>
+- <b>專用優惠</b>：只需要每次10億，可以限時6小時得到不同技能增強。
+- 包括有：攻x2、防x2、技能碎片x10(每次戰鬥後)、經驗值x2。
+
 <b style="color:#8e44ad;">新增【期間限定活動】</b>
 - <b>期間限定活動</b>：不定期會有限時活動出現。
 
@@ -715,7 +784,18 @@
                     </div>
                     <div class="event-rewards-row" id="event-banner-rewards"></div>
                 </div>
-                
+
+                <!-- 系統訊息廣播 bar -->
+                <div id="sys-msg-bar">
+                    <div id="sys-msg-bar-inner">
+                        <span class="sys-msg-icon">📢</span>
+                        <div class="sys-msg-text">
+                            <span class="sys-msg-scroll" id="sys-msg-content"></span>
+                        </div>
+                        <button class="sys-msg-close" onclick="closeSysMsgBar()">✕</button>
+                    </div>
+                </div>
+
                 <div id="boss-banner" style="display:none; background: linear-gradient(90deg, #2c3e50, #c0392b); padding: 15px; border-radius: 8px; border: 2px solid #e74c3c; margin-bottom: 15px; text-align: left; box-shadow: 0 0 15px #c0392b; animation: pulse 2s infinite; flex-shrink: 0;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div>
@@ -799,7 +879,10 @@
             return escapeHtml(name);
         }
 
-       const socket = io('https://mmo.ttctv-105.cc', { transports: ['websocket', 'polling'], secure: true });
+       const socket = io('https://mmo.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
         
         let myLevel = 1;
         let myName = ""; 
@@ -1562,6 +1645,46 @@
                 showToast("❌ " + msg); 
             }
         });
+
+        // ============================
+        // 📢 系統訊息廣播 bar
+        // ============================
+        let sysMsgAutoTimer = null;
+
+        socket.on('systemMessageBar', (data) => {
+            const bar = document.getElementById('sys-msg-bar');
+            const content = document.getElementById('sys-msg-content');
+            
+            if (!data.message || data.message.trim() === '') {
+                // 收到空訊息 = 清除
+                closeSysMsgBar();
+                return;
+            }
+
+            // 設定訊息內容（XSS 防護）
+            content.textContent = data.message;
+            bar.style.display = 'block';
+
+            // 重新觸發跑馬燈動畫
+            content.style.animation = 'none';
+            content.offsetHeight; // force reflow
+            content.style.animation = '';
+
+            // 清除舊的自動關閉計時器，設定新的（60秒後自動關閉）
+            if (sysMsgAutoTimer) clearTimeout(sysMsgAutoTimer);
+            sysMsgAutoTimer = setTimeout(() => {
+                closeSysMsgBar();
+            }, 60000);
+        });
+
+        function closeSysMsgBar() {
+            const bar = document.getElementById('sys-msg-bar');
+            bar.style.display = 'none';
+            if (sysMsgAutoTimer) {
+                clearTimeout(sysMsgAutoTimer);
+                sysMsgAutoTimer = null;
+            }
+        }
         
         socket.on('battleLog', (msg) => {
             if (msg.includes('強化') && (msg.includes('成功') || msg.includes('失敗') || msg.includes('破碎'))) {
