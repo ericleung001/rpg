@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -473,7 +473,7 @@
             border: 2px solid #f1c40f;
             border-radius: 8px;
             padding: 0;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             overflow: hidden;
             position: relative;
             flex-shrink: 0;
@@ -690,6 +690,17 @@
 
     <div id="app-layout">
         <div id="game-view">
+            <!-- 系統訊息廣播 bar (最上方) -->
+            <div id="sys-msg-bar">
+                <div id="sys-msg-bar-inner">
+                    <span class="sys-msg-icon">📢</span>
+                    <div class="sys-msg-text">
+                        <span class="sys-msg-scroll" id="sys-msg-content"></span>
+                    </div>
+                    <button class="sys-msg-close" onclick="closeSysMsgBar()">✕</button>
+                </div>
+            </div>
+
             <div class="top-bar">
                 <div style="display:flex; align-items:center;">
                     <button class="menu-toggle-btn" onclick="toggleSidebar()">☰ 選單</button>
@@ -783,17 +794,6 @@
                         <span class="event-date-badge" id="event-banner-date"></span>
                     </div>
                     <div class="event-rewards-row" id="event-banner-rewards"></div>
-                </div>
-
-                <!-- 系統訊息廣播 bar -->
-                <div id="sys-msg-bar">
-                    <div id="sys-msg-bar-inner">
-                        <span class="sys-msg-icon">📢</span>
-                        <div class="sys-msg-text">
-                            <span class="sys-msg-scroll" id="sys-msg-content"></span>
-                        </div>
-                        <button class="sys-msg-close" onclick="closeSysMsgBar()">✕</button>
-                    </div>
                 </div>
 
                 <div id="boss-banner" style="display:none; background: linear-gradient(90deg, #2c3e50, #c0392b); padding: 15px; border-radius: 8px; border: 2px solid #e74c3c; margin-bottom: 15px; text-align: left; box-shadow: 0 0 15px #c0392b; animation: pulse 2s infinite; flex-shrink: 0;">
