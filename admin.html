@@ -161,6 +161,19 @@
 
     <hr>
 
+    <h3 style="color: #2ecc71;">📢 系統訊息廣播</h3>
+    <div style="display:flex; flex-direction:column; align-items:center;">
+        <textarea id="sys-msg-text" placeholder="輸入要廣播的系統訊息..." rows="3" maxlength="200"
+            style="width:100%; max-width:500px; padding:10px; background:#222; color:#fff; border:1px solid #555; border-radius:5px; font-size:12px; font-family:monospace; resize:vertical; box-sizing:border-box;"></textarea>
+        <div style="display:flex; gap:10px; margin-top:8px;">
+            <button onclick="broadcastSysMsg()" style="background:#27ae60; width:auto; padding:10px 20px;">📢 發送廣播</button>
+            <button onclick="clearSysMsgBar()" style="background:#e67e22; width:auto; padding:10px 20px;">🗑️ 清除玩家畫面訊息</button>
+        </div>
+        <div style="font-size:10px; color:#aaa; margin-top:5px;">(最多200字，廣播後會在 hub.html 頂部顯示)</div>
+    </div>
+
+    <hr>
+
     <h3 style="color: #e74c3c;">🚧 系統維護</h3>
     <div style="display:flex; justify-content:center; gap:10px;">
         <button onclick="setMaintenance(true)" style="background:#c0392b;">🔴 開啟維護 (踢人)</button>
@@ -549,9 +562,9 @@
     
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-            transports: ['websocket', 'polling'],
-            secure: true 
-        });
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
 
         socket.on('connect', () => {
             log("✅ 連線成功，請輸入密碼與玩家名稱。");
@@ -926,6 +939,29 @@
             if(!name || !item || !count) { alert("請填寫所有欄位"); return; }
             log(`[請求] 發送 ${count} 個 [${item}] 給 ${name}...`);
             socket.emit('adminGiveItem', { adminPass: pass, targetName: name, itemId: item, count: count });
+        }
+
+        // ============================
+        // 🟢 系統訊息廣播
+        // ============================
+        function broadcastSysMsg() {
+            const pass = getPass();
+            if (!pass) return;
+            const msg = document.getElementById('sys-msg-text').value.trim();
+            if (!msg) { alert("請輸入訊息內容"); return; }
+            if (confirm(`確定要廣播以下訊息到全服嗎？\n\n${msg}`)) {
+                log("[請求] 正在廣播系統訊息...");
+                socket.emit('adminBroadcastMessage', { adminPass: pass, message: msg });
+            }
+        }
+
+        function clearSysMsgBar() {
+            const pass = getPass();
+            if (!pass) return;
+            if (confirm("確定要清除所有玩家畫面上的系統訊息嗎？")) {
+                socket.emit('adminBroadcastMessage', { adminPass: pass, message: '' });
+                log("[請求] 已發送清除廣播指令");
+            }
         }
 
         socket.on('adminResult', (res) => { log(res.msg); });
