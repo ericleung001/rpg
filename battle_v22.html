@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中_v7</title>
+    <title>戰鬥中_v8</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -290,10 +290,10 @@
     
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+        const socket = io(window.location.origin, { 
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
 
         // 🟢 [核心] 轉生稱號格式化工具 (新增)
         function formatName(name, rebirth) {
@@ -1185,22 +1185,39 @@
             `;
         }
 
-        // 🟢 [新增] 請求再戰一場
-        // 🟢 [新增] 請求再戰一場
+        // 🤖 反 Bot: 按鈕 cooldown 工具函數
+        function cooldownBtn(btn, cooldownSec, originalText, originalBg) {
+            if (!btn) return;
+            btn.disabled = true;
+            let remaining = cooldownSec;
+            btn.innerText = `${originalText} (${remaining}s)`;
+            btn.style.background = '#7f8c8d';
+            const timer = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                    btn.style.background = originalBg || '';
+                } else {
+                    btn.innerText = `${originalText} (${remaining}s)`;
+                }
+            }, 1000);
+            return timer;
+        }
+
+        // 🟢 [新增] 請求再戰一場 (含反 Bot cooldown)
         function restartBattle() {
             if (!roomId) return;
 
             // 1. 發送指令給伺服器
             socket.emit('restartBattle', roomId);
             
-            // 2. UI 反饋：禁用按鈕，避免重複點擊
-            // 找到那個「再戰一場」按鈕
+            // 2. UI 反饋：3 秒 cooldown 倒數
             const allBtns = document.getElementsByTagName('button');
             for (let btn of allBtns) {
                 if (btn.innerText.includes('再戰')) {
-                    btn.disabled = true;
-                    btn.innerText = "準備中...";
-                    btn.style.background = "#7f8c8d"; // 變灰色
+                    cooldownBtn(btn, 3, btn.innerText.replace(/ \(\d+s\)/g, ''), btn.style.background);
                 }
             }
             
@@ -1262,7 +1279,17 @@
             showMsg("房間已重置！");
         });
 
-        function requestStart() { socket.emit('startBattle', roomId); }
+        function requestStart() {
+            socket.emit('startBattle', roomId);
+
+            // 🤖 反 Bot: 開戰後 5 秒內防止重複點擊
+            const startBtns = document.querySelectorAll('button');
+            for (let btn of startBtns) {
+                if (btn.innerText.includes('開始') || btn.innerText.includes('房主開始')) {
+                    cooldownBtn(btn, 5, btn.innerText.replace(/ \(\d+s\)/g, ''), btn.style.background);
+                }
+            }
+        }
         
         // 🟢 [修正] 普通攻擊與物品使用
         function act(type) {
@@ -1279,6 +1306,8 @@
                     type, 
                     targetIndex: selectedTargetIndex 
                 }); 
+                // 🤖 安全兜底：如果 server 無回應，2 秒後自動解鎖按鈕
+                setTimeout(() => toggle(false), 2000); 
             }
         }
 
@@ -1363,6 +1392,8 @@
                     skillId: skillId, 
                     targetIndex: selectedTargetIndex 
                 }); 
+                // 🤖 安全兜底：如果 server 無回應，2 秒後自動解鎖按鈕
+                setTimeout(() => toggle(false), 2000); 
             }
         }
 
