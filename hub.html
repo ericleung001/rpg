@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -499,18 +499,9 @@
             font-size: 10px;
             color: #fff;
             font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            position: relative;
-        }
-        .sys-msg-scroll {
-            display: inline-block;
-            animation: sys-msg-scroll-anim 15s linear infinite;
-            padding-left: 100%;
-        }
-        @keyframes sys-msg-scroll-anim {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
+            white-space: normal;
+            word-break: break-all;
+            line-height: 1.4;
         }
         .sys-msg-close {
             background: rgba(255,255,255,0.2);
@@ -694,9 +685,7 @@
             <div id="sys-msg-bar">
                 <div id="sys-msg-bar-inner">
                     <span class="sys-msg-icon">📢</span>
-                    <div class="sys-msg-text">
-                        <span class="sys-msg-scroll" id="sys-msg-content"></span>
-                    </div>
+                    <div class="sys-msg-text" id="sys-msg-content"></div>
                     <button class="sys-msg-close" onclick="closeSysMsgBar()">✕</button>
                 </div>
             </div>
@@ -1649,7 +1638,6 @@
         // ============================
         // 📢 系統訊息廣播 bar
         // ============================
-        let sysMsgAutoTimer = null;
 
         socket.on('systemMessageBar', (data) => {
             const bar = document.getElementById('sys-msg-bar');
@@ -1664,26 +1652,10 @@
             // 設定訊息內容（XSS 防護）
             content.textContent = data.message;
             bar.style.display = 'block';
-
-            // 重新觸發跑馬燈動畫
-            content.style.animation = 'none';
-            content.offsetHeight; // force reflow
-            content.style.animation = '';
-
-            // 清除舊的自動關閉計時器，設定新的（60秒後自動關閉）
-            if (sysMsgAutoTimer) clearTimeout(sysMsgAutoTimer);
-            sysMsgAutoTimer = setTimeout(() => {
-                closeSysMsgBar();
-            }, 60000);
         });
 
         function closeSysMsgBar() {
-            const bar = document.getElementById('sys-msg-bar');
-            bar.style.display = 'none';
-            if (sysMsgAutoTimer) {
-                clearTimeout(sysMsgAutoTimer);
-                sysMsgAutoTimer = null;
-            }
+            document.getElementById('sys-msg-bar').style.display = 'none';
         }
         
         socket.on('battleLog', (msg) => {
