@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GM 超級後台2</title>
+    <title>GM 超級後台</title>
     <style>
         body { background: #222; color: #fff; font-family: monospace; padding: 20px; text-align: center; }
         input, select, button { padding: 10px; margin: 5px; width: 100%; max-width: 300px; box-sizing: border-box; }
@@ -272,6 +272,145 @@
         font-size:10px; color:#aaa; display:none;
     "></div>
 </div>
+
+    <!-- ================================ -->
+    <!-- 🆕 新用戶優惠設定 -->
+    <!-- ================================ -->
+    <hr>
+
+    <h3 style="color: #2ecc71;">🎁 新用戶優惠設定</h3>
+    <div id="new-user-reward-panel" style="
+        background: #111; border: 2px solid #2ecc71; border-radius: 10px;
+        padding: 20px; max-width: 600px; margin: 0 auto; text-align: left;
+    ">
+        <!-- 啟用開關 -->
+        <div style="display:flex; gap:10px; margin-bottom:15px; align-items:center;">
+            <label style="color:#2ecc71; font-weight:bold; font-size:12px; white-space:nowrap;">新用戶獎勵:</label>
+            <label style="color:#27ae60; font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;">
+                <input type="checkbox" id="new-user-reward-enabled" style="width:16px; height:16px; cursor:pointer;"> 啟用
+            </label>
+        </div>
+
+        <!-- 日期範圍 -->
+        <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap; align-items:center;">
+            <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:120px;">
+                <label style="color:#aaa; font-size:10px;">開始日期 (YYYY-MM-DD)</label>
+                <input type="date" id="new-user-start" style="padding:8px; background:#222; color:#fff; border:1px solid #555; border-radius:5px; font-size:12px; width:100%; box-sizing:border-box;">
+            </div>
+            <div style="color:#aaa; font-size:14px; padding-top:20px;">→</div>
+            <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:120px;">
+                <label style="color:#aaa; font-size:10px;">結束日期 (YYYY-MM-DD)</label>
+                <input type="date" id="new-user-end" style="padding:8px; background:#222; color:#fff; border:1px solid #555; border-radius:5px; font-size:12px; width:100%; box-sizing:border-box;">
+            </div>
+        </div>
+
+        <!-- 物品列表 -->
+        <div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:12px; margin-bottom:15px;">
+            <div style="color:#2ecc71; font-size:11px; font-weight:bold; margin-bottom:12px;">🎁 新用戶贈送物品</div>
+            <div id="new-user-items-list"></div>
+            <button onclick="addNewUserItemRow()" style="
+                background:#34495e; color:#ecf0f1; border:1px dashed #555;
+                padding:6px 12px; border-radius:5px; cursor:pointer; font-size:11px; margin-top:6px; width:100%;
+            ">+ 新增物品</button>
+        </div>
+
+        <!-- 操作按鈕 -->
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button onclick="loadNewUserReward()" style="background:#2c3e50; color:#ecf0f1; border:1px solid #555; padding:10px 16px; border-radius:6px; cursor:pointer; font-size:11px; flex:1;">
+                🔄 讀取設定
+            </button>
+            <button onclick="saveNewUserReward()" style="background:#27ae60; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:bold; flex:2;">
+                💾 儲存新用戶獎勵
+            </button>
+        </div>
+    </div>
+
+    <!-- ================================ -->
+    <!-- 🆕 優惠碼管理 -->
+    <!-- ================================ -->
+    <hr>
+
+    <h3 style="color: #e67e22;">🎫 優惠碼管理</h3>
+    <div id="promo-code-panel" style="
+        background: #111; border: 2px solid #e67e22; border-radius: 10px;
+        padding: 20px; max-width: 700px; margin: 0 auto; text-align: left;
+    ">
+        <!-- 優惠碼列表 -->
+        <div style="margin-bottom:15px;">
+            <div style="color:#e67e22; font-size:11px; font-weight:bold; margin-bottom:10px;">📋 現有優惠碼</div>
+            <button onclick="loadPromoCodes()" style="background:#2c3e50; color:#ecf0f1; border:1px solid #555; padding:6px 12px; border-radius:5px; cursor:pointer; font-size:10px; margin-bottom:10px;">🔄 刷新列表</button>
+            <table id="promo-code-table">
+                <thead>
+                    <tr>
+                        <th>優惠碼</th>
+                        <th>描述</th>
+                        <th>獎勵</th>
+                        <th>已用/上限</th>
+                        <th>狀態</th>
+                        <th>日期</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="promo-code-list">
+                    <tr><td colspan="7" style="color:#aaa;">點擊刷新載入...</td></tr>
+                </tbody>
+            </table>
+            <div class="pagination" id="promo-pagination" style="display:none;">
+                <button class="page-btn" onclick="changePromoPage(-1)" id="btn-promo-prev">◀ 上一頁</button>
+                <span id="page-promo-info">第 1 頁 / 共 1 頁</span>
+                <button class="page-btn" onclick="changePromoPage(1)" id="btn-promo-next">下一頁 ▶</button>
+            </div>
+        </div>
+
+        <!-- 建立新優惠碼 -->
+        <hr style="border-color:#333;">
+        <div style="color:#e67e22; font-size:11px; font-weight:bold; margin-bottom:12px;">➕ 建立新優惠碼</div>
+        
+        <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+            <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:150px;">
+                <label style="color:#aaa; font-size:10px;">優惠碼 (英文/數字)</label>
+                <input type="text" id="promo-code-input" placeholder="例: WELCOME2024" maxlength="30"
+                    style="padding:8px; background:#222; color:#fff; border:1px solid #555; border-radius:5px; font-size:12px; width:100%; box-sizing:border-box; text-transform:uppercase;">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:150px;">
+                <label style="color:#aaa; font-size:10px;">描述 (選填)</label>
+                <input type="text" id="promo-desc-input" placeholder="例: 新玩家歡迎禮包" maxlength="50"
+                    style="padding:8px; background:#222; color:#fff; border:1px solid #555; border-radius:5px; font-size:12px; width:100%; box-sizing:border-box;">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
+            <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:120px;">
+                <label style="color:#aaa; font-size:10px;">開始日期</label>
+                <input type="date" id="promo-start-input" style="padding:8px; background:#222; color:#fff; border:1px solid #555; border-radius:5px; font-size:12px; width:100%; box-sizing:border-box;">
+            </div>
+            <div style="color:#aaa; font-size:14px; padding-top:20px;">→</div>
+            <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:120px;">
+                <label style="color:#aaa; font-size:10px;">結束日期</label>
+                <input type="date" id="promo-end-input" style="padding:8px; background:#222; color:#fff; border:1px solid #555; border-radius:5px; font-size:12px; width:100%; box-sizing:border-box;">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:4px; width:100px;">
+                <label style="color:#aaa; font-size:10px;">最大使用次數</label>
+                <input type="number" id="promo-max-uses" min="0" value="0" placeholder="0=無限"
+                    style="padding:8px; background:#222; color:#fff; border:1px solid #555; border-radius:5px; font-size:12px; width:100%; box-sizing:border-box; text-align:center;">
+                <span style="color:#666; font-size:8px;">0 = 無限次</span>
+            </div>
+        </div>
+
+        <!-- 優惠碼物品列表 -->
+        <div style="background:#1a1a1a; border:1px solid #333; border-radius:8px; padding:12px; margin-bottom:15px;">
+            <div style="color:#e67e22; font-size:11px; font-weight:bold; margin-bottom:12px;">🎁 獎勵物品</div>
+            <div id="promo-items-list"></div>
+            <button onclick="addPromoItemRow()" style="
+                background:#34495e; color:#ecf0f1; border:1px dashed #555;
+                padding:6px 12px; border-radius:5px; cursor:pointer; font-size:11px; margin-top:6px; width:100%;
+            ">+ 新增物品</button>
+        </div>
+
+        <button onclick="createPromoCode()" style="background:#e67e22; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:bold; width:100%;">
+            ✨ 建立優惠碼
+        </button>
+    </div>
 
     <hr>
 
@@ -1117,6 +1256,224 @@ setTimeout(() => {
     const pass = document.getElementById('admin-pass').value;
     if (pass) loadEventConfig();
 }, 500);
+
+// ============================================================
+//  🆕 新用戶優惠設定 JS
+// ============================================================
+
+function addNewUserItemRow(id = '', count = 1) {
+    const list = document.getElementById('new-user-items-list');
+    if (list.children.length >= 10) {
+        alert('最多只能設定 10 種物品！');
+        return;
+    }
+    const div = document.createElement('div');
+    div.className = 'bonus-item-row';
+    div.style.cssText = 'display:flex; gap:6px; margin-bottom:6px; align-items:center;';
+    div.innerHTML = `
+        <input type="text" class="item-id-input" value="${id}" placeholder="物品ID (例: iron_sword)" 
+            style="flex:1; padding:6px; background:#222; color:#fff; border:1px solid #555; border-radius:4px; font-size:11px;">
+        <span style="color:#aaa; font-size:10px;">x</span>
+        <input type="number" class="item-count-input" value="${count}" min="1" max="9999"
+            style="width:60px; padding:6px; background:#222; color:#fff; border:1px solid #555; border-radius:4px; font-size:11px; text-align:center;">
+        <button onclick="this.parentElement.remove()" 
+            style="background:#c0392b; color:white; border:none; width:24px; height:24px; border-radius:4px; cursor:pointer; font-size:12px;">✕</button>
+    `;
+    list.appendChild(div);
+}
+
+function getNewUserItems() {
+    const items = [];
+    document.querySelectorAll('#new-user-items-list .bonus-item-row').forEach(row => {
+        const id = row.querySelector('.item-id-input').value.trim();
+        const count = parseInt(row.querySelector('.item-count-input').value) || 1;
+        if (id) items.push({ id, count });
+    });
+    return items;
+}
+
+function loadNewUserReward() {
+    const pass = getPass();
+    if (!pass) return;
+    socket.emit('adminGetPromoConfig', { adminPass: pass });
+}
+
+socket.on('adminPromoConfig', (cfg) => {
+    if (!cfg) return;
+    // 新用戶獎勵
+    const reward = cfg.newUserReward || {};
+    document.getElementById('new-user-reward-enabled').checked = reward.enabled || false;
+    document.getElementById('new-user-start').value = reward.startDate || '';
+    document.getElementById('new-user-end').value = reward.endDate || '';
+    document.getElementById('new-user-items-list').innerHTML = '';
+    if (Array.isArray(reward.items)) {
+        reward.items.forEach(item => addNewUserItemRow(item.id, item.count));
+    }
+    log(`[新用戶獎勵] 設定已讀取，狀態: ${reward.enabled ? '啟用' : '停用'}`);
+
+    // 優惠碼列表
+    promoCodesData = cfg.promoCodes || [];
+    promoPage = 1;
+    renderPromoTable();
+});
+
+function saveNewUserReward() {
+    const pass = getPass();
+    if (!pass) return;
+    const enabled = document.getElementById('new-user-reward-enabled').checked;
+    const startDate = document.getElementById('new-user-start').value;
+    const endDate = document.getElementById('new-user-end').value;
+    const items = getNewUserItems();
+    if (enabled && items.length === 0) {
+        alert('啟用獎勵時至少需要設定一個物品！'); return;
+    }
+    socket.emit('adminSetNewUserReward', { adminPass: pass, enabled, startDate, endDate, items });
+    log('[新用戶獎勵] 已發送設定...');
+}
+
+// ============================================================
+//  🆕 優惠碼管理 JS
+// ============================================================
+
+let promoCodesData = [];
+let promoPage = 1;
+const promoPerPage = 10;
+
+function addPromoItemRow(id = '', count = 1) {
+    const list = document.getElementById('promo-items-list');
+    if (list.children.length >= 10) {
+        alert('最多只能設定 10 種物品！');
+        return;
+    }
+    const div = document.createElement('div');
+    div.className = 'bonus-item-row';
+    div.style.cssText = 'display:flex; gap:6px; margin-bottom:6px; align-items:center;';
+    div.innerHTML = `
+        <input type="text" class="item-id-input" value="${id}" placeholder="物品ID (例: iron_sword)" 
+            style="flex:1; padding:6px; background:#222; color:#fff; border:1px solid #555; border-radius:4px; font-size:11px;">
+        <span style="color:#aaa; font-size:10px;">x</span>
+        <input type="number" class="item-count-input" value="${count}" min="1" max="9999"
+            style="width:60px; padding:6px; background:#222; color:#fff; border:1px solid #555; border-radius:4px; font-size:11px; text-align:center;">
+        <button onclick="this.parentElement.remove()" 
+            style="background:#c0392b; color:white; border:none; width:24px; height:24px; border-radius:4px; cursor:pointer; font-size:12px;">✕</button>
+    `;
+    list.appendChild(div);
+}
+
+function getPromoItems() {
+    const items = [];
+    document.querySelectorAll('#promo-items-list .bonus-item-row').forEach(row => {
+        const id = row.querySelector('.item-id-input').value.trim();
+        const count = parseInt(row.querySelector('.item-count-input').value) || 1;
+        if (id) items.push({ id, count });
+    });
+    return items;
+}
+
+function loadPromoCodes() {
+    const pass = getPass();
+    if (!pass) return;
+    socket.emit('adminGetPromoConfig', { adminPass: pass });
+}
+
+function changePromoPage(step) {
+    promoPage += step;
+    renderPromoTable();
+}
+
+function renderPromoTable() {
+    const tbody = document.getElementById('promo-code-list');
+    const paginationDiv = document.getElementById('promo-pagination');
+    tbody.innerHTML = '';
+
+    if (!promoCodesData || promoCodesData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="color:#aaa;">暫無優惠碼</td></tr>';
+        paginationDiv.style.display = 'none';
+        return;
+    }
+
+    paginationDiv.style.display = 'flex';
+    const totalPages = Math.ceil(promoCodesData.length / promoPerPage);
+    if (promoPage > totalPages) promoPage = totalPages;
+    if (promoPage < 1) promoPage = 1;
+
+    const startIndex = (promoPage - 1) * promoPerPage;
+    const endIndex = startIndex + promoPerPage;
+    const pageItems = promoCodesData.slice(startIndex, endIndex);
+
+    const today = new Date();
+    today.setHours(today.getHours() + 9);
+    const todayStr = today.toISOString().split('T')[0];
+
+    pageItems.forEach(promo => {
+        const rewardsText = (promo.items || []).map(i => `${i.id}x${i.count}`).join(', ');
+        const usesText = `${promo.usedCount || 0}${promo.maxUses > 0 ? '/' + promo.maxUses : '/∞'}`;
+        
+        // 狀態判定
+        let isActive = promo.enabled;
+        if (promo.startDate && todayStr < promo.startDate) isActive = false;
+        if (promo.endDate && todayStr > promo.endDate) isActive = false;
+        
+        let statusColor = isActive ? '#2ecc71' : '#e74c3c';
+        let statusText = isActive ? '啟用中' : '已停用';
+        if (promo.maxUses > 0 && promo.usedCount >= promo.maxUses) {
+            statusColor = '#f39c12';
+            statusText = '已用完';
+        }
+
+        const dateText = (promo.startDate || '?') + ' ~ ' + (promo.endDate || '無期限');
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="color:#f1c40f; font-weight:bold;">${promo.code}</td>
+            <td style="font-size:10px;">${promo.description || '-'}</td>
+            <td style="font-size:9px; text-align:left; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${rewardsText}">${rewardsText || '-'}</td>
+            <td>${usesText}</td>
+            <td style="color:${statusColor}; font-weight:bold;">${statusText}</td>
+            <td style="font-size:9px;">${dateText}</td>
+            <td><button class="btn-sm" style="background:#c0392b;" onclick="deletePromoCode('${promo.code}')">刪除</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('page-promo-info').innerText = `第 ${promoPage} 頁 / 共 ${totalPages} 頁 (共 ${promoCodesData.length} 個)`;
+    document.getElementById('btn-promo-prev').disabled = (promoPage === 1);
+    document.getElementById('btn-promo-next').disabled = (promoPage === totalPages);
+}
+
+function createPromoCode() {
+    const pass = getPass();
+    if (!pass) return;
+    const code = document.getElementById('promo-code-input').value.trim();
+    const description = document.getElementById('promo-desc-input').value.trim();
+    const startDate = document.getElementById('promo-start-input').value;
+    const endDate = document.getElementById('promo-end-input').value;
+    const maxUses = parseInt(document.getElementById('promo-max-uses').value) || 0;
+    const items = getPromoItems();
+
+    if (!code) { alert('請輸入優惠碼！'); return; }
+    if (items.length === 0) { alert('至少需要設定一個獎勵物品！'); return; }
+
+    socket.emit('adminCreatePromoCode', { adminPass: pass, code, description, startDate, endDate, maxUses, items });
+    log(`[優惠碼] 正在建立 [${code}]...`);
+
+    // 清空表單
+    document.getElementById('promo-code-input').value = '';
+    document.getElementById('promo-desc-input').value = '';
+    document.getElementById('promo-start-input').value = '';
+    document.getElementById('promo-end-input').value = '';
+    document.getElementById('promo-max-uses').value = '0';
+    document.getElementById('promo-items-list').innerHTML = '';
+}
+
+function deletePromoCode(code) {
+    const pass = getPass();
+    if (!pass) return;
+    if (confirm(`確定要刪除優惠碼 [${code}] 嗎？\n已使用的玩家不會被收回獎勵。`)) {
+        socket.emit('adminDeletePromoCode', { adminPass: pass, code });
+        log(`[優惠碼] 正在刪除 [${code}]...`);
+    }
+}
 
 
     </script>
