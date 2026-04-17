@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -572,6 +572,151 @@
             margin-top: 6px; padding: 5px 8px;
             border: 1px solid rgba(241,196,15,0.3);
         }
+
+        /* ==================== 優惠碼展示區 ==================== */
+        #promo-display-area {
+            display: none;
+            width: 100%;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+        #promo-display-area.active { display: block; }
+
+        .promo-toggle-bar {
+            background: linear-gradient(135deg, #1a0a00 0%, #2d1a00 100%);
+            border: 2px solid #e67e22;
+            border-radius: 8px;
+            padding: 6px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .promo-toggle-bar:active { filter: brightness(0.85); }
+        .promo-toggle-left {
+            display: flex; align-items: center; gap: 6px; font-size: 10px; color: #e67e22; font-weight: bold;
+        }
+        .promo-toggle-arrow {
+            font-size: 10px; color: #e67e22;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        .promo-toggle-arrow.expanded { transform: rotate(90deg); }
+        .promo-toggle-badge {
+            background: #e67e22; color: #fff;
+            font-size: 9px; font-weight: bold;
+            padding: 1px 6px; border-radius: 10px;
+            min-width: 18px; text-align: center;
+        }
+
+        .promo-card-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.2s ease;
+            opacity: 0;
+        }
+        .promo-card-list.expanded {
+            max-height: 400px;
+            overflow-y: auto;
+            opacity: 1;
+        }
+
+        .promo-card {
+            background: linear-gradient(135deg, #1a0a00 0%, #2d1a00 40%, #1a0a00 100%);
+            border: 2px solid #e67e22;
+            border-radius: 10px;
+            padding: 8px 10px;
+            margin-top: 6px;
+            box-shadow: 0 0 10px rgba(230,126,34,0.3);
+            animation: promo-glow 2.5s ease-in-out infinite;
+        }
+        @keyframes promo-glow {
+            0%, 100% { box-shadow: 0 0 8px rgba(230,126,34,0.3); }
+            50% { box-shadow: 0 0 16px rgba(230,126,34,0.6); }
+        }
+        .promo-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            border-bottom: 1px solid rgba(230,126,34,0.25);
+            padding-bottom: 4px;
+        }
+        .promo-card-title {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .promo-card-icon {
+            font-size: 12px;
+            animation: event-star 2s ease-in-out infinite;
+            display: inline-block;
+        }
+        .promo-card-name {
+            font-size: 10px;
+            font-weight: bold;
+            color: #e67e22;
+            text-shadow: 0 0 6px rgba(230,126,34,0.5);
+        }
+        .promo-card-date {
+            font-size: 8px;
+            color: #f39c12;
+            background: rgba(243,156,18,0.15);
+            border: 1px solid rgba(243,156,18,0.3);
+            padding: 1px 5px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+        .promo-card-desc {
+            font-size: 8px;
+            color: #bdc3c7;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        .promo-card-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-bottom: 4px;
+        }
+        .promo-item-chip {
+            background: rgba(230,126,34,0.15);
+            border: 1px solid rgba(230,126,34,0.4);
+            color: #e67e22;
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .promo-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 8px;
+        }
+        .promo-usage-text {
+            color: #f39c12;
+        }
+        .promo-usage-text .num { color: #fff; font-weight: bold; }
+        .promo-redeem-btn {
+            background: #e67e22;
+            color: #fff;
+            border: 1px solid #d35400;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 8px;
+            font-family: inherit;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.15s;
+        }
+        .promo-redeem-btn:active {
+            transform: scale(0.95);
+            filter: brightness(0.85);
+        }
+        /* =================================================== */
     </style>
 </head>
 <body>
@@ -608,6 +753,7 @@
             <a href="shard_shop.html" class="facility-btn" style="background:#9b59b6; border-color:#8e44ad;">💎 碎片交換</a>
             <a href="hire.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🏢 僱員探險</a>
             <a href="rebirth.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔄 轉生神殿</a>
+            <a href="pvp.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c; box-shadow: 0 0 10px rgba(231,76,60,0.5);">⚔️ PVP競技場</a>
         </div>
     </div>
     
@@ -743,7 +889,7 @@
                 <input type="text" id="promo-code-input-field" placeholder="請輸入優惠碼" maxlength="30"
                     style="flex:1; padding:12px; font-size:14px; border:2px solid #e67e22; border-radius:8px; outline:none; text-align:center; text-transform:uppercase; font-family:inherit; letter-spacing:2px;"
                     onkeydown="if(event.key==='Enter') submitPromoCode()">
-                <button onclick="submitPromoCode()" style="background:#e67e22; color:white; border:none; padding:12px 20px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:12px; font-family:inherit; white-space:nowrap;">
+                <button id="promo-redeem-submit-btn" onclick="submitPromoCode()" style="background:#e67e22; color:white; border:none; padding:12px 20px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:12px; font-family:inherit; white-space:nowrap;">
                     兌換
                 </button>
             </div>
@@ -777,11 +923,12 @@
                         <div class="notice-text">最新更新</div>
                     </div>
                     <div id="promo-code-btn" onclick="openPromoCode()" style="
-                        width: 28px; height: 28px; background: #e67e22; border: 2px solid #bdc3c7;
-                        border-radius: 6px; display: flex; align-items: center; justify-content: center;
-                        font-size: 14px; box-shadow: 2px 2px 0 rgba(0,0,0,0.3); cursor: pointer; margin-right: 10px;
-                        flex-shrink: 0;
-                    ">🎫</div>
+                        display: flex; align-items: center; gap: 3px;
+                        background: #e67e22; border: 2px solid #bdc3c7;
+                        border-radius: 6px; padding: 0 6px; height: 28px;
+                        font-size: 12px; box-shadow: 2px 2px 0 rgba(0,0,0,0.3); cursor: pointer; margin-right: 10px;
+                        flex-shrink: 0; color: #fff; font-family: inherit; white-space: nowrap;
+                    ">🎫 優惠碼</div>
                     <div class="logout-btn" onclick="logout()">登出</div>
                 </div>
                 <h1> 公會大廳</h1>
@@ -861,6 +1008,9 @@
                     <div id="special-offers-timers" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
                 </div>
             </div>
+
+            <!-- 🎫 優惠碼展示區 -->
+            <div id="promo-display-area"></div>
 
             <div class="main-content">
                 <div id="event-banner">
@@ -1192,12 +1342,18 @@
         // ================================
         // 🆕 優惠碼兌換功能
         // ================================
-        function openPromoCode() {
+        function openPromoCode(code) {
             document.getElementById('promo-modal').style.display = 'flex';
             const resultDiv = document.getElementById('promo-code-result');
             resultDiv.style.display = 'none';
-            document.getElementById('promo-code-input-field').value = '';
-            setTimeout(() => document.getElementById('promo-code-input-field').focus(), 100);
+            const input = document.getElementById('promo-code-input-field');
+            input.value = code || '';
+            if (code) {
+                // 有預填優惠碼，直接聚焦兌換按鈕
+                setTimeout(() => document.getElementById('promo-redeem-submit-btn').focus(), 100);
+            } else {
+                setTimeout(() => input.focus(), 100);
+            }
         }
 
         function closePromoCode() {
@@ -1236,6 +1392,96 @@
                 resultDiv.style.border = '1px solid #dc3545';
                 resultDiv.innerHTML = `<b>${res.msg}</b>`;
             }
+        });
+
+        // ================================
+        // 🎫 優惠碼展示區 — 渲染有效優惠碼 (預設摺合)
+        // ================================
+        function togglePromoDisplay() {
+            const list = document.getElementById('promo-card-list');
+            const arrow = document.getElementById('promo-toggle-arrow');
+            if (list.classList.contains('expanded')) {
+                list.classList.remove('expanded');
+                arrow.classList.remove('expanded');
+            } else {
+                list.classList.add('expanded');
+                arrow.classList.add('expanded');
+            }
+        }
+
+        socket.on('activePromoCodes', (codes) => {
+            const area = document.getElementById('promo-display-area');
+            if (!codes || codes.length === 0) {
+                area.classList.remove('active');
+                area.innerHTML = '';
+                return;
+            }
+            // 摺合頂部欄
+            let html = `
+            <div class="promo-toggle-bar" onclick="togglePromoDisplay()">
+                <div class="promo-toggle-left">
+                    <span class="promo-toggle-arrow" id="promo-toggle-arrow">▸</span>
+                    🎫 優惠碼
+                </div>
+                <span class="promo-toggle-badge">${codes.length}</span>
+            </div>
+            <div class="promo-card-list" id="promo-card-list">`;
+
+            codes.forEach(promo => {
+                // 日期文字
+                let dateText = '';
+                if (promo.startDate && promo.endDate) {
+                    dateText = `${promo.startDate} ~ ${promo.endDate}`;
+                } else if (promo.endDate) {
+                    dateText = `截止: ${promo.endDate}`;
+                } else if (promo.startDate) {
+                    dateText = `開始: ${promo.startDate}`;
+                }
+
+                // 使用次數
+                let usageText = '';
+                if (promo.maxUses > 0) {
+                    const remaining = promo.maxUses - promo.usedCount;
+                    usageText = `<span class="promo-usage-text">🎟️ 已用 <span class="num">${promo.usedCount}</span>/${promo.maxUses}</span>`;
+                    if (remaining <= 0) {
+                        usageText = `<span class="promo-usage-text" style="color:#e74c3c;">🎟️ 已額滿</span>`;
+                    }
+                } else {
+                    usageText = `<span class="promo-usage-text">🎟️ 已使用 <span class="num">${promo.usedCount}</span> 次 (無限)</span>`;
+                }
+
+                // 物品列表
+                let itemsHtml = '';
+                if (promo.items && promo.items.length > 0) {
+                    itemsHtml = '<div class="promo-card-items">' +
+                        promo.items.map(item => `<span class="promo-item-chip">${item.name} x${item.count}</span>`).join('') +
+                        '</div>';
+                }
+
+                // 描述
+                let descHtml = promo.description ? `<div class="promo-card-desc">${promo.description}</div>` : '';
+
+                html += `
+                <div class="promo-card">
+                    <div class="promo-card-header">
+                        <div class="promo-card-title">
+                            <span class="promo-card-icon">🎫</span>
+                            <span class="promo-card-name">${promo.code}</span>
+                        </div>
+                        ${dateText ? `<span class="promo-card-date">${dateText}</span>` : ''}
+                    </div>
+                    ${descHtml}
+                    ${itemsHtml}
+                    <div class="promo-card-footer">
+                        ${usageText}
+                        <button class="promo-redeem-btn" onclick="openPromoCode('${promo.code}')">兌換優惠碼</button>
+                    </div>
+                </div>`;
+            });
+
+            html += '</div>'; // close promo-card-list
+            area.innerHTML = html;
+            area.classList.add('active');
         });
 
         function sendPM() {
@@ -1433,6 +1679,8 @@
             status.innerHTML = " 已連線";
             status.style.color = "#2ecc71";
             socket.emit('joinGame', myToken);
+            // 請求目前有效優惠碼
+            socket.emit('getActivePromoCodes');
         });
 
         socket.on('disconnect', () => {
