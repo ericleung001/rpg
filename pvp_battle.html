@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PVP 戰鬥2</title>
+    <title>PVP 戰鬥</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -503,22 +503,31 @@
         let mySkills = [];
         let myInventory = {};
         
-        // 技能資訊
+        // 技能資訊 (含分類)
         const SKILL_INFO = {
-            'fireball':      { name: "火球術", mp: 5, desc: "傷x1.5" },
-            'thunder':       { name: "雷擊", mp: 15, desc: "傷x1.2+暈" },
-            'poison_touch': { name: "劇毒之觸", mp: 25, desc: "傷x2.5" },
-            'frost_nova':    { name: "冰霜新星", mp: 30, desc: "傷x1.2+降防" },
-            'meteor':        { name: "隕石術", mp: 80, desc: "傷x3.5" },
-            'divine_slash': { name: "次元斬", mp: 150, desc: "傷x5.0" },
-            'drain':         { name: "吸血", mp: 20, desc: "吸血100%" },
-            'holy_shield':  { name: "聖光守護", mp: 40, desc: "防禦x2" },
-            'berserk':       { name: "狂暴", mp: 60, desc: "攻x2(自殘)" },
-            'god_mode':      { name: "天神下凡", mp: 300, desc: "全能x3" },
-            'heal_light':    { name: "小回復", mp: 10, desc: "HP+20%" },
-            'god_light':     { name: "神之光", mp: 50, desc: "HP+50%" },
-            'heal_all':      { name: "聖光普照", mp: 100, desc: "全隊滿HP" },
-            'full_heal':     { name: "大天使息", mp: 200, desc: "HP全滿" }
+            // 攻擊技能
+            'fireball':      { name: "火球術", mp: 5, desc: "傷x1.5", type: 'attack' },
+            'thunder':       { name: "雷擊", mp: 15, desc: "傷x1.2+暈", type: 'attack' },
+            'poison_touch': { name: "劇毒之觸", mp: 25, desc: "傷x2.5", type: 'attack' },
+            'frost_nova':    { name: "冰霜新星", mp: 30, desc: "傷x1.2+降防", type: 'attack' },
+            'meteor':        { name: "隕石術", mp: 80, desc: "傷x3.5", type: 'attack' },
+            'divine_slash': { name: "次元斬", mp: 150, desc: "傷x5.0", type: 'attack' },
+            'drain':         { name: "吸血", mp: 20, desc: "吸血100%", type: 'attack' },
+            // 增益技能
+            'holy_shield':  { name: "聖光守護", mp: 40, desc: "防禦x2", type: 'buff' },
+            'berserk':       { name: "狂暴", mp: 60, desc: "攻x2(自殘)", type: 'buff' },
+            'god_mode':      { name: "天神下凡", mp: 300, desc: "全能x3", type: 'buff' },
+            // 治療技能
+            'heal_light':    { name: "小回復", mp: 10, desc: "HP+20%", type: 'heal' },
+            'god_light':     { name: "神之光", mp: 50, desc: "HP+50%", type: 'heal' },
+            'heal_all':      { name: "聖光普照", mp: 100, desc: "全隊滿HP", type: 'heal' },
+            'full_heal':     { name: "大天使息", mp: 200, desc: "HP全滿", type: 'heal' }
+        };
+        
+        const SKILL_TYPE_NAMES = {
+            'attack': '⚔️ 攻擊',
+            'buff': '🛡️ 增益',
+            'heal': '💚 治療'
         };
         
         const ITEM_NAMES = {
@@ -742,17 +751,36 @@
                     if (mySkills.length === 0) {
                         html = '<div style="grid-column: 1/-1; color: #7f8c8d; font-size: 10px;">沒有可用技能</div>';
                     } else {
+                        // 按類型分組技能
+                        const skillsByType = { attack: [], buff: [], heal: [] };
                         mySkills.forEach(skillId => {
                             const info = SKILL_INFO[skillId];
-                            if (!info) return;
-                            const canUse = self.mp >= info.mp && isMyTurn;
-                            html += `
-                                <button class="action-btn skill" onclick="doAction('skill', '${skillId}')" ${!canUse ? 'disabled' : ''}>
-                                    ${info.name}
-                                    <span class="skill-cost">MP: ${info.mp}</span>
-                                </button>
-                            `;
+                            if (info && skillsByType[info.type]) {
+                                skillsByType[info.type].push({ id: skillId, ...info });
+                            }
                         });
+                        
+                        // 生成分類顯示
+                        ['attack', 'buff', 'heal'].forEach(type => {
+                            const skills = skillsByType[type];
+                            if (skills.length > 0) {
+                                html += `<div style="grid-column: 1/-1; font-size: 8px; color: #f1c40f; margin: 5px 0 2px 0; border-bottom: 1px solid #555; padding-bottom: 2px;">${SKILL_TYPE_NAMES[type]}</div>`;
+                                skills.forEach(skill => {
+                                    const canUse = self.mp >= skill.mp && isMyTurn;
+                                    const btnClass = type === 'attack' ? 'skill' : (type === 'heal' ? 'item' : 'skill');
+                                    html += `
+                                        <button class="action-btn ${btnClass}" onclick="doAction('skill', '${skill.id}')" ${!canUse ? 'disabled' : ''}>
+                                            ${skill.name}
+                                            <span class="skill-cost">MP: ${skill.mp}</span>
+                                        </button>
+                                    `;
+                                });
+                            }
+                        });
+                        
+                        if (html === '') {
+                            html = '<div style="grid-column: 1/-1; color: #7f8c8d; font-size: 10px;">沒有可用技能</div>';
+                        }
                     }
                     break;
                     
