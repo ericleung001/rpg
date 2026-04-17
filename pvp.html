@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PVP 競技場</title>
+    <title>PVP 競技場2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -506,6 +506,7 @@
         
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('rooms')">🏠 房間列表</button>
+            <button class="tab-btn" onclick="switchTab('spectate')">👁️ 觀戰</button>
             <button class="tab-btn" onclick="switchTab('ranking')">🏆 排行榜</button>
             <button class="tab-btn" onclick="switchTab('chat')">💬 聊天</button>
         </div>
@@ -514,6 +515,13 @@
             <!-- 房間列表 -->
             <div id="rooms-tab">
                 <div class="room-list" id="room-list">
+                    <div class="no-rooms">載入中...</div>
+                </div>
+            </div>
+            
+            <!-- 觀戰列表 -->
+            <div id="spectate-tab" style="display: none;">
+                <div class="room-list" id="spectate-list">
                     <div class="no-rooms">載入中...</div>
                 </div>
             </div>
@@ -609,8 +617,14 @@
             document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
             
             document.getElementById('rooms-tab').style.display = tab === 'rooms' ? 'block' : 'none';
+            document.getElementById('spectate-tab').style.display = tab === 'spectate' ? 'block' : 'none';
             document.getElementById('ranking-tab').style.display = tab === 'ranking' ? 'block' : 'none';
             document.getElementById('chat-tab').style.display = tab === 'chat' ? 'block' : 'none';
+            
+            // 切換到觀戰 Tab 時獲取可觀戰房間
+            if (tab === 'spectate') {
+                socket.emit('getSpectatableRooms');
+            }
         }
         
         // 創建房間面板
@@ -647,6 +661,40 @@
             while (container.children.length > 50) {
                 container.removeChild(container.firstChild);
             }
+        }
+        
+        // 加入觀戰
+        function spectateRoom(roomId) {
+            socket.emit('spectatePvpRoom', roomId);
+        }
+        
+        // 渲染觀戰列表
+        function renderSpectatableRooms(rooms) {
+            const list = document.getElementById('spectate-list');
+            
+            if (!rooms || rooms.length === 0) {
+                list.innerHTML = '<div class="no-rooms">目前沒有進行中的戰鬥</div>';
+                return;
+            }
+            
+            list.innerHTML = rooms.map(room => {
+                const elapsed = room.startTime ? Math.floor((Date.now() - room.startTime) / 1000) : 0;
+                const mins = Math.floor(elapsed / 60);
+                const secs = elapsed % 60;
+                return `
+                    <div class="room-card" onclick="spectateRoom('${room.id}')">
+                        <div class="room-header">
+                            <span class="room-host">⚔️ ${escapeHtml(room.player1)} vs ${escapeHtml(room.player2)}</span>
+                            <span class="room-level" style="color: #e74c3c;">🔴 直播中</span>
+                        </div>
+                        <div class="room-info">
+                            <span>回合: ${room.turnCount || 0}</span>
+                            <span>進行時間: ${mins}:${secs.toString().padStart(2, '0')}</span>
+                            <span style="color: #2ecc71;">👁️ 點擊觀戰</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
         
         // 快速匹配
@@ -848,6 +896,18 @@
             container.innerHTML = '';
             if (messages && messages.length > 0) {
                 messages.forEach(msg => addChatMessage(msg));
+            }
+        });
+        
+        // 可觀戰房間列表
+        socket.on('spectatableRooms', renderSpectatableRooms);
+        
+        // 觀戰開始 - 跳轉到戰鬥頁面
+        socket.on('pvpBattleStart', (data) => {
+            if (data.isSpectator) {
+                // 觀戰模式，跳轉到戰鬥頁面
+                const params = new URLSearchParams({ room: data.roomId, spectator: '1' });
+                window.location.href = 'pvp_battle.html?' + params.toString();
             }
         });
         
