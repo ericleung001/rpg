@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -727,6 +727,37 @@
         </div>
     </div>
 
+    <!-- 🆕 優惠碼兌換 Modal -->
+    <div id="promo-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width:380px;">
+            <button class="close-btn-x" onclick="closePromoCode()">×</button>
+            <div style="font-size:14px; font-weight:bold; color:#e67e22; margin-bottom:15px; text-align:center;">
+                🎫 兌換優惠碼
+            </div>
+            
+            <div style="font-size:10px; color:#aaa; text-align:center; margin-bottom:15px;">
+                輸入優惠碼即可領取專屬獎勵
+            </div>
+
+            <div style="display:flex; gap:8px; margin-bottom:15px;">
+                <input type="text" id="promo-code-input-field" placeholder="請輸入優惠碼" maxlength="30"
+                    style="flex:1; padding:12px; font-size:14px; border:2px solid #e67e22; border-radius:8px; outline:none; text-align:center; text-transform:uppercase; font-family:inherit; letter-spacing:2px;"
+                    onkeydown="if(event.key==='Enter') submitPromoCode()">
+                <button onclick="submitPromoCode()" style="background:#e67e22; color:white; border:none; padding:12px 20px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:12px; font-family:inherit; white-space:nowrap;">
+                    兌換
+                </button>
+            </div>
+
+            <div id="promo-code-result" style="display:none; padding:12px; border-radius:8px; font-size:11px; text-align:center; line-height:1.6;"></div>
+
+            <div style="margin-top:10px; text-align:center;">
+                <button onclick="closePromoCode()" style="background:#34495e; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:10px; font-family:inherit; width:100%;">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="app-layout">
         <div id="game-view">
             <!-- 系統訊息廣播 bar (最上方) -->
@@ -745,6 +776,12 @@
                         <div id="notice-btn">📢</div>
                         <div class="notice-text">最新更新</div>
                     </div>
+                    <div id="promo-code-btn" onclick="openPromoCode()" style="
+                        width: 28px; height: 28px; background: #e67e22; border: 2px solid #bdc3c7;
+                        border-radius: 6px; display: flex; align-items: center; justify-content: center;
+                        font-size: 14px; box-shadow: 2px 2px 0 rgba(0,0,0,0.3); cursor: pointer; margin-right: 10px;
+                        flex-shrink: 0;
+                    ">🎫</div>
                     <div class="logout-btn" onclick="logout()">登出</div>
                 </div>
                 <h1> 公會大廳</h1>
@@ -1151,6 +1188,55 @@
             document.getElementById('pm-modal').style.display = 'none';
             currentChatTarget = null;
         }
+
+        // ================================
+        // 🆕 優惠碼兌換功能
+        // ================================
+        function openPromoCode() {
+            document.getElementById('promo-modal').style.display = 'flex';
+            const resultDiv = document.getElementById('promo-code-result');
+            resultDiv.style.display = 'none';
+            document.getElementById('promo-code-input-field').value = '';
+            setTimeout(() => document.getElementById('promo-code-input-field').focus(), 100);
+        }
+
+        function closePromoCode() {
+            document.getElementById('promo-modal').style.display = 'none';
+        }
+
+        function submitPromoCode() {
+            const input = document.getElementById('promo-code-input-field');
+            const code = input.value.trim();
+            if (!code) { alert('請輸入優惠碼'); return; }
+            
+            const resultDiv = document.getElementById('promo-code-result');
+            resultDiv.style.display = 'block';
+            resultDiv.style.background = '#fff3cd';
+            resultDiv.style.color = '#856404';
+            resultDiv.style.border = '1px solid #ffc107';
+            resultDiv.innerHTML = '⏳ 兌換中...';
+            input.disabled = true;
+
+            socket.emit('redeemPromoCode', { code: code });
+        }
+
+        socket.on('promoCodeResult', (res) => {
+            const resultDiv = document.getElementById('promo-code-result');
+            const input = document.getElementById('promo-code-input-field');
+            input.disabled = false;
+
+            if (res.success) {
+                resultDiv.style.background = '#d4edda';
+                resultDiv.style.color = '#155724';
+                resultDiv.style.border = '1px solid #28a745';
+                resultDiv.innerHTML = `<b>🎉 兌換成功！</b><br>${res.msg}`;
+            } else {
+                resultDiv.style.background = '#f8d7da';
+                resultDiv.style.color = '#721c24';
+                resultDiv.style.border = '1px solid #dc3545';
+                resultDiv.innerHTML = `<b>${res.msg}</b>`;
+            }
+        });
 
         function sendPM() {
             const input = document.getElementById('pm-input');
