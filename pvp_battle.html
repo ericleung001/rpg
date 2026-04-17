@@ -40,10 +40,28 @@
             font-size: 14px;
             border-bottom: 4px solid #f1c40f;
             text-shadow: 2px 2px 0 #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
         }
         
         #turn-bar.my-turn {
             animation: pulse 1s infinite;
+        }
+        
+        #timer-bar {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+            color: #f1c40f;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            border-bottom: 2px solid #f1c40f;
+        }
+        
+        #timer-bar.warning {
+            color: #e74c3c;
+            animation: pulse 0.5s infinite;
         }
         
         @keyframes pulse {
@@ -380,6 +398,10 @@
     <div id="game-container">
         <div id="turn-bar">準備戰鬥...</div>
         
+        <div id="timer-bar" style="background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%); padding: 8px 15px; font-size: 10px; color: #f1c40f; text-align: center; display: none;">
+            ⏱️ 剩餘時間: <span id="time-remaining">20:00</span>
+        </div>
+        
         <div class="battle-area">
             <!-- 敵人面板 -->
             <div class="player-panel enemy" id="enemy-panel">
@@ -502,6 +524,9 @@
         let currentTurn = null;
         let mySkills = [];
         let myInventory = {};
+        let battleStartTime = null;
+        let timerInterval = null;
+        let isSpectator = false;
         
         // 技能資訊 (含分類)
         const SKILL_INFO = {
@@ -549,6 +574,32 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
         
+        // 計時器更新
+        function updateTimer() {
+            if (!battleStartTime) return;
+            
+            const elapsed = Date.now() - battleStartTime;
+            const remaining = Math.max(0, 20 * 60 * 1000 - elapsed); // 20分鐘
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            
+            document.getElementById('time-remaining').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timer-bar').style.display = 'block';
+            
+            // 警告狀態 (最後1分鐘)
+            if (remaining < 60000) {
+                document.getElementById('timer-bar').classList.add('warning');
+            } else {
+                document.getElementById('timer-bar').classList.remove('warning');
+            }
+            
+            // 時間到
+            if (remaining <= 0) {
+                clearInterval(timerInterval);
+            }
+        }
+        
         // 初始化
         socket.emit('joinGame', myToken);
         
@@ -571,6 +622,19 @@
             player1 = data.player1;
             player2 = data.player2;
             currentTurn = data.currentTurn;
+            isSpectator = data.isSpectator || false;
+            
+            // 啟動計時器
+            if (data.timeLimit) {
+                battleStartTime = Date.now();
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(updateTimer, 1000);
+            } else if (data.timeRemaining) {
+                // 觀戰模式，使用剩餘時間
+                battleStartTime = Date.now() - (20 * 60 * 1000 - data.timeRemaining);
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(updateTimer, 1000);
+            }
             
             // 如果有歷史日誌，顯示出來
             if (data.logs && data.logs.length > 0) {
@@ -582,6 +646,12 @@
                     logArea.appendChild(div);
                 });
                 logArea.scrollTop = logArea.scrollHeight;
+            }
+            
+            // 觀戰模式提示
+            if (isSpectator) {
+                showToast('👁️ 觀戰模式', 'success');
+                document.getElementById('action-area').style.display = 'none';
             }
             
             initBattleUI();
