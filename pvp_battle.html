@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PVP 戰鬥</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body { 
+            background: linear-gradient(135deg, #1a0a0a 0%, #2d1a1a 50%, #1a0a0a 100%);
+            color: #ecf0f1; 
+            font-family: 'Press Start 2P', monospace; 
+            margin: 0; padding: 0; 
+            min-height: 100vh;
+            overflow: hidden;
+            user-select: none; -webkit-user-select: none;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 640px;
+            width: 100%;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #2c1810 0%, #1a0f0a 100%);
+            border-left: 4px solid #c0392b;
+            border-right: 4px solid #c0392b;
+        }
+        
+        /* 回合指示 */
+        #turn-bar {
+            background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+            color: #fff;
+            text-align: center;
+            padding: 15px;
+            font-size: 14px;
+            border-bottom: 4px solid #f1c40f;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        #turn-bar.my-turn {
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%); }
+            50% { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+        }
+        
+        /* 玩家區域 */
+        .battle-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            gap: 10px;
+        }
+        
+        .player-panel {
+            background: rgba(0, 0, 0, 0.5);
+            border: 3px solid #7f8c8d;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        
+        .player-panel.enemy { border-color: #e74c3c; }
+        .player-panel.self { border-color: #2ecc71; }
+        
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .player-name {
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .player-panel.self .player-name { color: #2ecc71; }
+        .player-panel.enemy .player-name { color: #e74c3c; }
+        
+        .player-level {
+            font-size: 10px;
+            color: #3498db;
+        }
+        
+        .compensation-badge {
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 5px;
+            margin-left: 5px;
+        }
+        
+        .compensation-badge.penalty { background: #c0392b; color: #fff; }
+        .compensation-badge.bonus { background: #27ae60; color: #fff; }
+        
+        .hp-bar-container {
+            margin-bottom: 5px;
+        }
+        
+        .bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 8px;
+            margin-bottom: 2px;
+        }
+        
+        .bar-label .label { color: #f1c40f; }
+        .bar-label .value { color: #fff; }
+        
+        .hp-bar, .mp-bar {
+            height: 12px;
+            background: #333;
+            border: 2px solid #555;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
+            transition: width 0.3s;
+        }
+        
+        .mp-bar { height: 8px; margin-top: 3px; }
+        .mp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db 0%, #2980b9 100%);
+            transition: width 0.3s;
+        }
+        
+        .player-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 8px;
+            font-size: 9px;
+            background: rgba(0,0,0,0.3);
+            padding: 5px;
+            border-radius: 5px;
+        }
+        
+        .player-stats span { color: #f1c40f; }
+        
+        /* 戰鬥日誌 */
+        .log-area {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #555;
+            border-radius: 8px;
+            padding: 10px;
+            max-height: 120px;
+            overflow-y: auto;
+            font-size: 9px;
+            line-height: 1.6;
+        }
+        
+        .log-area::-webkit-scrollbar { width: 5px; }
+        .log-area::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+        
+        /* 操作區 */
+        .action-area {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+            border-top: 4px solid #f1c40f;
+            padding: 10px;
+        }
+        
+        .action-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .action-tab {
+            flex: 1;
+            background: #34495e;
+            border: 2px solid #7f8c8d;
+            color: #bdc3c7;
+            font-family: inherit;
+            font-size: 10px;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .action-tab.active {
+            background: #e74c3c;
+            border-color: #f1c40f;
+            color: #fff;
+        }
+        
+        .action-tab:disabled {
+            background: #555;
+            color: #777;
+            cursor: not-allowed;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            border: 2px solid #fff;
+            color: white;
+            font-family: inherit;
+            font-size: 10px;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .action-btn:active { transform: scale(0.95); }
+        .action-btn:disabled {
+            background: #555;
+            border-color: #777;
+            color: #888;
+            cursor: not-allowed;
+        }
+        
+        .action-btn.attack { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+        .action-btn.skill { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); }
+        .action-btn.item { background: linear-gradient(135deg, #27ae60 0%, #1e8449 100%); }
+        
+        .skill-cost {
+            font-size: 8px;
+            color: #3498db;
+            display: block;
+            margin-top: 3px;
+        }
+        
+        .item-count {
+            font-size: 8px;
+            color: #f1c40f;
+            display: block;
+            margin-top: 3px;
+        }
+        
+        /* 結果畫面 */
+        #result-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        #result-overlay.active { display: flex; }
+        
+        .result-box {
+            background: linear-gradient(135deg, #2c3e50 0%, #1a252f 100%);
+            border: 4px solid #f1c40f;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .result-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        .result-title.win { color: #f1c40f; animation: winPulse 0.5s ease infinite; }
+        .result-title.lose { color: #e74c3c; }
+        
+        @keyframes winPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .result-stats {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .result-row:last-child { border-bottom: none; }
+        .result-row .label { color: #bdc3c7; }
+        .result-row .value { font-weight: bold; }
+        .result-row .value.positive { color: #2ecc71; }
+        .result-row .value.negative { color: #e74c3c; }
+        
+        .result-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            border: 2px solid #f1c40f;
+            color: white;
+            font-family: inherit;
+            font-size: 12px;
+            padding: 15px 40px;
+            cursor: pointer;
+            border-radius: 10px;
+            margin: 5px;
+        }
+        
+        /* 等待中 */
+        #loading-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #loading-overlay.hidden { display: none; }
+        
+        .spinner {
+            width: 50px; height: 50px;
+            border: 4px solid #333;
+            border-top: 4px solid #f1c40f;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Toast */
+        #toast {
+            position: fixed;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e74c3c;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: 2px solid #f1c40f;
+            font-size: 12px;
+            z-index: 3000;
+            transition: top 0.5s ease;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        #toast.show { top: 20px; }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <div style="font-size: 14px;">載入戰鬥數據...</div>
+    </div>
+    
+    <div id="toast"></div>
+    
+    <div id="game-container">
+        <div id="turn-bar">準備戰鬥...</div>
+        
+        <div class="battle-area">
+            <!-- 敵人面板 -->
+            <div class="player-panel enemy" id="enemy-panel">
+                <div class="player-header">
+                    <div>
+                        <span class="player-name" id="enemy-name">敵人</span>
+                        <span class="compensation-badge" id="enemy-compensation" style="display:none;"></span>
+                    </div>
+                    <span class="player-level">Lv.<span id="enemy-level">?</span></span>
+                </div>
+                <div class="hp-bar-container">
+                    <div class="bar-label">
+                        <span class="label">HP</span>
+                        <span class="value"><span id="enemy-hp">0</span> / <span id="enemy-maxhp">0</span></span>
+                    </div>
+                    <div class="hp-bar"><div class="hp-fill" id="enemy-hp-fill" style="width:100%"></div></div>
+                </div>
+                <div class="hp-bar-container">
+                    <div class="bar-label">
+                        <span class="label">MP</span>
+                        <span class="value"><span id="enemy-mp">0</span> / <span id="enemy-maxmp">0</span></span>
+                    </div>
+                    <div class="mp-bar"><div class="mp-fill" id="enemy-mp-fill" style="width:100%"></div></div>
+                </div>
+                <div class="player-stats">
+                    <span>⚔️ <span id="enemy-atk">0</span></span>
+                    <span>🛡️ <span id="enemy-def">0</span></span>
+                </div>
+            </div>
+            
+            <!-- 戰鬥日誌 -->
+            <div class="log-area" id="battle-log">
+                <div style="color:#f1c40f;">⚔️ 戰鬥開始！</div>
+            </div>
+            
+            <!-- 自己面板 -->
+            <div class="player-panel self" id="self-panel">
+                <div class="player-header">
+                    <div>
+                        <span class="player-name" id="self-name">我</span>
+                        <span class="compensation-badge" id="self-compensation" style="display:none;"></span>
+                    </div>
+                    <span class="player-level">Lv.<span id="self-level">?</span></span>
+                </div>
+                <div class="hp-bar-container">
+                    <div class="bar-label">
+                        <span class="label">HP</span>
+                        <span class="value"><span id="self-hp">0</span> / <span id="self-maxhp">0</span></span>
+                    </div>
+                    <div class="hp-bar"><div class="hp-fill" id="self-hp-fill" style="width:100%"></div></div>
+                </div>
+                <div class="hp-bar-container">
+                    <div class="bar-label">
+                        <span class="label">MP</span>
+                        <span class="value"><span id="self-mp">0</span> / <span id="self-maxmp">0</span></span>
+                    </div>
+                    <div class="mp-bar"><div class="mp-fill" id="self-mp-fill" style="width:100%"></div></div>
+                </div>
+                <div class="player-stats">
+                    <span>⚔️ <span id="self-atk">0</span></span>
+                    <span>🛡️ <span id="self-def">0</span></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 操作區 -->
+        <div class="action-area" id="action-area">
+            <div class="action-tabs">
+                <button class="action-tab active" onclick="switchActionTab('attack')">⚔️ 攻擊</button>
+                <button class="action-tab" onclick="switchActionTab('skill')">✨ 技能</button>
+                <button class="action-tab" onclick="switchActionTab('item')">🧪 物品</button>
+            </div>
+            <div class="action-buttons" id="action-buttons">
+                <!-- 動態生成 -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- 結果畫面 -->
+    <div id="result-overlay">
+        <div class="result-box">
+            <div class="result-title" id="result-title">勝利！</div>
+            <div class="result-stats">
+                <div class="result-row">
+                    <span class="label">積分變化</span>
+                    <span class="value positive" id="result-score">+32</span>
+                </div>
+                <div class="result-row">
+                    <span class="label">當前積分</span>
+                    <span class="value" id="result-new-score">1032</span>
+                </div>
+                <div class="result-row">
+                    <span class="label">戰績</span>
+                    <span class="value" id="result-record">1W / 0L</span>
+                </div>
+                <div class="result-row" id="result-bet-row" style="display:none;">
+                    <span class="label">押注獲得</span>
+                    <span class="value positive" id="result-bet">+1000 G</span>
+                </div>
+            </div>
+            <div>
+                <button class="result-btn" onclick="backToPvp()">返回競技場</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script>
+        const socket = io('https://mmo.ttctv-105.cc', { 
+    transports: ['websocket', 'polling'],
+    secure: true // 因為你用 https，建議加呢個
+});
+        
+        let myToken = localStorage.getItem('rpg_token');
+        let roomId = new URLSearchParams(window.location.search).get('room');
+        let mySocketId = null;
+        let currentTab = 'attack';
+        let player1 = null;
+        let player2 = null;
+        let currentTurn = null;
+        let mySkills = [];
+        let myInventory = {};
+        
+        // 技能資訊
+        const SKILL_INFO = {
+            'fireball':      { name: "火球術", mp: 5, desc: "傷x1.5" },
+            'thunder':       { name: "雷擊", mp: 15, desc: "傷x1.2+暈" },
+            'poison_touch': { name: "劇毒之觸", mp: 25, desc: "傷x2.5" },
+            'frost_nova':    { name: "冰霜新星", mp: 30, desc: "傷x1.2+降防" },
+            'meteor':        { name: "隕石術", mp: 80, desc: "傷x3.5" },
+            'divine_slash': { name: "次元斬", mp: 150, desc: "傷x5.0" },
+            'drain':         { name: "吸血", mp: 20, desc: "吸血100%" },
+            'holy_shield':  { name: "聖光守護", mp: 40, desc: "防禦x2" },
+            'berserk':       { name: "狂暴", mp: 60, desc: "攻x2(自殘)" },
+            'god_mode':      { name: "天神下凡", mp: 300, desc: "全能x3" },
+            'heal_light':    { name: "小回復", mp: 10, desc: "HP+20%" },
+            'god_light':     { name: "神之光", mp: 50, desc: "HP+50%" },
+            'heal_all':      { name: "聖光普照", mp: 100, desc: "全隊滿HP" },
+            'full_heal':     { name: "大天使息", mp: 200, desc: "HP全滿" }
+        };
+        
+        const ITEM_NAMES = {
+            'potion_hp': '紅水(小)', 'potion_mid': '紅水(中)', 'potion_high': '紅水(大)', 
+            'potion_max': '秘藥', 'elixir': '甘露',
+            'potion_mp': '藍水(小)', 'potion_mp_mid': '藍水(中)', 'potion_mp_high': '藍水(大)',
+            'void_soup': '虛空海鮮湯'
+        };
+        
+        if (!myToken) {
+            window.location.href = 'index.html';
+        }
+        
+        // Toast
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
+        // 初始化
+        socket.emit('joinGame', myToken);
+        
+        socket.on('connect', () => {
+            mySocketId = socket.id;
+            // 如果是直接進入戰鬥頁面，需要重新請求戰鬥數據
+            if (roomId) {
+                // 等待服務器推送戰鬥數據
+            }
+        });
+        
+        // 戰鬥開始
+        socket.on('pvpBattleStart', (data) => {
+            roomId = data.roomId;
+            player1 = data.player1;
+            player2 = data.player2;
+            currentTurn = data.currentTurn;
+            
+            initBattleUI();
+            document.getElementById('loading-overlay').classList.add('hidden');
+        });
+        
+        // 戰鬥更新
+        socket.on('pvpBattleUpdate', (data) => {
+            player1 = data.player1;
+            player2 = data.player2;
+            currentTurn = data.currentTurn;
+            
+            updateUI();
+            
+            // 更新日誌
+            const logArea = document.getElementById('battle-log');
+            if (data.logs && data.logs.length > 0) {
+                const lastLog = data.logs[data.logs.length - 1];
+                const div = document.createElement('div');
+                div.innerHTML = lastLog;
+                logArea.appendChild(div);
+                logArea.scrollTop = logArea.scrollHeight;
+            }
+            
+            updateActionButtons();
+        });
+        
+        // 戰鬥結束
+        socket.on('pvpBattleEnd', (result) => {
+            showResult(result);
+        });
+        
+        socket.on('pvpError', (msg) => {
+            showToast(msg);
+        });
+        
+        // 初始化戰鬥 UI
+        function initBattleUI() {
+            // 判斷誰是自己
+            const isPlayer1 = player1.name === localStorage.getItem('rpg_name');
+            const self = isPlayer1 ? player1 : player2;
+            const enemy = isPlayer1 ? player2 : player1;
+            
+            mySkills = self.skills || [];
+            myInventory = self.inventory || {};
+            
+            // 更新自己
+            document.getElementById('self-name').innerText = self.name;
+            document.getElementById('self-level').innerText = self.level;
+            document.getElementById('self-hp').innerText = self.hp;
+            document.getElementById('self-maxhp').innerText = self.maxHp;
+            document.getElementById('self-mp').innerText = self.mp;
+            document.getElementById('self-maxmp').innerText = self.maxMp;
+            document.getElementById('self-atk').innerText = self.atk;
+            document.getElementById('self-def').innerText = self.def;
+            
+            // 更新敵人
+            document.getElementById('enemy-name').innerText = enemy.name;
+            document.getElementById('enemy-level').innerText = enemy.level;
+            document.getElementById('enemy-hp').innerText = enemy.hp;
+            document.getElementById('enemy-maxhp').innerText = enemy.maxHp;
+            document.getElementById('enemy-mp').innerText = enemy.mp;
+            document.getElementById('enemy-maxmp').innerText = enemy.maxMp;
+            document.getElementById('enemy-atk').innerText = enemy.atk;
+            document.getElementById('enemy-def').innerText = enemy.def;
+            
+            // 顯示補償
+            if (self.compensation && self.compensation.type !== 'none') {
+                const badge = document.getElementById('self-compensation');
+                badge.style.display = 'inline';
+                if (self.compensation.type === 'penalty') {
+                    badge.className = 'compensation-badge penalty';
+                    badge.innerText = `-${Math.round(self.compensation.value * 100)}%`;
+                } else {
+                    badge.className = 'compensation-badge bonus';
+                    badge.innerText = `+${Math.round(self.compensation.value * 100)}%`;
+                }
+            }
+            
+            if (enemy.compensation && enemy.compensation.type !== 'none') {
+                const badge = document.getElementById('enemy-compensation');
+                badge.style.display = 'inline';
+                if (enemy.compensation.type === 'penalty') {
+                    badge.className = 'compensation-badge penalty';
+                    badge.innerText = `-${Math.round(enemy.compensation.value * 100)}%`;
+                } else {
+                    badge.className = 'compensation-badge bonus';
+                    badge.innerText = `+${Math.round(enemy.compensation.value * 100)}%`;
+                }
+            }
+            
+            updateUI();
+            updateActionButtons();
+        }
+        
+        // 更新 UI
+        function updateUI() {
+            const isPlayer1 = player1.name === localStorage.getItem('rpg_name');
+            const self = isPlayer1 ? player1 : player2;
+            const enemy = isPlayer1 ? player2 : player1;
+            
+            // 更新血條
+            document.getElementById('self-hp').innerText = self.hp;
+            document.getElementById('self-hp-fill').style.width = (self.hp / self.maxHp * 100) + '%';
+            document.getElementById('self-mp').innerText = self.mp;
+            document.getElementById('self-mp-fill').style.width = (self.mp / self.maxMp * 100) + '%';
+            
+            document.getElementById('enemy-hp').innerText = enemy.hp;
+            document.getElementById('enemy-hp-fill').style.width = (enemy.hp / enemy.maxHp * 100) + '%';
+            document.getElementById('enemy-mp').innerText = enemy.mp;
+            document.getElementById('enemy-mp-fill').style.width = (enemy.mp / enemy.maxMp * 100) + '%';
+            
+            // 更新回合
+            const isMyTurn = (isPlayer1 && currentTurn === socket.id) || 
+                            (!isPlayer1 && currentTurn === socket.id);
+            
+            const turnBar = document.getElementById('turn-bar');
+            if (isMyTurn) {
+                turnBar.innerHTML = '⚔️ 輪到你行動！';
+                turnBar.classList.add('my-turn');
+            } else {
+                turnBar.innerHTML = '⏳ 等待對手...';
+                turnBar.classList.remove('my-turn');
+            }
+            
+            // 啟用/禁用操作
+            document.querySelectorAll('.action-tab, .action-btn').forEach(btn => {
+                btn.disabled = !isMyTurn;
+            });
+        }
+        
+        // 切換操作 Tab
+        function switchActionTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.action-tab[onclick="switchActionTab('${tab}')"]`).classList.add('active');
+            updateActionButtons();
+        }
+        
+        // 更新操作按鈕
+        function updateActionButtons() {
+            const container = document.getElementById('action-buttons');
+            const isPlayer1 = player1.name === localStorage.getItem('rpg_name');
+            const self = isPlayer1 ? player1 : player2;
+            const isMyTurn = currentTurn === socket.id;
+            
+            let html = '';
+            
+            switch (currentTab) {
+                case 'attack':
+                    html = `
+                        <button class="action-btn attack" onclick="doAction('attack')" ${!isMyTurn ? 'disabled' : ''}>
+                            ⚔️ 普通攻擊
+                        </button>
+                    `;
+                    break;
+                    
+                case 'skill':
+                    if (mySkills.length === 0) {
+                        html = '<div style="grid-column: 1/-1; color: #7f8c8d; font-size: 10px;">沒有可用技能</div>';
+                    } else {
+                        mySkills.forEach(skillId => {
+                            const info = SKILL_INFO[skillId];
+                            if (!info) return;
+                            const canUse = self.mp >= info.mp && isMyTurn;
+                            html += `
+                                <button class="action-btn skill" onclick="doAction('skill', '${skillId}')" ${!canUse ? 'disabled' : ''}>
+                                    ${info.name}
+                                    <span class="skill-cost">MP: ${info.mp}</span>
+                                </button>
+                            `;
+                        });
+                    }
+                    break;
+                    
+                case 'item':
+                    const items = Object.entries(myInventory).filter(([id, count]) => count > 0 && ITEM_NAMES[id]);
+                    if (items.length === 0) {
+                        html = '<div style="grid-column: 1/-1; color: #7f8c8d; font-size: 10px;">沒有可用物品</div>';
+                    } else {
+                        items.forEach(([itemId, count]) => {
+                            html += `
+                                <button class="action-btn item" onclick="doAction('item', '${itemId}')" ${!isMyTurn ? 'disabled' : ''}>
+                                    ${ITEM_NAMES[itemId]}
+                                    <span class="item-count">x${count}</span>
+                                </button>
+                            `;
+                        });
+                    }
+                    break;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // 執行動作
+        function doAction(action, id = null) {
+            const data = {
+                roomId: roomId,
+                action: action
+            };
+            
+            if (action === 'skill') data.skillId = id;
+            if (action === 'item') data.itemId = id;
+            
+            socket.emit('pvpAction', data);
+        }
+        
+        // 顯示結果
+        function showResult(result) {
+            const myName = localStorage.getItem('rpg_name');
+            const isWin = result.winner.name === myName;
+            
+            const title = document.getElementById('result-title');
+            title.innerText = isWin ? '🏆 勝利！' : '💀 敗北...';
+            title.className = 'result-title ' + (isWin ? 'win' : 'lose');
+            
+            const myResult = isWin ? result.winner : result.loser;
+            
+            document.getElementById('result-score').innerText = (isWin ? '+' : '-') + myResult.change;
+            document.getElementById('result-score').className = 'value ' + (isWin ? 'positive' : 'negative');
+            document.getElementById('result-new-score').innerText = myResult.score;
+            document.getElementById('result-record').innerText = `${myResult.wins}W / ${myResult.losses}L`;
+            
+            if (result.betResult) {
+                document.getElementById('result-bet-row').style.display = 'flex';
+                document.getElementById('result-bet').innerText = '+' + result.betResult.amount + ' G';
+            }
+            
+            document.getElementById('result-overlay').classList.add('active');
+        }
+        
+        // 返回競技場
+        function backToPvp() {
+            window.location.href = 'pvp.html';
+        }
+        
+        // 如果戰鬥開始事件已經錯過，請求重新同步
+        setTimeout(() => {
+            if (!player1) {
+                showToast('戰鬥數據同步中...');
+                // 可以在這裡添加重新請求戰鬥數據的邏輯
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
