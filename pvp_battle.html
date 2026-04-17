@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PVP 戰鬥</title>
+    <title>PVP 戰鬥2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -545,18 +545,35 @@
         
         socket.on('connect', () => {
             mySocketId = socket.id;
-            // 如果是直接進入戰鬥頁面，需要重新請求戰鬥數據
+            // [修復] 如果是直接進入戰鬥頁面，主動請求戰鬥數據
             if (roomId) {
-                // 等待服務器推送戰鬥數據
+                console.log('[PVP Battle] 請求戰鬥數據, roomId:', roomId);
+                // 延遲一小段時間確保 joinGame 完成
+                setTimeout(() => {
+                    socket.emit('requestPvpBattleData', roomId);
+                }, 500);
             }
         });
         
         // 戰鬥開始
         socket.on('pvpBattleStart', (data) => {
+            console.log('[PVP Battle] 收到戰鬥數據:', data);
             roomId = data.roomId;
             player1 = data.player1;
             player2 = data.player2;
             currentTurn = data.currentTurn;
+            
+            // 如果有歷史日誌，顯示出來
+            if (data.logs && data.logs.length > 0) {
+                const logArea = document.getElementById('battle-log');
+                logArea.innerHTML = '';
+                data.logs.forEach(log => {
+                    const div = document.createElement('div');
+                    div.innerHTML = log;
+                    logArea.appendChild(div);
+                });
+                logArea.scrollTop = logArea.scrollHeight;
+            }
             
             initBattleUI();
             document.getElementById('loading-overlay').classList.add('hidden');
@@ -590,6 +607,14 @@
         
         socket.on('pvpError', (msg) => {
             showToast(msg);
+            // 如果還在載入中，表示同步失敗，返回競技場
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (!loadingOverlay.classList.contains('hidden')) {
+                loadingOverlay.classList.add('hidden');
+                setTimeout(() => {
+                    window.location.href = 'pvp.html';
+                }, 2000);
+            }
         });
         
         // 初始化戰鬥 UI
@@ -793,13 +818,15 @@
             window.location.href = 'pvp.html';
         }
         
-        // 如果戰鬥開始事件已經錯過，請求重新同步
+        // [修改] 延長超時檢測時間，並在失敗時給出更明確的提示
         setTimeout(() => {
             if (!player1) {
-                showToast('戰鬥數據同步中...');
-                // 可以在這裡添加重新請求戰鬥數據的邏輯
+                showToast('連線逾時，請重新進入競技場');
+                setTimeout(() => {
+                    window.location.href = 'pvp.html';
+                }, 2000);
             }
-        }, 3000);
+        }, 8000); // 延長到 8 秒
     </script>
 </body>
 </html>
