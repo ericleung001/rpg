@@ -372,6 +372,71 @@
             font-size: 8px;
             color: #f39c12;
         }
+        
+        /* 公頻聊天 */
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            height: 350px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 9px;
+            line-height: 1.6;
+        }
+        
+        .chat-messages::-webkit-scrollbar { width: 5px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+        
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input-area input {
+            flex: 1;
+            background: #2c3e50;
+            border: 2px solid #3498db;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 10px;
+        }
+        
+        .chat-input-area .btn {
+            padding: 10px 20px;
+            font-size: 10px;
+        }
+        
+        .chat-msg {
+            margin-bottom: 5px;
+            padding: 5px 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+        }
+        
+        .chat-msg .name { color: #f1c40f; }
+        .chat-msg .time { color: #7f8c8d; font-size: 8px; margin-left: 5px; }
+        .chat-msg .text { color: #ecf0f1; }
+        
+        /* 觀戰列表 */
+        .spectator-list {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 8px;
+            margin-top: 10px;
+            font-size: 8px;
+        }
+        
+        .spectator-list .title { color: #f1c40f; margin-bottom: 5px; }
+        .spectator-list .viewers { color: #bdc3c7; }
     </style>
 </head>
 <body>
@@ -433,10 +498,6 @@
                     <option value="999">不限制</option>
                 </select>
             </div>
-            <div class="config-row">
-                <span>押注金幣：</span>
-                <input type="number" id="bet-gold" value="0" min="0" step="1000">
-            </div>
             <div style="display: flex; gap: 10px; justify-content: center;">
                 <button class="btn btn-success" onclick="createRoom()">創建房間</button>
                 <button class="btn btn-secondary" onclick="toggleCreatePanel()">取消</button>
@@ -446,6 +507,7 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('rooms')">🏠 房間列表</button>
             <button class="tab-btn" onclick="switchTab('ranking')">🏆 排行榜</button>
+            <button class="tab-btn" onclick="switchTab('chat')">💬 聊天</button>
         </div>
         
         <div class="content-panel">
@@ -460,6 +522,17 @@
             <div id="ranking-tab" style="display: none;">
                 <div class="ranking-list" id="ranking-list">
                     <div class="no-rooms">載入中...</div>
+                </div>
+            </div>
+            
+            <!-- 公頻聊天 -->
+            <div id="chat-tab" style="display: none;">
+                <div class="chat-area" id="pvp-chat">
+                    <div class="chat-messages" id="chat-messages"></div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chat-input" placeholder="輸入訊息..." maxlength="100" onkeypress="if(event.key==='Enter')sendPvpChat()">
+                        <button class="btn" onclick="sendPvpChat()">發送</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -537,6 +610,7 @@
             
             document.getElementById('rooms-tab').style.display = tab === 'rooms' ? 'block' : 'none';
             document.getElementById('ranking-tab').style.display = tab === 'ranking' ? 'block' : 'none';
+            document.getElementById('chat-tab').style.display = tab === 'chat' ? 'block' : 'none';
         }
         
         // 創建房間面板
@@ -547,10 +621,32 @@
         // 創建房間
         function createRoom() {
             const levelRange = parseInt(document.getElementById('level-range').value);
-            const betGold = parseInt(document.getElementById('bet-gold').value) || 0;
-            
-            socket.emit('createPvpRoom', { levelRange, betGold });
+            socket.emit('createPvpRoom', { levelRange, betGold: 0 });
             toggleCreatePanel();
+        }
+        
+        // 公頻聊天
+        function sendPvpChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (msg) {
+                socket.emit('pvpChat', msg);
+                input.value = '';
+            }
+        }
+        
+        function addChatMessage(data) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'chat-msg';
+            div.innerHTML = `<span class="name">${escapeHtml(data.name)}</span><span class="time">${data.time || ''}</span><div class="text">${escapeHtml(data.msg)}</div>`;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            
+            // 限制訊息數量
+            while (container.children.length > 50) {
+                container.removeChild(container.firstChild);
+            }
         }
         
         // 快速匹配
@@ -739,6 +835,20 @@
         
         socket.on('pvpError', (msg) => {
             showToast(msg);
+        });
+        
+        // PVP 公頻聊天
+        socket.on('pvpChatMessage', (data) => {
+            addChatMessage(data);
+        });
+        
+        // 載入歷史聊天
+        socket.on('pvpChatHistory', (messages) => {
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = '';
+            if (messages && messages.length > 0) {
+                messages.forEach(msg => addChatMessage(msg));
+            }
         });
         
         socket.on('disconnect', () => {
