@@ -3,337 +3,1677 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會3</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
-        :root {
-            --bg-color: #2c3e50;
-            --panel-bg: #34495e;
-            --accent-color: #f1c40f;
-            --text-main: #ecf0f1;
-            --danger: #e74c3c;
-            --success: #2ecc71;
-            --primary: #3498db;
-            --font-pixel: 'Press Start 2P', monospace;
-            --font-ui: 'Noto Sans TC', -apple-system, sans-serif;
-        }
-
         body { 
-            background-color: var(--bg-color); color: var(--text-main); 
-            font-family: var(--font-ui); 
+            background-color: #2c3e50; color: #ecf0f1; 
+            font-family: 'Press Start 2P', monospace; 
+            text-align: center; 
             margin: 0; padding: 0; 
-            height: 100dvh; overflow: hidden; 
-            display: flex; justify-content: center;
+            height: 100dvh; 
+            overflow: hidden; 
+            overscroll-behavior: none;
             user-select: none; -webkit-user-select: none;
+            display: flex; justify-content: center; 
         }
 
-        /* 主佈局容器 */
         #app-layout {
-            display: flex; flex-direction: column; 
-            width: 100%; height: 100%;
-            max-width: 1400px; position: relative;
+            display: flex;
+            flex-direction: column; 
+            width: 100%;
+            height: 100%;
+            max-width: 600px; 
+            position: relative;
         }
 
-        /* 頂部極簡導航欄 */
-        .top-status-bar {
-            padding: 10px 15px; background: rgba(0,0,0,0.5);
+        #game-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #2c3e50; 
+            z-index: 99999; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease-out;
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid #fff; border-top: 4px solid #f1c40f;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: 30px;}
+        .logout-btn { font-size: 10px; color: #e74c3c; cursor: pointer; text-decoration: underline; white-space: nowrap; padding: 5px; }
+        h1 { font-size: 16px; margin: 0; white-space: nowrap; }
+        #conn-status { font-size: 10px; padding: 5px 8px; background: #333; border: 1px solid #fff; border-radius: 6px; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+
+        .status-bar { 
+            background: #34495e; border: 3px solid #fff; padding: 10px; 
+            width: 100%; margin-bottom: 10px; border-radius: 12px; 
+            display: flex; flex-direction: column; gap: 8px;
+            font-size: 10px; box-sizing: border-box; text-align: left;
+            flex-shrink: 0; 
+        }
+
+        .status-row-top {
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid #555; z-index: 1001;
+            border-bottom: 1px solid #555; padding-bottom: 6px;
         }
-        .header-brand { font-family: var(--font-pixel); font-size: 14px; color: var(--accent-color); }
-        .top-stats { display: flex; gap: 15px; font-size: 12px; font-weight: bold; }
-        .stat-item { display: flex; align-items: center; gap: 4px; }
-        .logout-link { color: var(--danger); cursor: pointer; text-decoration: underline; font-size: 10px; }
+        .status-item { display: flex; gap: 5px; align-items: center; }
+        .label { color: #f1c40f; font-weight: bold; }
+        .val { color: white; font-weight: bold; }
 
-        /* 主遊戲視圖 */
-        #game-content {
-            flex: 1; display: flex; overflow: hidden; position: relative;
+        .status-row-bars {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
+        }
+        .bar-container { display: flex; flex-direction: column; }
+        .bar-label { font-size: 9px; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .bar-bg { width:100%; height:6px; background:#555; border-radius:3px; overflow:hidden; }
+        
+        .status-row-stats {
+            display: flex; justify-content: space-around; background: rgba(0,0,0,0.2);
+            padding: 6px; border-radius: 4px; 
         }
 
-        /* 左側欄 (電腦版固定設施選單) */
-        #left-sidebar {
-            width: 260px; background: #1a252f; border-right: 3px solid var(--panel-bg);
-            padding: 20px; display: none; overflow-y: auto;
-        }
-        .sidebar-title { font-family: var(--font-pixel); font-size: 12px; color: var(--accent-color); margin-bottom: 20px; }
-
-        /* 中間主視圖區 */
-        #main-view {
-            flex: 1; overflow-y: auto; padding: 15px;
+        .exp-container { margin-top: 2px; }
+        .exp-bar { width: 100%; height: 6px; background: #555; border: 1px solid #fff; border-radius: 4px; overflow: hidden; }
+        .exp-fill { height: 100%; background: #3498db; width: 0%; transition: width 0.3s; }
+        
+        .main-content {
+            width: 100%;
+            flex: 1; 
             display: flex; flex-direction: column;
-            padding-bottom: 80px; /* 預留手機版底部導航 */
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 45px; /* 新增：預留聊天室高度，防止遮擋底部按鈕 */
         }
 
-        /* 右側欄 (電腦版固定聊天室) */
-        #right-sidebar {
-            width: 320px; background: rgba(0,0,0,0.3); border-left: 3px solid var(--panel-bg);
-            display: none; flex-direction: column;
+        /* ==================== 側邊欄選單系統 ==================== */
+        #sidebar-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 10000;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        #sidebar-overlay.active { opacity: 1; pointer-events: auto; }
+
+        #sidebar-menu {
+            position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
+            background: #2c3e50; border-right: 4px solid #f1c40f;
+            z-index: 10001; transition: left 0.3s ease-in-out;
+            display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.8);
+            text-align: left;
+        }
+        #sidebar-menu.open { left: 0; }
+
+        .sidebar-header {
+            padding: 15px; background: #222; color: #f1c40f; font-size: 14px;
+            font-weight: bold; border-bottom: 2px solid #555;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .close-sidebar-btn {
+            background: transparent; border: none; color: #e74c3c; font-size: 24px;
+            cursor: pointer; font-weight: bold; font-family: inherit; padding: 0 5px;
         }
 
-        /* 分頁切換系統 */
-        .view-section { display: none; flex-direction: column; width: 100%; }
-        .view-section.active { display: flex; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
-
-        /* 設施網格按鈕 */
-        .facility-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .fac-btn {
-            background: var(--panel-bg); border: 2px solid #bdc3c7; border-radius: 8px;
-            padding: 15px 10px; text-decoration: none; color: white;
-            display: flex; flex-direction: column; align-items: center; gap: 8px;
-            font-family: var(--font-pixel); font-size: 10px; transition: transform 0.1s;
-            box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+        .sidebar-content {
+            flex: 1; overflow-y: auto; padding: 15px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start;
+            padding-bottom: 80px;
         }
-        .fac-btn:active { transform: scale(0.95); box-shadow: none; }
 
-        /* 角色面板樣式 */
-        .char-card { background: #1a252f; border: 3px solid #fff; border-radius: 15px; padding: 20px; margin-bottom: 20px; }
-        .char-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; }
-        .bar-container { margin-bottom: 15px; }
-        .bar-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; }
-        .bar-bg { width: 100%; height: 14px; background: #333; border-radius: 7px; overflow: hidden; border: 1px solid #555; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
-
-        /* 底部導航欄 (手機專用) */
-        #bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 70px;
-            background: #1a1a1a; border-top: 3px solid var(--panel-bg);
-            display: grid; grid-template-columns: repeat(4, 1fr);
-            z-index: 1000; padding-bottom: env(safe-area-inset-bottom);
+        .menu-toggle-btn {
+            background: #34495e; border: 2px solid #bdc3c7; color: white;
+            font-size: 10px; cursor: pointer; padding: 6px 8px; border-radius: 6px;
+            margin-right: 10px; font-family: inherit; box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+            white-space: nowrap;
         }
-        .nav-item {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #7f8c8d; cursor: pointer; transition: 0.2s;
+        .menu-toggle-btn:active { transform: scale(0.95); box-shadow: none; }
+
+        /* 原本的 grid 樣式已轉移至 sidebar-content */
+        .facility-btn {
+            position: relative; 
+            padding: 0; 
+            font-family: inherit; font-size: 10px; font-weight: bold;
+            cursor: pointer; border: 2px solid #bdc3c7; color: white; text-decoration: none; 
+            display: flex; align-items: center; justify-content: center;
+            background: #34495e; border-radius: 6px; height: 42px; white-space: nowrap; 
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.3); 
+            touch-action: manipulation; transition: transform 0.05s;
         }
-        .nav-item.active { color: var(--accent-color); background: rgba(255,255,255,0.05); }
-        .nav-icon { font-size: 22px; margin-bottom: 4px; }
-        .nav-text { font-family: var(--font-pixel); font-size: 8px; }
+        .facility-btn:active { transform: scale(0.95); box-shadow: none; filter: brightness(0.9); }
+        /* ======================================================= */
+        
+        .map-container { padding-right: 5px; padding-bottom: 60px; }
+        .btn { 
+            padding: 12px 8px; font-family: inherit; font-size: 12px; cursor: pointer; 
+            border: 2px solid #bdc3c7; color: white; text-decoration: none; 
+            display: block; text-shadow: 1px 1px 0 #000; background: #34495e; 
+            position: relative; text-align: left; margin-bottom: 8px; border-radius: 6px;
+            touch-action: manipulation; transition: transform 0.05s, background-color 0.1s; 
+        }
+        .btn:active { transform: scale(0.98); filter: brightness(0.8); background: #2980b9; }
+        .locked { background: #555; color: #888; border-color: #555; pointer-events: none; }
+        
+        .info-tag { float: right; font-size: 10px; color: #f1c40f; margin-top: 2px; }
+        .room-tag { font-size: 9px; padding: 2px 4px; border-radius: 4px; float: right; margin-left: 5px; }
+        .status-waiting { background: #27ae60; color: white; }
+        .status-fighting { background: #c0392b; color: white; }
+        
+        #chat-container {
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7;
+            display: flex; flex-direction: column; font-size: 10px; z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom);
+            transition: height 0.3s ease-in-out;
+            height: 30px; 
+        }
+        #chat-header {
+            height: 30px; background: #34495e; color: #fff; line-height: 30px; 
+            cursor: pointer; font-weight: bold; border-bottom: 1px solid #555;
+            display: flex; justify-content: center; align-items: center;
+            touch-action: manipulation; flex-shrink: 0; 
+        }
+        #chat-header:hover { background: #2c3e50; }
 
-        /* 聊天室通用樣式 */
-        #chat-history { flex: 1; overflow-y: auto; padding: 10px; font-size: 12px; color: #fff; }
-        #chat-input-area { display: flex; background: #222; padding: 10px; gap: 5px; }
-        #chat-input { flex: 1; background: #333; border: 1px solid #555; color: white; padding: 8px; border-radius: 4px; font-family: var(--font-ui); }
-        #chat-send { background: var(--primary); border: none; color: white; padding: 0 15px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .chat-open { height: 40vh !important; }
+        #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+        .chat-open #chat-body { display: flex; } 
 
-        /* 媒體查詢：電腦版 */
+        #chat-history { flex: 1; overflow-y: auto; padding: 8px; text-align: left; color: white; }
+        #chat-input-area { display: flex; border-top: 1px solid #555; height: 40px; flex-shrink: 0; }
+        #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 10px; font-family: inherit; font-size: 12px; outline: none; }
+        #chat-send { background: #2980b9; color: white; border: none; padding: 0 15px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; touch-action: manipulation; }
+
+        #toast-notification {
+            position: fixed; top: -60px; left: 50%; transform: translateX(-50%);
+            background: #f1c40f; color: #000; border: 3px solid #fff;
+            padding: 10px 20px; border-radius: 30px; font-size: 12px; font-weight: bold;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.6); z-index: 2000;
+            transition: top 0.5s ease-in-out; white-space: nowrap; pointer-events: none;
+        }
+
+        /* ==================== 公告系統樣式修正 ==================== */
+        #notice-container {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            gap: 4px;
+            margin-right: 10px;
+        }
+
+        #notice-btn {
+            width: 28px; 
+            height: 28px;
+            background: #e67e22; 
+            border: 2px solid #bdc3c7;
+            border-radius: 6px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+            animation: bounce 2s infinite;
+            flex-shrink: 0;
+        }
+
+        .notice-text {
+            font-size: 10px; 
+            color: #f1c40f;
+            font-weight: bold;
+            white-space: nowrap;
+            text-shadow: 1px 1px 0px #000;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+
+        #notice-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            z-index: 9999;
+        }
+        .notice-box {
+            background: #fff; color: #2c3e50; width: 85%; max-width: 400px;
+            border: 4px solid #f1c40f; border-radius: 10px; padding: 20px; text-align: left;
+            font-family: 'Press Start 2P', monospace; max-height: 70vh; overflow-y: auto;
+        }
+        .notice-title { font-size: 16px; color: #d35400; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        .notice-content { font-size: 10px; line-height: 1.8; white-space: pre-wrap; }
+        .close-notice-btn {
+            margin-top: 20px; width: 100%; padding: 10px; background: #34495e; 
+            color: white; border: none; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 12px;
+        }
+        /* ======================================================= */
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); 
+            display: none;
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;        
+            z-index: 9999;
+        }
+        
+        .modal-box {
+            background: #fff; color: #2c3e50; width: 85%; max-width: 400px;
+            border: 4px solid #f1c40f; border-radius: 10px; padding: 20px; text-align: left;
+            font-family: 'Press Start 2P', monospace; max-height: 70vh; overflow-y: auto;
+            position: relative;
+            margin: auto; 
+        }
+        .close-btn-x {
+            position: absolute; top: 10px; right: 10px;
+            background: #e74c3c; color: white; border: none;
+            width: 25px; height: 25px; border-radius: 50%;
+            cursor: pointer; font-weight: bold;
+        }
+        
+        /* 英雄榜樣式 */
+        .ranking-box {
+            width: 100%; max-width: 600px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #f1c40f;
+            border-radius: 8px; padding: 10px; margin: 10px 0; text-align: left;
+            box-sizing: border-box; box-shadow: 0 0 10px rgba(241, 196, 15, 0.2); flex-shrink: 0; 
+        }
+        .rank-title { color: #f1c40f; font-size: 12px; font-weight: bold; text-align: center; margin-bottom: 8px; border-bottom: 1px dashed #555; padding-bottom: 5px; }
+        .rank-row { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; padding: 4px 5px; }
+        .rank-row:nth-child(odd) { background: rgba(255,255,255,0.05); }
+        .rank-1 { color: #ffd700; font-weight: bold; text-shadow: 0 0 5px #ffd700; }
+        .rank-2 { color: #c0c0c0; font-weight: bold; }
+        .rank-3 { color: #cd7f32; font-weight: bold; }
+
+        /* 好友列表樣式 */
+        .friend-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px; border-bottom: 1px solid #eee; font-size: 10px;
+        }
+        .friend-name { font-weight: bold; }
+        .friend-status { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .status-on { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
+        .status-off { background: #95a5a6; }
+        .friend-actions button {
+            font-size: 9px; padding: 4px 8px; margin-left: 5px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc;
+        }
+        .btn-pm { background: #3498db; color: white; border-color: #2980b9; }
+        .btn-del { background: #e74c3c; color: white; border-color: #c0392b; }
+
+        /* 私訊專用視窗樣式 */
+        #pm-modal { z-index: 10000; }
+        #pm-history {
+            background: #f9f9f9; border: 1px solid #ddd; height: 250px; 
+            overflow-y: auto; padding: 10px; margin-bottom: 10px; border-radius: 5px;
+            font-size: 10px; display: flex; flex-direction: column; gap: 8px;
+        }
+        .pm-msg { padding: 8px; border-radius: 8px; max-width: 80%; word-break: break-all; }
+        .pm-mine { align-self: flex-end; background: #3498db; color: white; border-bottom-right-radius: 0; }
+        .pm-other { align-self: flex-start; background: #eec5a9; color: #2c3e50; border-bottom-left-radius: 0; }
+        .pm-time { font-size: 8px; opacity: 0.7; margin-top: 2px; text-align: right; }
+
+        /* 未讀紅點樣式 */
+        .unread-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: #e74c3c; color: white;
+            border-radius: 50%; width: 18px; height: 18px;
+            font-size: 9px; display: flex; justify-content: center; align-items: center;
+            border: 2px solid white; font-weight: bold;
+            display: none; /* 預設隱藏 */
+            z-index: 10;
+        }
+        .friend-badge {
+            background: #e74c3c; color: white;
+            border-radius: 10px; padding: 2px 6px;
+            font-size: 8px; margin-left: 5px;
+        }
+
         @media (min-width: 1024px) {
-            #left-sidebar, #right-sidebar { display: flex; }
-            #bottom-nav { display: none; }
-            #main-view { padding-bottom: 15px; }
-            .view-section { display: flex !important; }
-            #town-tab-mobile, #social-tab-mobile { display: none !important; }
-            .facility-grid { grid-template-columns: 1fr; }
-            .view-section-title { font-family: var(--font-pixel); font-size: 12px; color: var(--accent-color); margin: 20px 0 10px; }
+            body { background-color: #222; }
+            #app-layout { flex-direction: row; max-width: 1000px; background-color: #2c3e50; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+            #game-view { width: 600px; border-right: 4px solid #bdc3c7; }
+            #chat-container { position: static; width: 400px; height: 100% !important; border-top: none; background: #34495e; }
+            #chat-header { cursor: default; background: #2c3e50; }
+            #chat-header:active { pointer-events: none; }
+            #chat-body { display: flex !important; height: calc(100% - 30px); }
+            .main-content { margin-bottom: 0; }
+            #notice-btn { left: calc(50% - 540px); }
         }
 
-        /* 原始 Modal 樣式保留 */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; display: none; justify-content: center; align-items: center; }
-        .modal-box { background: white; color: #2c3e50; width: 90%; max-width: 400px; padding: 20px; border: 4px solid var(--accent-color); border-radius: 10px; max-height: 80vh; overflow-y: auto; position: relative; }
-        .btn { display: block; width: 100%; padding: 12px; margin-top: 10px; background: var(--panel-bg); color: white; border: none; border-radius: 5px; font-family: inherit; cursor: pointer; text-align: center; }
-        #toast-notification { position: fixed; top: -60px; left: 50%; transform: translateX(-50%); background: var(--accent-color); color: #000; padding: 12px 25px; border-radius: 30px; font-weight: bold; z-index: 10000; transition: 0.5s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        /* 活動橫幅 */
+        @keyframes event-glow {
+            0%, 100% { box-shadow: 0 0 8px rgba(241,196,15,0.4), inset 0 0 8px rgba(241,196,15,0.05); }
+            50% { box-shadow: 0 0 18px rgba(241,196,15,0.8), inset 0 0 12px rgba(241,196,15,0.1); }
+        }
+        @keyframes event-shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        @keyframes event-star {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.2) rotate(-5deg); }
+            75% { transform: scale(0.9) rotate(5deg); }
+        }
+        
+        #event-banner {
+            display: none;
+            width: 100%;
+            background: linear-gradient(135deg, #1a0a00 0%, #2d1a00 40%, #1a0a00 100%);
+            border: 2px solid #f1c40f;
+            border-radius: 10px;
+            padding: 0;
+            margin-bottom: 10px;
+            overflow: hidden;
+            position: relative;
+            animation: event-glow 2.5s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        
+        #event-banner::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(241,196,15,0.06) 40%,
+                rgba(241,196,15,0.12) 50%,
+                rgba(241,196,15,0.06) 60%,
+                transparent 100%
+            );
+            background-size: 200% 100%;
+            animation: event-shimmer 3s linear infinite;
+            pointer-events: none;
+        }
+        
+        .event-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px 4px;
+            border-bottom: 1px solid rgba(241,196,15,0.2);
+        }
+        
+        .event-title-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .event-star-icon {
+            font-size: 16px;
+            animation: event-star 2s ease-in-out infinite;
+            display: inline-block;
+        }
+        
+        .event-name-text {
+            font-size: 11px;
+            font-weight: bold;
+            color: #f1c40f;
+            text-shadow: 0 0 8px rgba(241,196,15,0.6);
+            letter-spacing: 0.5px;
+        }
+        
+        .event-date-badge {
+            font-size: 8px;
+            color: #f39c12;
+            background: rgba(243,156,18,0.15);
+            border: 1px solid rgba(243,156,18,0.3);
+            padding: 2px 6px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+        
+        .event-rewards-row {
+            display: flex;
+            gap: 6px;
+            padding: 6px 12px 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .event-reward-chip {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 9px;
+            border-radius: 20px;
+            font-size: 9px;
+            font-weight: bold;
+            white-space: nowrap;
+            border: 1px solid;
+        }
+        
+        .chip-exp { background: rgba(52,152,219,0.2); border-color: rgba(52,152,219,0.5); color: #5dade2; }
+        .chip-shard { background: rgba(155,89,182,0.2); border-color: rgba(155,89,182,0.5); color: #a569bd; }
+        .chip-item { background: rgba(230,126,34,0.2); border-color: rgba(230,126,34,0.5); color: #e59866; }
+
+        /* 系統訊息廣播 bar */
+        #sys-msg-bar {
+            display: none;
+            width: 100%;
+            background: linear-gradient(90deg, #1a5276, #2e86c1, #1a5276);
+            border: 2px solid #f1c40f;
+            border-radius: 8px;
+            padding: 0;
+            margin-bottom: 8px;
+            overflow: hidden;
+            position: relative;
+            flex-shrink: 0;
+            box-shadow: 0 0 12px rgba(241,196,15,0.4);
+        }
+        #sys-msg-bar-inner {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            gap: 10px;
+        }
+        .sys-msg-icon {
+            font-size: 14px;
+            animation: sys-msg-pulse 1.5s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        @keyframes sys-msg-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        .sys-msg-text {
+            flex: 1;
+            font-size: 10px;
+            color: #fff;
+            font-weight: bold;
+            white-space: normal;
+            word-break: break-all;
+            line-height: 1.4;
+        }
+        .sys-msg-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: #fff;
+            font-size: 14px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sys-msg-close:hover { background: rgba(255,255,255,0.4); }
+        .sys-msg-close:active { transform: scale(0.9); }
+
+        /* ==================== Layout Shift Prevention ==================== */
+        @keyframes sectionFadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .section-animate {
+            animation: sectionFadeIn 0.3s ease forwards;
+        }
+        /* conn-status 固定寬度 */
+        #conn-status { min-width: 65px; text-align: center; justify-content: center; }
+        /* 數值容器固定寬度，防止數字載入後跳動 */
+        #pid { min-width: 70px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+        #gold { min-width: 70px; text-align: right; }
+        #hp, #mp { min-width: 90px; text-align: right; }
+        #atk, #def { min-width: 50px; text-align: right; }
+        #exp-txt { min-width: 70px; text-align: right; }
+        /* 地圖列表載入中保留最小高度 */
+        #map-list { min-height: 250px; }
+        /* top-bar 子元素防跳動 */
+        .top-bar > * { flex-shrink: 0; }
+        /* 按鈕載入 skeleton */
+        .btn-skeleton {
+            background: linear-gradient(90deg, #34495e 25%, #3d5a73 50%, #34495e 75%);
+            background-size: 200% 100%;
+            animation: skeletonShimmer 1.5s ease-in-out infinite;
+            color: transparent !important;
+            border-color: #3d5a73 !important;
+            pointer-events: none;
+        }
+        @keyframes skeletonShimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        /* status-bar 內動態區塊過渡 */
+        #durability-section {
+            transition: opacity 0.3s ease, max-height 0.3s ease;
+            max-height: 0; opacity: 0; overflow: hidden;
+            margin-top: 0; padding: 0;
+        }
+        #durability-section.dur-visible {
+            max-height: 60px; opacity: 1;
+            margin-top: 6px; padding: 5px 8px;
+        }
+        #special-offers-panel {
+            transition: opacity 0.3s ease, max-height 0.3s ease;
+            max-height: 0; opacity: 0; overflow: hidden;
+            margin-top: 0; padding: 0; border: none;
+        }
+        #special-offers-panel.offer-visible {
+            max-height: 80px; opacity: 1;
+            margin-top: 6px; padding: 5px 8px;
+            border: 1px solid rgba(241,196,15,0.3);
+        }
+
+        /* ==================== 優惠碼展示區 ==================== */
+        #promo-display-area {
+            display: none;
+            width: 100%;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+        #promo-display-area.active { display: block; }
+
+        .promo-toggle-bar {
+            background: linear-gradient(135deg, #1a0a00 0%, #2d1a00 100%);
+            border: 2px solid #e67e22;
+            border-radius: 8px;
+            padding: 6px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .promo-toggle-bar:active { filter: brightness(0.85); }
+        .promo-toggle-left {
+            display: flex; align-items: center; gap: 6px; font-size: 10px; color: #e67e22; font-weight: bold;
+        }
+        .promo-toggle-arrow {
+            font-size: 10px; color: #e67e22;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        .promo-toggle-arrow.expanded { transform: rotate(90deg); }
+        .promo-toggle-badge {
+            background: #e67e22; color: #fff;
+            font-size: 9px; font-weight: bold;
+            padding: 1px 6px; border-radius: 10px;
+            min-width: 18px; text-align: center;
+        }
+
+        .promo-card-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.2s ease;
+            opacity: 0;
+        }
+        .promo-card-list.expanded {
+            max-height: 400px;
+            overflow-y: auto;
+            opacity: 1;
+        }
+
+        .promo-card {
+            background: linear-gradient(135deg, #1a0a00 0%, #2d1a00 40%, #1a0a00 100%);
+            border: 2px solid #e67e22;
+            border-radius: 10px;
+            padding: 8px 10px;
+            margin-top: 6px;
+            box-shadow: 0 0 10px rgba(230,126,34,0.3);
+            animation: promo-glow 2.5s ease-in-out infinite;
+        }
+        @keyframes promo-glow {
+            0%, 100% { box-shadow: 0 0 8px rgba(230,126,34,0.3); }
+            50% { box-shadow: 0 0 16px rgba(230,126,34,0.6); }
+        }
+        .promo-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            border-bottom: 1px solid rgba(230,126,34,0.25);
+            padding-bottom: 4px;
+        }
+        .promo-card-title {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .promo-card-icon {
+            font-size: 12px;
+            animation: event-star 2s ease-in-out infinite;
+            display: inline-block;
+        }
+        .promo-card-name {
+            font-size: 10px;
+            font-weight: bold;
+            color: #e67e22;
+            text-shadow: 0 0 6px rgba(230,126,34,0.5);
+        }
+        .promo-card-date {
+            font-size: 8px;
+            color: #f39c12;
+            background: rgba(243,156,18,0.15);
+            border: 1px solid rgba(243,156,18,0.3);
+            padding: 1px 5px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+        .promo-card-desc {
+            font-size: 8px;
+            color: #bdc3c7;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        .promo-card-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-bottom: 4px;
+        }
+        .promo-item-chip {
+            background: rgba(230,126,34,0.15);
+            border: 1px solid rgba(230,126,34,0.4);
+            color: #e67e22;
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .promo-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 8px;
+        }
+        .promo-usage-text {
+            color: #f39c12;
+        }
+        .promo-usage-text .num { color: #fff; font-weight: bold; }
+        .promo-redeem-btn {
+            background: #e67e22;
+            color: #fff;
+            border: 1px solid #d35400;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 8px;
+            font-family: inherit;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.15s;
+        }
+        .promo-redeem-btn:active {
+            transform: scale(0.95);
+            filter: brightness(0.85);
+        }
+        /* =================================================== */
     </style>
 </head>
 <body>
-    <div id="loading-overlay" style="position:fixed;inset:0;background:var(--bg-color);z-index:99999;display:flex;flex-direction:column;justify-content:center;align-items:center;">
-        <div style="width:40px;height:40px;border:4px solid #fff;border-top-color:var(--accent-color);border-radius:50%;animation:spin 1s linear infinite;"></div>
-        <p style="font-family:var(--font-pixel);font-size:10px;margin-top:20px;">LOADING ADVENTURE...</p>
-    </div>
-    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div id="sidebar-menu">
+        <div class="sidebar-header">
+            🏰 城鎮設施
+            <button class="close-sidebar-btn" onclick="toggleSidebar()">×</button>
+        </div>
+        <div class="sidebar-content">
+            <a href="bag.html" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">🎒 背包</a>
+            <a href="equip.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🛡️ 裝備</a>
+            <a href="market.html" class="facility-btn" style="background:#f39c12; border-color:#d35400;">🏪 道具</a>
+            <a href="auction.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">⚖️ 市集</a>
+            <a href="smithy.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔨 鍛造</a>
+            <a href="myth.html" class="facility-btn" style="background:#4a0080; border-color:#8b00ff;">⚗️ 神話</a>
+            <a href="enhance.html" class="facility-btn" style="background:#d35400; border-color:#e67e22;">🔥 強化</a>
+            <a href="gathering.html" class="facility-btn" style="background:#27ae60; border-color:#2ecc71;">🌲 採集</a>
+            <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;">🏨 旅館</a>
+            <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🍳 廚房</a>
+            <a href="lottery.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🎱 彩票</a>
+            <a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;">📜 圖鑑</a>
+            
+            <div class="facility-btn" style="background:#3498db; border-color:#2980b9;" onclick="openFriends(); toggleSidebar();">
+                👥 好友
+                <div id="main-unread-badge" class="unread-badge">0</div>
+            </div>
 
-    <div id="toast-notification">訊息提示</div>
+            <div class="facility-btn" style="background:#d35400; border-color:#e67e22;" onclick="openDailyQuests(); toggleSidebar();">
+                📜 每日任務
+            </div>
+            <div class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;" onclick="window.location.href='guild.html'">🏰 創造公會</div>
+            <a href="skills.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">⚡ 技能升級</a>
+            <a href="shard_shop.html" class="facility-btn" style="background:#9b59b6; border-color:#8e44ad;">💎 碎片交換</a>
+            <a href="hire.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🏢 僱員探險</a>
+            <a href="rebirth.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔄 轉生神殿</a>
+            <div class="facility-btn" style="background:#e67e22; border-color:#d35400;" onclick="openPromoCode(); toggleSidebar();">🎫 優惠碼</div>
+        </div>
+    </div>
+    
+    <div id="toast-notification"> 訊息提示</div>
+
+    <div id="notice-modal">
+        <div class="notice-box">
+            <div class="notice-title">📢 Ver 5.1 更新公告</div>
+<button class="close-notice-btn" onclick="closeNotice()">我知道了，立即體驗！</button>
+            <div class="notice-content">
+<b style="color:#8e44ad;">新增【專用優惠】</b>
+- <b>專用優惠</b>：只需要每次10億，可以限時6小時得到不同技能增強。
+- 包括有：攻x2、防x2、技能碎片x10(每次戰鬥後)、經驗值x2。
+
+<b style="color:#8e44ad;">新增【期間限定活動】</b>
+- <b>期間限定活動</b>：不定期會有限時活動出現。
+
+<b style="color:#16a085;">【轉生系統】</b>
+- <b>轉生系統</b>：全屬性提升+20%。
+- <b>轉生與榮耀</b>：獲得轉生稱號與榮耀。
+- <b>保留等級</b>：保留技能與技能等級。
+- <b>所有裝備/物品</b>：保留背包與身上所有裝備/物品。
+- <b>金幣</b>：金幣保留上限 1000 萬。
+
+<b style="color:#e67e22;">【🏢 僱員探險系統 — 全新！】</b>
+- <b>雇用僱員</b>：根據玩家等級最多可雇用 <span style="color:#f1c40f">5 位僱員</span>。
+- <b>派遣探險</b>：選擇區域派出僱員，<span style="color:#2ecc71">3 小時</span>後自動帶回金幣、素材及珍稀道具！
+- <b>僱員升級</b>：探險獲得經驗，等級越高掉落率和獎勵加成越多。
+- <b>背景運行</b>：探險期間可以做其他事，完成後回來收取即可。
+
+<b style="color:#3498db;">【📧 Email 登入系統 — 全新！】</b>
+- <b>必須使用 Email 登入</b>，新註冊需填寫 Email 並驗證。
+- <b>舊玩家</b>：請到登入頁「🔗 綁定Email」完成綁定後用 Email 登入。
+- <b>忘記密碼</b>：透過 Email 收取重設連結，安全又方便。
+- 密碼需 <b>8位以上</b>，含大寫、小寫英文及數字。
+
+<b style="color:#16a085;">【🔧 裝備耐久度系統】</b>
+- 每件裝備擁有 <b>100 點耐久度</b>，戰鬥後會根據怪物等級扣減。
+- 耐久度越低，裝備 <b>屬性加成越少</b>（耐久 50% = 屬性只剩一半）。
+- <b>耐久歸零</b>：裝備不會消失，但屬性加成降至 <span style="color:#e74c3c">0</span>。
+- <b>維修方式</b>：前往 <span style="color:#16a085">裝備</span>，點擊裝備旁的「🔧 維修」按鈕。
+- <b>維修費用</b>（碎片）：統一裝備等級 ——
+  <span style="color:#aaa;">全部 0.01/點</span>
+- 大廳角色面板可隨時查看三件裝備的耐久度。
+
+<b style="color:#8e44ad;">【🏰 公會系統】</b>
+- <b>創建公會</b>：花費 <span style="color:#f1c40f">50 萬金幣</span>，最多容納 50 人。
+- <b>三大設施</b>（可升級至 Lv.10）：
+  ⛪ <b>聖殿</b>：增加成員上限 (+5人/級)
+  ⚔️ <b>遠征營</b>：全員採集/戰鬥金幣EXP加成 (+2%/級)
+  🏦 <b>寶庫</b>：共享倉庫格數 (+10格/級)
+- <b>每日福利</b>：
+  達成 <span style="color:#f1c40f">20 人</span> → 全員送強化石
+  公會金庫達 <span style="color:#f1c40f">5 億</span> → 全員獲得 10% 利息（每日，上限 1 億）
+- <b>捐獻系統</b>：可向公會金庫捐贈碎片，用於升級設施。
+- <b>會長工具</b>：設定職位、踢人、發放全員獎勵。
+
+<b style="color:#7289da;">【💬 Discord 社群】</b>
+- 有任何問題、建議或 Bug 回報，歡迎加入我們的 Discord！
+- <a href="https://discord.gg/q5EfXzXpM3" target="_blank" style="color:#7289da; font-weight:bold; text-decoration:underline;">👉 https://discord.gg/q5EfXzXpM3</a>
+
+            </div>
+            <button class="close-notice-btn" onclick="closeNotice()">我知道了，立即體驗！</button>
+        </div>
+    </div>
+
+    <div id="quest-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+        <div style="background:#2c3e50; padding:20px; border:4px solid #fff; border-radius:10px; width:85%; max-width:400px; color:white; text-align:center;">
+            <h2 style="color:#f1c40f; margin-top:0;">📜 每日委託</h2>
+            <div style="font-size:10px; color:#aaa; margin-bottom:10px;">(每天 00:00 重置)</div>
+            
+            <div id="quest-list" style="text-align:left; max-height:300px; overflow-y:auto; margin-bottom:10px;">
+                <div style="padding:10px; text-align:center;">載入中...</div>
+            </div>
+
+            <button class="btn" style="background:#c0392b; width:100%;" onclick="document.getElementById('quest-modal').style.display='none'">關閉</button>
+        </div>
+    </div>
+
+    <div id="friends-modal" class="modal-overlay">
+        <div class="modal-box">
+            <button class="close-btn-x" onclick="document.getElementById('friends-modal').style.display='none'">×</button>
+            <div style="font-size:16px; font-weight:bold; color:#d35400; margin-bottom:15px; text-align:center;">👥 好友系統</div>
+            
+            <div style="display:flex; gap:5px; margin-bottom:15px; border-bottom:1px dashed #ccc; padding-bottom:10px;">
+                <input type="text" id="friend-input" placeholder="輸入玩家名字" style="flex:1; padding:8px; font-size:10px;">
+                <button onclick="sendRequest()" style="background:#27ae60; color:white; border:none; padding:8px; cursor:pointer; font-size:10px; border-radius:4px;">申請</button>
+            </div>
+            
+            <div id="request-section" style="display:none; margin-bottom:10px;">
+                <div style="font-size:12px; color:#e67e22; margin-bottom:5px;">📩 好友申請</div>
+                <div id="request-list-content" style="max-height:100px; overflow-y:auto; border:1px solid #f39c12; padding:5px; background:#fffbf0; border-radius:4px;"></div>
+            </div>
+
+            <div style="font-size:12px; color:#3498db; margin-bottom:5px;">📋 好友名單</div>
+            <div id="friend-list-content" style="min-height:150px; max-height:250px; overflow-y:auto; border:1px solid #eee; padding:5px;">
+                <div style="text-align:center; color:#aaa; font-size:10px; margin-top:20px;">載入中...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pm-modal" class="modal-overlay">
+        <div class="modal-box" style="display:flex; flex-direction:column; height: 70vh;">
+            <button class="close-btn-x" onclick="closePM()">×</button>
+            <div style="font-size:14px; font-weight:bold; color:#3498db; margin-bottom:10px; text-align:center; border-bottom:1px solid #ccc; padding-bottom:5px;">
+                與 <span id="pm-target-name">...</span> 的對話
+            </div>
+            
+            <div id="pm-history">
+                <div style="text-align:center; color:#aaa; margin-top:20px;">載入記錄中...</div>
+            </div>
+
+            <div style="display:flex; gap:5px; margin-top:auto;">
+                <input type="text" id="pm-input" placeholder="輸入訊息..." style="flex:1; padding:10px; font-size:12px; border:1px solid #ccc; border-radius:4px;">
+                <button onclick="sendPM()" style="background:#2980b9; color:white; border:none; padding:10px 15px; border-radius:4px; font-weight:bold; cursor:pointer;">發送</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🆕 優惠碼兌換 Modal -->
+    <div id="promo-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width:380px;">
+            <button class="close-btn-x" onclick="closePromoCode()">×</button>
+            <div style="font-size:14px; font-weight:bold; color:#e67e22; margin-bottom:15px; text-align:center;">
+                🎫 兌換優惠碼
+            </div>
+            
+            <div style="font-size:10px; color:#aaa; text-align:center; margin-bottom:15px;">
+                輸入優惠碼即可領取專屬獎勵
+            </div>
+
+            <div style="display:flex; gap:8px; margin-bottom:15px;">
+                <input type="text" id="promo-code-input-field" placeholder="請輸入優惠碼" maxlength="30"
+                    style="flex:1; padding:12px; font-size:14px; border:2px solid #e67e22; border-radius:8px; outline:none; text-align:center; text-transform:uppercase; font-family:inherit; letter-spacing:2px;"
+                    onkeydown="if(event.key==='Enter') submitPromoCode()">
+                <button id="promo-redeem-submit-btn" onclick="submitPromoCode()" style="background:#e67e22; color:white; border:none; padding:12px 20px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:12px; font-family:inherit; white-space:nowrap;">
+                    兌換
+                </button>
+            </div>
+
+            <div id="promo-code-result" style="display:none; padding:12px; border-radius:8px; font-size:11px; text-align:center; line-height:1.6;"></div>
+
+            <div style="margin-top:10px; text-align:center;">
+                <button onclick="closePromoCode()" style="background:#34495e; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:10px; font-family:inherit; width:100%;">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div id="app-layout">
-        <div class="top-status-bar">
-            <div class="header-brand">GUILD HUB</div>
-            <div class="top-stats">
-                <div class="stat-item" style="color:var(--accent-color);">💰 <span id="gold">---</span></div>
-                <div class="stat-item" id="conn-status" style="color:var(--danger);">● 連線中</div>
-                <div class="logout-link" onclick="logout()">登出</div>
+        <div id="game-view">
+            <!-- 系統訊息廣播 bar (最上方) -->
+            <div id="sys-msg-bar">
+                <div id="sys-msg-bar-inner">
+                    <span class="sys-msg-icon">📢</span>
+                    <div class="sys-msg-text" id="sys-msg-content"></div>
+                    <button class="sys-msg-close" onclick="closeSysMsgBar()">✕</button>
+                </div>
+            </div>
+
+            <div class="top-bar">
+                <div style="display:flex; align-items:center;">
+                    <button class="menu-toggle-btn" onclick="toggleSidebar()">☰ 選單</button>
+                    <div id="notice-container" onclick="openNotice()">
+                        <div id="notice-btn">📢</div>
+                        <div class="notice-text">最新更新</div>
+                    </div>
+                    <div class="logout-btn" onclick="logout()">登出</div>
+                </div>
+                <h1> 公會大廳</h1>
+                <div id="conn-status" style="color:#e74c3c"> 連線中</div>
+            </div>
+            
+            <div class="status-bar">
+                <div class="status-row-top">
+                    <div class="status-item"><span class="label">LV</span> <span id="lvl" class="val">1</span></div>
+                    <div class="status-item"><span id="pid" class="val" style="color:#2ecc71;">---</span></div>
+                    <div class="status-item"><span class="label">💰</span> <span id="gold" class="val">---</span></div>
+                </div>
+
+                <div class="status-row-bars">
+                    <div class="bar-container">
+                        <div class="bar-label"><span style="color:#e74c3c">HP</span> <span id="hp">---/---</span></div>
+                        <div class="bar-bg">
+                            <div id="hp-bar-fill" style="width:100%; height:100%; background:#e74c3c; transition:width 0.3s;"></div>
+                        </div>
+                    </div>
+                    <div class="bar-container">
+                        <div class="bar-label"><span style="color:#3498db">MP</span> <span id="mp">---/---</span></div>
+                        <div class="bar-bg">
+                            <div id="mp-bar-fill" style="width:100%; height:100%; background:#3498db; transition:width 0.3s;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="status-row-stats">
+                    <div class="status-item"><span class="label">⚔️ ATK</span> <span id="atk" class="val">---</span></div>
+                    <div class="status-item"><span class="label">🛡️ DEF</span> <span id="def" class="val">---</span></div>
+                </div>
+
+                <div id="durability-section" style="background:#1a1a2e; border-radius:6px; font-size:9px;">
+                    <div style="color:#666; margin-bottom:4px; font-size:8px; letter-spacing:1px;">🔧 耐久度</div>
+                    <div style="display:flex; gap:6px;">
+                        <div id="dur-weapon" style="flex:1; display:none;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                <span style="color:#e67e22;">⚔️</span>
+                                <span id="dur-weapon-val" style="color:#ccc;">100</span>
+                            </div>
+                            <div style="background:#333; border-radius:2px; height:3px;">
+                                <div id="dur-weapon-bar" style="background:#27ae60; height:3px; border-radius:2px; width:100%; transition:width 0.3s;"></div>
+                            </div>
+                        </div>
+                        <div id="dur-armor" style="flex:1; display:none;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                <span style="color:#3498db;">🛡️</span>
+                                <span id="dur-armor-val" style="color:#ccc;">100</span>
+                            </div>
+                            <div style="background:#333; border-radius:2px; height:3px;">
+                                <div id="dur-armor-bar" style="background:#27ae60; height:3px; border-radius:2px; width:100%; transition:width 0.3s;"></div>
+                            </div>
+                        </div>
+                        <div id="dur-acc" style="flex:1; display:none;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                <span style="color:#9b59b6;">💍</span>
+                                <span id="dur-acc-val" style="color:#ccc;">100</span>
+                            </div>
+                            <div style="background:#333; border-radius:2px; height:3px;">
+                                <div id="dur-acc-bar" style="background:#27ae60; height:3px; border-radius:2px; width:100%; transition:width 0.3s;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exp-container">
+                    <div style="display:flex; justify-content:space-between; font-size:8px; color:#bdc3c7; margin-bottom:1px;">
+                        <span>EXP</span> <span id="exp-txt">---/---</span>
+                    </div>
+                    <div class="exp-bar"><div id="exp-fill" class="exp-fill"></div></div>
+                </div>
+                
+                <!-- 專用優惠狀態 -->
+                <div id="special-offers-panel" style="background:linear-gradient(135deg, #1a0a00 0%, #2d1a00 50%, #1a0a00 100%); border-radius:6px; font-size:8px; border: 1px solid rgba(241,196,15,0.3);">
+                    <div style="color:#f1c40f; margin-bottom:4px; font-weight:bold;">⭐ 專用優惠生效中</div>
+                    <div id="special-offers-timers" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
+                </div>
+            </div>
+
+            <!-- 🎫 優惠碼展示區 -->
+            <div id="promo-display-area"></div>
+
+            <div class="main-content">
+                <div id="event-banner">
+                    <div class="event-header">
+                        <div class="event-title-row">
+                            <span class="event-star-icon">🎉</span>
+                            <span class="event-name-text" id="event-banner-name">特別限定活動</span>
+                        </div>
+                        <span class="event-date-badge" id="event-banner-date"></span>
+                    </div>
+                    <div class="event-rewards-row" id="event-banner-rewards"></div>
+                </div>
+
+                <div id="boss-banner" style="display:none; background: linear-gradient(90deg, #2c3e50, #c0392b); padding: 15px; border-radius: 8px; border: 2px solid #e74c3c; margin-bottom: 15px; text-align: left; box-shadow: 0 0 15px #c0392b; animation: pulse 2s infinite; flex-shrink: 0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="color:#f1c40f; font-weight:bold; font-size:14px; margin-bottom:5px;">☠️ 虛空滅世者 降臨！</div>
+                            <div style="color:#fff; font-size:10px;">
+                                <div style="margin-bottom:2px;">全服 HP: <span id="boss-hp-text">計算中...</span></div>
+                                <div style="color:#e74c3c; font-weight:bold;">⏱️ 剩餘時間: <span id="boss-timer">--:--</span></div>
+                            </div>
+                        </div>
+                        <button onclick="joinBoss()" style="background:#f1c40f; color:#000; border:none; padding:10px 20px; font-weight:bold; border-radius:5px; cursor:pointer;">
+                            ⚔️ 立即討伐
+                        </button>
+                    </div>
+                    <div style="width:100%; height:8px; background:#333; margin-top:10px; border-radius:4px;">
+                        <div id="boss-hp-bar" style="width:100%; height:100%; background:#e74c3c; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+
+                <div class="ranking-box" id="boss-ranking-area" style="display:none;">
+                    <div class="rank-title">🏆 上屆討伐英雄榜</div>
+                    <div id="ranking-list">
+                        </div>
+                </div>
+
+                <div id="hireling-panel" style="display:none; background:#1a1a2e; border:2px solid #e67e22; border-radius:8px; padding:8px; margin-bottom:8px;">
+                    <div style="font-size:10px; color:#e67e22; margin-bottom:5px; cursor:pointer;" onclick="window.location.href='hire.html'">
+                        🏢 僱員狀態 <span style="color:#666; font-size:8px;">(點擊管理)</span>
+                    </div>
+                    <div id="hireling-status-list" style="font-size:9px;"></div>
+                </div>
+                
+                <div id="list-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px; flex-shrink: 0;">世界地圖</div>
+                <div class="map-container" id="map-list">
+                    <div class="btn btn-skeleton" style="height:48px;">&nbsp;</div>
+                    <div class="btn btn-skeleton" style="height:48px;">&nbsp;</div>
+                    <div class="btn btn-skeleton" style="height:48px;">&nbsp;</div>
+                    <div class="btn btn-skeleton" style="height:48px;">&nbsp;</div>
+                    <div class="btn btn-skeleton" style="height:48px;">&nbsp;</div>
+                </div>
             </div>
         </div>
 
-        <div id="game-content">
-            <div id="left-sidebar">
-                <div class="sidebar-title">🏰 城鎮設施</div>
-                <div class="facility-grid" id="fac-list-desktop">
-                    <a href="bag.html" class="fac-btn" style="border-color:#1abc9c;">🎒 背包</a>
-                    <a href="equip.html" class="fac-btn" style="border-color:#8e44ad;">🛡️ 裝備</a>
-                    <a href="market.html" class="fac-btn" style="border-color:#f39c12;">🏪 道具</a>
-                    <a href="smithy.html" class="fac-btn" style="border-color:#c0392b;">🔨 鍛造</a>
-                    <a href="enhance.html" class="fac-btn" style="border-color:#d35400;">🔥 強化</a>
-                    <a href="guild.html" class="fac-btn" style="border-color:#3498db;">🏰 公會</a>
-                    <div class="fac-btn" style="border-color:#27ae60;" onclick="openDailyQuests()">📜 任務</div>
-                </div>
-            </div>
-
-            <div id="main-view">
-                <div id="sys-msg-bar" style="display:none; margin-bottom:10px; background:var(--primary); padding:10px; border-radius:8px; font-size:12px; font-weight:bold;">
-                    📢 <span id="sys-msg-content"></span>
-                </div>
-
-                <div id="adventure-tab" class="view-section active">
-                    <div id="event-banner"></div>
-                    <div id="boss-banner"></div>
-                    
-                    <div class="view-section-title" style="font-size:10px; color:#aaa; margin:10px 0;">🗺️ 冒險地圖</div>
-                    <div id="map-list" style="min-height:300px;">
-                        </div>
-                </div>
-
-                <div id="town-tab-mobile" class="view-section">
-                    <div class="view-section-title">🏘️ 訪問設施</div>
-                    <div class="facility-grid">
-                        <a href="bag.html" class="fac-btn" style="border-color:#1abc9c;">🎒 背包</a>
-                        <a href="equip.html" class="fac-btn" style="border-color:#8e44ad;">🛡️ 裝備</a>
-                        <a href="market.html" class="fac-btn" style="border-color:#f39c12;">🏪 道具</a>
-                        <a href="auction.html" class="fac-btn" style="border-color:#2980b9;">⚖️ 市集</a>
-                        <a href="smithy.html" class="fac-btn" style="border-color:#c0392b;">🔨 鍛造</a>
-                        <a href="enhance.html" class="fac-btn" style="border-color:#d35400;">🔥 強化</a>
-                        <a href="gathering.html" class="fac-btn" style="border-color:#27ae60;">🌲 採集</a>
-                        <a href="guild.html" class="fac-btn" style="border-color:#3498db;">🏰 公會</a>
-                        <a href="rebirth.html" class="fac-btn" style="border-color:#c0392b;">🔄 轉生</a>
-                        <div class="fac-btn" style="border-color:#e67e22;" onclick="openPromoCode()">🎫 優惠碼</div>
-                    </div>
-                </div>
-
-                <div id="character-tab" class="view-section">
-                    <div class="char-card">
-                        <div class="char-header">
-                            <span id="pid" style="font-family:var(--font-pixel); font-size:16px; color:var(--success);">---</span>
-                            <span style="font-size:12px;">LEVEL <b id="lvl" style="color:var(--accent-color);">1</b></span>
-                        </div>
-
-                        <div class="bar-container">
-                            <div class="bar-label"><span>HP 生命值</span> <span id="hp">---/---</span></div>
-                            <div class="bar-bg"><div id="hp-bar-fill" class="bar-fill" style="background:var(--danger);"></div></div>
-                        </div>
-
-                        <div class="bar-container">
-                            <div class="bar-label"><span>MP 魔力值</span> <span id="mp">---/---</span></div>
-                            <div class="bar-bg"><div id="mp-bar-fill" class="bar-fill" style="background:var(--primary);"></div></div>
-                        </div>
-
-                        <div class="bar-container">
-                            <div class="bar-label"><span>EXP 經驗值</span> <span id="exp-txt">---/---</span></div>
-                            <div class="bar-bg"><div id="exp-fill" class="bar-fill" style="background:var(--success);"></div></div>
-                        </div>
-
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
-                            <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:6px; text-align:center;">
-                                <div style="font-size:9px; color:#aaa;">攻擊力</div>
-                                <div id="atk" style="font-weight:bold; font-size:14px; color:var(--danger);">---</div>
-                            </div>
-                            <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:6px; text-align:center;">
-                                <div style="font-size:9px; color:#aaa;">防禦力</div>
-                                <div id="def" style="font-weight:bold; font-size:14px; color:var(--primary);">---</div>
-                            </div>
-                        </div>
-
-                        <div id="durability-section" style="margin-top:20px; padding:15px; background:rgba(0,0,0,0.2); border-radius:10px; border:1px dashed #555;">
-                            <div style="font-size:10px; color:#aaa; margin-bottom:10px;">🔧 裝備耐久度</div>
-                            <div id="dur-weapon" style="display:none; margin-bottom:8px;">
-                                <div style="display:flex; justify-content:space-between; font-size:9px;"><span>⚔️ 武器</span><span id="dur-weapon-val">100</span></div>
-                                <div class="bar-bg" style="height:4px; margin-top:3px;"><div id="dur-weapon-bar" class="bar-fill" style="background:var(--success);"></div></div>
-                            </div>
-                            <div id="dur-armor" style="display:none; margin-bottom:8px;">
-                                <div style="display:flex; justify-content:space-between; font-size:9px;"><span>🛡️ 防具</span><span id="dur-armor-val">100</span></div>
-                                <div class="bar-bg" style="height:4px; margin-top:3px;"><div id="dur-armor-bar" class="bar-fill" style="background:var(--primary);"></div></div>
-                            </div>
-                            <div id="dur-acc" style="display:none;">
-                                <div style="display:flex; justify-content:space-between; font-size:9px;"><span>💍 飾品</span><span id="dur-acc-val">100</span></div>
-                                <div class="bar-bg" style="height:4px; margin-top:3px;"><div id="dur-acc-bar" class="bar-fill" style="background:var(--accent-color);"></div></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="special-offers-panel" style="display:none; background:linear-gradient(45deg, #1a252f, #2c3e50); padding:15px; border-radius:10px; border:1px solid var(--accent-color);">
-                        <div style="font-family:var(--font-pixel); font-size:8px; color:var(--accent-color); margin-bottom:10px;">⭐ ACTIVE BUFFS</div>
-                        <div id="special-offers-timers" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
-                    </div>
-                </div>
-
-                <div id="social-tab-mobile" class="view-section">
-                    <div class="view-section-title">👥 社交功能</div>
-                    <div style="display:flex; gap:10px; margin-bottom:15px;">
-                        <button class="btn" style="flex:1; margin-top:0;" onclick="openFriends()">好友列表 <span id="main-unread-badge" style="background:red; border-radius:50%; padding:2px 6px; font-size:9px; display:none;">0</span></button>
-                        <button class="btn" style="flex:1; margin-top:0;" onclick="openDailyQuests()">每日任務</button>
-                    </div>
-                    <div id="promo-display-area"></div>
-                    <div id="hireling-panel" style="display:none;"></div>
-                </div>
-            </div>
-
-            <div id="right-sidebar">
-                <div style="background:var(--panel-bg); padding:10px; font-family:var(--font-pixel); font-size:10px; text-align:center;">GLOBAL CHAT</div>
+        <div id="chat-container">
+            <div id="chat-header" onclick="toggleChat()"> 公頻聊天室 (點擊展開)</div>
+            <div id="chat-body">
                 <div id="chat-history"></div>
                 <div id="chat-input-area">
-                    <input type="text" id="chat-input" placeholder="說點什麼..." maxlength="50">
+                    <input type="text" id="chat-input" placeholder="輸入訊息..." maxlength="50">
                     <button id="chat-send">發送</button>
                 </div>
             </div>
         </div>
 
-        <div id="bottom-nav">
-            <div class="nav-item active" onclick="switchTab('adventure', this)">
-                <span class="nav-icon">🗺️</span><span class="nav-text">MAP</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('town', this)">
-                <span class="nav-icon">🏰</span><span class="nav-text">TOWN</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('character', this)">
-                <span class="nav-icon">🎒</span><span class="nav-text">ROLE</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('social', this)">
-                <span class="nav-icon">💬</span><span class="nav-text">SOCIAL</span>
-            </div>
-        </div>
-    </div>
-
-    <div id="notice-modal" class="modal-overlay">...</div>
-    <div id="friends-modal" class="modal-overlay">...</div>
-    <div id="pm-modal" class="modal-overlay">...</div>
-    <div id="promo-modal" class="modal-overlay">...</div>
-
+    </div> 
+    
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        // --- UI 控制邏輯 ---
-        function switchTab(tabId, el) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            
-            const target = document.getElementById(tabId + '-tab') || document.getElementById(tabId + '-tab-mobile');
-            if (target) target.classList.add('active');
-            if (el) el.classList.add('active');
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast-notification');
-            toast.innerText = msg;
-            toast.style.top = "30px"; 
-            setTimeout(() => { toast.style.top = "-60px"; }, 3000);
-        }
-
-        window.onload = () => {
-            setTimeout(() => {
-                const loader = document.getElementById('loading-overlay');
-                loader.style.opacity = '0';
-                setTimeout(() => loader.remove(), 500);
-            }, 1000);
+        // 開關側邊欄選單
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar-menu');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
         };
 
-        // --- 核心 Socket.io 邏輯 (完整移植) ---
-        const socket = io('https://mmo.ttctv-105.cc', { 
+        function escapeHtml(text) {
+            if (!text) return text;
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function hasForbiddenChars(str) {
+            const regex = /[\x00-\x1F\x7F\u200B\u2028-\u202F\u2060-\u2064\uFEFF]/;
+            return regex.test(str);
+        }
+
+        function formatName(name, rebirth) {
+            if (rebirth && rebirth > 0) {
+                return `${escapeHtml(name)}<span style="color:#f1c40f; font-weight:bold; margin-left:2px;">+${rebirth}</span>`;
+            }
+            return escapeHtml(name);
+        }
+
+      const socket = io('https://mmo.ttctv-105.cc', { 
     transports: ['websocket', 'polling'],
     secure: true // 因為你用 https，建議加呢個
 });
+        
+        let myLevel = 1;
+        let myName = ""; 
+        let currentChatTarget = null;
         let myToken = localStorage.getItem('rpg_token');
-        if (!myToken) window.location.href = 'index.html';
+        if (!myToken) { window.location.href = 'index.html'; }
+
+        function openNotice() {
+            document.getElementById('notice-modal').style.display = 'flex'; 
+        }
+        function closeNotice() {
+            document.getElementById('notice-modal').style.display = 'none';
+        }
+
+        function openDailyQuests() {
+            document.getElementById('quest-modal').style.display = 'flex';
+            socket.emit('getDailyQuests');
+        }
+
+        function claimQuest(key) {
+            socket.emit('claimDailyReward', key);
+        }
+
+        const ITEM_NAME_MAP = {
+            'potion_hp': '生命藥水',
+            'potion_mp': '魔力藥水',
+            'potion_mid': '中級藥水',
+            'scroll_exp': '經驗卷軸',
+            'lucky_bag': '奇蹟福袋',
+            'enhance_stone': '強化石',
+            'elixir': '神之甘露',
+            'gem_atk': '攻擊寶石',
+            'god_stone': '神之石',
+            'void_soup': "虛空海鮮湯",
+            'copper_ore': '銅礦石',
+            'soft_fur': '柔軟皮毛',
+            'beast_fang': '野獸尖牙',
+            'slime_gel': '黏液',
+            'iron_ore': '鐵礦石',
+            'leather': '皮革',
+            'tough_hide': '硬皮革',
+            'magic_dust': '魔粉',
+            'poison_sac': '毒囊',
+            'bone_shard': '碎骨片',
+            'silver_ore': '銀礦石',
+            'fire_core': '火焰核心',
+            'lava_rock': '熔岩石',
+            'coal': '煤炭',
+            'dragon_scale': '龍鱗',
+            'gold_ore': '金礦石',
+            'ice_crystal': '永恆冰晶',
+            'yeti_fur': '雪怪毛皮',
+            'spirit_dust': '靈魂粉末',
+            'mithril': '秘銀',
+            'void_dust': '虛空之塵',
+            'demon_horn': '惡魔之角',
+            'dark_essence': '暗之精華',
+            'adamantite': '精金',
+            'ruby': '紅寶石',
+            'diamond': '鑽石',
+            'god_blood': '神之血',
+            'chaos_orb': '混沌寶珠',
+            'angel_feather': '天使之羽',
+            'titan_steel': '泰坦神鋼',
+            'star_fragment': '星之碎片',
+            'void_shard': '虛空碎片',
+            'dark_matter': '暗物質',
+            'cosmic_steel': '宇宙鋼',
+            'star_core': '恆星核心',
+            'time_sand': '時光之沙',
+            'dimension_gem': '維度寶石',
+            'entropy_origin': '熱寂原點',
+            'oak_log': '橡木原木',
+            'maple_log': '楓木原木',
+            'yew_log': '紫杉原木',
+            'ancient_log': '遠古神木',
+            'spirit_wood': '靈木',
+            'dragon_wood': '龍骨木',
+            'void_wood': '虛空木',
+            'chaos_wood': '混沌神木',
+            'carp': '鯉魚',
+            'salmon': '鮭魚',
+            'koi': '錦鯉',
+            'magic_fish': '魔力魚',
+            'tuna': '黑鮪魚',
+            'shark': '大白鯊',
+            'lava_eel': '熔岩鰻',
+            'void_squid': '虛空烏賊',
+            'god_carp': '神之鯉',
+            'pearl': '珍珠',
+            'quantum_residue': '量子殘渣',
+            'multiverse_shard': '多元宇宙碎片',
+            'divinity_core': '創世神格',
+            'singularity_weapon':'奇點·萬象崩壞',
+            'void_reaper':"虛空收割者",
+            'demon_armor':"惡魔戰甲",
+            'singularity_armor': '奇點·絕對防禦',
+            'skill_shard': '✨ 技能碎片',
+            'shard_ring_novice': '學徒碎片戒指',
+            'shard_neck_brave': '勇者碎片項鍊',
+            'shard_charm_wind': '疾風碎片護符',
+            'shard_ring_vampire': '吸血鬼碎片指環',
+            'shard_earring_holy': '神聖碎片耳環',
+            'shard_belt_titan': '泰坦碎片腰帶',
+            'shard_pendant_dragon': '龍魂碎片吊墜',
+            'shard_ring_void': '虛空碎片之戒',
+            'shard_core_galaxy': '銀河碎片核心',
+            'shard_crown_infinity': '無限碎片皇冠'
+        };
+        
+        socket.on('dailyQuestData', (data) => {
+            const listDiv = document.getElementById('quest-list');
+            listDiv.innerHTML = ''; 
+
+            const { config, progress, claimed } = data;
+
+            if (!config || Object.keys(config).length === 0) {
+                listDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#aaa;">暫無任務，請稍後再試</div>';
+                return;
+            }
+
+            for (const [key, quest] of Object.entries(config)) {
+                const cur = progress[key] || 0;
+                const target = quest.target;
+                const displayCur = cur > target ? target : cur;
+                
+                const isDone = cur >= target;
+                const isClaimed = claimed.includes(key);
+
+                let rewardText = `💰金錢:${quest.reward.gold} ✨EXP:${quest.reward.exp}`;
+                
+                if (quest.reward.item) {
+                    const itemName = ITEM_NAME_MAP[quest.reward.item] || quest.reward.item;
+                    const qty = quest.reward.itemCount || 1;
+                    const qtyText = qty > 1 ? ` x${qty}` : "";
+                    rewardText += ` <span style="color:#e67e22; font-weight:bold;">🎁${itemName}${qtyText}</span>`;
+                }
+
+                let btnHtml = '';
+                if (isClaimed) {
+                    btnHtml = `<button disabled style="background:#7f8c8d; color:#fff; border:1px solid #555; padding:5px; width:100px; border-radius:4px;">已領取</button>`;
+                } else if (isDone) {
+                    btnHtml = `<button onclick="claimQuest('${key}')" style="background:#2ecc71; color:#fff; border:1px solid #27ae60; padding:5px; cursor:pointer; font-weight:bold; width:100px; border-radius:4px; box-shadow:0 2px 5px rgba(0,0,0,0.2);">領取</button>`;
+                } else {
+                    btnHtml = `<button disabled style="background:#34495e; color:#7f8c8d; border:1px solid #2c3e50; padding:5px; width:100px; border-radius:4px;">未完成</button>`;
+                }
+
+                const itemDiv = document.createElement('div');
+                itemDiv.style.background = 'rgba(0,0,0,0.3)';
+                itemDiv.style.marginBottom = '8px';
+                itemDiv.style.padding = '10px';
+                itemDiv.style.borderRadius = '8px';
+                itemDiv.style.border = '1px solid #444';
+
+                if (isDone && !isClaimed) itemDiv.style.borderColor = '#2ecc71';
+
+                itemDiv.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <span style="font-weight:bold; color:#f1c40f; font-size:12px;">${quest.name}</span>
+                        <span style="font-size:10px; color:${isDone ? '#2ecc71' : '#aaa'}; font-weight:bold;">
+                            ${displayCur}/${target}
+                        </span>
+                    </div>
+                    <div style="font-size:10px; color:#bdc3c7; margin-bottom:8px;">${quest.desc}</div>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="font-size:10px; color:#3498db;">${rewardText}</div>
+                        <div>${btnHtml}</div>
+                    </div>
+                `;
+                listDiv.appendChild(itemDiv);
+            }
+        });
+
+        socket.on('questResult', (res) => {
+            showToast(res.msg);
+        });
+
+        function openFriends() {
+            document.getElementById('friends-modal').style.display = 'flex';
+            socket.emit('getFriends'); 
+        }
+
+        function sendRequest() {
+            const input = document.getElementById('friend-input');
+            const name = input.value.trim();
+            if(!name) return;
+            
+            if (hasForbiddenChars(name)) {
+                alert("❌ 名稱包含非法隱藏字元！");
+                return;
+            }
+
+            socket.emit('sendFriendRequest', name);
+            input.value = '';
+        }
+
+        function answerRequest(name, action) {
+            socket.emit('handleFriendRequest', { requesterName: name, action: action });
+        }
+
+        function removeFriend(name) {
+            if(confirm(`確定要刪除好友 [${name}] 嗎？`)) {
+                socket.emit('removeFriend', name);
+            }
+        }
+
+        function startPM(name) {
+            currentChatTarget = name;
+            document.getElementById('friends-modal').style.display = 'none';
+            document.getElementById('pm-modal').style.display = 'flex';
+            document.getElementById('pm-target-name').innerText = name;
+            document.getElementById('pm-history').innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">載入記錄中...</div>';
+            
+            socket.emit('getPrivateHistory', name); 
+            socket.emit('markAsRead', name);
+            socket.emit('getFriends');
+        }
+
+        function closePM() {
+            document.getElementById('pm-modal').style.display = 'none';
+            currentChatTarget = null;
+        }
+
+        // ================================
+        // 🆕 優惠碼兌換功能
+        // ================================
+        function openPromoCode(code) {
+            document.getElementById('promo-modal').style.display = 'flex';
+            const resultDiv = document.getElementById('promo-code-result');
+            resultDiv.style.display = 'none';
+            const input = document.getElementById('promo-code-input-field');
+            input.value = code || '';
+            if (code) {
+                // 有預填優惠碼，直接聚焦兌換按鈕
+                setTimeout(() => document.getElementById('promo-redeem-submit-btn').focus(), 100);
+            } else {
+                setTimeout(() => input.focus(), 100);
+            }
+        }
+
+        function closePromoCode() {
+            document.getElementById('promo-modal').style.display = 'none';
+        }
+
+        function submitPromoCode() {
+            const input = document.getElementById('promo-code-input-field');
+            const code = input.value.trim();
+            if (!code) { alert('請輸入優惠碼'); return; }
+            
+            const resultDiv = document.getElementById('promo-code-result');
+            resultDiv.style.display = 'block';
+            resultDiv.style.background = '#fff3cd';
+            resultDiv.style.color = '#856404';
+            resultDiv.style.border = '1px solid #ffc107';
+            resultDiv.innerHTML = '⏳ 兌換中...';
+            input.disabled = true;
+
+            socket.emit('redeemPromoCode', { code: code });
+        }
+
+        socket.on('promoCodeResult', (res) => {
+            const resultDiv = document.getElementById('promo-code-result');
+            const input = document.getElementById('promo-code-input-field');
+            input.disabled = false;
+
+            if (res.success) {
+                resultDiv.style.background = '#d4edda';
+                resultDiv.style.color = '#155724';
+                resultDiv.style.border = '1px solid #28a745';
+                resultDiv.innerHTML = `<b>🎉 兌換成功！</b><br>${res.msg}`;
+            } else {
+                resultDiv.style.background = '#f8d7da';
+                resultDiv.style.color = '#721c24';
+                resultDiv.style.border = '1px solid #dc3545';
+                resultDiv.innerHTML = `<b>${res.msg}</b>`;
+            }
+        });
+
+        // ================================
+        // 🎫 優惠碼展示區 — 渲染有效優惠碼 (預設摺合)
+        // ================================
+        function togglePromoDisplay() {
+            const list = document.getElementById('promo-card-list');
+            const arrow = document.getElementById('promo-toggle-arrow');
+            if (list.classList.contains('expanded')) {
+                list.classList.remove('expanded');
+                arrow.classList.remove('expanded');
+            } else {
+                list.classList.add('expanded');
+                arrow.classList.add('expanded');
+            }
+        }
+
+        socket.on('activePromoCodes', (codes) => {
+            const area = document.getElementById('promo-display-area');
+            if (!codes || codes.length === 0) {
+                area.classList.remove('active');
+                area.innerHTML = '';
+                return;
+            }
+            // 摺合頂部欄
+            let html = `
+            <div class="promo-toggle-bar" onclick="togglePromoDisplay()">
+                <div class="promo-toggle-left">
+                    <span class="promo-toggle-arrow" id="promo-toggle-arrow">▸</span>
+                    🎫 優惠碼
+                </div>
+                <span class="promo-toggle-badge">${codes.length}</span>
+            </div>
+            <div class="promo-card-list" id="promo-card-list">`;
+
+            codes.forEach(promo => {
+                // 日期文字
+                let dateText = '';
+                if (promo.startDate && promo.endDate) {
+                    dateText = `${promo.startDate} ~ ${promo.endDate}`;
+                } else if (promo.endDate) {
+                    dateText = `截止: ${promo.endDate}`;
+                } else if (promo.startDate) {
+                    dateText = `開始: ${promo.startDate}`;
+                }
+
+                // 使用次數
+                let usageText = '';
+                if (promo.maxUses > 0) {
+                    const remaining = promo.maxUses - promo.usedCount;
+                    usageText = `<span class="promo-usage-text">🎟️ 已用 <span class="num">${promo.usedCount}</span>/${promo.maxUses}</span>`;
+                    if (remaining <= 0) {
+                        usageText = `<span class="promo-usage-text" style="color:#e74c3c;">🎟️ 已額滿</span>`;
+                    }
+                } else {
+                    usageText = `<span class="promo-usage-text">🎟️ 已使用 <span class="num">${promo.usedCount}</span> 次 (無限)</span>`;
+                }
+
+                // 物品列表
+                let itemsHtml = '';
+                if (promo.items && promo.items.length > 0) {
+                    itemsHtml = '<div class="promo-card-items">' +
+                        promo.items.map(item => `<span class="promo-item-chip">${item.name} x${item.count}</span>`).join('') +
+                        '</div>';
+                }
+
+                // 描述
+                let descHtml = promo.description ? `<div class="promo-card-desc">${promo.description}</div>` : '';
+
+                html += `
+                <div class="promo-card">
+                    <div class="promo-card-header">
+                        <div class="promo-card-title">
+                            <span class="promo-card-icon">🎫</span>
+                            <span class="promo-card-name">${promo.code}</span>
+                        </div>
+                        ${dateText ? `<span class="promo-card-date">${dateText}</span>` : ''}
+                    </div>
+                    ${descHtml}
+                    ${itemsHtml}
+                    <div class="promo-card-footer">
+                        ${usageText}
+                        <button class="promo-redeem-btn" onclick="openPromoCode('${promo.code}')">兌換優惠碼</button>
+                    </div>
+                </div>`;
+            });
+
+            html += '</div>'; // close promo-card-list
+            area.innerHTML = html;
+            area.classList.add('active');
+        });
+
+        function sendPM() {
+            const input = document.getElementById('pm-input');
+            const msg = input.value.trim();
+            if (!msg || !currentChatTarget) return;
+            
+            if (hasForbiddenChars(msg)) {
+                alert("❌ 訊息包含非法隱藏字元，請移除後重試！");
+                return;
+            }
+            
+            socket.emit('privateMessage', { targetName: currentChatTarget, msg: msg });
+            input.value = '';
+        }
+        
+        document.getElementById('pm-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendPM();
+        });
+
+        socket.on('privateHistoryUpdate', (data) => {
+            if (currentChatTarget !== data.targetName) return;
+            
+            const historyDiv = document.getElementById('pm-history');
+            historyDiv.innerHTML = '';
+            
+            if (!data.history || data.history.length === 0) {
+                historyDiv.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">無對話記錄</div>';
+            } else {
+                data.history.forEach(row => {
+                    const rawTime = row.created_at || row.time || Date.now();
+                    const dateObj = new Date(rawTime);
+                    const timeStr = dateObj.toLocaleTimeString('en-GB', { hour12: false }); 
+
+                    appendPM(row.sender, row.message || row.msg, timeStr);
+                });
+            }
+            
+            setTimeout(() => { historyDiv.scrollTop = historyDiv.scrollHeight; }, 100);
+        });
+
+        socket.on('receivePrivateChat', (data) => {
+            const time = data.time ? new Date(data.time) : new Date();
+            const timeStr = time.toLocaleTimeString('en-GB', { hour12: false });
+
+            if (currentChatTarget && (data.fromName === currentChatTarget || data.fromName === myName)) {
+                const isSelf = (data.fromName === myName);
+                const senderName = isSelf ? myName : data.fromName;
+                
+                appendPM(senderName, data.msg, timeStr);
+
+                if (!isSelf) {
+                    socket.emit('markAsRead', data.fromName);
+                }
+            } 
+            else if (data.fromName !== myName) {
+                showToast(`📩 收到來自 [${escapeHtml(data.fromName)}] 的私訊`);
+                socket.emit('getFriends'); 
+            }
+        });
+
+        socket.on('pmNotification', (senderName) => {
+            if (currentChatTarget !== senderName) {
+                showToast(`📩 ${escapeHtml(senderName)} 傳送了私訊給你！`);
+                socket.emit('getFriends');
+            }
+        });
+
+        function appendPM(sender, msg, time = "") {
+            const box = document.getElementById('pm-history');
+            if (!box) return;
+
+            const div = document.createElement('div');
+            div.style.marginBottom = "8px";
+            
+            const isMe = (sender === myName); 
+            
+            if (isMe) {
+                div.style.textAlign = "right";
+                div.innerHTML = `
+                    <span style="font-size:8px; color:#aaa; margin-right:5px;">${time}</span>
+                    <span style="background:#3498db; color:white; padding:6px 10px; border-radius:10px; border-bottom-right-radius:0; font-size:12px;">${escapeHtml(msg)}</span>
+                `;
+            } else {
+                div.style.textAlign = "left";
+                div.innerHTML = `
+                    <div style="font-size:10px; color:#f1c40f; margin-bottom:2px;">${escapeHtml(sender)}</div>
+                    <span style="background:#e67e22; color:white; padding:6px 10px; border-radius:10px; border-bottom-left-radius:0; font-size:12px;">${escapeHtml(msg)}</span>
+                    <span style="font-size:8px; color:#aaa; margin-left:5px;">${time}</span>
+                `;
+            }
+
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        socket.on('friendListUpdate', (data) => {
+            const friends = data.friends || [];
+            const requests = data.requests || [];
+            const totalUnread = data.totalUnread || 0;
+
+            const mainBadge = document.getElementById('main-unread-badge');
+            if (totalUnread > 0) {
+                mainBadge.innerText = totalUnread > 99 ? '99+' : totalUnread;
+                mainBadge.style.display = 'flex';
+            } else {
+                mainBadge.style.display = 'none';
+            }
+
+            const reqSection = document.getElementById('request-section');
+            const reqContainer = document.getElementById('request-list-content');
+            reqContainer.innerHTML = '';
+            
+            if (requests && requests.length > 0) {
+                reqSection.style.display = 'block';
+                requests.forEach(name => {
+                    const div = document.createElement('div');
+                    div.style.cssText = "display:flex; justify-content:space-between; align-items:center; padding:5px; border-bottom:1px dashed #ccc; font-size:10px;";
+                    div.innerHTML = `
+                        <span style="font-weight:bold;">${escapeHtml(name)}</span>
+                        <div>
+                            <button onclick="answerRequest('${escapeHtml(name)}', 'accept')" style="background:#2ecc71; border:none; color:white; cursor:pointer; padding:2px 5px; border-radius:3px;">✔</button>
+                            <button onclick="answerRequest('${escapeHtml(name)}', 'reject')" style="background:#e74c3c; border:none; color:white; cursor:pointer; padding:2px 5px; border-radius:3px;">✘</button>
+                        </div>
+                    `;
+                    reqContainer.appendChild(div);
+                });
+            } else {
+                reqSection.style.display = 'none';
+            }
+
+            const friendContainer = document.getElementById('friend-list-content');
+            friendContainer.innerHTML = '';
+            
+            if (friends.length === 0) {
+                friendContainer.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">還沒有好友，快去加人吧！</div>';
+            } else {
+                friends.sort((a, b) => (a.isOnline === b.isOnline) ? 0 : a.isOnline ? -1 : 1);
+                friends.forEach(f => {
+                    const div = document.createElement('div');
+                    div.className = 'friend-row';
+                    const statusClass = f.isOnline ? 'status-on' : 'status-off';
+                    const color = f.isOnline ? '#2c3e50' : '#aaa';
+                    
+                    let badgeHtml = '';
+                    if (f.unread > 0) {
+                        badgeHtml = `<span class="friend-badge">${f.unread}</span>`;
+                    }
+
+                    div.innerHTML = `
+                        <div style="display:flex; align-items:center; color:${color}">
+                            <div class="friend-status ${statusClass}"></div>
+                            <span class="friend-name">${escapeHtml(f.name)}</span>
+                            ${badgeHtml}
+                        </div>
+                        <div class="friend-actions">
+                            <button class="btn-pm" onclick="startPM('${escapeHtml(f.name)}')">私訊</button>
+                            <button class="btn-del" onclick="removeFriend('${escapeHtml(f.name)}')">刪除</button>
+                        </div>
+                    `;
+                    friendContainer.appendChild(div);
+                });
+            }
+        });
+
+        socket.on('updateFriendListRequest', () => {
+            socket.emit('getFriends'); 
+        });
+
+        const WORLD_MAP = [
+            { id: 'city_1', name: '曙光平原', reqLv: 1, desc: '冒險的起點 (Lv.1-20)', monsters: [{ id: 'slime', name: '史萊姆', lv: 1 }, { id: 'rat', name: '大老鼠', lv: 3 }, { id: 'bee', name: '殺人蜂', lv: 5 }, { id: 'boar', name: '野豬', lv: 8 }, { id: 'thief', name: '盜賊', lv: 12 }, { id: 'wolf_king', name: '🐺 狼王 (BOSS)', lv: 15 }] },
+            { id: 'city_2', name: '迷霧沼澤', reqLv: 1, desc: '充滿毒氣與亡靈 (Lv.20-40)', monsters: [{ id: 'snake', name: '毒蛇', lv: 22 }, { id: 'zombie', name: '腐屍', lv: 25 }, { id: 'skeleton', name: '骷髏兵', lv: 28 }, { id: 'ghoul', name: '食屍鬼', lv: 32 }, { id: 'witch', name: '沼澤女巫', lv: 35 }, { id: 'hydra', name: '🐍 九頭蛇 (BOSS)', lv: 40 }] },
+            { id: 'city_3', name: '灼熱峽谷', reqLv: 1, desc: '烈火與熔岩 (Lv.40-60)', monsters: [{ id: 'fire_imp', name: '火焰小鬼', lv: 42 }, { id: 'lava_golem', name: '熔岩戈侖', lv: 45 }, { id: 'salamander', name: '火蜥蜴', lv: 48 }, { id: 'fire_mage', name: '烈焰法師', lv: 52 }, { id: 'dragon_hatchling', name: '幼龍', lv: 55 }, { id: 'balrog', name: '🔥 炎魔 (BOSS)', lv: 60 }] },
+            { id: 'city_4', name: '極寒凍土', reqLv: 1, desc: '永冬之地 (Lv.60-80)', monsters: [{ id: 'snow_wolf', name: '雪原狼', lv: 62 }, { id: 'yeti', name: '雪人', lv: 65 }, { id: 'ice_spirit', name: '冰精靈', lv: 68 }, { id: 'frost_knight', name: '寒霜騎士', lv: 72 }, { id: 'ice_dragon', name: '冰霜龍', lv: 75 }, { id: 'lich_king', name: '❄️ 巫妖王 (BOSS)', lv: 80 }] },
+            { id: 'city_5', name: '虛空要塞', reqLv: 1, desc: '接近魔界的地方 (Lv.80-100)', monsters: [{ id: 'void_eye', name: '虛空之眼', lv: 82 }, { id: 'shadow_assassin', name: '暗影刺客', lv: 85 }, { id: 'dark_paladin', name: '墮落聖騎', lv: 88 }, { id: 'demon_guard', name: '惡魔守衛', lv: 92 }, { id: 'succubus', name: '魅魔', lv: 95 }, { id: 'void_lord', name: '👁️ 虛空領主 (BOSS)', lv: 99 }] },
+            { id: 'city_6', name: '魔界王座', reqLv: 1, desc: '💀 最終決戰 (Lv.100-150)', monsters: [{ id: 'chaos_beast', name: '混沌巨獸', lv: 105 }, { id: 'fallen_angel', name: '墮天使', lv: 110 }, { id: 'demon_king', name: '👑 魔王撒旦', lv: 150 }] },
+            { id: 'city_7', name: '虛空裂縫', reqLv: 1, desc: '🟣 扭曲的次元 (Lv.160-180)', monsters: [{ id: 'void_walker', name: '虛空行者', lv: 160 }, { id: 'chaos_knight', name: '混沌騎士', lv: 170 }, { id: 'abyss_dragon', name: '🐉 深淵魔龍 (BOSS)', lv: 180 }] },
+            { id: 'city_8', name: '眾神墓地', reqLv: 1, desc: '💀 神話終結之地 (Lv.190-200)', monsters: [{ id: 'fallen_titan', name: '墮落泰坦', lv: 190 }, { id: 'genesis_god', name: '☠️ 創世破壞神 (FINAL)', lv: 200 }] },
+            { id: 'city_9', name: '虛空之界', reqLv: 1, desc: '⚫ 虛無的盡頭 (Lv.210-225)', monsters: [{ id: 'void_worm', name: '虛空吞噬蟲', lv: 210 }, { id: 'shadow_phantom', name: '👻 虚影夢魘 (BOSS)', lv: 225 }] },
+            { id: 'city_10', name: '星際航道', reqLv: 1, desc: '🌌 穿越星辰 (Lv.245-260)', monsters: [{ id: 'star_eater', name: '吞星巨獸', lv: 245 }, { id: 'nebula_dragon', name: '🐲 星雲幻龍 (BOSS)', lv: 260 }] },
+            { id: 'city_11', name: '維度盡頭', reqLv: 1, desc: '⏳ 時間與空間的終點 (Lv.280-300)', monsters: [{ id: 'time_keeper', name: '時空裁決者', lv: 280 }, { id: 'dimension_breaker', name: '維度粉碎者', lv: 290 }, { id: 'entropy_god', name: '👑 終焉·熱寂之神 (GOD)', lv: 300 }] },
+            { id: 'city_12', name: '終焉奇點', reqLv: 1, desc: '⚛️ 宇宙重啟之地 (Lv.450-500)', monsters: [{ id: 'chaos_boss', name: '🌀 混沌幻影 (隨機)', lv: '350+' }, { id: 'akashic_record', name: '👁️ 全知者·阿卡西 (BOSS)', lv: 550 }] },
+            { id: 'city_13', name: '零之領域', reqLv: 1, desc: '☠️ 宇宙的終焉 (Lv.580+)', monsters: [{ id: 'void_devourer_god', name: '🌌 零界·虛無吞噬者 (GOD)', lv: 580}] }
+        ];
+
+        let currentView = 'cities'; 
+        let selectedCity = null;
+        let selectedMonster = null;
+        let cityData = {}; 
+        let activeRooms = []; 
+        let bossHubTimer = null;
 
         socket.on('connect', () => {
             const status = document.getElementById('conn-status');
-            status.innerText = "● 已連線";
+            status.innerHTML = " 已連線";
             status.style.color = "#2ecc71";
             socket.emit('joinGame', myToken);
+            // 請求目前有效優惠碼
             socket.emit('getActivePromoCodes');
         });
 
@@ -910,38 +2250,13 @@
                 });
             } else if (currentView === 'monsters') {
                 document.getElementById('list-title').innerText = `${selectedCity.name} - 怪物`;
-                
-                // 屬性 Icon 對照表
-                const ELE_ICON = { 'fire':'🔥', 'ice':'❄️', 'nature':'🌲', 'void':'🌌', 'holy':'✨', 'neutral':'' };
-                
-                // 簡單的前端屬性分類判定 (與後端一致)
-                const fireMobs = ['fire_imp', 'lava_golem', 'salamander', 'fire_mage', 'dragon_hatchling', 'balrog', 'demon_king'];
-                const iceMobs = ['snow_wolf', 'yeti', 'ice_spirit', 'frost_knight', 'ice_dragon', 'lich_king'];
-                const natureMobs = ['slime', 'bee', 'wolf_king', 'snake', 'hydra', 'fallen_titan'];
-                const holyMobs = ['fallen_angel', 'genesis_god', 'nebula_dragon', 'time_keeper', 'akashic_record'];
-                const voidMobs = ['zombie', 'skeleton', 'ghoul', 'witch', 'void_eye', 'shadow_assassin', 'dark_paladin', 'demon_guard', 'succubus', 'void_lord', 'chaos_beast', 'void_walker', 'chaos_knight', 'abyss_dragon', 'void_worm', 'shadow_phantom', 'star_eater', 'dimension_breaker', 'entropy_god', 'void_devourer_god', 'chaos_boss'];
-                
                 selectedCity.monsters.forEach(mob => {
                     const rooms = activeRooms.filter(r => r.monsterKey === mob.id);
                     const fighting = rooms.filter(r => r.status === 'fighting').length;
                     const waiting = rooms.filter(r => r.status === 'waiting').length;
-                    
-                    let ele = 'neutral';
-                    if (fireMobs.includes(mob.id)) ele = 'fire';
-                    else if (iceMobs.includes(mob.id)) ele = 'ice';
-                    else if (natureMobs.includes(mob.id)) ele = 'nature';
-                    else if (holyMobs.includes(mob.id)) ele = 'holy';
-                    else if (voidMobs.includes(mob.id)) ele = 'void';
-                    
-                    let icon = ELE_ICON[ele];
-
                     html += `<div class="btn" style="border-color:#c0392b" onclick="triggerSelectMonster('${mob.id}')">
-                        <span style="font-size:12px; font-weight:bold;">${icon} ${mob.name} (LV.${mob.lv})</span>
-                        <div style="margin-top:5px; font-size:10px;">
-                            <span class="info-tag" style="color:#2ecc71">等:${waiting}</span>
-                            <span class="info-tag" style="color:#e74c3c; margin-right:10px;">戰:${fighting}</span>
-                        </div>
-                    </div>`;
+                        <span style="font-size:12px; font-weight:bold;">${mob.name} (LV.${mob.lv})</span>
+                        <div style="margin-top:5px; font-size:10px;"><span class="info-tag" style="color:#2ecc71">等:${waiting}</span><span class="info-tag" style="color:#e74c3c; margin-right:10px;">戰:${fighting}</span></div></div>`;
                 });
                 html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('cities')">◀ 返回地圖</div>`;
             } else if (currentView === 'rooms') {
@@ -981,13 +2296,6 @@
                 }
             }
             container.innerHTML = html;
-            // 登出功能
-            function logout() {
-                if(confirm("確定要登出嗎？")) {
-                    localStorage.removeItem('rpg_token');
-                    window.location.href = 'index.html';
-                }
-            }
         }
     </script>
 
