@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會3</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -980,8 +980,8 @@
             transform: scale(0.98);
             filter: brightness(0.9);
         }
-        /* ========================================================= */
         </style>
+        /* ========================================================= */
 </head>
 <body>
     <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -2616,11 +2616,14 @@
 
         // 初始化：查詢伺服器背景採集狀態
         function initBackgroundGather() {
+            console.log('[背景採集] 查詢伺服器狀態...');
             socket.emit('getBackgroundGatherStatus');
         }
 
-        // 接收背景採集狀態
+        // 接收背景採集狀態 (統一處理器)
         socket.on('backgroundGatherStatus', (data) => {
+            console.log('[背景採集] 收到狀態:', data);
+
             if (!data.active) {
                 // 沒有進行中的採集
                 document.getElementById('bg-gather-panel').classList.remove('active');
@@ -2632,78 +2635,45 @@
             }
 
             // 顯示背景採集面板
-            showBackgroundGatherPanel(data);
-            startBackgroundGatherTimer();
-        });
-
-        // 顯示背景採集面板
-        function showBackgroundGatherPanel(data) {
             const panel = document.getElementById('bg-gather-panel');
             const nodeName = document.getElementById('bg-gather-node-name');
             const box = document.getElementById('bg-gather-box');
             const collectBtn = document.getElementById('bg-gather-collect-btn');
+            const progressFill = document.getElementById('bg-gather-progress-fill');
+            const remainingEl = document.getElementById('bg-gather-remaining');
+            const etaEl = document.getElementById('bg-gather-eta');
 
+            // 更新採集地點名稱
             nodeName.textContent = data.nodeName || '---';
 
-            // 檢查是否完成
-            if (data.isComplete) {
-                box.classList.add('complete');
-                collectBtn.classList.add('ready');
-            } else {
-                box.classList.remove('complete');
-                collectBtn.classList.remove('ready');
-            }
-
-            panel.classList.add('active');
-        }
-
-        // 啟動背景採集計時器 (定期向伺服器查詢)
-        function startBackgroundGatherTimer() {
-            if (bgGatherInterval) {
-                clearInterval(bgGatherInterval);
-            }
-
-            const updateTimer = () => {
-                socket.emit('getBackgroundGatherStatus');
-            };
-
-            // 每秒更新一次
-            bgGatherInterval = setInterval(updateTimer, 1000);
-        }
-
-        // 接收狀態更新
-        socket.on('backgroundGatherStatus', (data) => {
-            if (!data.active) {
-                document.getElementById('bg-gather-panel').classList.remove('active');
-                if (bgGatherInterval) {
-                    clearInterval(bgGatherInterval);
-                    bgGatherInterval = null;
-                }
-                return;
-            }
-
-            // 更新進度條
-            const progressFill = document.getElementById('bg-gather-progress-fill');
-            const totalDuration = data.nodeTime * data.remainingCount;
-            const progress = Math.min(100, (data.elapsed / totalDuration) * 100);
+            // 更新進度條 (使用伺服器返回的 progress)
+            const progress = Math.min(100, data.progress || 0);
             progressFill.style.width = `${progress}%`;
 
             // 更新剩餘次數
-            const remainingEl = document.getElementById('bg-gather-remaining');
-            remainingEl.textContent = `剩餘: ${data.remainingCount} 次`;
+            remainingEl.textContent = `剩餘: ${data.remainingCount || 0} 次`;
 
-            // 更新預計完成時間
-            const etaEl = document.getElementById('bg-gather-eta');
-            if (data.remaining > 0) {
-                const mins = Math.floor(data.remaining / 60000);
-                const secs = Math.floor((data.remaining % 60000) / 1000);
+            // 更新預計完成時間 (使用伺服器返回的 remainingTime)
+            if (data.remainingTime && data.remainingTime > 0) {
+                const mins = Math.floor(data.remainingTime / 60000);
+                const secs = Math.floor((data.remainingTime % 60000) / 1000);
                 etaEl.textContent = `預計完成: ${mins}分${secs}秒`;
+                box.classList.remove('complete');
+                collectBtn.classList.remove('ready');
             } else {
                 etaEl.textContent = '已完成！';
-                const box = document.getElementById('bg-gather-box');
                 box.classList.add('complete');
-                const collectBtn = document.getElementById('bg-gather-collect-btn');
                 collectBtn.classList.add('ready');
+            }
+
+            // 顯示面板
+            panel.classList.add('active');
+
+            // 啟動定期查詢計時器
+            if (!bgGatherInterval) {
+                bgGatherInterval = setInterval(() => {
+                    socket.emit('getBackgroundGatherStatus');
+                }, 1000);
             }
         });
 
