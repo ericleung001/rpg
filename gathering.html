@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>資源採集v3</title>
+    <title>資源採集v4</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -94,6 +94,14 @@
             padding: 10px 20px; cursor: pointer; font-family: inherit; font-size: 12px;
             border-radius: 4px; margin-top: 15px;
         }
+        
+        /* 🟢 背景模式按鈕 */
+        .overlay-bg-btn {
+            background: #27ae60; border: 2px solid #2ecc71; color: white;
+            padding: 10px 20px; cursor: pointer; font-family: inherit; font-size: 12px;
+            border-radius: 4px; margin-top: 10px;
+        }
+        .overlay-bg-btn:active { transform: scale(0.95); }
 
         /* 🟢 聊天室樣式 (修正版) */
         #chat-container {
@@ -173,7 +181,7 @@
         <div id="main-content">
             <div class="header">
                 <span style="font-size:12px;">🌲 資源採集</span>
-                <a href="hub.html" class="back-btn" onclick="stopGathering()">回大廳</a>
+                <a href="hub.html" class="back-btn" id="back-btn">回大廳</a>
             </div>
 
             <div class="gather-status-bar">
@@ -225,6 +233,7 @@
             </div>
             <div id="timer-text" style="margin-top: 5px; font-size: 10px; color: #aaa;">請勿關閉視窗</div>
             <button class="overlay-stop-btn" onclick="stopGathering()">⛔ 停止採集</button>
+            <button class="overlay-bg-btn" onclick="goToBackgroundMode()">🔄 背景執行</button>
         </div>
     </div>
 
@@ -250,6 +259,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
         let currentGatherNodeId = null; 
         let currentGatherTime = 0; 
         let currentActionName = "";
+        let gatheredItems = []; // 🟢 收集到的物品清單
+        let totalGatherExp = 0; // 🟢 收集到的總經驗值
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
@@ -336,6 +347,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
             currentGatherNodeId = nodeId;
             currentGatherTime = duration || 3000;
             currentActionName = name;
+            gatheredItems = []; // 重置收集清單
+            totalGatherExp = 0;
 
             socket.emit('startGather', targetCount);
         }
@@ -391,6 +404,29 @@ const socket = io('https://mmo.ttctv-105.cc', {
             } else {
                 stopGathering(); 
                 showToast("🎉 採集任務完成！");
+            }
+        });
+
+        // 🟢 背景模式 - 返回大廳但繼續採集 (改用伺服器端追蹤)
+        function goToBackgroundMode() {
+            if (!isGathering || !currentGatherNodeId) return;
+            
+            // 向伺服器申請背景採集
+            socket.emit('startBackgroundGather', {
+                nodeId: currentGatherNodeId,
+                count: remainingCount
+            });
+        }
+
+        // 🟢 伺服器確認背景採集已開始
+        socket.on('backgroundGatherStarted', (data) => {
+            if (data.success) {
+                showToast("🔄 背景採集已啟動！");
+                stopGathering();
+                // 延遲跳轉
+                setTimeout(() => {
+                    window.location.href = 'hub.html';
+                }, 500);
             }
         });
 
@@ -498,8 +534,18 @@ const socket = io('https://mmo.ttctv-105.cc', {
             setTimeout(() => { t.style.top = "-100px"; }, 2000);
         }
 
-        window.onbeforeunload = function() {
-            if (isGathering) stopGathering();
+        // 🟢 返回按鈕處理
+        document.getElementById('back-btn').onclick = function(e) {
+            if (isGathering) {
+                e.preventDefault();
+                // 顯示確認對話框
+                if (confirm('採集進行中，是否切換到背景執行？\n\n確定：背景執行並返回大廳\n取消：停止採集並返回大廳')) {
+                    goToBackgroundMode();
+                } else {
+                    stopGathering();
+                    window.location.href = 'hub.html';
+                }
+            }
         };
     </script>
 </body>
