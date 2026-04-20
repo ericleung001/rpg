@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
@@ -2257,13 +2257,38 @@
                 });
             } else if (currentView === 'monsters') {
                 document.getElementById('list-title').innerText = `${selectedCity.name} - 怪物`;
+                
+                // 屬性 Icon 對照表
+                const ELE_ICON = { 'fire':'🔥', 'ice':'❄️', 'nature':'🌲', 'void':'🌌', 'holy':'✨', 'neutral':'' };
+                
+                // 簡單的前端屬性分類判定 (與後端一致)
+                const fireMobs = ['fire_imp', 'lava_golem', 'salamander', 'fire_mage', 'dragon_hatchling', 'balrog', 'demon_king'];
+                const iceMobs = ['snow_wolf', 'yeti', 'ice_spirit', 'frost_knight', 'ice_dragon', 'lich_king'];
+                const natureMobs = ['slime', 'bee', 'wolf_king', 'snake', 'hydra', 'fallen_titan'];
+                const holyMobs = ['fallen_angel', 'genesis_god', 'nebula_dragon', 'time_keeper', 'akashic_record'];
+                const voidMobs = ['zombie', 'skeleton', 'ghoul', 'witch', 'void_eye', 'shadow_assassin', 'dark_paladin', 'demon_guard', 'succubus', 'void_lord', 'chaos_beast', 'void_walker', 'chaos_knight', 'abyss_dragon', 'void_worm', 'shadow_phantom', 'star_eater', 'dimension_breaker', 'entropy_god', 'void_devourer_god', 'chaos_boss'];
+                
                 selectedCity.monsters.forEach(mob => {
                     const rooms = activeRooms.filter(r => r.monsterKey === mob.id);
                     const fighting = rooms.filter(r => r.status === 'fighting').length;
                     const waiting = rooms.filter(r => r.status === 'waiting').length;
+                    
+                    let ele = 'neutral';
+                    if (fireMobs.includes(mob.id)) ele = 'fire';
+                    else if (iceMobs.includes(mob.id)) ele = 'ice';
+                    else if (natureMobs.includes(mob.id)) ele = 'nature';
+                    else if (holyMobs.includes(mob.id)) ele = 'holy';
+                    else if (voidMobs.includes(mob.id)) ele = 'void';
+                    
+                    let icon = ELE_ICON[ele];
+
                     html += `<div class="btn" style="border-color:#c0392b" onclick="triggerSelectMonster('${mob.id}')">
-                        <span style="font-size:12px; font-weight:bold;">${mob.name} (LV.${mob.lv})</span>
-                        <div style="margin-top:5px; font-size:10px;"><span class="info-tag" style="color:#2ecc71">等:${waiting}</span><span class="info-tag" style="color:#e74c3c; margin-right:10px;">戰:${fighting}</span></div></div>`;
+                        <span style="font-size:12px; font-weight:bold;">${icon} ${mob.name} (LV.${mob.lv})</span>
+                        <div style="margin-top:5px; font-size:10px;">
+                            <span class="info-tag" style="color:#2ecc71">等:${waiting}</span>
+                            <span class="info-tag" style="color:#e74c3c; margin-right:10px;">戰:${fighting}</span>
+                        </div>
+                    </div>`;
                 });
                 html += `<div class="btn" style="background:#7f8c8d; text-align:center;" onclick="goBack('cities')">◀ 返回地圖</div>`;
             } else if (currentView === 'rooms') {
