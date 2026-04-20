@@ -3,13 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
+        
+        /* ========== 字體系統：標題用像素風，正文用易讀字體 ========== */
+        :root {
+            --font-display: 'Press Start 2P', monospace;
+            --font-body: 'Noto Sans TC', 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+        }
         
         body { 
             background-color: #2c3e50; color: #ecf0f1; 
-            font-family: 'Press Start 2P', monospace; 
+            font-family: var(--font-body); 
             text-align: center; 
             margin: 0; padding: 0; 
             height: 100dvh; 
@@ -56,41 +62,45 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: 30px;}
-        .logout-btn { font-size: 10px; color: #e74c3c; cursor: pointer; text-decoration: underline; white-space: nowrap; padding: 5px; }
-        h1 { font-size: 16px; margin: 0; white-space: nowrap; }
-        #conn-status { font-size: 10px; padding: 5px 8px; background: #333; border: 1px solid #fff; border-radius: 6px; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+        .logout-btn { font-size: 12px; color: #e74c3c; cursor: pointer; text-decoration: underline; white-space: nowrap; padding: 8px 10px; border-radius: 4px; transition: background 0.2s; }
+        .logout-btn:active { background: rgba(231,76,60,0.2); }
+        h1 { font-family: var(--font-display); font-size: 14px; margin: 0; white-space: nowrap; }
+        #conn-status { font-size: 11px; padding: 6px 10px; background: #333; border: 1px solid #fff; border-radius: 6px; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
 
         .status-bar { 
-            background: #34495e; border: 3px solid #fff; padding: 10px; 
+            background: #34495e; border: 3px solid #fff; padding: 12px; 
             width: 100%; margin-bottom: 10px; border-radius: 12px; 
-            display: flex; flex-direction: column; gap: 8px;
-            font-size: 10px; box-sizing: border-box; text-align: left;
+            display: flex; flex-direction: column; gap: 10px;
+            font-size: 11px; box-sizing: border-box; text-align: left;
             flex-shrink: 0; 
         }
 
         .status-row-top {
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #555; padding-bottom: 6px;
+            border-bottom: 1px solid #555; padding-bottom: 8px;
         }
         .status-item { display: flex; gap: 5px; align-items: center; }
-        .label { color: #f1c40f; font-weight: bold; }
-        .val { color: white; font-weight: bold; }
+        .label { color: #f1c40f; font-weight: bold; font-size: 10px; }
+        .val { color: white; font-weight: bold; font-size: 12px; }
+        #gold { color: #f1c40f; font-size: 12px; }
+        #lvl { color: #2ecc71; font-size: 14px; }
 
         .status-row-bars {
             display: grid; grid-template-columns: 1fr 1fr; gap: 15px;
         }
         .bar-container { display: flex; flex-direction: column; }
-        .bar-label { font-size: 9px; margin-bottom: 4px; display: flex; justify-content: space-between; }
-        .bar-bg { width:100%; height:6px; background:#555; border-radius:3px; overflow:hidden; }
+        .bar-label { font-size: 11px; margin-bottom: 5px; display: flex; justify-content: space-between; font-weight: bold; }
+        .bar-bg { width:100%; height:8px; background:#555; border-radius:4px; overflow:hidden; border: 1px solid #666; }
         
         .status-row-stats {
-            display: flex; justify-content: space-around; background: rgba(0,0,0,0.2);
-            padding: 6px; border-radius: 4px; 
+            display: flex; justify-content: space-around; background: rgba(0,0,0,0.3);
+            padding: 8px; border-radius: 6px; 
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .exp-container { margin-top: 2px; }
-        .exp-bar { width: 100%; height: 6px; background: #555; border: 1px solid #fff; border-radius: 4px; overflow: hidden; }
-        .exp-fill { height: 100%; background: #3498db; width: 0%; transition: width 0.3s; }
+        .exp-container { margin-top: 4px; }
+        .exp-bar { width: 100%; height: 8px; background: #555; border: 1px solid #fff; border-radius: 4px; overflow: hidden; }
+        .exp-fill { height: 100%; background: linear-gradient(90deg, #3498db, #2980b9); width: 0%; transition: width 0.3s; }
         
         .main-content {
             width: 100%;
@@ -120,6 +130,7 @@
 
         .sidebar-header {
             padding: 15px; background: #222; color: #f1c40f; font-size: 14px;
+            font-family: var(--font-display);
             font-weight: bold; border-bottom: 2px solid #555;
             display: flex; justify-content: space-between; align-items: center;
             flex-shrink: 0;
@@ -132,14 +143,30 @@
 
         .sidebar-content {
             flex: 1; overflow-y: auto; padding: 15px;
-            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-content: start;
             padding-bottom: 80px;
+        }
+        /* ========== 側邊欄按鈕分組 ========== */
+        .sidebar-divider {
+            grid-column: 1 / -1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #555, transparent);
+            margin: 8px 0;
+        }
+        .sidebar-section-title {
+            grid-column: 1 / -1;
+            font-size: 9px;
+            color: #888;
+            text-align: left;
+            padding: 4px 0;
+            border-bottom: 1px dashed #444;
+            margin-bottom: 4px;
         }
 
         .menu-toggle-btn {
             background: #34495e; border: 2px solid #bdc3c7; color: white;
-            font-size: 10px; cursor: pointer; padding: 6px 8px; border-radius: 6px;
-            margin-right: 10px; font-family: inherit; box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+            font-size: 11px; cursor: pointer; padding: 8px 12px; border-radius: 6px;
+            margin-right: 10px; font-family: var(--font-body); box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
             white-space: nowrap;
         }
         .menu-toggle-btn:active { transform: scale(0.95); box-shadow: none; }
@@ -147,57 +174,67 @@
         /* 原本的 grid 樣式已轉移至 sidebar-content */
         .facility-btn {
             position: relative; 
-            padding: 0; 
-            font-family: inherit; font-size: 10px; font-weight: bold;
+            padding: 0 8px; 
+            font-family: var(--font-body); font-size: 11px; font-weight: bold;
             cursor: pointer; border: 2px solid #bdc3c7; color: white; text-decoration: none; 
             display: flex; align-items: center; justify-content: center;
-            background: #34495e; border-radius: 6px; height: 42px; white-space: nowrap; 
+            background: #34495e; border-radius: 8px; min-height: 48px; white-space: nowrap; 
             box-shadow: 2px 2px 0 rgba(0,0,0,0.3); 
-            touch-action: manipulation; transition: transform 0.05s;
+            touch-action: manipulation; transition: transform 0.1s, box-shadow 0.1s;
+            gap: 4px;
         }
-        .facility-btn:active { transform: scale(0.95); box-shadow: none; filter: brightness(0.9); }
+        .facility-btn:active { transform: scale(0.96); box-shadow: none; filter: brightness(0.9); }
+        .facility-btn:focus { outline: 3px solid #f1c40f; outline-offset: 2px; }
         /* ======================================================= */
         
         .map-container { padding-right: 5px; padding-bottom: 60px; }
         .btn { 
-            padding: 12px 8px; font-family: inherit; font-size: 12px; cursor: pointer; 
+            padding: 14px 12px; font-family: var(--font-body); font-size: 13px; cursor: pointer; 
             border: 2px solid #bdc3c7; color: white; text-decoration: none; 
             display: block; text-shadow: 1px 1px 0 #000; background: #34495e; 
-            position: relative; text-align: left; margin-bottom: 8px; border-radius: 6px;
-            touch-action: manipulation; transition: transform 0.05s, background-color 0.1s; 
+            position: relative; text-align: left; margin-bottom: 8px; border-radius: 8px;
+            touch-action: manipulation; transition: transform 0.1s, background-color 0.15s; 
+            min-height: 52px;
         }
-        .btn:active { transform: scale(0.98); filter: brightness(0.8); background: #2980b9; }
-        .locked { background: #555; color: #888; border-color: #555; pointer-events: none; }
+        .btn:active { transform: scale(0.98); filter: brightness(0.85); background: #2980b9; }
+        .locked { background: #555; color: #888; border-color: #555; pointer-events: none; opacity: 0.7; }
         
-        .info-tag { float: right; font-size: 10px; color: #f1c40f; margin-top: 2px; }
-        .room-tag { font-size: 9px; padding: 2px 4px; border-radius: 4px; float: right; margin-left: 5px; }
+        .info-tag { float: right; font-size: 11px; color: #f1c40f; margin-top: 2px; font-weight: bold; }
+        .room-tag { font-size: 10px; padding: 3px 6px; border-radius: 4px; float: right; margin-left: 5px; font-weight: bold; }
         .status-waiting { background: #27ae60; color: white; }
         .status-fighting { background: #c0392b; color: white; }
         
         #chat-container {
             position: fixed; bottom: 0; left: 0; width: 100%; 
             background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7;
-            display: flex; flex-direction: column; font-size: 10px; z-index: 100;
+            display: flex; flex-direction: column; font-size: 12px; z-index: 100;
             padding-bottom: env(safe-area-inset-bottom);
-            transition: height 0.3s ease-in-out;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             height: 30px; 
+            transform: translateY(0);
+        }
+        #chat-container.chat-open {
+            height: 40vh;
         }
         #chat-header {
             height: 30px; background: #34495e; color: #fff; line-height: 30px; 
             cursor: pointer; font-weight: bold; border-bottom: 1px solid #555;
             display: flex; justify-content: center; align-items: center;
             touch-action: manipulation; flex-shrink: 0; 
+            font-family: var(--font-display);
+            font-size: 10px;
         }
-        #chat-header:hover { background: #2c3e50; }
+        #chat-header:active { background: #2c3e50; }
 
         .chat-open { height: 40vh !important; }
         #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
         .chat-open #chat-body { display: flex; } 
 
-        #chat-history { flex: 1; overflow-y: auto; padding: 8px; text-align: left; color: white; }
-        #chat-input-area { display: flex; border-top: 1px solid #555; height: 40px; flex-shrink: 0; }
-        #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 10px; font-family: inherit; font-size: 12px; outline: none; }
-        #chat-send { background: #2980b9; color: white; border: none; padding: 0 15px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; touch-action: manipulation; }
+        #chat-history { flex: 1; overflow-y: auto; padding: 10px; text-align: left; color: white; font-size: 12px; line-height: 1.6; }
+        #chat-input-area { display: flex; border-top: 1px solid #555; height: 44px; flex-shrink: 0; }
+        #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 12px; font-family: var(--font-body); font-size: 14px; outline: none; }
+        #chat-send { background: #2980b9; color: white; border: none; padding: 0 18px; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: bold; touch-action: manipulation; min-width: 60px; }
+        #chat-send:active { background: #3498db; }
 
         #toast-notification {
             position: fixed; top: -60px; left: 50%; transform: translateX(-50%);
@@ -252,15 +289,18 @@
         }
         .notice-box {
             background: #fff; color: #2c3e50; width: 85%; max-width: 400px;
-            border: 4px solid #f1c40f; border-radius: 10px; padding: 20px; text-align: left;
-            font-family: 'Press Start 2P', monospace; max-height: 70vh; overflow-y: auto;
+            border: 4px solid #f1c40f; border-radius: 12px; padding: 20px; text-align: left;
+            font-family: var(--font-body); max-height: 70vh; overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
-        .notice-title { font-size: 16px; color: #d35400; margin-bottom: 15px; text-align: center; font-weight: bold; }
-        .notice-content { font-size: 10px; line-height: 1.8; white-space: pre-wrap; }
+        .notice-title { font-family: var(--font-display); font-size: 14px; color: #d35400; margin-bottom: 15px; text-align: center; font-weight: bold; }
+        .notice-content { font-size: 12px; line-height: 2; white-space: pre-wrap; }
         .close-notice-btn {
-            margin-top: 20px; width: 100%; padding: 10px; background: #34495e; 
-            color: white; border: none; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 12px;
+            margin-top: 20px; width: 100%; padding: 12px; background: #34495e; 
+            color: white; border: none; border-radius: 8px; cursor: pointer; font-family: var(--font-body); font-size: 12px; font-weight: bold;
+            transition: background 0.2s;
         }
+        .close-notice-btn:active { background: #2c3e50; }
         /* ======================================================= */
 
         .modal-overlay {
@@ -275,10 +315,11 @@
         
         .modal-box {
             background: #fff; color: #2c3e50; width: 85%; max-width: 400px;
-            border: 4px solid #f1c40f; border-radius: 10px; padding: 20px; text-align: left;
-            font-family: 'Press Start 2P', monospace; max-height: 70vh; overflow-y: auto;
+            border: 4px solid #f1c40f; border-radius: 12px; padding: 20px; text-align: left;
+            font-family: var(--font-body); max-height: 70vh; overflow-y: auto;
             position: relative;
             margin: auto; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
         .close-btn-x {
             position: absolute; top: 10px; right: 10px;
@@ -292,11 +333,11 @@
             width: 100%; max-width: 600px;
             background: rgba(0, 0, 0, 0.6);
             border: 2px solid #f1c40f;
-            border-radius: 8px; padding: 10px; margin: 10px 0; text-align: left;
+            border-radius: 10px; padding: 12px; margin: 10px 0; text-align: left;
             box-sizing: border-box; box-shadow: 0 0 10px rgba(241, 196, 15, 0.2); flex-shrink: 0; 
         }
-        .rank-title { color: #f1c40f; font-size: 12px; font-weight: bold; text-align: center; margin-bottom: 8px; border-bottom: 1px dashed #555; padding-bottom: 5px; }
-        .rank-row { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; padding: 4px 5px; }
+        .rank-title { font-family: var(--font-display); color: #f1c40f; font-size: 11px; font-weight: bold; text-align: center; margin-bottom: 10px; border-bottom: 1px dashed #555; padding-bottom: 6px; }
+        .rank-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 5px; padding: 5px 6px; }
         .rank-row:nth-child(odd) { background: rgba(255,255,255,0.05); }
         .rank-1 { color: #ffd700; font-weight: bold; text-shadow: 0 0 5px #ffd700; }
         .rank-2 { color: #c0c0c0; font-weight: bold; }
@@ -305,14 +346,14 @@
         /* 好友列表樣式 */
         .friend-row {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 8px; border-bottom: 1px solid #eee; font-size: 10px;
+            padding: 10px; border-bottom: 1px solid #eee; font-size: 12px;
         }
         .friend-name { font-weight: bold; }
-        .friend-status { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .friend-status { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; }
         .status-on { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
         .status-off { background: #95a5a6; }
         .friend-actions button {
-            font-size: 9px; padding: 4px 8px; margin-left: 5px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc;
+            font-size: 10px; padding: 5px 10px; margin-left: 5px; cursor: pointer; border-radius: 5px; border: 1px solid #ccc; font-family: var(--font-body);
         }
         .btn-pm { background: #3498db; color: white; border-color: #2980b9; }
         .btn-del { background: #e74c3c; color: white; border-color: #c0392b; }
@@ -321,13 +362,13 @@
         #pm-modal { z-index: 10000; }
         #pm-history {
             background: #f9f9f9; border: 1px solid #ddd; height: 250px; 
-            overflow-y: auto; padding: 10px; margin-bottom: 10px; border-radius: 5px;
-            font-size: 10px; display: flex; flex-direction: column; gap: 8px;
+            overflow-y: auto; padding: 12px; margin-bottom: 12px; border-radius: 6px;
+            font-size: 12px; display: flex; flex-direction: column; gap: 10px;
         }
-        .pm-msg { padding: 8px; border-radius: 8px; max-width: 80%; word-break: break-all; }
+        .pm-msg { padding: 10px; border-radius: 10px; max-width: 80%; word-break: break-all; font-size: 12px; }
         .pm-mine { align-self: flex-end; background: #3498db; color: white; border-bottom-right-radius: 0; }
         .pm-other { align-self: flex-start; background: #eec5a9; color: #2c3e50; border-bottom-left-radius: 0; }
-        .pm-time { font-size: 8px; opacity: 0.7; margin-top: 2px; text-align: right; }
+        .pm-time { font-size: 9px; opacity: 0.7; margin-top: 4px; text-align: right; }
 
         /* 未讀紅點樣式 */
         .unread-badge {
@@ -355,6 +396,15 @@
             #chat-body { display: flex !important; height: calc(100% - 30px); }
             .main-content { margin-bottom: 0; }
             #notice-btn { left: calc(50% - 540px); }
+            /* Desktop 地圖雙欄顯示 */
+            #map-list {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            #map-list .btn {
+                margin-bottom: 0;
+            }
         }
 
         /* 活動橫幅 */
@@ -718,7 +768,219 @@
             filter: brightness(0.85);
         }
         /* =================================================== */
-    </style>
+        
+        /* ==================== 背景採集狀態區塊 ==================== */
+        #bg-gather-panel {
+            display: none;
+            width: 100%;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+        #bg-gather-panel.active { display: block; }
+        
+        .bg-gather-box {
+            background: linear-gradient(135deg, #1a3d2e 0%, #1e5a3a 50%, #1a3d2e 100%);
+            border: 2px solid #27ae60;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 0 12px rgba(39, 174, 96, 0.3);
+            animation: gather-glow 2.5s ease-in-out infinite;
+        }
+        @keyframes gather-glow {
+            0%, 100% { box-shadow: 0 0 8px rgba(39, 174, 96, 0.3); }
+            50% { box-shadow: 0 0 18px rgba(39, 174, 96, 0.6); }
+        }
+        
+        .bg-gather-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(39, 174, 96, 0.3);
+        }
+        .bg-gather-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #2ecc71;
+        }
+        .bg-gather-icon {
+            font-size: 16px;
+            animation: gather-icon-bounce 1.5s ease-in-out infinite;
+        }
+        @keyframes gather-icon-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .bg-gather-node-name {
+            font-size: 10px;
+            color: #a8e6cf;
+        }
+        
+        .bg-gather-progress-section {
+            margin-bottom: 8px;
+        }
+        .bg-gather-progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #1a3d2e;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid rgba(39, 174, 96, 0.5);
+        }
+        .bg-gather-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            transition: width 0.5s ease;
+            border-radius: 5px;
+        }
+        .bg-gather-time-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: #a8e6cf;
+            margin-top: 4px;
+        }
+        
+        .bg-gather-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .bg-gather-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: var(--font-body);
+            transition: all 0.15s;
+            border: none;
+        }
+        .bg-gather-btn:active {
+            transform: scale(0.95);
+            filter: brightness(0.85);
+        }
+        .bg-gather-collect-btn {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+        }
+        .bg-gather-cancel-btn {
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            color: white;
+        }
+        .bg-gather-goto-btn {
+            background: linear-gradient(135deg, #2980b9, #3498db);
+            color: white;
+        }
+        
+        /* 採集完成特殊樣式 */
+        .bg-gather-box.complete {
+            background: linear-gradient(135deg, #2d4a1c 0%, #4a7c2c 50%, #2d4a1c 100%);
+            border-color: #f1c40f;
+            animation: gather-complete-pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes gather-complete-pulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(241, 196, 15, 0.4); }
+            50% { box-shadow: 0 0 20px rgba(241, 196, 15, 0.8); }
+        }
+        
+        /* 收取結果彈窗 */
+        #collect-result-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 99999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .collect-result-box {
+            background: linear-gradient(135deg, #1e3a2f 0%, #2d5a47 100%);
+            border: 3px solid #2ecc71;
+            border-radius: 12px;
+            padding: 20px;
+            width: 85%;
+            max-width: 400px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .collect-result-title {
+            font-family: var(--font-display);
+            font-size: 14px;
+            color: #2ecc71;
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(46, 204, 113, 0.3);
+        }
+        .collect-result-info {
+            font-size: 11px;
+            color: #a8e6cf;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .collect-items-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+        .collect-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.3);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+        }
+        .collect-item-name {
+            color: #f1c40f;
+            font-weight: bold;
+        }
+        .collect-item-count {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        .collect-exp-info {
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 11px;
+        }
+        .collect-exp-value {
+            color: #3498db;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .collect-close-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: var(--font-body);
+        }
+        .collect-close-btn:active {
+            transform: scale(0.98);
+            filter: brightness(0.9);
+        }
+        /* ========================================================= */
 </head>
 <body>
     <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -728,33 +990,56 @@
             <button class="close-sidebar-btn" onclick="toggleSidebar()">×</button>
         </div>
         <div class="sidebar-content">
-            <a href="bag.html" class="facility-btn" style="background:#16a085; border-color:#1abc9c;">🎒 背包</a>
-            <a href="equip.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🛡️ 裝備</a>
-            <a href="market.html" class="facility-btn" style="background:#f39c12; border-color:#d35400;">🏪 道具</a>
-            <a href="auction.html" class="facility-btn" style="background:#2980b9; border-color:#3498db;">⚖️ 市集</a>
-            <a href="smithy.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔨 鍛造</a>
-            <a href="myth.html" class="facility-btn" style="background:#4a0080; border-color:#8b00ff;">⚗️ 神話</a>
-            <a href="enhance.html" class="facility-btn" style="background:#d35400; border-color:#e67e22;">🔥 強化</a>
-            <a href="gathering.html" class="facility-btn" style="background:#27ae60; border-color:#2ecc71;">🌲 採集</a>
-            <a href="rest.html" class="facility-btn" style="background:#2c3e50; border-color:#95a5a6;">🏨 旅館</a>
-            <a href="kitchen.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🍳 廚房</a>
-            <a href="lottery.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">🎱 彩票</a>
-            <a href="manual.html" class="facility-btn" style="background:#7f8c8d; border-color:#95a5a6;">📜 圖鑑</a>
+            <!-- 📦 物品管理 -->
+            <div class="sidebar-section-title">📦 物品管理</div>
+            <a href="bag.html" class="facility-btn" style="background:linear-gradient(135deg, #16a085, #1abc9c); border-color:#1abc9c;">🎒 背包</a>
+            <a href="equip.html" class="facility-btn" style="background:linear-gradient(135deg, #8e44ad, #9b59b6); border-color:#9b59b6;">🛡️ 裝備</a>
             
-            <div class="facility-btn" style="background:#3498db; border-color:#2980b9;" onclick="openFriends(); toggleSidebar();">
+            <div class="sidebar-divider"></div>
+            
+            <!-- 🏪 商店交易 -->
+            <div class="sidebar-section-title">🏪 商店交易</div>
+            <a href="market.html" class="facility-btn" style="background:linear-gradient(135deg, #f39c12, #e67e22); border-color:#d35400;">🏪 道具店</a>
+            <a href="auction.html" class="facility-btn" style="background:linear-gradient(135deg, #2980b9, #3498db); border-color:#3498db;">⚖️ 市集</a>
+            <a href="shard_shop.html" class="facility-btn" style="background:linear-gradient(135deg, #9b59b6, #8e44ad); border-color:#8e44ad;">💎 碎片交換</a>
+            <a href="lottery.html" class="facility-btn" style="background:linear-gradient(135deg, #8e44ad, #6c3483); border-color:#9b59b6;">🎱 彩票</a>
+            
+            <div class="sidebar-divider"></div>
+            
+            <!-- ⚔️ 強化升級 -->
+            <div class="sidebar-section-title">⚔️ 強化升級</div>
+            <a href="smithy.html" class="facility-btn" style="background:linear-gradient(135deg, #c0392b, #e74c3c); border-color:#e74c3c;">🔨 鍛造</a>
+            <a href="enhance.html" class="facility-btn" style="background:linear-gradient(135deg, #d35400, #e67e22); border-color:#e67e22;">🔥 強化</a>
+            <a href="myth.html" class="facility-btn" style="background:linear-gradient(135deg, #4a0080, #6a0dad); border-color:#8b00ff;">⚗️ 神話</a>
+            <a href="skills.html" class="facility-btn" style="background:linear-gradient(135deg, #8e44ad, #5b2c6f); border-color:#9b59b6;">⚡ 技能升級</a>
+            
+            <div class="sidebar-divider"></div>
+            
+            <!-- 🌲 資源獲取 -->
+            <div class="sidebar-section-title">🌲 資源獲取</div>
+            <a href="gathering.html" class="facility-btn" style="background:linear-gradient(135deg, #27ae60, #2ecc71); border-color:#2ecc71;">🌲 採集</a>
+            <a href="hire.html" class="facility-btn" style="background:linear-gradient(135deg, #e67e22, #d35400); border-color:#d35400;">🏢 僱員探險</a>
+            <a href="rest.html" class="facility-btn" style="background:linear-gradient(135deg, #2c3e50, #34495e); border-color:#95a5a6;">🏨 旅館</a>
+            <a href="kitchen.html" class="facility-btn" style="background:linear-gradient(135deg, #e67e22, #ca6f1e); border-color:#d35400;">🍳 廚房</a>
+            
+            <div class="sidebar-divider"></div>
+            
+            <!-- 👥 社交系統 -->
+            <div class="sidebar-section-title">👥 社交系統</div>
+            <div class="facility-btn" style="background:linear-gradient(135deg, #3498db, #2980b9); border-color:#2980b9;" onclick="openFriends(); toggleSidebar();">
                 👥 好友
                 <div id="main-unread-badge" class="unread-badge">0</div>
             </div>
-
-            <div class="facility-btn" style="background:#d35400; border-color:#e67e22;" onclick="openDailyQuests(); toggleSidebar();">
-                📜 每日任務
-            </div>
-            <div class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;" onclick="window.location.href='guild.html'">🏰 創造公會</div>
-            <a href="skills.html" class="facility-btn" style="background:#8e44ad; border-color:#9b59b6;">⚡ 技能升級</a>
-            <a href="shard_shop.html" class="facility-btn" style="background:#9b59b6; border-color:#8e44ad;">💎 碎片交換</a>
-            <a href="hire.html" class="facility-btn" style="background:#e67e22; border-color:#d35400;">🏢 僱員探險</a>
-            <a href="rebirth.html" class="facility-btn" style="background:#c0392b; border-color:#e74c3c;">🔄 轉生神殿</a>
-            <div class="facility-btn" style="background:#e67e22; border-color:#d35400;" onclick="openPromoCode(); toggleSidebar();">🎫 優惠碼</div>
+            <div class="facility-btn" style="background:linear-gradient(135deg, #8e44ad, #6c3483); border-color:#9b59b6;" onclick="window.location.href='guild.html'">🏰 公會</div>
+            
+            <div class="sidebar-divider"></div>
+            
+            <!-- ⭐ 特殊功能 -->
+            <div class="sidebar-section-title">⭐ 特殊功能</div>
+            <a href="rebirth.html" class="facility-btn" style="background:linear-gradient(135deg, #c0392b, #922b21); border-color:#e74c3c;">🔄 轉生神殿</a>
+            <div class="facility-btn" style="background:linear-gradient(135deg, #e67e22, #b9770e); border-color:#d35400;" onclick="openDailyQuests(); toggleSidebar();">📜 每日任務</div>
+            <div class="facility-btn" style="background:linear-gradient(135deg, #e67e22, #ca6f1e); border-color:#d35400;" onclick="openPromoCode(); toggleSidebar();">🎫 優惠碼</div>
+            <a href="manual.html" class="facility-btn" style="background:linear-gradient(135deg, #7f8c8d, #5d6d7e); border-color:#95a5a6;">📜 圖鑑</a>
         </div>
     </div>
     
@@ -1006,6 +1291,33 @@
             <!-- 🎫 優惠碼展示區 -->
             <div id="promo-display-area"></div>
 
+            <!-- 🌲 背景採集狀態區塊 -->
+            <div id="bg-gather-panel">
+                <div class="bg-gather-box" id="bg-gather-box">
+                    <div class="bg-gather-header">
+                        <div class="bg-gather-title">
+                            <span class="bg-gather-icon">🌲</span>
+                            <span>背景採集中</span>
+                        </div>
+                        <span class="bg-gather-node-name" id="bg-gather-node-name">---</span>
+                    </div>
+                    <div class="bg-gather-progress-section">
+                        <div class="bg-gather-progress-bar">
+                            <div class="bg-gather-progress-fill" id="bg-gather-progress-fill"></div>
+                        </div>
+                        <div class="bg-gather-time-info">
+                            <span id="bg-gather-remaining">剩餘: -- 次</span>
+                            <span id="bg-gather-eta">預計完成: --:--</span>
+                        </div>
+                    </div>
+                    <div class="bg-gather-actions">
+                        <button class="bg-gather-btn bg-gather-collect-btn" id="bg-gather-collect-btn" onclick="collectBackgroundGather()">📦 收取</button>
+                        <button class="bg-gather-btn bg-gather-cancel-btn" onclick="cancelBackgroundGather()">❌ 取消</button>
+                        <button class="bg-gather-btn bg-gather-goto-btn" onclick="goToGatheringPage()">🔄 前往</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="main-content">
                 <div id="event-banner">
                     <div class="event-header">
@@ -1018,20 +1330,18 @@
                     <div class="event-rewards-row" id="event-banner-rewards"></div>
                 </div>
 
-                <div id="boss-banner" style="display:none; background: linear-gradient(90deg, #2c3e50, #c0392b); padding: 15px; border-radius: 8px; border: 2px solid #e74c3c; margin-bottom: 15px; text-align: left; box-shadow: 0 0 15px #c0392b; animation: pulse 2s infinite; flex-shrink: 0;">
+                <div id="boss-banner" style="display:none; background: linear-gradient(90deg, #2c3e50, #c0392b); padding: 15px; border-radius: 10px; border: 2px solid #e74c3c; margin-bottom: 15px; text-align: left; box-shadow: 0 0 15px #c0392b; animation: pulse 2s infinite; flex-shrink: 0;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                            <div style="color:#f1c40f; font-weight:bold; font-size:14px; margin-bottom:5px;">☠️ 虛空滅世者 降臨！</div>
-                            <div style="color:#fff; font-size:10px;">
-                                <div style="margin-bottom:2px;">全服 HP: <span id="boss-hp-text">計算中...</span></div>
+                            <div style="color:#f1c40f; font-family:var(--font-display); font-weight:bold; font-size:12px; margin-bottom:6px;">☠️ 虛空滅世者 降臨！</div>
+                            <div style="color:#fff; font-size:12px;">
+                                <div style="margin-bottom:3px;">全服 HP: <span id="boss-hp-text">計算中...</span></div>
                                 <div style="color:#e74c3c; font-weight:bold;">⏱️ 剩餘時間: <span id="boss-timer">--:--</span></div>
                             </div>
                         </div>
-                        <button onclick="joinBoss()" style="background:#f1c40f; color:#000; border:none; padding:10px 20px; font-weight:bold; border-radius:5px; cursor:pointer;">
-                            ⚔️ 立即討伐
-                        </button>
+                        <button onclick="joinBoss()" style="background:#f1c40f; color:#000; border:none; padding:12px 20px; font-family:var(--font-body); font-weight:bold; border-radius:6px; cursor:pointer; font-size:12px;">⚔️ 立即討伐</button>
                     </div>
-                    <div style="width:100%; height:8px; background:#333; margin-top:10px; border-radius:4px;">
+                    <div style="width:100%; height:10px; background:#333; margin-top:12px; border-radius:5px;">
                         <div id="boss-hp-bar" style="width:100%; height:100%; background:#e74c3c; transition: width 0.5s;"></div>
                     </div>
                 </div>
@@ -1049,7 +1359,7 @@
                     <div id="hireling-status-list" style="font-size:9px;"></div>
                 </div>
                 
-                <div id="list-title" style="text-align:left; font-size:10px; color:#aaa; margin-bottom:5px; flex-shrink: 0;">世界地圖</div>
+                <div id="list-title" style="text-align:left; font-size:12px; color:#aaa; margin-bottom:8px; flex-shrink: 0; font-weight:bold;">世界地圖</div>
                 <div class="map-container" id="map-list">
                     <div class="btn btn-skeleton" style="height:48px;">&nbsp;</div>
                     <div class="btn btn-skeleton" style="height:48px;">&nbsp;</div>
@@ -1105,7 +1415,7 @@
             return escapeHtml(name);
         }
 
-      const socket = io('https://mmo.ttctv-105.cc', { 
+       const socket = io('https://mmo.ttctv-105.cc', { 
     transports: ['websocket', 'polling'],
     secure: true // 因為你用 https，建議加呢個
 });
@@ -2297,7 +2607,215 @@
             }
             container.innerHTML = html;
         }
+
+        // ================================
+        // 🌲 背景採集系統 (伺服器端追蹤)
+        // ================================
+        let bgGatherInterval = null;
+
+        // 初始化：查詢伺服器背景採集狀態
+        function initBackgroundGather() {
+            socket.emit('getBackgroundGatherStatus');
+        }
+
+        // 接收背景採集狀態
+        socket.on('backgroundGatherStatus', (data) => {
+            if (!data.active) {
+                // 沒有進行中的採集
+                document.getElementById('bg-gather-panel').classList.remove('active');
+                if (bgGatherInterval) {
+                    clearInterval(bgGatherInterval);
+                    bgGatherInterval = null;
+                }
+                return;
+            }
+
+            // 顯示背景採集面板
+            showBackgroundGatherPanel(data);
+            startBackgroundGatherTimer();
+        });
+
+        // 顯示背景採集面板
+        function showBackgroundGatherPanel(data) {
+            const panel = document.getElementById('bg-gather-panel');
+            const nodeName = document.getElementById('bg-gather-node-name');
+            const box = document.getElementById('bg-gather-box');
+            const collectBtn = document.getElementById('bg-gather-collect-btn');
+
+            nodeName.textContent = data.nodeName || '---';
+
+            // 檢查是否完成
+            if (data.isComplete) {
+                box.classList.add('complete');
+                collectBtn.classList.add('ready');
+            } else {
+                box.classList.remove('complete');
+                collectBtn.classList.remove('ready');
+            }
+
+            panel.classList.add('active');
+        }
+
+        // 啟動背景採集計時器 (定期向伺服器查詢)
+        function startBackgroundGatherTimer() {
+            if (bgGatherInterval) {
+                clearInterval(bgGatherInterval);
+            }
+
+            const updateTimer = () => {
+                socket.emit('getBackgroundGatherStatus');
+            };
+
+            // 每秒更新一次
+            bgGatherInterval = setInterval(updateTimer, 1000);
+        }
+
+        // 接收狀態更新
+        socket.on('backgroundGatherStatus', (data) => {
+            if (!data.active) {
+                document.getElementById('bg-gather-panel').classList.remove('active');
+                if (bgGatherInterval) {
+                    clearInterval(bgGatherInterval);
+                    bgGatherInterval = null;
+                }
+                return;
+            }
+
+            // 更新進度條
+            const progressFill = document.getElementById('bg-gather-progress-fill');
+            const totalDuration = data.nodeTime * data.remainingCount;
+            const progress = Math.min(100, (data.elapsed / totalDuration) * 100);
+            progressFill.style.width = `${progress}%`;
+
+            // 更新剩餘次數
+            const remainingEl = document.getElementById('bg-gather-remaining');
+            remainingEl.textContent = `剩餘: ${data.remainingCount} 次`;
+
+            // 更新預計完成時間
+            const etaEl = document.getElementById('bg-gather-eta');
+            if (data.remaining > 0) {
+                const mins = Math.floor(data.remaining / 60000);
+                const secs = Math.floor((data.remaining % 60000) / 1000);
+                etaEl.textContent = `預計完成: ${mins}分${secs}秒`;
+            } else {
+                etaEl.textContent = '已完成！';
+                const box = document.getElementById('bg-gather-box');
+                box.classList.add('complete');
+                const collectBtn = document.getElementById('bg-gather-collect-btn');
+                collectBtn.classList.add('ready');
+            }
+        });
+
+        // 收取背景採集結果
+        function collectBackgroundGather() {
+            socket.emit('collectBackgroundGather');
+        }
+
+        // 接收取回結果
+        socket.on('backgroundGatherCollectResult', (data) => {
+            if (bgGatherInterval) {
+                clearInterval(bgGatherInterval);
+                bgGatherInterval = null;
+            }
+
+            document.getElementById('bg-gather-panel').classList.remove('active');
+
+            if (data.success) {
+                showCollectResult({
+                    nodeName: data.nodeName,
+                    items: data.items,
+                    totalExp: data.totalExp
+                });
+                // 更新玩家狀態
+                socket.emit('getMyStats');
+            } else {
+                showToast(data.msg || '收取失敗');
+            }
+        });
+
+        // 顯示收取結果
+        function showCollectResult(result) {
+            const modal = document.getElementById('collect-result-modal');
+            const infoEl = document.getElementById('collect-result-info');
+            const listEl = document.getElementById('collect-items-list');
+            const expEl = document.getElementById('collect-exp-value');
+
+            infoEl.textContent = `採集地點：${result.nodeName || '未知'}`;
+            expEl.textContent = result.totalExp || 0;
+
+            // 統計物品
+            const itemCounts = {};
+            if (result.items && result.items.length > 0) {
+                result.items.forEach(item => {
+                    const name = item.name || item;
+                    itemCounts[name] = (itemCounts[name] || 0) + 1;
+                });
+            }
+
+            // 渲染物品列表
+            listEl.innerHTML = '';
+            if (Object.keys(itemCounts).length === 0) {
+                listEl.innerHTML = '<div style="text-align:center; color:#aaa; padding:10px;">沒有獲得任何物品</div>';
+            } else {
+                Object.entries(itemCounts).forEach(([name, count]) => {
+                    const row = document.createElement('div');
+                    row.className = 'collect-item-row';
+                    row.innerHTML = `
+                        <span class="collect-item-name">${escapeHtml(name)}</span>
+                        <span class="collect-item-count">x${count}</span>
+                    `;
+                    listEl.appendChild(row);
+                });
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        // 關閉收取結果
+        function closeCollectResult() {
+            document.getElementById('collect-result-modal').style.display = 'none';
+        }
+
+        // 取消背景採集
+        function cancelBackgroundGather() {
+            if (confirm('確定要取消背景採集嗎？')) {
+                socket.emit('cancelBackgroundGather');
+            }
+        }
+
+        // 取消結果
+        socket.on('backgroundGatherCancelled', () => {
+            if (bgGatherInterval) {
+                clearInterval(bgGatherInterval);
+                bgGatherInterval = null;
+            }
+            document.getElementById('bg-gather-panel').classList.remove('active');
+            showToast('已取消背景採集');
+        });
+
+        // 前往採集頁面
+        function goToGatheringPage() {
+            window.location.href = 'gathering.html';
+        }
+
+        // 頁面載入時初始化
+        window.addEventListener('load', () => {
+            setTimeout(initBackgroundGather, 1000);
+        });
     </script>
+
+    <!-- 📦 採集結果彈窗 -->
+    <div id="collect-result-modal">
+        <div class="collect-result-box">
+            <div class="collect-result-title">🎉 採集完成！</div>
+            <div class="collect-result-info" id="collect-result-info">採集地點：---</div>
+            <div class="collect-items-list" id="collect-items-list"></div>
+            <div class="collect-exp-info">
+                獲得經驗值：<span class="collect-exp-value" id="collect-exp-value">0</span>
+            </div>
+            <button class="collect-close-btn" onclick="closeCollectResult()">確認收取</button>
+        </div>
+    </div>
 
     <div id="room-type-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
         <div style="background:#2c3e50; border:2px solid #3498db; border-radius:12px; padding:20px; width:280px; max-width:90%; text-align:center; box-shadow:0 0 20px rgba(52,152,219,0.4);">
