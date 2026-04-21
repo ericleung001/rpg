@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -619,6 +619,51 @@
             margin-top: 0; padding: 0; border: none;
         }
         #special-offers-panel.offer-visible {
+/* 🟢 採集狀態顯示 */
+        #gather-status-panel {
+            transition: opacity 0.3s ease, max-height 0.3s ease;
+            max-height: 0; opacity: 0; overflow: hidden;
+            margin-top: 0; padding: 0;
+        }
+        #gather-status-panel.gather-visible {
+            max-height: 60px; opacity: 1;
+            margin-top: 6px; padding: 8px;
+        }
+        #gather-status-panel .gather-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        #gather-status-panel .gather-title {
+            color: #2ecc71;
+            font-weight: bold;
+            font-size: 9px;
+        }
+        #gather-status-panel .gather-count {
+            color: #f1c40f;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        #gather-status-panel .gather-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        #gather-status-panel .gather-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #27ae60, #2ecc71);
+            transition: width 0.3s ease;
+        }
+        #gather-status-panel .gather-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 8px;
+            color: #888;
+            margin-top: 4px;
+        }
             max-height: 80px; opacity: 1;
             margin-top: 6px; padding: 5px 8px;
             border: 1px solid rgba(241,196,15,0.3);
@@ -768,221 +813,7 @@
             filter: brightness(0.85);
         }
         /* =================================================== */
-        
-        /* ==================== 背景採集狀態區塊 ==================== */
-        #bg-gather-panel {
-            display: none;
-            width: 100%;
-            margin-bottom: 10px;
-            flex-shrink: 0;
-        }
-        #bg-gather-panel.active { display: block; }
-        
-        .bg-gather-box {
-            background: linear-gradient(135deg, #1a3d2e 0%, #1e5a3a 50%, #1a3d2e 100%);
-            border: 2px solid #27ae60;
-            border-radius: 10px;
-            padding: 10px;
-            box-shadow: 0 0 12px rgba(39, 174, 96, 0.3);
-            animation: gather-glow 2.5s ease-in-out infinite;
-        }
-        @keyframes gather-glow {
-            0%, 100% { box-shadow: 0 0 8px rgba(39, 174, 96, 0.3); }
-            50% { box-shadow: 0 0 18px rgba(39, 174, 96, 0.6); }
-        }
-        
-        .bg-gather-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid rgba(39, 174, 96, 0.3);
-        }
-        .bg-gather-title {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            font-weight: bold;
-            color: #2ecc71;
-        }
-        .bg-gather-icon {
-            font-size: 16px;
-            animation: gather-icon-bounce 1.5s ease-in-out infinite;
-        }
-        @keyframes gather-icon-bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-3px); }
-        }
-        .bg-gather-node-name {
-            font-size: 10px;
-            color: #a8e6cf;
-        }
-        
-        .bg-gather-progress-section {
-            margin-bottom: 8px;
-        }
-        .bg-gather-progress-bar {
-            width: 100%;
-            height: 10px;
-            background: #1a3d2e;
-            border-radius: 5px;
-            overflow: hidden;
-            border: 1px solid rgba(39, 174, 96, 0.5);
-        }
-        .bg-gather-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #27ae60, #2ecc71);
-            transition: width 0.5s ease;
-            border-radius: 5px;
-        }
-        .bg-gather-time-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 9px;
-            color: #a8e6cf;
-            margin-top: 4px;
-        }
-        
-        .bg-gather-actions {
-            display: flex;
-            gap: 8px;
-        }
-        .bg-gather-btn {
-            flex: 1;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            font-family: var(--font-body);
-            transition: all 0.15s;
-            border: none;
-        }
-        .bg-gather-btn:active {
-            transform: scale(0.95);
-            filter: brightness(0.85);
-        }
-        .bg-gather-collect-btn {
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-            color: white;
-        }
-        .bg-gather-cancel-btn {
-            background: linear-gradient(135deg, #c0392b, #e74c3c);
-            color: white;
-        }
-        .bg-gather-goto-btn {
-            background: linear-gradient(135deg, #2980b9, #3498db);
-            color: white;
-        }
-        
-        /* 採集完成特殊樣式 */
-        .bg-gather-box.complete {
-            background: linear-gradient(135deg, #2d4a1c 0%, #4a7c2c 50%, #2d4a1c 100%);
-            border-color: #f1c40f;
-            animation: gather-complete-pulse 1.5s ease-in-out infinite;
-        }
-        @keyframes gather-complete-pulse {
-            0%, 100% { box-shadow: 0 0 8px rgba(241, 196, 15, 0.4); }
-            50% { box-shadow: 0 0 20px rgba(241, 196, 15, 0.8); }
-        }
-        
-        /* 收取結果彈窗 */
-        #collect-result-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 99999;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .collect-result-box {
-            background: linear-gradient(135deg, #1e3a2f 0%, #2d5a47 100%);
-            border: 3px solid #2ecc71;
-            border-radius: 12px;
-            padding: 20px;
-            width: 85%;
-            max-width: 400px;
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-        .collect-result-title {
-            font-family: var(--font-display);
-            font-size: 14px;
-            color: #2ecc71;
-            text-align: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid rgba(46, 204, 113, 0.3);
-        }
-        .collect-result-info {
-            font-size: 11px;
-            color: #a8e6cf;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        .collect-items-list {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin-bottom: 15px;
-        }
-        .collect-item-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0,0,0,0.3);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-        }
-        .collect-item-name {
-            color: #f1c40f;
-            font-weight: bold;
-        }
-        .collect-item-count {
-            color: #2ecc71;
-            font-weight: bold;
-        }
-        .collect-exp-info {
-            background: rgba(52, 152, 219, 0.2);
-            border: 1px solid rgba(52, 152, 219, 0.5);
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 15px;
-            text-align: center;
-            font-size: 11px;
-        }
-        .collect-exp-value {
-            color: #3498db;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        .collect-close-btn {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            font-family: var(--font-body);
-        }
-        .collect-close-btn:active {
-            transform: scale(0.98);
-            filter: brightness(0.9);
-        }
-        /* ========================================================= */
-        </style>
-        
+    </style>
 </head>
 <body>
     <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -1287,38 +1118,23 @@
                 <div id="special-offers-panel" style="background:linear-gradient(135deg, #1a0a00 0%, #2d1a00 50%, #1a0a00 100%); border-radius:6px; font-size:8px; border: 1px solid rgba(241,196,15,0.3);">
                     <div style="color:#f1c40f; margin-bottom:4px; font-weight:bold;">⭐ 專用優惠生效中</div>
                     <div id="special-offers-timers" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
+<!-- 🟢 採集狀態 -->
+                <div id="gather-status-panel" style="background:linear-gradient(135deg, #0a1a0a 0%, #1a2e1a 50%, #0a1a0a 100%); border-radius:6px; font-size:8px; border: 1px solid rgba(46,204,113,0.3);">
+                    <div class="gather-header">
+                        <span class="gather-title">⛏️ 後台採集中</span>
+                        <span class="gather-count" id="gather-count-text">剩餘 0 次</span>
+                    </div>
+                    <div class="gather-bar-bg">
+                        <div class="gather-bar-fill" id="gather-progress-bar" style="width:0%;"></div>
+                    </div>
+                    <div class="gather-info">
+                        <span id="gather-node-name">---</span>
+                        <a href="gathering.html" style="color:#2ecc71; text-decoration:none;">查看詳情 →</a>
+                    </div>
                 </div>
-            </div>
 
             <!-- 🎫 優惠碼展示區 -->
             <div id="promo-display-area"></div>
-
-            <!-- 🌲 背景採集狀態區塊 -->
-            <div id="bg-gather-panel">
-                <div class="bg-gather-box" id="bg-gather-box">
-                    <div class="bg-gather-header">
-                        <div class="bg-gather-title">
-                            <span class="bg-gather-icon">🌲</span>
-                            <span>背景採集中</span>
-                        </div>
-                        <span class="bg-gather-node-name" id="bg-gather-node-name">---</span>
-                    </div>
-                    <div class="bg-gather-progress-section">
-                        <div class="bg-gather-progress-bar">
-                            <div class="bg-gather-progress-fill" id="bg-gather-progress-fill"></div>
-                        </div>
-                        <div class="bg-gather-time-info">
-                            <span id="bg-gather-remaining">剩餘: -- 次</span>
-                            <span id="bg-gather-eta">預計完成: --:--</span>
-                        </div>
-                    </div>
-                    <div class="bg-gather-actions">
-                        <button class="bg-gather-btn bg-gather-collect-btn" id="bg-gather-collect-btn" onclick="collectBackgroundGather()">📦 收取</button>
-                        <button class="bg-gather-btn bg-gather-cancel-btn" onclick="cancelBackgroundGather()">❌ 取消</button>
-                        <button class="bg-gather-btn bg-gather-goto-btn" onclick="goToGatheringPage()">🔄 前往</button>
-                    </div>
-                </div>
-            </div>
 
             <div class="main-content">
                 <div id="event-banner">
@@ -1418,9 +1234,9 @@
         }
 
        const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true
+        });
         
         let myLevel = 1;
         let myName = ""; 
@@ -2158,6 +1974,13 @@
             // 縮寫 EXP 顯示
             document.getElementById('exp-txt').innerText = `${formatNumberShort(p.exp)}/${formatNumberShort(p.maxExp)}`;
             document.getElementById('exp-fill').style.width = Math.min(100, (p.exp / p.maxExp * 100)) + '%';
+// 🟢 檢查採集狀態
+            if (p.autoGatherTask) {
+                updateGatherStatusUI(p.autoGatherTask);
+            } else {
+                // 如果內存中沒有，向服務器請求
+                socket.emit('getAutoGatherStatus');
+            }
             
             // 更新專用優惠狀態 UI
             updateSpecialOffersDisplay(p.specialOffers);
@@ -2255,7 +2078,7 @@
                 let icon = '';
                 
                 if (h.status === 'exploring') {
-                    const total = 3 * 60 * 60 * 1000;
+                    const total = 1 * 60 * 60 * 1000;
                     const remaining = Math.max(0, (h.startTime + total) - now);
                     if (remaining <= 0) {
                         icon = '📦';
@@ -2610,184 +2433,36 @@
             container.innerHTML = html;
         }
 
-        // ================================
-        // 🌲 背景採集系統 (伺服器端追蹤)
-        // ================================
-        let bgGatherInterval = null;
+        // ==========================================
+        // 🟢 採集狀態顯示功能
+        // ==========================================
 
-        // 初始化：查詢伺服器背景採集狀態
-        function initBackgroundGather() {
-            console.log('[背景採集] 查詢伺服器狀態...');
-            socket.emit('getBackgroundGatherStatus');
-        }
-
-        // 接收背景採集狀態 (統一處理器)
-        socket.on('backgroundGatherStatus', (data) => {
-            console.log('[背景採集] 收到狀態:', data);
-
-            if (!data.active) {
-                // 沒有進行中的採集
-                document.getElementById('bg-gather-panel').classList.remove('active');
-                if (bgGatherInterval) {
-                    clearInterval(bgGatherInterval);
-                    bgGatherInterval = null;
-                }
+        function updateGatherStatusUI(task) {
+            const panel = document.getElementById('gather-status-panel');
+            if (!task || task.remainingCount <= 0) {
+                panel.classList.remove('gather-visible');
                 return;
             }
+            panel.classList.add('gather-visible');
+            document.getElementById('gather-count-text').innerText = `剩餘 ${task.remainingCount} 次`;
+            document.getElementById('gather-node-name').innerText = task.nodeName || '採集中...';
+            const progress = ((task.totalCount - task.remainingCount) / task.totalCount) * 100;
+            document.getElementById('gather-progress-bar').style.width = Math.min(100, progress) + '%';
+        }
 
-            // 顯示背景採集面板
-            const panel = document.getElementById('bg-gather-panel');
-            const nodeName = document.getElementById('bg-gather-node-name');
-            const box = document.getElementById('bg-gather-box');
-            const collectBtn = document.getElementById('bg-gather-collect-btn');
-            const progressFill = document.getElementById('bg-gather-progress-fill');
-            const remainingEl = document.getElementById('bg-gather-remaining');
-            const etaEl = document.getElementById('bg-gather-eta');
-
-            // 更新採集地點名稱
-            nodeName.textContent = data.nodeName || '---';
-
-            // 更新進度條 (使用伺服器返回的 progress)
-            const progress = Math.min(100, data.progress || 0);
-            progressFill.style.width = `${progress}%`;
-
-            // 更新剩餘次數
-            remainingEl.textContent = `剩餘: ${data.remainingCount || 0} 次`;
-
-            // 更新預計完成時間 (使用伺服器返回的 remainingTime)
-            if (data.remainingTime && data.remainingTime > 0) {
-                const mins = Math.floor(data.remainingTime / 60000);
-                const secs = Math.floor((data.remainingTime % 60000) / 1000);
-                etaEl.textContent = `預計完成: ${mins}分${secs}秒`;
-                box.classList.remove('complete');
-                collectBtn.classList.remove('ready');
-            } else {
-                etaEl.textContent = '已完成！';
-                box.classList.add('complete');
-                collectBtn.classList.add('ready');
-            }
-
-            // 顯示面板
-            panel.classList.add('active');
-
-            // 啟動定期查詢計時器
-            if (!bgGatherInterval) {
-                bgGatherInterval = setInterval(() => {
-                    socket.emit('getBackgroundGatherStatus');
-                }, 1000);
-            }
+        socket.on('autoGatherStatus', (status) => { updateGatherStatusUI(status); });
+        socket.on('autoGatherResumed', (data) => { updateGatherStatusUI(data); });
+        socket.on('autoGatherProgress', (data) => {
+            updateGatherStatusUI({
+                remainingCount: data.remainingCount,
+                totalCount: data.totalCount,
+                nodeName: data.lastResult?.nodeName
+            });
         });
-
-        // 收取背景採集結果
-        function collectBackgroundGather() {
-            socket.emit('collectBackgroundGather');
-        }
-
-        // 接收取回結果
-        socket.on('backgroundGatherCollectResult', (data) => {
-            if (bgGatherInterval) {
-                clearInterval(bgGatherInterval);
-                bgGatherInterval = null;
-            }
-
-            document.getElementById('bg-gather-panel').classList.remove('active');
-
-            if (data.success) {
-                showCollectResult({
-                    nodeName: data.nodeName,
-                    items: data.items,
-                    totalExp: data.totalExp
-                });
-                // 更新玩家狀態
-                socket.emit('getMyStats');
-            } else {
-                showToast(data.msg || '收取失敗');
-            }
-        });
-
-        // 顯示收取結果
-        function showCollectResult(result) {
-            const modal = document.getElementById('collect-result-modal');
-            const infoEl = document.getElementById('collect-result-info');
-            const listEl = document.getElementById('collect-items-list');
-            const expEl = document.getElementById('collect-exp-value');
-
-            infoEl.textContent = `採集地點：${result.nodeName || '未知'}`;
-            expEl.textContent = result.totalExp || 0;
-
-            // 統計物品
-            const itemCounts = {};
-            if (result.items && result.items.length > 0) {
-                result.items.forEach(item => {
-                    const name = item.name || item;
-                    itemCounts[name] = (itemCounts[name] || 0) + 1;
-                });
-            }
-
-            // 渲染物品列表
-            listEl.innerHTML = '';
-            if (Object.keys(itemCounts).length === 0) {
-                listEl.innerHTML = '<div style="text-align:center; color:#aaa; padding:10px;">沒有獲得任何物品</div>';
-            } else {
-                Object.entries(itemCounts).forEach(([name, count]) => {
-                    const row = document.createElement('div');
-                    row.className = 'collect-item-row';
-                    row.innerHTML = `
-                        <span class="collect-item-name">${escapeHtml(name)}</span>
-                        <span class="collect-item-count">x${count}</span>
-                    `;
-                    listEl.appendChild(row);
-                });
-            }
-
-            modal.style.display = 'flex';
-        }
-
-        // 關閉收取結果
-        function closeCollectResult() {
-            document.getElementById('collect-result-modal').style.display = 'none';
-        }
-
-        // 取消背景採集
-        function cancelBackgroundGather() {
-            if (confirm('確定要取消背景採集嗎？')) {
-                socket.emit('cancelBackgroundGather');
-            }
-        }
-
-        // 取消結果
-        socket.on('backgroundGatherCancelled', () => {
-            if (bgGatherInterval) {
-                clearInterval(bgGatherInterval);
-                bgGatherInterval = null;
-            }
-            document.getElementById('bg-gather-panel').classList.remove('active');
-            showToast('已取消背景採集');
-        });
-
-        // 前往採集頁面
-        function goToGatheringPage() {
-            window.location.href = 'gathering.html';
-        }
-
-        // 頁面載入時初始化
-        window.addEventListener('load', () => {
-            setTimeout(initBackgroundGather, 1000);
+        socket.on('autoGatherCompleted', () => {
+            document.getElementById('gather-status-panel').classList.remove('gather-visible');
         });
     </script>
-
-    <!-- 📦 採集結果彈窗 -->
-    <div id="collect-result-modal">
-        <div class="collect-result-box">
-            <div class="collect-result-title">🎉 採集完成！</div>
-            <div class="collect-result-info" id="collect-result-info">採集地點：---</div>
-            <div class="collect-items-list" id="collect-items-list"></div>
-            <div class="collect-exp-info">
-                獲得經驗值：<span class="collect-exp-value" id="collect-exp-value">0</span>
-            </div>
-            <button class="collect-close-btn" onclick="closeCollectResult()">確認收取</button>
-        </div>
-    </div>
 
     <div id="room-type-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
         <div style="background:#2c3e50; border:2px solid #3498db; border-radius:12px; padding:20px; width:280px; max-width:90%; text-align:center; box-shadow:0 0 20px rgba(52,152,219,0.4);">
