@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>資源採集v4 - 自動採集版</title>
+    <title>資源採集v5 - 自動採集版</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -15,7 +15,6 @@
             overflow: scroll;
         }
 
-        /* 主內容區塊 */
         #main-content {
             flex: 1;
             display: flex;
@@ -27,7 +26,6 @@
 
         .header { padding: 10px; border-bottom: 2px solid #fff; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 
-        /* 🟢 返回按鈕 z-index 10001 (比遮罩高，允許中途離開) */
         .back-btn {
             background: #e74c3c; border: 2px solid #c0392b; color: white; padding: 8px;
             cursor: pointer; font-family: inherit; font-size: 10px; text-decoration: none;
@@ -71,7 +69,6 @@
 
         #game-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); border: 2px solid #f1c40f; padding: 10px 20px; border-radius: 20px; z-index: 20000; transition: top 0.5s; font-size: 12px; white-space: nowrap; color: white;}
 
-        /* 🛑 採集鎖定遮罩 (z-index: 10000) */
         #lock-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85);
@@ -95,7 +92,6 @@
             border-radius: 4px; margin-top: 15px;
         }
 
-        /* 🟢 新增：收集物品統計樣式 */
         .collected-summary {
             margin-top: 10px;
             padding: 10px;
@@ -116,15 +112,11 @@
             border-bottom: 1px dashed #555;
         }
 
-        /* 🟢 聊天室樣式 (修正版) */
         #chat-container {
             position: fixed; bottom: 0; left: 0; width: 100%;
             background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7;
             display: flex; flex-direction: column; font-size: 10px;
-
-            /* ⭐ 關鍵修改：將層級設為 12000，高於遮罩的 10000 */
             z-index: 12000;
-
             padding-bottom: env(safe-area-inset-bottom);
             transition: height 0.3s ease-in-out;
             height: 30px;
@@ -167,7 +159,6 @@
                 padding-bottom: 10px;
             }
             #chat-container {
-                /* ⭐ 關鍵修改：PC版改為 relative，確保 z-index 生效 */
                 position: relative;
                 width: 400px;
                 height: 100% !important;
@@ -247,7 +238,6 @@
             </div>
             <div id="timer-text" style="margin-top: 5px; font-size: 10px; color: #aaa;">伺服器後台執行中，可關閉頁面</div>
 
-            <!-- 🟢 新增：收集物品統計 -->
             <div class="collected-summary" id="collected-summary" style="display:none;">
                 <h4>📦 已收集物品</h4>
                 <div id="collected-items"></div>
@@ -278,7 +268,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
         let currentGatherNodeId = null;
         let currentGatherTime = 0;
         let currentActionName = "";
-        let collectedItems = {}; // 本地收集物品統計
+        let collectedItems = {};
+        let hasRequestedStatus = false; // 🟢 防止重複請求
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
@@ -288,14 +279,11 @@ const socket = io('https://mmo.ttctv-105.cc', {
             myGatherLv = p.gatherLevel || 1;
             updateGatherUI(myGatherLv, p.gatherExp || 0, myGatherLv * 500);
 
-            // 🟢 檢查是否有進行中的自動採集任務
-            if (p.autoGatherTask) {
-                socket.emit('getAutoGatherStatus');
-            }
-
-            if (Object.keys(gatherData).length === 0) {
+            // 🟢 修改：不要在這裡請求狀態，等服務器主動發送 autoGatherResumed
+            // 只在首次加載且沒有正在進行中的任務時才請求
+            if (!isGathering && !hasRequestedStatus && Object.keys(gatherData).length === 0) {
                 socket.emit('getGatherNodes');
-            } else {
+            } else if (Object.keys(gatherData).length > 0) {
                 renderNodes();
             }
         });
@@ -361,10 +349,10 @@ const socket = io('https://mmo.ttctv-105.cc', {
         }
 
         // ==========================================
-        // 🟢 [核心] 新版自動採集邏輯
+        // 🟢 [核心] 自動採集邏輯
         // ==========================================
 
-        // 初始化採集：向 Server 申請自動採集
+        // 初始化採集
         function initGatherSequence(nodeId, duration, name) {
             if (isGathering) return;
 
@@ -373,7 +361,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             currentActionName = name;
             collectedItems = {};
 
-            // 🟢 發送自動採集請求到伺服器
             socket.emit('startAutoGather', {
                 nodeId: nodeId,
                 count: targetCount
@@ -399,14 +386,21 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         // 🟢 監聽採集進度
         socket.on('autoGatherProgress', (data) => {
+            if (!isGathering) {
+                // 🟢 如果收到進度但不在採集狀態，說明是恢復的任務
+                isGathering = true;
+                document.querySelectorAll('.count-btn').forEach(b => b.style.opacity = '0.5');
+                document.querySelectorAll('.tab-btn').forEach(b => b.style.opacity = '0.5');
+                document.getElementById('lock-overlay').style.display = 'flex';
+            }
+
             remainingCount = data.remainingCount;
             document.getElementById('queue-text').innerText = `剩餘次數: ${remainingCount}`;
 
-            // 更新本地收集物品統計
             collectedItems = data.collectedItems || {};
             updateCollectedSummary();
 
-            // 更新進度條動畫
+            // 更新進度條
             const fill = document.getElementById('progress-fill');
             fill.style.transition = 'none';
             fill.style.width = '0%';
@@ -416,12 +410,10 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 fill.style.width = '100%';
             }, 50);
 
-            // 顯示最新收穫
             if (data.lastResult && data.lastResult.success) {
                 showToast("✅ " + data.lastResult.msg);
             }
 
-            // 更新採集等級 UI
             if (data.lastResult && data.lastResult.gatherLevel) {
                 updateGatherUI(data.lastResult.gatherLevel, data.lastResult.gatherExp, data.lastResult.gatherMaxExp);
             }
@@ -431,7 +423,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
         socket.on('autoGatherCompleted', (data) => {
             isGathering = false;
 
-            // 顯示總結
             let summary = `🎉 採集完成！\n`;
             let itemCount = 0;
             for (let itemId in data.collectedItems) {
@@ -441,7 +432,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
             showToast(summary);
 
-            // 延遲關閉遮罩
             setTimeout(() => {
                 stopGathering();
             }, 1500);
@@ -464,29 +454,23 @@ const socket = io('https://mmo.ttctv-105.cc', {
             stopGathering();
         });
 
-        // 🟢 監聽採集狀態恢復（重連時）
+        // 🟢 監聽採集狀態（手動查詢返回）
         socket.on('autoGatherStatus', (status) => {
-            if (status) {
-                // 有進行中的任務，顯示進度
-                isGathering = true;
-                remainingCount = status.remainingCount;
-                currentGatherTime = status.gatherTime;
-                currentActionName = status.nodeName;
-                collectedItems = status.collectedItems || {};
-
-                document.querySelectorAll('.count-btn').forEach(b => b.style.opacity = '0.5');
-                document.querySelectorAll('.tab-btn').forEach(b => b.style.opacity = '0.5');
-                document.getElementById('lock-overlay').style.display = 'flex';
-                document.getElementById('action-text').innerText = `🖥️ 後台採集中：${status.nodeName}`;
-                document.getElementById('queue-text').innerText = `剩餘次數: ${status.remainingCount}`;
-                document.getElementById('timer-text').innerText = '伺服器後台執行中，可關閉頁面';
-
-                updateCollectedSummary();
+            if (status && !isGathering) {
+                showGatheringUI(status);
             }
         });
 
-        // 🟢 監聽採集恢復（重連時）
+        // 🟢 監聽採集恢復（服務器主動推送）
         socket.on('autoGatherResumed', (data) => {
+            console.log('[Gather] 收到恢復事件:', data);
+            if (!isGathering) {
+                showGatheringUI(data);
+            }
+        });
+
+        // 🟢 顯示採集中的 UI
+        function showGatheringUI(data) {
             isGathering = true;
             remainingCount = data.remainingCount;
             currentGatherTime = data.gatherTime;
@@ -501,7 +485,9 @@ const socket = io('https://mmo.ttctv-105.cc', {
             document.getElementById('timer-text').innerText = '已恢復採集任務！';
 
             updateCollectedSummary();
-        });
+
+            showToast('✅ 已恢復採集任務，剩餘 ' + data.remainingCount + ' 次');
+        }
 
         // 🟢 更新收集物品統計 UI
         function updateCollectedSummary() {
@@ -547,7 +533,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
         }
 
         function stopGathering() {
-            // 🟢 如果正在採集，通知伺服器取消
             if (isGathering) {
                 socket.emit('cancelAutoGather');
             }
@@ -609,11 +594,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             t.style.top = "30px";
             setTimeout(() => { t.style.top = "-100px"; }, 2500);
         }
-
-        // 🟢 頁面關閉時不需要特別處理，伺服器會繼續執行
-        window.onbeforeunload = function() {
-            // 不再需要停止採集，伺服器會繼續執行
-        };
     </script>
 </body>
 </html>
