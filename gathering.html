@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>資源採集v4</title>
+    <title>資源採集v4 - 自動採集版</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        
-        body { 
-            background-color: #2c3e50; color: #fff; 
-            font-family: 'Press Start 2P', monospace; 
+
+        body {
+            background-color: #2c3e50; color: #fff;
+            font-family: 'Press Start 2P', monospace;
             text-align: center; margin: 0; padding: 0;
             display: flex; flex-direction: column; height: 100dvh;
-            overflow: scroll; 
+            overflow: scroll;
         }
 
         /* 主內容區塊 */
@@ -22,20 +22,20 @@
             flex-direction: column;
             overflow-y: auto;
             padding: 10px;
-            padding-bottom: 40px; 
+            padding-bottom: 40px;
         }
 
         .header { padding: 10px; border-bottom: 2px solid #fff; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        
+
         /* 🟢 返回按鈕 z-index 10001 (比遮罩高，允許中途離開) */
-        .back-btn { 
-            background: #e74c3c; border: 2px solid #c0392b; color: white; padding: 8px; 
+        .back-btn {
+            background: #e74c3c; border: 2px solid #c0392b; color: white; padding: 8px;
             cursor: pointer; font-family: inherit; font-size: 10px; text-decoration: none;
-            position: relative; z-index: 10001; 
+            position: relative; z-index: 10001;
         }
-        
-        .gather-status-bar { 
-            background: #34495e; padding: 10px; border-radius: 8px; margin-bottom: 15px; 
+
+        .gather-status-bar {
+            background: #34495e; padding: 10px; border-radius: 8px; margin-bottom: 15px;
             font-size: 10px; border: 2px solid #7f8c8d; text-align: left;
         }
         .exp-bar { width: 100%; height: 8px; background: #555; margin-top: 5px; border-radius: 4px; overflow:hidden; }
@@ -55,18 +55,18 @@
             border-radius: 4px; margin-bottom: 5px;
         }
         .count-btn.selected { background: #f39c12; border-color: #e67e22; color: #000; font-weight: bold; }
-        
+
         .node-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 5px; }
-        
-        .node-card { 
-            background: #3498db; border: 4px solid #2980b9; 
+
+        .node-card {
+            background: #3498db; border: 4px solid #2980b9;
             padding: 10px; border-radius: 8px; cursor: pointer; position: relative;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             height: 100px;
         }
         .node-card:active { transform: scale(0.95); }
         .node-card.locked { background: #7f8c8d; border-color: #95a5a6; cursor: not-allowed; opacity: 0.7; }
-        
+
         .action-img { font-size: 30px; margin-bottom: 10px; }
 
         #game-toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); border: 2px solid #f1c40f; padding: 10px 20px; border-radius: 20px; z-index: 20000; transition: top 0.5s; font-size: 12px; white-space: nowrap; color: white;}
@@ -74,8 +74,8 @@
         /* 🛑 採集鎖定遮罩 (z-index: 10000) */
         #lock-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85); 
-            z-index: 10000; display: none; 
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10000; display: none;
             flex-direction: column; justify-content: center; align-items: center;
             color: white;
         }
@@ -88,56 +88,69 @@
         .progress-bar { width: 100%; height: 20px; background: #2c3e50; margin-top: 15px; border-radius: 10px; overflow: hidden; }
         .progress-fill { height: 100%; width: 0%; background: #2ecc71; transition: width 0.1s linear; }
         .loading-text { font-size: 14px; margin-bottom: 5px; font-weight: bold; color: #f1c40f; }
-        
+
         .overlay-stop-btn {
             background: #c0392b; border: 2px solid #e74c3c; color: white;
             padding: 10px 20px; cursor: pointer; font-family: inherit; font-size: 12px;
             border-radius: 4px; margin-top: 15px;
         }
-        
-        /* 🟢 背景模式按鈕 */
-        .overlay-bg-btn {
-            background: #27ae60; border: 2px solid #2ecc71; color: white;
-            padding: 10px 20px; cursor: pointer; font-family: inherit; font-size: 12px;
-            border-radius: 4px; margin-top: 10px;
+
+        /* 🟢 新增：收集物品統計樣式 */
+        .collected-summary {
+            margin-top: 10px;
+            padding: 10px;
+            background: #2c3e50;
+            border-radius: 8px;
+            font-size: 10px;
+            max-height: 120px;
+            overflow-y: auto;
         }
-        .overlay-bg-btn:active { transform: scale(0.95); }
+        .collected-summary h4 {
+            margin: 0 0 8px 0;
+            color: #f1c40f;
+        }
+        .collected-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            border-bottom: 1px dashed #555;
+        }
 
         /* 🟢 聊天室樣式 (修正版) */
         #chat-container {
-            position: fixed; bottom: 0; left: 0; width: 100%; 
+            position: fixed; bottom: 0; left: 0; width: 100%;
             background: rgba(0, 0, 0, 0.95); border-top: 4px solid #bdc3c7;
-            display: flex; flex-direction: column; font-size: 10px; 
-            
+            display: flex; flex-direction: column; font-size: 10px;
+
             /* ⭐ 關鍵修改：將層級設為 12000，高於遮罩的 10000 */
-            z-index: 12000; 
-            
+            z-index: 12000;
+
             padding-bottom: env(safe-area-inset-bottom);
             transition: height 0.3s ease-in-out;
-            height: 30px; 
+            height: 30px;
         }
-        
+
         #chat-header {
-            height: 30px; background: #34495e; color: #fff; line-height: 30px; 
+            height: 30px; background: #34495e; color: #fff; line-height: 30px;
             cursor: pointer; font-weight: bold; border-bottom: 1px solid #555;
             display: flex; justify-content: center; align-items: center;
             touch-action: manipulation;
-            flex-shrink: 0; 
+            flex-shrink: 0;
         }
         #chat-header:hover { background: #2c3e50; }
 
         .chat-open { height: 40vh !important; }
         #chat-body { flex: 1; display: none; flex-direction: column; overflow: hidden; }
-        .chat-open #chat-body { display: flex; } 
+        .chat-open #chat-body { display: flex; }
 
         #chat-history { flex: 1; overflow-y: auto; padding: 8px; text-align: left; color: white; }
         #chat-input-area { display: flex; border-top: 1px solid #555; height: 40px; flex-shrink: 0; }
         #chat-input { flex: 1; background: #222; color: white; border: none; padding: 0 10px; font-family: inherit; font-size: 12px; outline: none; }
         #chat-send { background: #2980b9; color: white; border: none; padding: 0 15px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: bold; touch-action: manipulation; }
-        
+
         @media (min-width: 1024px) {
-            body { 
-                flex-direction: row; 
+            body {
+                flex-direction: row;
                 justify-content: center;
                 background-color: #222;
             }
@@ -155,9 +168,9 @@
             }
             #chat-container {
                 /* ⭐ 關鍵修改：PC版改為 relative，確保 z-index 生效 */
-                position: relative; 
+                position: relative;
                 width: 400px;
-                height: 100% !important; 
+                height: 100% !important;
                 border-top: none;
                 background: #34495e;
                 z-index: 12000;
@@ -176,12 +189,12 @@
 </head>
 <body>
     <div id="game-toast"></div>
-    
+
     <div id="app-layout">
         <div id="main-content">
             <div class="header">
-                <span style="font-size:12px;">🌲 資源採集</span>
-                <a href="hub.html" class="back-btn" id="back-btn">回大廳</a>
+                <span style="font-size:12px;">🌲 資源採集 v4</span>
+                <a href="hub.html" class="back-btn" onclick="stopGathering()">回大廳</a>
             </div>
 
             <div class="gather-status-bar">
@@ -205,6 +218,7 @@
                 <button class="count-btn" onclick="setCount(70)">x70</button>
                 <button class="count-btn" onclick="setCount(100)">x100</button>
                 <button class="count-btn" onclick="setCount(200)">x200</button>
+                <button class="count-btn" onclick="setCount(500)">x500</button>
             </div>
 
             <div id="node-list" class="node-container">
@@ -231,55 +245,61 @@
             <div class="progress-bar">
                 <div id="progress-fill" class="progress-fill"></div>
             </div>
-            <div id="timer-text" style="margin-top: 5px; font-size: 10px; color: #aaa;">請勿關閉視窗</div>
+            <div id="timer-text" style="margin-top: 5px; font-size: 10px; color: #aaa;">伺服器後台執行中，可關閉頁面</div>
+
+            <!-- 🟢 新增：收集物品統計 -->
+            <div class="collected-summary" id="collected-summary" style="display:none;">
+                <h4>📦 已收集物品</h4>
+                <div id="collected-items"></div>
+            </div>
+
             <button class="overlay-stop-btn" onclick="stopGathering()">⛔ 停止採集</button>
-            <button class="overlay-bg-btn" onclick="goToBackgroundMode()">🔄 背景執行</button>
         </div>
     </div>
 
     <script src="socket.io.js"></script>
     <script>
-const socket = io('https://mmo.ttctv-105.cc', { 
+const socket = io('https://mmo.ttctv-105.cc', {
     transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
+    secure: true
 });
-        
+
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
 
         let myGatherLv = 1;
         let gatherData = {};
         let currentType = 'wood';
-        
+
         // 🟢 狀態控制變數
-        let isGathering = false;        
-        let isWaitingServer = false;    
-        let targetCount = 1;            
-        let remainingCount = 0;         
-        let currentGatherNodeId = null; 
-        let currentGatherTime = 0; 
+        let isGathering = false;
+        let targetCount = 1;
+        let remainingCount = 0;
+        let currentGatherNodeId = null;
+        let currentGatherTime = 0;
         let currentActionName = "";
-        let gatheredItems = []; // 🟢 收集到的物品清單
-        let totalGatherExp = 0; // 🟢 收集到的總經驗值
+        let collectedItems = {}; // 本地收集物品統計
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
         });
 
-        socket.on('playerStatsUpdate', (p) => { 
+        socket.on('playerStatsUpdate', (p) => {
             myGatherLv = p.gatherLevel || 1;
-            const gExp = p.gatherExp || 0;
-            const maxExp = myGatherLv * 500;
+            updateGatherUI(myGatherLv, p.gatherExp || 0, myGatherLv * 500);
 
-            updateGatherUI(myGatherLv, gExp, maxExp);
-            
+            // 🟢 檢查是否有進行中的自動採集任務
+            if (p.autoGatherTask) {
+                socket.emit('getAutoGatherStatus');
+            }
+
             if (Object.keys(gatherData).length === 0) {
                 socket.emit('getGatherNodes');
             } else {
-                renderNodes(); 
+                renderNodes();
             }
         });
-        
+
         socket.on('gatherNodeList', (data) => {
             gatherData = data;
             renderNodes();
@@ -288,7 +308,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         // 🟢 [聊天室邏輯]
         socket.on('chatHistory', (history) => {
             const box = document.getElementById('chat-history');
-            box.innerHTML = ''; 
+            box.innerHTML = '';
             history.forEach(data => appendChat(data.name, data.msg));
         });
 
@@ -300,7 +320,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function appendChat(name, msg) {
             const history = document.getElementById('chat-history');
             const div = document.createElement('div');
-            
+
             const nameSpan = document.createElement('span');
             nameSpan.style.color = '#f1c40f';
             nameSpan.style.fontWeight = 'bold';
@@ -310,7 +330,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
             div.appendChild(nameSpan);
             div.appendChild(msgNode);
-            
+
             history.appendChild(div);
             history.scrollTop = history.scrollHeight;
         }
@@ -329,7 +349,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function toggleChat() {
             const chat = document.getElementById('chat-container');
             const header = document.getElementById('chat-header');
-            
+
             if (window.innerWidth >= 1024) return;
 
             chat.classList.toggle('chat-open');
@@ -340,95 +360,170 @@ const socket = io('https://mmo.ttctv-105.cc', {
             }
         }
 
-        // 🟢 [核心] 初始化採集：向 Server 申請
+        // ==========================================
+        // 🟢 [核心] 新版自動採集邏輯
+        // ==========================================
+
+        // 初始化採集：向 Server 申請自動採集
         function initGatherSequence(nodeId, duration, name) {
             if (isGathering) return;
-            
+
             currentGatherNodeId = nodeId;
             currentGatherTime = duration || 3000;
             currentActionName = name;
-            gatheredItems = []; // 重置收集清單
-            totalGatherExp = 0;
+            collectedItems = {};
 
-            socket.emit('startGather', targetCount);
-        }
-
-        // 🟢 [核心] Server 批准後才正式開始
-        socket.on('gatherStarted', (approvedCount) => {
-            isGathering = true;
-            isWaitingServer = false;
-            remainingCount = approvedCount; 
-            
-            document.querySelectorAll('.count-btn').forEach(b => b.style.opacity = '0.5');
-            document.querySelectorAll('.tab-btn').forEach(b => b.style.opacity = '0.5');
-            document.getElementById('lock-overlay').style.display = 'flex';
-            document.getElementById('action-text').innerText = `正在採集：${currentActionName}`;
-            
-            updateQueueDisplay();
-            startSingleGather(); 
-        });
-
-        socket.on('forceStopGather', () => {
-            stopGathering();
-            showToast("⚠️ 系統強制停止 (配額用盡)");
-        });
-
-        socket.on('gatherResult', (res) => {
-            isWaitingServer = false; 
-
-            if (!isGathering) return; 
-
-            remainingCount--; 
-            updateQueueDisplay();
-
-            if(res.success) {
-                showToast("✅ " + res.msg);
-                
-                if (res.gatherLevel) {
-                    myGatherLv = res.gatherLevel;
-                    updateGatherUI(res.gatherLevel, res.gatherExp, res.gatherMaxExp);
-                    renderNodes();
-                }
-            } else {
-                showToast("❌ " + res.msg);
-                if (res.msg.includes("背包") || res.msg.includes("等級") || res.msg.includes("進行中")) {
-                    stopGathering();
-                    return;
-                }
-            }
-
-            if (remainingCount > 0) {
-                setTimeout(() => {
-                    startSingleGather(); 
-                }, 50); 
-            } else {
-                stopGathering(); 
-                showToast("🎉 採集任務完成！");
-            }
-        });
-
-        // 🟢 背景模式 - 返回大廳但繼續採集 (改用伺服器端追蹤)
-        function goToBackgroundMode() {
-            if (!isGathering || !currentGatherNodeId) return;
-            
-            // 向伺服器申請背景採集
-            socket.emit('startBackgroundGather', {
-                nodeId: currentGatherNodeId,
-                count: remainingCount
+            // 🟢 發送自動採集請求到伺服器
+            socket.emit('startAutoGather', {
+                nodeId: nodeId,
+                count: targetCount
             });
         }
 
-        // 🟢 伺服器確認背景採集已開始
-        socket.on('backgroundGatherStarted', (data) => {
-            if (data.success) {
-                showToast("🔄 背景採集已啟動！");
-                stopGathering();
-                // 延遲跳轉
-                setTimeout(() => {
-                    window.location.href = 'hub.html';
-                }, 500);
+        // 🟢 監聽自動採集開始
+        socket.on('autoGatherStarted', (data) => {
+            isGathering = true;
+            remainingCount = data.totalCount;
+            currentGatherTime = data.gatherTime;
+
+            document.querySelectorAll('.count-btn').forEach(b => b.style.opacity = '0.5');
+            document.querySelectorAll('.tab-btn').forEach(b => b.style.opacity = '0.5');
+            document.getElementById('lock-overlay').style.display = 'flex';
+            document.getElementById('action-text').innerText = `🖥️ 後台採集中：${data.nodeName}`;
+            document.getElementById('queue-text').innerText = `剩餘次數: ${remainingCount}`;
+            document.getElementById('timer-text').innerText = '伺服器後台執行中，可關閉頁面';
+
+            collectedItems = {};
+            updateCollectedSummary();
+        });
+
+        // 🟢 監聽採集進度
+        socket.on('autoGatherProgress', (data) => {
+            remainingCount = data.remainingCount;
+            document.getElementById('queue-text').innerText = `剩餘次數: ${remainingCount}`;
+
+            // 更新本地收集物品統計
+            collectedItems = data.collectedItems || {};
+            updateCollectedSummary();
+
+            // 更新進度條動畫
+            const fill = document.getElementById('progress-fill');
+            fill.style.transition = 'none';
+            fill.style.width = '0%';
+            void fill.offsetWidth;
+            setTimeout(() => {
+                fill.style.transition = `width ${currentGatherTime}ms linear`;
+                fill.style.width = '100%';
+            }, 50);
+
+            // 顯示最新收穫
+            if (data.lastResult && data.lastResult.success) {
+                showToast("✅ " + data.lastResult.msg);
+            }
+
+            // 更新採集等級 UI
+            if (data.lastResult && data.lastResult.gatherLevel) {
+                updateGatherUI(data.lastResult.gatherLevel, data.lastResult.gatherExp, data.lastResult.gatherMaxExp);
             }
         });
+
+        // 🟢 監聽採集完成
+        socket.on('autoGatherCompleted', (data) => {
+            isGathering = false;
+
+            // 顯示總結
+            let summary = `🎉 採集完成！\n`;
+            let itemCount = 0;
+            for (let itemId in data.collectedItems) {
+                itemCount += data.collectedItems[itemId];
+            }
+            summary += `共收集 ${itemCount} 個物品`;
+
+            showToast(summary);
+
+            // 延遲關閉遮罩
+            setTimeout(() => {
+                stopGathering();
+            }, 1500);
+        });
+
+        // 🟢 監聽採集取消
+        socket.on('autoGatherCancelled', (data) => {
+            isGathering = false;
+
+            let summary = '⏹️ 採集已停止\n';
+            if (data.collectedItems) {
+                let itemCount = 0;
+                for (let itemId in data.collectedItems) {
+                    itemCount += data.collectedItems[itemId];
+                }
+                summary += `已收集 ${itemCount} 個物品`;
+            }
+
+            showToast(summary);
+            stopGathering();
+        });
+
+        // 🟢 監聽採集狀態恢復（重連時）
+        socket.on('autoGatherStatus', (status) => {
+            if (status) {
+                // 有進行中的任務，顯示進度
+                isGathering = true;
+                remainingCount = status.remainingCount;
+                currentGatherTime = status.gatherTime;
+                currentActionName = status.nodeName;
+                collectedItems = status.collectedItems || {};
+
+                document.querySelectorAll('.count-btn').forEach(b => b.style.opacity = '0.5');
+                document.querySelectorAll('.tab-btn').forEach(b => b.style.opacity = '0.5');
+                document.getElementById('lock-overlay').style.display = 'flex';
+                document.getElementById('action-text').innerText = `🖥️ 後台採集中：${status.nodeName}`;
+                document.getElementById('queue-text').innerText = `剩餘次數: ${status.remainingCount}`;
+                document.getElementById('timer-text').innerText = '伺服器後台執行中，可關閉頁面';
+
+                updateCollectedSummary();
+            }
+        });
+
+        // 🟢 監聽採集恢復（重連時）
+        socket.on('autoGatherResumed', (data) => {
+            isGathering = true;
+            remainingCount = data.remainingCount;
+            currentGatherTime = data.gatherTime;
+            currentActionName = data.nodeName;
+            collectedItems = data.collectedItems || {};
+
+            document.querySelectorAll('.count-btn').forEach(b => b.style.opacity = '0.5');
+            document.querySelectorAll('.tab-btn').forEach(b => b.style.opacity = '0.5');
+            document.getElementById('lock-overlay').style.display = 'flex';
+            document.getElementById('action-text').innerText = `🖥️ 後台採集中：${data.nodeName}`;
+            document.getElementById('queue-text').innerText = `剩餘次數: ${data.remainingCount}`;
+            document.getElementById('timer-text').innerText = '已恢復採集任務！';
+
+            updateCollectedSummary();
+        });
+
+        // 🟢 更新收集物品統計 UI
+        function updateCollectedSummary() {
+            const summaryDiv = document.getElementById('collected-summary');
+            const itemsDiv = document.getElementById('collected-items');
+
+            if (Object.keys(collectedItems).length === 0) {
+                summaryDiv.style.display = 'none';
+                return;
+            }
+
+            summaryDiv.style.display = 'block';
+            itemsDiv.innerHTML = '';
+
+            for (let itemId in collectedItems) {
+                const count = collectedItems[itemId];
+                const div = document.createElement('div');
+                div.className = 'collected-item';
+                div.innerHTML = `<span>${itemId}</span><span>x${count}</span>`;
+                itemsDiv.appendChild(div);
+            }
+        }
 
         function updateGatherUI(lv, exp, max) {
             document.getElementById('gather-lv').innerText = lv;
@@ -445,20 +540,26 @@ const socket = io('https://mmo.ttctv-105.cc', {
         }
 
         function setCount(n) {
-            if (isGathering) return; 
+            if (isGathering) return;
             targetCount = n;
             document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('selected'));
             event.target.classList.add('selected');
         }
 
         function stopGathering() {
+            // 🟢 如果正在採集，通知伺服器取消
+            if (isGathering) {
+                socket.emit('cancelAutoGather');
+            }
+
             isGathering = false;
-            isWaitingServer = false;
             remainingCount = 0;
             currentGatherNodeId = null;
-            
+            collectedItems = {};
+
             document.getElementById('lock-overlay').style.display = 'none';
-            
+            document.getElementById('collected-summary').style.display = 'none';
+
             document.querySelectorAll('.count-btn').forEach(b => b.style.opacity = '1');
             document.querySelectorAll('.tab-btn').forEach(b => b.style.opacity = '1');
         }
@@ -466,7 +567,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function renderNodes() {
             const container = document.getElementById('node-list');
             container.innerHTML = '';
-            
+
             if (Object.keys(gatherData).length === 0) {
                 container.innerHTML = '<div style="padding:20px; font-size:10px;">載入中...</div>';
                 return;
@@ -479,7 +580,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 const isLocked = myGatherLv < node.reqLv;
                 const div = document.createElement('div');
                 div.className = `node-card ${isLocked ? 'locked' : ''}`;
-                
+
                 let icon = '🌲';
                 if(currentType === 'mine') icon = '🪨';
                 if(currentType === 'fish') icon = '💧';
@@ -497,55 +598,21 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 } else {
                     div.onclick = () => showToast(`❌ 等級不足！需要採集等級 ${node.reqLv}`);
                 }
-                
+
                 container.appendChild(div);
             });
-        }
-
-        function updateQueueDisplay() {
-            document.getElementById('queue-text').innerText = `剩餘次數: ${remainingCount}`;
-        }
-
-        function startSingleGather() {
-            if (!isGathering || remainingCount <= 0 || isWaitingServer) return;
-
-            const fill = document.getElementById('progress-fill');
-            fill.style.transition = 'none';
-            fill.style.width = '0%';
-            
-            void fill.offsetWidth; 
-
-            setTimeout(() => {
-                fill.style.transition = `width ${currentGatherTime}ms linear`;
-                fill.style.width = '100%';
-            }, 50);
-
-            setTimeout(() => {
-                if (!isGathering) return; 
-                isWaitingServer = true; 
-                socket.emit('gatherAction', currentGatherNodeId);
-            }, currentGatherTime);
         }
 
         function showToast(msg) {
             const t = document.getElementById('game-toast');
             t.innerText = msg;
             t.style.top = "30px";
-            setTimeout(() => { t.style.top = "-100px"; }, 2000);
+            setTimeout(() => { t.style.top = "-100px"; }, 2500);
         }
 
-        // 🟢 返回按鈕處理
-        document.getElementById('back-btn').onclick = function(e) {
-            if (isGathering) {
-                e.preventDefault();
-                // 顯示確認對話框
-                if (confirm('採集進行中，是否切換到背景執行？\n\n確定：背景執行並返回大廳\n取消：停止採集並返回大廳')) {
-                    goToBackgroundMode();
-                } else {
-                    stopGathering();
-                    window.location.href = 'hub.html';
-                }
-            }
+        // 🟢 頁面關閉時不需要特別處理，伺服器會繼續執行
+        window.onbeforeunload = function() {
+            // 不再需要停止採集，伺服器會繼續執行
         };
     </script>
 </body>
