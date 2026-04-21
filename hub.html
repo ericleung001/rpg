@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -1123,7 +1123,7 @@
                     <div style="color:#f1c40f; margin-bottom:4px; font-weight:bold;">⭐ 專用優惠生效中</div>
                     <div id="special-offers-timers" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
                 </div>
-
+                
                 <!-- 🟢 採集狀態 -->
                 <div id="gather-status-panel">
                     <div class="gather-header">
@@ -1989,6 +1989,46 @@
         });
         
         // ==========================================
+        //  🟢 採集狀態系統
+        // ==========================================
+        
+        // 監聽採集狀態更新
+        socket.on('autoGatherStatus', (data) => {
+            const panel = document.getElementById('gather-status-panel');
+            const countText = document.getElementById('gather-count-text');
+            const progressBar = document.getElementById('gather-progress-bar');
+            const nodeName = document.getElementById('gather-node-name');
+            
+            if (data && data.isActive && data.remainingCount > 0) {
+                panel.classList.add('gather-visible');
+                countText.textContent = `剩餘 ${data.remainingCount} 次`;
+                
+                // 計算進度百分比
+                const total = data.totalCount || data.remainingCount;
+                const completed = total - data.remainingCount;
+                const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+                progressBar.style.width = progress + '%';
+                
+                // 顯示採集點名稱
+                nodeName.textContent = data.nodeName || '採集中...';
+            } else {
+                panel.classList.remove('gather-visible');
+            }
+        });
+        
+        // 頁面載入時請求採集狀態
+        setTimeout(() => {
+            socket.emit('getAutoGatherStatus');
+        }, 1500);
+        
+        // 定期更新採集狀態
+        setInterval(() => {
+            if (socket.connected) {
+                socket.emit('getAutoGatherStatus');
+            }
+        }, 5000);
+        
+        // ==========================================
         //  專用優惠系統
         // ==========================================
         let hubSpecialOffers = {};
@@ -2057,46 +2097,6 @@
                 renderSpecialOffersTimers();
             }
         }, 1000);
-
-        // ==========================================
-        //  🟢 採集狀態系統
-        // ==========================================
-        
-        // 監聽採集狀態更新
-        socket.on('autoGatherStatus', (data) => {
-            const panel = document.getElementById('gather-status-panel');
-            const countText = document.getElementById('gather-count-text');
-            const progressBar = document.getElementById('gather-progress-bar');
-            const nodeName = document.getElementById('gather-node-name');
-            
-            if (data && data.isActive && data.remainingCount > 0) {
-                panel.classList.add('gather-visible');
-                countText.textContent = `剩餘 ${data.remainingCount} 次`;
-                
-                // 計算進度百分比
-                const total = data.totalCount || data.remainingCount;
-                const completed = total - data.remainingCount;
-                const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-                progressBar.style.width = progress + '%';
-                
-                // 顯示採集點名稱
-                nodeName.textContent = data.nodeName || '採集中...';
-            } else {
-                panel.classList.remove('gather-visible');
-            }
-        });
-        
-        // 頁面載入時請求採集狀態
-        setTimeout(() => {
-            socket.emit('getAutoGatherStatus');
-        }, 1500);
-        
-        // 定期更新採集狀態
-        setInterval(() => {
-            if (socket.connected) {
-                socket.emit('getAutoGatherStatus');
-            }
-        }, 5000);
 
         socket.on('hirelingsData', (data) => {
             const panel = document.getElementById('hireling-panel');
