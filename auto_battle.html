@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>自動戰鬥</title>
+    <title>自動戰鬥2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -289,6 +289,51 @@
         .log-win { color: #2ecc71; }
         .log-lose { color: #e74c3c; }
         .log-info { color: #3498db; }
+        .log-rest { color: #f1c40f; }
+
+        /* 休息狀態 */
+        .resting-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            z-index: 10;
+        }
+        
+        .resting-icon {
+            font-size: 30px;
+            margin-bottom: 10px;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        .resting-text {
+            color: #f1c40f;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .resting-timer {
+            color: #fff;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .progress-panel {
+            position: relative;
+        }
 
         /* 提示訊息 */
         .toast {
@@ -344,6 +389,13 @@
 
         <!-- 進度面板 -->
         <div class="progress-panel" id="progress-panel">
+            <!-- 休息覆蓋層 -->
+            <div class="resting-overlay" id="resting-overlay" style="display:none;">
+                <div class="resting-icon">🏨</div>
+                <div class="resting-text">旅館休息中...</div>
+                <div class="resting-timer" id="rest-timer">10</div>
+            </div>
+            
             <div class="progress-header">
                 <span class="progress-title">⚔️ 戰鬥中: <span id="battle-monster-name">---</span></span>
                 <span class="progress-count" id="battle-count">0/0</span>
@@ -519,6 +571,9 @@
 
         // 戰鬥進度
         socket.on('autoBattleProgress', (data) => {
+            // 隱藏休息覆蓋層
+            document.getElementById('resting-overlay').style.display = 'none';
+            
             const completed = data.totalCount - data.remainingCount;
             const progress = Math.round((completed / data.totalCount) * 100);
             
@@ -546,9 +601,42 @@
             }
         });
 
+        // 休息中（HP過低自動休息）
+        socket.on('autoBattleResting', (data) => {
+            // 顯示休息覆蓋層
+            const overlay = document.getElementById('resting-overlay');
+            const timerEl = document.getElementById('rest-timer');
+            overlay.style.display = 'flex';
+            
+            // 更新剩餘次數
+            const completed = data.totalCount - data.remainingCount;
+            document.getElementById('battle-count').textContent = `${completed}/${data.totalCount}`;
+            
+            // 添加休息日誌
+            const log = document.getElementById('battle-log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry log-rest';
+            entry.textContent = `🏨 HP過低，自動休息（扣除1次）`;
+            log.insertBefore(entry, log.firstChild);
+            
+            // 倒計時
+            let timeLeft = data.restTime || 10;
+            timerEl.textContent = timeLeft;
+            
+            const countdownInterval = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    overlay.style.display = 'none';
+                }
+            }, 1000);
+        });
+
         // 戰鬥完成
         socket.on('autoBattleCompleted', (data) => {
             isBattling = false;
+            document.getElementById('resting-overlay').style.display = 'none';
             document.getElementById('cancel-btn').classList.remove('visible');
             document.getElementById('start-btn').disabled = false;
             
@@ -562,6 +650,7 @@
         // 戰鬥取消
         socket.on('autoBattleCancelled', (data) => {
             isBattling = false;
+            document.getElementById('resting-overlay').style.display = 'none';
             document.getElementById('cancel-btn').classList.remove('visible');
             document.getElementById('start-btn').disabled = false;
             
