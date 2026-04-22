@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>資源採集v4 - 自動採集版</title>
+    <title>資源採集v5 - 自動採集版</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -270,6 +270,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         let currentActionName = "";
         let collectedItems = {};
         let hasRequestedStatus = false; // 🟢 防止重複請求
+        let collectedItemNames = {}; // 🟢 物品中文名稱映射
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
@@ -360,6 +361,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             currentGatherTime = duration || 3000;
             currentActionName = name;
             collectedItems = {};
+            collectedItemNames = {}; // 🟢 清除物品名稱映射
 
             socket.emit('startAutoGather', {
                 nodeId: nodeId,
@@ -398,6 +400,10 @@ const socket = io('https://mmo.ttctv-105.cc', {
             document.getElementById('queue-text').innerText = `剩餘次數: ${remainingCount}`;
 
             collectedItems = data.collectedItems || {};
+            // 🟢 合併物品名稱映射
+            if (data.collectedItemNames) {
+                collectedItemNames = {...collectedItemNames, ...data.collectedItemNames};
+            }
             updateCollectedSummary();
 
             // 更新進度條
@@ -478,6 +484,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             currentGatherTime = data.gatherTime;
             currentActionName = data.nodeName;
             collectedItems = data.collectedItems || {};
+            collectedItemNames = data.collectedItemNames || {}; // 🟢 恢復物品名稱映射
 
             document.querySelectorAll('.count-btn').forEach(b => b.style.opacity = '0.5');
             document.querySelectorAll('.tab-btn').forEach(b => b.style.opacity = '0.5');
@@ -506,9 +513,11 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
             for (let itemId in collectedItems) {
                 const count = collectedItems[itemId];
+                // 🟢 使用中文名稱，如果沒有則使用英文ID
+                const displayName = collectedItemNames[itemId] || itemId;
                 const div = document.createElement('div');
                 div.className = 'collected-item';
-                div.innerHTML = `<span>${itemId}</span><span>x${count}</span>`;
+                div.innerHTML = `<span>${displayName}</span><span>x${count}</span>`;
                 itemsDiv.appendChild(div);
             }
         }
@@ -540,6 +549,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             remainingCount = 0;
             currentGatherNodeId = null;
             collectedItems = {};
+            collectedItemNames = {}; // 🟢 清除物品名稱映射
 
             document.getElementById('lock-overlay').style.display = 'none';
             document.getElementById('collected-summary').style.display = 'none';
@@ -579,11 +589,19 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 if(currentType === 'fish') icon = '💧';
 
                 const lockMsg = isLocked ? `(需 Lv.${node.reqLv})` : '';
+                
+                // 🟢 顯示可能的掉落物品
+                let dropInfo = '';
+                if (node.dropNames && node.dropNames.length > 0) {
+                    const dropStr = node.dropNames.map(d => `${d.name}`).join(', ');
+                    dropInfo = `<div style="font-size:8px; color:#aaa; margin-top:3px;">可能獲得: ${dropStr}</div>`;
+                }
 
                 div.innerHTML = `
                     <div class="action-img">${icon}</div>
                     <div style="font-size:12px; margin-bottom:5px;">${node.name}</div>
                     <div style="font-size:10px; color:#ddd;">${lockMsg}</div>
+                    ${dropInfo}
                 `;
 
                 if (!isLocked) {
