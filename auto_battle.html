@@ -593,11 +593,29 @@
                 if (data.lastResult.won) {
                     let logText = `✓ 勝利! +${data.lastResult.exp}EXP +${data.lastResult.gold}G`;
                     
+                    // 🟢 顯示級差懲罰
+                    if (data.lastResult.expRatio && data.lastResult.expRatio < 1) {
+                        const penaltyPct = Math.round((1 - data.lastResult.expRatio) * 100);
+                        logText += ` <span style="color:#e74c3c;">[級差-${penaltyPct}%]</span>`;
+                    }
+                    
+                    // 🟢 顯示掉落物品
+                    if (data.lastResult.dropNames && data.lastResult.dropNames.length > 0) {
+                        const dropStr = data.lastResult.dropNames.join(', ');
+                        logText += ` <span style="color:#2ecc71;">[獲得:${dropStr}]</span>`;
+                    }
+                    
                     // 🟢 顯示活動加成
                     if (data.lastResult.eventBonus && data.lastResult.eventBonus.active) {
                         let eventParts = [];
                         if (data.lastResult.eventBonus.expBonus > 0) eventParts.push(`活動EXP+${data.lastResult.eventBonus.expBonus}`);
                         if (data.lastResult.eventBonus.shards > 0) eventParts.push(`碎片+${data.lastResult.eventBonus.shards}`);
+                        // 🟢 顯示活動物品
+                        if (data.lastResult.eventBonus.itemNames && data.lastResult.eventBonus.itemNames.length > 0) {
+                            data.lastResult.eventBonus.itemNames.forEach(item => {
+                                eventParts.push(`${item.name}x${item.count}`);
+                            });
+                        }
                         if (eventParts.length > 0) {
                             logText += ` <span style="color:#e67e22;">[活動:${eventParts.join(' ')}]</span>`;
                         }
