@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>自動戰鬥</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
+        
+        :root {
+            --font-display: 'Press Start 2P', monospace;
+            --font-body: 'Noto Sans TC', 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+        }
+        
+        body { 
+            background-color: #1a0a0a; 
+            color: #ecf0f1; 
+            font-family: var(--font-body); 
+            text-align: center; 
+            margin: 0; padding: 0; 
+            min-height: 100dvh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #c0392b;
+        }
+
+        .header h1 {
+            font-family: var(--font-display);
+            font-size: 14px;
+            color: #e74c3c;
+            margin: 0;
+        }
+
+        .back-btn {
+            background: #c0392b;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+        .panel {
+            background: linear-gradient(135deg, #2c3e50, #1a252f);
+            border: 2px solid #e74c3c;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .panel-title {
+            color: #f1c40f;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 8px;
+        }
+
+        .monster-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .monster-card {
+            background: #34495e;
+            border: 2px solid #555;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .monster-card:hover {
+            background: #3d566e;
+        }
+
+        .monster-card.selected {
+            border-color: #e74c3c;
+            background: rgba(231, 76, 60, 0.2);
+        }
+
+        .monster-name {
+            font-weight: bold;
+            font-size: 12px;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .monster-stats {
+            font-size: 10px;
+            color: #aaa;
+        }
+
+        .monster-stats span {
+            display: block;
+        }
+
+        .monster-lv { color: #2ecc71; }
+        .monster-exp { color: #f1c40f; }
+        .monster-gold { color: #f1c40f; }
+
+        .count-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .count-btn {
+            background: #34495e;
+            border: 2px solid #555;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .count-btn:hover {
+            background: #3d566e;
+        }
+
+        .count-btn.selected {
+            border-color: #e74c3c;
+            background: rgba(231, 76, 60, 0.3);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .start-btn {
+            flex: 1;
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            border: none;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .start-btn:hover {
+            transform: scale(1.02);
+        }
+
+        .start-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .cancel-btn {
+            flex: 1;
+            background: #7f8c8d;
+            border: none;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .cancel-btn.visible {
+            display: block;
+        }
+
+        /* 進度面板 */
+        .progress-panel {
+            background: linear-gradient(135deg, #1a0a0a, #2e1a1a);
+            border: 2px solid #e74c3c;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .progress-panel.visible {
+            display: block;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-title {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .progress-count {
+            color: #f1c40f;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #c0392b, #e74c3c);
+            transition: width 0.3s ease;
+        }
+
+        .progress-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            text-align: center;
+        }
+
+        .stat-item {
+            background: rgba(0,0,0,0.3);
+            padding: 8px;
+            border-radius: 5px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #888;
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+
+        .log-panel {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 10px;
+            text-align: left;
+            margin-top: 10px;
+        }
+
+        .log-entry {
+            margin-bottom: 3px;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .log-win { color: #2ecc71; }
+        .log-lose { color: #e74c3c; }
+        .log-info { color: #3498db; }
+
+        /* 提示訊息 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            border: 2px solid #f1c40f;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+            font-size: 12px;
+        }
+
+        .toast.error { border-color: #e74c3c; }
+        .toast.success { border-color: #2ecc71; }
+
+        .player-info {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .player-info span {
+            color: #aaa;
+        }
+
+        .player-info strong {
+            color: #f1c40f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="hub.html" class="back-btn">← 返回</a>
+            <h1>⚔️ 自動戰鬥</h1>
+            <div style="width: 60px;"></div>
+        </div>
+
+        <div class="player-info">
+            <div>HP: <strong id="player-hp">---</strong></div>
+            <div>Lv: <strong id="player-lv">---</strong></div>
+            <div>ATK: <strong id="player-atk">---</strong></div>
+        </div>
+
+        <!-- 進度面板 -->
+        <div class="progress-panel" id="progress-panel">
+            <div class="progress-header">
+                <span class="progress-title">⚔️ 戰鬥中: <span id="battle-monster-name">---</span></span>
+                <span class="progress-count" id="battle-count">0/0</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progress-bar" style="width:0%;"></div>
+            </div>
+            <div class="progress-stats">
+                <div class="stat-item">
+                    <div class="stat-label">勝利</div>
+                    <div class="stat-value" id="stat-wins">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">失敗</div>
+                    <div class="stat-value" id="stat-losses">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">經驗</div>
+                    <div class="stat-value" id="stat-exp">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">金幣</div>
+                    <div class="stat-value" id="stat-gold">0</div>
+                </div>
+            </div>
+            <div class="log-panel" id="battle-log"></div>
+        </div>
+
+        <!-- 選擇面板 -->
+        <div class="panel" id="selection-panel">
+            <div class="panel-title">👹 選擇怪物</div>
+            <div class="monster-grid" id="monster-list">
+                <div style="grid-column: span 2; text-align: center; color: #aaa;">載入中...</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">🔢 戰鬥次數</div>
+            <div class="count-selector" id="count-selector">
+                <button class="count-btn" data-count="10">10次</button>
+                <button class="count-btn" data-count="30">30次</button>
+                <button class="count-btn" data-count="50">50次</button>
+                <button class="count-btn" data-count="100">100次</button>
+                <button class="count-btn" data-count="200">200次</button>
+            </div>
+            <div class="action-btns">
+                <button class="start-btn" id="start-btn" disabled>⚔️ 開始戰鬥</button>
+                <button class="cancel-btn" id="cancel-btn">❌ 停止戰鬥</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script>
+        const socket = io('https://mmo.ttctv-105.cc', { 
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
+
+        let myToken = localStorage.getItem('rpg_token');
+        let selectedMonster = null;
+        let selectedCount = 10;
+        let isBattling = false;
+
+        if (!myToken) {
+            window.location.href = 'index.html';
+        }
+
+        // 顯示提示
+        function showToast(msg, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = 'toast ' + type;
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 3000);
+        }
+
+        // 更新玩家信息
+        function updatePlayerInfo(p) {
+            document.getElementById('player-hp').textContent = `${p.hp || 100}/${p.maxHp || 100}`;
+            document.getElementById('player-lv').textContent = p.level || 1;
+            document.getElementById('player-atk').textContent = p.atk || 10;
+        }
+
+        // 載入怪物列表
+        socket.on('connect', () => {
+            socket.emit('joinGame', myToken);
+            setTimeout(() => {
+                socket.emit('getBattleMonsters');
+                socket.emit('getAutoBattleStatus');
+            }, 1000);
+        });
+
+        socket.on('playerStatsUpdate', updatePlayerInfo);
+
+        // 接收怪物列表
+        socket.on('battleMonstersList', (monsters) => {
+            const container = document.getElementById('monster-list');
+            container.innerHTML = '';
+
+            monsters.forEach(m => {
+                const card = document.createElement('div');
+                card.className = 'monster-card';
+                card.dataset.key = m.key;
+                card.innerHTML = `
+                    <div class="monster-name">${m.name}</div>
+                    <div class="monster-stats">
+                        <span class="monster-lv">Lv.${m.level}</span>
+                        <span class="monster-exp">EXP: ${m.exp}</span>
+                        <span class="monster-gold">金: ${m.gold}</span>
+                    </div>
+                `;
+                card.onclick = () => selectMonster(m.key, card);
+                container.appendChild(card);
+            });
+        });
+
+        // 選擇怪物
+        function selectMonster(key, card) {
+            document.querySelectorAll('.monster-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedMonster = key;
+            updateStartButton();
+        }
+
+        // 選擇次數
+        document.querySelectorAll('.count-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedCount = parseInt(btn.dataset.count);
+                updateStartButton();
+            };
+        });
+
+        // 預設選擇10次
+        document.querySelector('.count-btn[data-count="10"]').classList.add('selected');
+
+        // 更新開始按鈕狀態
+        function updateStartButton() {
+            document.getElementById('start-btn').disabled = !selectedMonster || isBattling;
+        }
+
+        // 開始戰鬥
+        document.getElementById('start-btn').onclick = () => {
+            if (!selectedMonster || isBattling) return;
+            
+            socket.emit('startAutoBattle', {
+                monsterKey: selectedMonster,
+                count: selectedCount
+            });
+        };
+
+        // 取消戰鬥
+        document.getElementById('cancel-btn').onclick = () => {
+            socket.emit('cancelAutoBattle');
+        };
+
+        // 戰鬥開始
+        socket.on('autoBattleStarted', (data) => {
+            isBattling = true;
+            showToast(`開始自動戰鬥: ${data.monsterName} x${data.totalCount}`, 'success');
+            
+            document.getElementById('progress-panel').classList.add('visible');
+            document.getElementById('cancel-btn').classList.add('visible');
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('battle-monster-name').textContent = data.monsterName;
+            document.getElementById('battle-count').textContent = `0/${data.totalCount}`;
+            document.getElementById('battle-log').innerHTML = '';
+        });
+
+        // 戰鬥進度
+        socket.on('autoBattleProgress', (data) => {
+            const completed = data.totalCount - data.remainingCount;
+            const progress = Math.round((completed / data.totalCount) * 100);
+            
+            document.getElementById('progress-bar').style.width = progress + '%';
+            document.getElementById('battle-count').textContent = `${completed}/${data.totalCount}`;
+            document.getElementById('stat-wins').textContent = data.wins;
+            document.getElementById('stat-losses').textContent = data.losses;
+            document.getElementById('stat-exp').textContent = data.totalExp.toLocaleString();
+            document.getElementById('stat-gold').textContent = data.totalGold.toLocaleString();
+
+            // 添加日誌
+            if (data.lastResult) {
+                const log = document.getElementById('battle-log');
+                const entry = document.createElement('div');
+                entry.className = 'log-entry ' + (data.lastResult.won ? 'log-win' : 'log-lose');
+                
+                if (data.lastResult.won) {
+                    entry.textContent = `✓ 勝利! +${data.lastResult.exp}EXP +${data.lastResult.gold}G`;
+                } else {
+                    entry.textContent = `✗ 戰敗`;
+                }
+                
+                log.insertBefore(entry, log.firstChild);
+                if (log.children.length > 50) log.removeChild(log.lastChild);
+            }
+        });
+
+        // 戰鬥完成
+        socket.on('autoBattleCompleted', (data) => {
+            isBattling = false;
+            document.getElementById('cancel-btn').classList.remove('visible');
+            document.getElementById('start-btn').disabled = false;
+            
+            showToast(`戰鬥完成! ${data.wins}勝 ${data.losses}敗`, 'success');
+            
+            setTimeout(() => {
+                document.getElementById('progress-panel').classList.remove('visible');
+            }, 3000);
+        });
+
+        // 戰鬥取消
+        socket.on('autoBattleCancelled', (data) => {
+            isBattling = false;
+            document.getElementById('cancel-btn').classList.remove('visible');
+            document.getElementById('start-btn').disabled = false;
+            
+            showToast(`戰鬥已停止`, '');
+            
+            setTimeout(() => {
+                document.getElementById('progress-panel').classList.remove('visible');
+            }, 2000);
+        });
+
+        // 恢復戰鬥
+        socket.on('autoBattleResumed', (data) => {
+            isBattling = true;
+            document.getElementById('progress-panel').classList.add('visible');
+            document.getElementById('cancel-btn').classList.add('visible');
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('battle-monster-name').textContent = data.monsterName;
+            
+            const completed = data.totalCount - data.remainingCount;
+            const progress = Math.round((completed / data.totalCount) * 100);
+            document.getElementById('progress-bar').style.width = progress + '%';
+            document.getElementById('battle-count').textContent = `${completed}/${data.totalCount}`;
+            document.getElementById('stat-wins').textContent = data.wins;
+            document.getElementById('stat-losses').textContent = data.losses;
+            document.getElementById('stat-exp').textContent = (data.totalExp || 0).toLocaleString();
+            document.getElementById('stat-gold').textContent = (data.totalGold || 0).toLocaleString();
+        });
+
+        // 戰鬥狀態查詢
+        socket.on('autoBattleStatus', (data) => {
+            if (data && data.isActive) {
+                isBattling = true;
+                document.getElementById('progress-panel').classList.add('visible');
+                document.getElementById('cancel-btn').classList.add('visible');
+                document.getElementById('start-btn').disabled = true;
+                document.getElementById('battle-monster-name').textContent = data.monsterName;
+                
+                const completed = data.totalCount - data.remainingCount;
+                const progress = Math.round((completed / data.totalCount) * 100);
+                document.getElementById('progress-bar').style.width = progress + '%';
+                document.getElementById('battle-count').textContent = `${completed}/${data.totalCount}`;
+                document.getElementById('stat-wins').textContent = data.wins || 0;
+                document.getElementById('stat-losses').textContent = data.losses || 0;
+                document.getElementById('stat-exp').textContent = (data.totalExp || 0).toLocaleString();
+                document.getElementById('stat-gold').textContent = (data.totalGold || 0).toLocaleString();
+            }
+        });
+
+        // 錯誤訊息
+        socket.on('errorMessage', (msg) => {
+            showToast(msg, 'error');
+        });
+    </script>
+</body>
+</html>
