@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>自動戰鬥2</title>
+    <title>自動戰鬥3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -591,7 +591,23 @@
                 entry.className = 'log-entry ' + (data.lastResult.won ? 'log-win' : 'log-lose');
                 
                 if (data.lastResult.won) {
-                    entry.textContent = `✓ 勝利! +${data.lastResult.exp}EXP +${data.lastResult.gold}G`;
+                    let logText = `✓ 勝利! +${data.lastResult.exp}EXP +${data.lastResult.gold}G`;
+                    
+                    // 🟢 顯示專用優惠效果
+                    if (data.specialOfferEffects) {
+                        const effects = data.specialOfferEffects;
+                        let effectParts = [];
+                        if (effects.atkBoost) effectParts.push('攻x2');
+                        if (effects.defBoost) effectParts.push('防x2');
+                        if (effects.expBoost) effectParts.push('經驗x2');
+                        if (effects.skillShard > 0) effectParts.push(`碎片+${effects.skillShard}`);
+                        
+                        if (effectParts.length > 0) {
+                            logText += ` <span style="color:#f1c40f;">[${effectParts.join(' ')}]</span>`;
+                        }
+                    }
+                    
+                    entry.innerHTML = logText;
                 } else {
                     entry.textContent = `✗ 戰敗`;
                 }
