@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>自動戰鬥3</title>
+    <title>自動戰鬥</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -593,6 +593,21 @@
                 if (data.lastResult.won) {
                     let logText = `✓ 勝利! +${data.lastResult.exp}EXP +${data.lastResult.gold}G`;
                     
+                    // 🟢 顯示活動加成
+                    if (data.lastResult.eventBonus && data.lastResult.eventBonus.active) {
+                        let eventParts = [];
+                        if (data.lastResult.eventBonus.expBonus > 0) eventParts.push(`活動EXP+${data.lastResult.eventBonus.expBonus}`);
+                        if (data.lastResult.eventBonus.shards > 0) eventParts.push(`碎片+${data.lastResult.eventBonus.shards}`);
+                        if (eventParts.length > 0) {
+                            logText += ` <span style="color:#e67e22;">[活動:${eventParts.join(' ')}]</span>`;
+                        }
+                    }
+                    
+                    // 🟢 顯示公會加成
+                    if (data.lastResult.guildBonus && data.lastResult.guildBonus.active) {
+                        logText += ` <span style="color:#f39c12;">[公會+${data.lastResult.guildBonus.bonusPct}%]</span>`;
+                    }
+                    
                     // 🟢 顯示專用優惠效果
                     if (data.specialOfferEffects) {
                         const effects = data.specialOfferEffects;
@@ -603,7 +618,7 @@
                         if (effects.skillShard > 0) effectParts.push(`碎片+${effects.skillShard}`);
                         
                         if (effectParts.length > 0) {
-                            logText += ` <span style="color:#f1c40f;">[${effectParts.join(' ')}]</span>`;
+                            logText += ` <span style="color:#9b59b6;">[優惠:${effectParts.join(' ')}]</span>`;
                         }
                     }
                     
