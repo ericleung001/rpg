@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>自動戰鬥3</title>
+    <title>自動戰鬥</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -371,6 +371,95 @@
         .player-info strong {
             color: #f1c40f;
         }
+
+        /* 技能面板 */
+        .skills-panel {
+            background: linear-gradient(135deg, #1a0a2e, #16213e);
+            border: 2px solid #9b59b6;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .skills-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .skills-title {
+            color: #9b59b6;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .skills-toggle {
+            color: #9b59b6;
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+
+        .skills-toggle.expanded {
+            transform: rotate(180deg);
+        }
+
+        .skills-list {
+            display: none;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .skills-list.visible {
+            display: block;
+        }
+
+        .skill-item {
+            background: rgba(155, 89, 182, 0.2);
+            border: 1px solid #9b59b6;
+            border-radius: 5px;
+            padding: 6px 10px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+        }
+
+        .skill-name {
+            color: #ecf0f1;
+            font-weight: bold;
+        }
+
+        .skill-level {
+            color: #f1c40f;
+            font-size: 10px;
+        }
+
+        .skill-type {
+            color: #3498db;
+            font-size: 9px;
+            padding: 2px 5px;
+            background: rgba(52, 152, 219, 0.2);
+            border-radius: 3px;
+        }
+
+        .skill-type.dmg { background: rgba(231, 76, 60, 0.3); color: #e74c3c; }
+        .skill-type.heal { background: rgba(46, 204, 113, 0.3); color: #2ecc71; }
+        .skill-type.buff { background: rgba(52, 152, 219, 0.3); color: #3498db; }
+        .skill-type.buff_atk { background: rgba(230, 126, 34, 0.3); color: #e67e22; }
+        .skill-type.drain { background: rgba(155, 89, 182, 0.3); color: #9b59b6; }
+        .skill-type.stun { background: rgba(241, 196, 15, 0.3); color: #f1c40f; }
+        .skill-type.dot { background: rgba(39, 174, 96, 0.3); color: #27ae60; }
+        .skill-type.aoe { background: rgba(231, 76, 60, 0.4); color: #ff6b6b; }
+        .skill-type.god { background: rgba(241, 196, 15, 0.4); color: #ffd700; }
+
+        .skills-count {
+            color: #bdc3c7;
+            font-size: 11px;
+        }
     </style>
 </head>
 <body>
@@ -385,6 +474,17 @@
             <div>HP: <strong id="player-hp">---</strong></div>
             <div>Lv: <strong id="player-lv">---</strong></div>
             <div>ATK: <strong id="player-atk">---</strong></div>
+        </div>
+
+        <!-- 技能面板 -->
+        <div class="skills-panel">
+            <div class="skills-header" onclick="toggleSkillsList()">
+                <span class="skills-title">✨ 已學技能 (<span id="skills-count">0</span>)</span>
+                <span class="skills-toggle" id="skills-toggle">▼</span>
+            </div>
+            <div class="skills-list" id="skills-list">
+                <div style="text-align: center; color: #aaa; padding: 10px;">載入中...</div>
+            </div>
         </div>
 
         <!-- 進度面板 -->
@@ -480,7 +580,33 @@
             document.getElementById('player-hp').textContent = `${p.hp || 100}/${p.maxHp || 100}`;
             document.getElementById('player-lv').textContent = p.level || 1;
             document.getElementById('player-atk').textContent = p.atk || 10;
+            // 同時刷新技能列表
+            socket.emit('getPlayerSkills');
         }
+
+        // 切換技能列表顯示
+        function toggleSkillsList() {
+            const list = document.getElementById('skills-list');
+            const toggle = document.getElementById('skills-toggle');
+            list.classList.toggle('visible');
+            toggle.classList.toggle('expanded');
+        }
+
+        // 技能類型顯示名稱
+        const SKILL_TYPE_NAMES = {
+            'dmg': '傷害',
+            'heal': '治療',
+            'buff': '防禦',
+            'buff_atk': '攻擊',
+            'drain': '吸血',
+            'stun': '暈眩',
+            'dot': '持續',
+            'debuff': '降防',
+            'aoe': '全體',
+            'aoe_percent': '百分比',
+            'god': '天神',
+            'heal_all': '全補'
+        };
 
         // 載入怪物列表
         socket.on('connect', () => {
@@ -488,10 +614,41 @@
             setTimeout(() => {
                 socket.emit('getBattleMonsters');
                 socket.emit('getAutoBattleStatus');
+                socket.emit('getPlayerSkills');
             }, 1000);
         });
 
         socket.on('playerStatsUpdate', updatePlayerInfo);
+
+        // 接收技能數據
+        socket.on('playerSkillsData', (data) => {
+            const container = document.getElementById('skills-list');
+            const countEl = document.getElementById('skills-count');
+            
+            countEl.textContent = data.totalSkills;
+            
+            if (data.skills.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #aaa; padding: 10px;">尚無已學技能</div>';
+                return;
+            }
+
+            container.innerHTML = data.skills.map(skill => {
+                const typeName = SKILL_TYPE_NAMES[skill.type] || skill.type;
+                // 已升級的技能顯示星星標記
+                const levelDisplay = skill.level > 1 
+                    ? `<span class="skill-level">★ Lv.${skill.level}</span>`
+                    : `<span class="skill-level">Lv.${skill.level}</span>`;
+                return `
+                    <div class="skill-item">
+                        <span class="skill-name">${skill.name}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="skill-type ${skill.type}">${typeName}</span>
+                            ${levelDisplay}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        });
 
         // 接收怪物列表
         socket.on('battleMonstersList', (monsters) => {
@@ -666,10 +823,17 @@
                             logText += ` <span style="color:#00bfff;">[技能:${skillParts.join(' ')}]</span>`;
                         }
                         
-                        // 顯示活躍技能名稱
+                        // 顯示活躍技能名稱（顯示全部）
                         if (skillBonus.activeSkills && skillBonus.activeSkills.length > 0) {
-                            const skillNames = skillBonus.activeSkills.slice(0, 3).join(', ');  // 最多顯示3個
-                            logText += ` <span style="color:#87ceeb;">[${skillNames}]</span>`;
+                            // 如果技能數量超過5個，分行顯示
+                            if (skillBonus.activeSkills.length > 5) {
+                                const first5 = skillBonus.activeSkills.slice(0, 5).join(', ');
+                                const remaining = skillBonus.activeSkills.length - 5;
+                                logText += ` <span style="color:#87ceeb;">[${first5}... +${remaining}個]</span>`;
+                            } else {
+                                const skillNames = skillBonus.activeSkills.join(', ');
+                                logText += ` <span style="color:#87ceeb;">[${skillNames}]</span>`;
+                            }
                         }
                     }
                     
