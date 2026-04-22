@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>資源採集v5 - 自動採集版</title>
+    <title>資源採集v4 - 自動採集版</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -185,7 +185,7 @@
         <div id="main-content">
             <div class="header">
                 <span style="font-size:12px;">🌲 資源採集 v4</span>
-                <a href="hub.html" class="back-btn" onclick="stopGathering()">回大廳</a>
+                <a href="hub.html" class="back-btn">回大廳</a>
             </div>
 
             <div class="gather-status-bar">
@@ -432,8 +432,9 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
             showToast(summary);
 
+            // 延遲關閉遮罩（只清理 UI，不發送取消請求）
             setTimeout(() => {
-                stopGathering();
+                resetGatheringUI();
             }, 1500);
         });
 
@@ -451,7 +452,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
             }
 
             showToast(summary);
-            stopGathering();
+            // 只清理 UI，不發送取消請求（伺服器已經取消了）
+            resetGatheringUI();
         });
 
         // 🟢 監聽採集狀態（手動查詢返回）
@@ -518,7 +520,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         }
 
         function switchTab(type) {
-            stopGathering();
+            // 切换标签时不取消后台任务，只更新 UI
             currentType = type;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
@@ -532,11 +534,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
             event.target.classList.add('selected');
         }
 
-        function stopGathering() {
-            if (isGathering) {
-                socket.emit('cancelAutoGather');
-            }
-
+        // 🟢 清理 UI 狀態（不取消後台任務）
+        function resetGatheringUI() {
             isGathering = false;
             remainingCount = 0;
             currentGatherNodeId = null;
@@ -547,6 +546,15 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
             document.querySelectorAll('.count-btn').forEach(b => b.style.opacity = '1');
             document.querySelectorAll('.tab-btn').forEach(b => b.style.opacity = '1');
+        }
+
+        // 🟢 真正取消採集（會通知伺服器停止後台任務）
+        function stopGathering() {
+            if (isGathering) {
+                socket.emit('cancelAutoGather');
+            }
+
+            resetGatheringUI();
         }
 
         function renderNodes() {
