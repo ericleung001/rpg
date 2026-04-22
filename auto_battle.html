@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>自動戰鬥2</title>
+    <title>自動戰鬥4</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -637,6 +637,39 @@
                         
                         if (effectParts.length > 0) {
                             logText += ` <span style="color:#9b59b6;">[優惠:${effectParts.join(' ')}]</span>`;
+                        }
+                    }
+                    
+                    // 🟢🟢 顯示技能加成效果
+                    if (data.lastResult.skillBonus) {
+                        const skillBonus = data.lastResult.skillBonus;
+                        let skillParts = [];
+                        
+                        // 顯示攻擊力倍率
+                        if (skillBonus.atkMult && skillBonus.atkMult > 1) {
+                            skillParts.push(`攻x${skillBonus.atkMult.toFixed(1)}`);
+                        }
+                        // 顯示防禦力倍率
+                        if (skillBonus.defMult && skillBonus.defMult > 1) {
+                            skillParts.push(`防x${skillBonus.defMult.toFixed(1)}`);
+                        }
+                        // 顯示吸血回復
+                        if (skillBonus.drainHeal && skillBonus.drainHeal > 0) {
+                            skillParts.push(`吸血+${skillBonus.drainHeal}HP`);
+                        }
+                        // 顯示戰後回復
+                        if (skillBonus.hpRecovery && skillBonus.hpRecovery > 0) {
+                            skillParts.push(`回復+${skillBonus.hpRecovery}HP`);
+                        }
+                        
+                        if (skillParts.length > 0) {
+                            logText += ` <span style="color:#00bfff;">[技能:${skillParts.join(' ')}]</span>`;
+                        }
+                        
+                        // 顯示活躍技能名稱
+                        if (skillBonus.activeSkills && skillBonus.activeSkills.length > 0) {
+                            const skillNames = skillBonus.activeSkills.slice(0, 3).join(', ');  // 最多顯示3個
+                            logText += ` <span style="color:#87ceeb;">[${skillNames}]</span>`;
                         }
                     }
                     
