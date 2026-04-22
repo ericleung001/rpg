@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -673,6 +673,71 @@
             margin-top: 4px;
         }
 
+        /* 🔴 戰鬥狀態顯示 */
+        #battle-status-panel {
+            transition: opacity 0.3s ease, max-height 0.3s ease;
+            max-height: 0; opacity: 0; overflow: hidden;
+            margin-top: 0; padding: 0;
+            background: linear-gradient(135deg, #1a0a0a 0%, #2e1a1a 50%, #1a0a0a 100%);
+            border: 1px solid rgba(231,76,60,0.3);
+            border-radius: 6px;
+        }
+        #battle-status-panel.battle-visible {
+            max-height: 100px; opacity: 1;
+            margin-top: 6px; padding: 8px;
+        }
+        #battle-status-panel .battle-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        #battle-status-panel .battle-title {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 9px;
+        }
+        #battle-status-panel .battle-count {
+            color: #f1c40f;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        #battle-status-panel .battle-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        #battle-status-panel .battle-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #c0392b, #e74c3c);
+            transition: width 0.3s ease;
+        }
+        #battle-status-panel .battle-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 8px;
+            color: #888;
+            margin-top: 4px;
+        }
+        #battle-status-panel .battle-stats {
+            display: flex;
+            justify-content: space-around;
+            font-size: 8px;
+            color: #aaa;
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        #battle-status-panel .battle-stat {
+            text-align: center;
+        }
+        #battle-status-panel .battle-stat-val {
+            color: #f1c40f;
+            font-weight: bold;
+        }
+
         /* ==================== 優惠碼展示區 ==================== */
         #promo-display-area {
             display: none;
@@ -1123,7 +1188,7 @@
                     <div style="color:#f1c40f; margin-bottom:4px; font-weight:bold;">⭐ 專用優惠生效中</div>
                     <div id="special-offers-timers" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
                 </div>
-
+                
                 <!-- 🟢 採集狀態 -->
                 <div id="gather-status-panel">
                     <div class="gather-header">
@@ -1136,6 +1201,27 @@
                     <div class="gather-info">
                         <span id="gather-node-name">---</span>
                         <a href="gathering.html" style="color:#2ecc71; text-decoration:none;">查看詳情 →</a>
+                    </div>
+                </div>
+
+                <!-- 🔴 戰鬥狀態 -->
+                <div id="battle-status-panel">
+                    <div class="battle-header">
+                        <span class="battle-title">⚔️ 後台戰鬥中</span>
+                        <span class="battle-count" id="battle-count-text">剩餘 0 次</span>
+                    </div>
+                    <div class="battle-bar-bg">
+                        <div class="battle-bar-fill" id="battle-progress-bar" style="width:0%;"></div>
+                    </div>
+                    <div class="battle-info">
+                        <span id="battle-monster-name">---</span>
+                        <a href="auto_battle.html" style="color:#e74c3c; text-decoration:none;">查看詳情 →</a>
+                    </div>
+                    <div class="battle-stats">
+                        <div class="battle-stat">勝: <span class="battle-stat-val" id="battle-wins">0</span></div>
+                        <div class="battle-stat">敗: <span class="battle-stat-val" id="battle-losses">0</span></div>
+                        <div class="battle-stat">EXP: <span class="battle-stat-val" id="battle-exp">0</span></div>
+                        <div class="battle-stat">金: <span class="battle-stat-val" id="battle-gold">0</span></div>
                     </div>
                 </div>
             </div>
@@ -1989,6 +2075,90 @@
         });
         
         // ==========================================
+        //  🟢 採集狀態系統
+        // ==========================================
+        
+        // 監聽採集狀態更新
+        socket.on('autoGatherStatus', (data) => {
+            const panel = document.getElementById('gather-status-panel');
+            const countText = document.getElementById('gather-count-text');
+            const progressBar = document.getElementById('gather-progress-bar');
+            const nodeName = document.getElementById('gather-node-name');
+            
+            if (data && data.isActive && data.remainingCount > 0) {
+                panel.classList.add('gather-visible');
+                countText.textContent = `剩餘 ${data.remainingCount} 次`;
+                
+                // 計算進度百分比
+                const total = data.totalCount || data.remainingCount;
+                const completed = total - data.remainingCount;
+                const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+                progressBar.style.width = progress + '%';
+                
+                // 顯示採集點名稱
+                nodeName.textContent = data.nodeName || '採集中...';
+            } else {
+                panel.classList.remove('gather-visible');
+            }
+        });
+        
+        // 頁面載入時請求採集狀態
+        setTimeout(() => {
+            socket.emit('getAutoGatherStatus');
+        }, 1500);
+        
+        // 定期更新採集狀態
+        setInterval(() => {
+            if (socket.connected) {
+                socket.emit('getAutoGatherStatus');
+                socket.emit('getAutoBattleStatus');
+            }
+        }, 5000);
+        
+        // ==========================================
+        //  🔴 戰鬥狀態系統
+        // ==========================================
+        
+        // 監聽戰鬥狀態更新
+        socket.on('autoBattleStatus', (data) => {
+            const panel = document.getElementById('battle-status-panel');
+            const countText = document.getElementById('battle-count-text');
+            const progressBar = document.getElementById('battle-progress-bar');
+            const monsterName = document.getElementById('battle-monster-name');
+            const winsEl = document.getElementById('battle-wins');
+            const lossesEl = document.getElementById('battle-losses');
+            const expEl = document.getElementById('battle-exp');
+            const goldEl = document.getElementById('battle-gold');
+            
+            if (data && data.isActive && data.remainingCount > 0) {
+                panel.classList.add('battle-visible');
+                countText.textContent = `剩餘 ${data.remainingCount} 次`;
+                
+                // 計算進度百分比
+                const total = data.totalCount || data.remainingCount;
+                const completed = total - data.remainingCount;
+                const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+                progressBar.style.width = progress + '%';
+                
+                // 顯示怪物名稱
+                monsterName.textContent = data.monsterName || '戰鬥中...';
+                
+                // 顯示統計
+                winsEl.textContent = data.wins || 0;
+                lossesEl.textContent = data.losses || 0;
+                expEl.textContent = (data.totalExp || 0).toLocaleString();
+                goldEl.textContent = (data.totalGold || 0).toLocaleString();
+            } else {
+                panel.classList.remove('battle-visible');
+            }
+        });
+        
+        // 頁面載入時請求戰鬥狀態
+        setTimeout(() => {
+            socket.emit('getAutoBattleStatus');
+        }, 1800);
+        
+        // ==========================================
         //  專用優惠系統
         // ==========================================
         let hubSpecialOffers = {};
@@ -2057,46 +2227,6 @@
                 renderSpecialOffersTimers();
             }
         }, 1000);
-
-        // ==========================================
-        //  🟢 採集狀態系統
-        // ==========================================
-        
-        // 監聽採集狀態更新
-        socket.on('autoGatherStatus', (data) => {
-            const panel = document.getElementById('gather-status-panel');
-            const countText = document.getElementById('gather-count-text');
-            const progressBar = document.getElementById('gather-progress-bar');
-            const nodeName = document.getElementById('gather-node-name');
-            
-            if (data && data.isActive && data.remainingCount > 0) {
-                panel.classList.add('gather-visible');
-                countText.textContent = `剩餘 ${data.remainingCount} 次`;
-                
-                // 計算進度百分比
-                const total = data.totalCount || data.remainingCount;
-                const completed = total - data.remainingCount;
-                const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-                progressBar.style.width = progress + '%';
-                
-                // 顯示採集點名稱
-                nodeName.textContent = data.nodeName || '採集中...';
-            } else {
-                panel.classList.remove('gather-visible');
-            }
-        });
-        
-        // 頁面載入時請求採集狀態
-        setTimeout(() => {
-            socket.emit('getAutoGatherStatus');
-        }, 1500);
-        
-        // 定期更新採集狀態
-        setInterval(() => {
-            if (socket.connected) {
-                socket.emit('getAutoGatherStatus');
-            }
-        }, 5000);
 
         socket.on('hirelingsData', (data) => {
             const panel = document.getElementById('hireling-panel');
