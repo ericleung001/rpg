@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -2133,16 +2133,21 @@
             
             if (data && data.isActive && data.remainingCount > 0) {
                 panel.classList.add('battle-visible');
-                countText.textContent = `剩餘 ${data.remainingCount} 次`;
+                
+                // 處理休息狀態
+                if (data.isResting) {
+                    monsterName.textContent = '🏨 旅館休息中...';
+                    countText.textContent = `剩餘 ${data.remainingCount} 次 (休息中)`;
+                } else {
+                    monsterName.textContent = data.monsterName || '戰鬥中...';
+                    countText.textContent = `剩餘 ${data.remainingCount} 次`;
+                }
                 
                 // 計算進度百分比
                 const total = data.totalCount || data.remainingCount;
                 const completed = total - data.remainingCount;
                 const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
                 progressBar.style.width = progress + '%';
-                
-                // 顯示怪物名稱
-                monsterName.textContent = data.monsterName || '戰鬥中...';
                 
                 // 顯示統計
                 winsEl.textContent = data.wins || 0;
@@ -2158,6 +2163,29 @@
         setTimeout(() => {
             socket.emit('getAutoBattleStatus');
         }, 1800);
+        
+        // 監聽休息狀態（HP過低自動休息）
+        socket.on('autoBattleResting', (data) => {
+            const panel = document.getElementById('battle-status-panel');
+            const monsterName = document.getElementById('battle-monster-name');
+            const countText = document.getElementById('battle-count-text');
+            
+            if (panel.classList.contains('battle-visible')) {
+                monsterName.textContent = '🏨 旅館休息中...';
+                countText.textContent = `剩餘 ${data.remainingCount} 次 (休息中)`;
+                
+                // 顯示休息倒計時
+                let restTime = data.restTime || 10;
+                const restInterval = setInterval(() => {
+                    restTime--;
+                    if (restTime <= 0 || !panel.classList.contains('battle-visible')) {
+                        clearInterval(restInterval);
+                        return;
+                    }
+                    monsterName.textContent = `🏨 旅館休息中 (${restTime}秒)...`;
+                }, 1000);
+            }
+        });
         
         // ==========================================
         //  專用優惠系統
