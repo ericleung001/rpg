@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>自動戰鬥4</title>
+    <title>自動戰鬥</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -780,6 +780,113 @@
                 document.getElementById('stat-gold').textContent = (data.totalGold || 0).toLocaleString();
             }
         });
+
+        // 🟢 離線戰鬥結果通知（Idle Game 核心功能）
+        socket.on('offlineBattleResults', (data) => {
+            // 構建離線獎勵訊息
+            let message = `🌙 離線 ${Math.floor(data.offlineSeconds / 60)} 分鐘\n`;
+            message += `⚔️ 戰鬥 ${data.battlesFought} 場 (${data.wins}勝 ${data.losses}敗)\n`;
+            if (data.restCount > 0) {
+                message += `💤 休息 ${data.restCount} 次\n`;
+            }
+            message += `✨ EXP +${data.totalExp.toLocaleString()}\n`;
+            message += `💰 Gold +${data.totalGold.toLocaleString()}\n`;
+            if (data.dropNames && data.dropNames.length > 0) {
+                message += `📦 獲得物品:\n${data.dropNames.join('\n')}`;
+            }
+
+            // 顯示彈窗
+            showOfflineResultsModal(data);
+        });
+
+        // 🟢 離線結果彈窗函數
+        function showOfflineResultsModal(data) {
+            // 創建彈窗
+            const modal = document.createElement('div');
+            modal.id = 'offline-results-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: linear-gradient(135deg, #2c3e50, #1a252f);
+                border: 3px solid #f1c40f;
+                border-radius: 15px;
+                padding: 20px;
+                max-width: 350px;
+                width: 90%;
+                text-align: center;
+                animation: popIn 0.3s ease-out;
+            `;
+
+            // 動畫樣式
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes popIn {
+                    from { transform: scale(0.8); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+
+            content.innerHTML = `
+                <h2 style="color: #f1c40f; margin-bottom: 15px; font-size: 18px;">
+                    🌙 離線獎勵結算
+                </h2>
+                <div style="text-align: left; margin-bottom: 15px; font-size: 14px; line-height: 1.8;">
+                    <p>⏱️ 離線時間: <span style="color: #3498db;">${Math.floor(data.offlineSeconds / 60)} 分鐘</span></p>
+                    <p>⚔️ 戰鬥次數: <span style="color: #e74c3c;">${data.battlesFought} 場</span></p>
+                    <p>✅ 勝利: <span style="color: #2ecc71;">${data.wins}</span> | ❌ 失敗: <span style="color: #e74c3c;">${data.losses}</span></p>
+                    ${data.restCount > 0 ? `<p>💤 自動休息: <span style="color: #9b59b6;">${data.restCount} 次</span></p>` : ''}
+                    <hr style="border-color: #555; margin: 10px 0;">
+                    <p>✨ 經驗值: <span style="color: #2ecc71;">+${data.totalExp.toLocaleString()}</span></p>
+                    <p>💰 金幣: <span style="color: #f1c40f;">+${data.totalGold.toLocaleString()}</span></p>
+                    ${data.dropNames && data.dropNames.length > 0 ? `
+                    <div style="margin-top: 10px;">
+                        <p style="color: #f1c40f;">📦 獲得物品:</p>
+                        <div style="background: #1a252f; padding: 8px; border-radius: 5px; margin-top: 5px;">
+                            ${data.dropNames.map(name => `<p style="margin: 3px 0; color: #ecf0f1;">${name}</p>`).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                <button id="close-offline-modal" style="
+                    background: #e74c3c;
+                    color: white;
+                    border: none;
+                    padding: 10px 30px;
+                    border-radius: 5px;
+                    font-size: 14px;
+                    cursor: pointer;
+                    font-family: var(--font-body);
+                ">確定</button>
+            `;
+
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+
+            // 關閉按鈕事件
+            document.getElementById('close-offline-modal').addEventListener('click', () => {
+                modal.remove();
+            });
+
+            // 點擊背景關閉
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
 
         // 錯誤訊息
         socket.on('errorMessage', (msg) => {
