@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會3</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -279,6 +279,11 @@
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-2px); }
+        }
+        
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
 
         #notice-modal {
@@ -673,71 +678,6 @@
             margin-top: 4px;
         }
 
-        /* 🔴 戰鬥狀態顯示 */
-        #battle-status-panel {
-            transition: opacity 0.3s ease, max-height 0.3s ease;
-            max-height: 0; opacity: 0; overflow: hidden;
-            margin-top: 0; padding: 0;
-            background: linear-gradient(135deg, #1a0a0a 0%, #2e1a1a 50%, #1a0a0a 100%);
-            border: 1px solid rgba(231,76,60,0.3);
-            border-radius: 6px;
-        }
-        #battle-status-panel.battle-visible {
-            max-height: 100px; opacity: 1;
-            margin-top: 6px; padding: 8px;
-        }
-        #battle-status-panel .battle-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-        #battle-status-panel .battle-title {
-            color: #e74c3c;
-            font-weight: bold;
-            font-size: 9px;
-        }
-        #battle-status-panel .battle-count {
-            color: #f1c40f;
-            font-size: 11px;
-            font-weight: bold;
-        }
-        #battle-status-panel .battle-bar-bg {
-            width: 100%;
-            height: 6px;
-            background: #333;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        #battle-status-panel .battle-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #c0392b, #e74c3c);
-            transition: width 0.3s ease;
-        }
-        #battle-status-panel .battle-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 8px;
-            color: #888;
-            margin-top: 4px;
-        }
-        #battle-status-panel .battle-stats {
-            display: flex;
-            justify-content: space-around;
-            font-size: 8px;
-            color: #aaa;
-            margin-top: 4px;
-            padding-top: 4px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        #battle-status-panel .battle-stat {
-            text-align: center;
-        }
-        #battle-status-panel .battle-stat-val {
-            color: #f1c40f;
-            font-weight: bold;
-        }
-
         /* ==================== 優惠碼展示區 ==================== */
         #promo-display-area {
             display: none;
@@ -920,7 +860,6 @@
             <!-- 🌲 資源獲取 -->
             <div class="sidebar-section-title">🌲 資源獲取</div>
             <a href="gathering.html" class="facility-btn" style="background:linear-gradient(135deg, #27ae60, #2ecc71); border-color:#2ecc71;">🌲 採集</a>
-            <a href="auto_battle.html" class="facility-btn" style="background:linear-gradient(135deg, #c0392b, #e74c3c); border-color:#e74c3c;">⚔️ 自動戰鬥</a>
             <a href="hire.html" class="facility-btn" style="background:linear-gradient(135deg, #e67e22, #d35400); border-color:#d35400;">🏢 僱員探險</a>
             <a href="rest.html" class="facility-btn" style="background:linear-gradient(135deg, #2c3e50, #34495e); border-color:#95a5a6;">🏨 旅館</a>
             <a href="kitchen.html" class="facility-btn" style="background:linear-gradient(135deg, #e67e22, #ca6f1e); border-color:#d35400;">🍳 廚房</a>
@@ -1202,27 +1141,6 @@
                     <div class="gather-info">
                         <span id="gather-node-name">---</span>
                         <a href="gathering.html" style="color:#2ecc71; text-decoration:none;">查看詳情 →</a>
-                    </div>
-                </div>
-
-                <!-- 🔴 戰鬥狀態 -->
-                <div id="battle-status-panel">
-                    <div class="battle-header">
-                        <span class="battle-title">⚔️ 後台戰鬥中</span>
-                        <span class="battle-count" id="battle-count-text">剩餘 0 次</span>
-                    </div>
-                    <div class="battle-bar-bg">
-                        <div class="battle-bar-fill" id="battle-progress-bar" style="width:0%;"></div>
-                    </div>
-                    <div class="battle-info">
-                        <span id="battle-monster-name">---</span>
-                        <a href="auto_battle.html" style="color:#e74c3c; text-decoration:none;">查看詳情 →</a>
-                    </div>
-                    <div class="battle-stats">
-                        <div class="battle-stat">勝: <span class="battle-stat-val" id="battle-wins">0</span></div>
-                        <div class="battle-stat">敗: <span class="battle-stat-val" id="battle-losses">0</span></div>
-                        <div class="battle-stat">EXP: <span class="battle-stat-val" id="battle-exp">0</span></div>
-                        <div class="battle-stat">金: <span class="battle-stat-val" id="battle-gold">0</span></div>
                     </div>
                 </div>
             </div>
@@ -2112,80 +2030,165 @@
         setInterval(() => {
             if (socket.connected) {
                 socket.emit('getAutoGatherStatus');
-                socket.emit('getAutoBattleStatus');
             }
         }, 5000);
         
         // ==========================================
-        //  🔴 戰鬥狀態系統
+        //  🌙 離線獎勵通知系統
         // ==========================================
         
-        // 監聽戰鬥狀態更新
-        socket.on('autoBattleStatus', (data) => {
-            const panel = document.getElementById('battle-status-panel');
-            const countText = document.getElementById('battle-count-text');
-            const progressBar = document.getElementById('battle-progress-bar');
-            const monsterName = document.getElementById('battle-monster-name');
-            const winsEl = document.getElementById('battle-wins');
-            const lossesEl = document.getElementById('battle-losses');
-            const expEl = document.getElementById('battle-exp');
-            const goldEl = document.getElementById('battle-gold');
-            
-            if (data && data.isActive && data.remainingCount > 0) {
-                panel.classList.add('battle-visible');
-                
-                // 處理休息狀態
-                if (data.isResting) {
-                    monsterName.textContent = '🏨 旅館休息中...';
-                    countText.textContent = `剩餘 ${data.remainingCount} 次 (休息中)`;
-                } else {
-                    monsterName.textContent = data.monsterName || '戰鬥中...';
-                    countText.textContent = `剩餘 ${data.remainingCount} 次`;
-                }
-                
-                // 計算進度百分比
-                const total = data.totalCount || data.remainingCount;
-                const completed = total - data.remainingCount;
-                const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-                progressBar.style.width = progress + '%';
-                
-                // 顯示統計
-                winsEl.textContent = data.wins || 0;
-                lossesEl.textContent = data.losses || 0;
-                expEl.textContent = (data.totalExp || 0).toLocaleString();
-                goldEl.textContent = (data.totalGold || 0).toLocaleString();
-            } else {
-                panel.classList.remove('battle-visible');
-            }
+        // 🟢 離線戰鬥結果通知
+        socket.on('offlineBattleResults', (data) => {
+            console.log('[Hub] 收到離線戰鬥獎勵:', data);
+            showOfflineBattleModal(data);
         });
         
-        // 頁面載入時請求戰鬥狀態
-        setTimeout(() => {
-            socket.emit('getAutoBattleStatus');
-        }, 1800);
-        
-        // 監聽休息狀態（HP過低自動休息）
-        socket.on('autoBattleResting', (data) => {
-            const panel = document.getElementById('battle-status-panel');
-            const monsterName = document.getElementById('battle-monster-name');
-            const countText = document.getElementById('battle-count-text');
-            
-            if (panel.classList.contains('battle-visible')) {
-                monsterName.textContent = '🏨 旅館休息中...';
-                countText.textContent = `剩餘 ${data.remainingCount} 次 (休息中)`;
-                
-                // 顯示休息倒計時
-                let restTime = data.restTime || 10;
-                const restInterval = setInterval(() => {
-                    restTime--;
-                    if (restTime <= 0 || !panel.classList.contains('battle-visible')) {
-                        clearInterval(restInterval);
-                        return;
-                    }
-                    monsterName.textContent = `🏨 旅館休息中 (${restTime}秒)...`;
-                }, 1000);
-            }
+        // 🟢 離線採集結果通知
+        socket.on('offlineGatherResults', (data) => {
+            console.log('[Hub] 收到離線採集獎勵:', data);
+            showOfflineGatherModal(data);
         });
+        
+        // 離線戰鬥獎勵彈窗
+        function showOfflineBattleModal(data) {
+            // 移除已存在的彈窗
+            const existingModal = document.getElementById('offline-battle-modal');
+            if (existingModal) existingModal.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = 'offline-battle-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.85);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 30000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #2c3e50, #1a252f);
+                    border: 3px solid #f1c40f;
+                    border-radius: 15px;
+                    padding: 20px;
+                    max-width: 350px;
+                    width: 90%;
+                    text-align: center;
+                    animation: popIn 0.3s ease-out;
+                    font-family: var(--font-body);
+                ">
+                    <h2 style="color: #f1c40f; margin-bottom: 15px; font-size: 16px;">
+                        ⚔️ 離線戰鬥獎勵
+                    </h2>
+                    <div style="text-align: left; margin-bottom: 15px; font-size: 12px; line-height: 1.8; color: white;">
+                        <p>⏱️ 離線時間: <span style="color: #3498db;">${Math.floor(data.offlineSeconds / 60)} 分鐘</span></p>
+                        <p>⚔️ 戰鬥次數: <span style="color: #e74c3c;">${data.battlesFought} 場</span></p>
+                        <p>✅ 勝利: <span style="color: #2ecc71;">${data.wins}</span> | ❌ 失敗: <span style="color: #e74c3c;">${data.losses}</span></p>
+                        ${data.restCount > 0 ? `<p>💤 自動休息: <span style="color: #9b59b6;">${data.restCount} 次</span></p>` : ''}
+                        <hr style="border-color: #555; margin: 10px 0;">
+                        <p>✨ 經驗值: <span style="color: #2ecc71;">+${data.totalExp.toLocaleString()}</span></p>
+                        <p>💰 金幣: <span style="color: #f1c40f;">+${data.totalGold.toLocaleString()}</span></p>
+                        ${data.dropNames && data.dropNames.length > 0 ? `
+                        <div style="margin-top: 10px;">
+                            <p style="color: #f1c40f;">📦 獲得物品:</p>
+                            <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 5px; margin-top: 5px; max-height: 120px; overflow-y: auto;">
+                                ${data.dropNames.map(name => `<p style="margin: 3px 0; color: #ecf0f1; font-size: 11px;">${name}</p>`).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <button onclick="this.closest('#offline-battle-modal').remove()" style="
+                        background: #e74c3c;
+                        color: white;
+                        border: none;
+                        padding: 10px 30px;
+                        border-radius: 5px;
+                        font-size: 14px;
+                        cursor: pointer;
+                        font-family: var(--font-body);
+                    ">確定</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+        }
+        
+        // 離線採集獎勵彈窗
+        function showOfflineGatherModal(data) {
+            // 移除已存在的彈窗
+            const existingModal = document.getElementById('offline-gather-modal');
+            if (existingModal) existingModal.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = 'offline-gather-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.85);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 30000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #27ae60, #1e8449);
+                    border: 3px solid #f1c40f;
+                    border-radius: 15px;
+                    padding: 20px;
+                    max-width: 350px;
+                    width: 90%;
+                    text-align: center;
+                    animation: popIn 0.3s ease-out;
+                    font-family: var(--font-body);
+                ">
+                    <h2 style="color: #f1c40f; margin-bottom: 15px; font-size: 16px;">
+                        🌿 離線採集獎勵
+                    </h2>
+                    <div style="text-align: left; margin-bottom: 15px; font-size: 12px; line-height: 1.8; color: white;">
+                        <p>⏱️ 離線時間: <span style="color: #3498db;">${Math.floor(data.offlineSeconds / 60)} 分鐘</span></p>
+                        <p>⛏️ 採集次數: <span style="color: #2ecc71;">${data.gathersCompleted} 次</span></p>
+                        <hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">
+                        <p>✨ 採集經驗: <span style="color: #f1c40f;">+${data.totalGatherExp}</span></p>
+                        ${data.itemNames && data.itemNames.length > 0 ? `
+                        <div style="margin-top: 10px;">
+                            <p style="color: #f1c40f;">📦 獲得物品:</p>
+                            <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 5px; margin-top: 5px; max-height: 120px; overflow-y: auto;">
+                                ${data.itemNames.map(name => `<p style="margin: 3px 0; color: #ecf0f1; font-size: 11px;">${name}</p>`).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <button onclick="this.closest('#offline-gather-modal').remove()" style="
+                        background: #2ecc71;
+                        color: white;
+                        border: 2px solid #27ae60;
+                        padding: 10px 30px;
+                        border-radius: 5px;
+                        font-size: 14px;
+                        cursor: pointer;
+                        font-family: var(--font-body);
+                    ">確定</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+        }
         
         // ==========================================
         //  專用優惠系統
