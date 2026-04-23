@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -881,6 +881,10 @@
             <button class="close-sidebar-btn" onclick="toggleSidebar()">×</button>
         </div>
         <div class="sidebar-content">
+<!-- 自動戰鬥 -->
+            <div class="sidebar-section-title">自動戰鬥</div>
+	<a href="auto_battle.html" class="facility-btn" style="background:linear-gradient(135deg, #c0392b, #e74c3c); border-color:#e74c3c;">⚔️ 自動戰鬥</a>
+		
             <!-- 📦 物品管理 -->
             <div class="sidebar-section-title">📦 物品管理</div>
             <a href="bag.html" class="facility-btn" style="background:linear-gradient(135deg, #16a085, #1abc9c); border-color:#1abc9c;">🎒 背包</a>
@@ -938,9 +942,14 @@
 
     <div id="notice-modal">
         <div class="notice-box">
-            <div class="notice-title">📢 Ver 5.1 更新公告</div>
+            <div class="notice-title">📢 Ver 6.0 更新公告</div>
 <button class="close-notice-btn" onclick="closeNotice()">我知道了，立即體驗！</button>
             <div class="notice-content">
+<b style="color:#8e44ad;">新增【自動系統】</b>
+- <b>自動戰鬥系統</b>：後台運作，離開網頁也會繼續戰鬥直至完成
+-         可選擇戰鬥次數及怪物，如死亡，只需要等候10秒就會繼續戰鬥剩餘次數。
+- <b>自動採集系統</b>：後台採集系統，離開網頁也會繼續採集直至完成。
+
 <b style="color:#8e44ad;">新增【專用優惠】</b>
 - <b>專用優惠</b>：只需要每次10億，可以限時6小時得到不同技能增強。
 - 包括有：攻x2、防x2、技能碎片x10(每次戰鬥後)、經驗值x2。
@@ -1177,6 +1186,7 @@
                     <div style="color:#f1c40f; margin-bottom:4px; font-weight:bold;">⭐ 專用優惠生效中</div>
                     <div id="special-offers-timers" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
                 </div>
+		
                 
                 <!-- 🔴 自動戰鬥狀態 -->
                 <div id="battle-status-panel">
