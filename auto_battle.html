@@ -541,7 +541,6 @@
                 <button class="count-btn" data-count="100">100次</button>
                 <button class="count-btn" data-count="200">200次</button>
                 <button class="count-btn" data-count="500">500次</button>
-                <button class="count-btn" data-count="1000">1000次</button>
             </div>
             <div class="action-btns">
                 <button class="start-btn" id="start-btn" disabled>⚔️ 開始戰鬥</button>
@@ -554,7 +553,7 @@
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
-        const socket = io('https://mmo.ttctv-105.cc', { 
+       const socket = io('https://mmo.ttctv-105.cc', { 
             transports: ['websocket', 'polling'],
             secure: true 
         });
@@ -563,6 +562,7 @@
         let selectedMonster = null;
         let selectedCount = 10;
         let isBattling = false;
+        let battleCancelRequested = false; // 【修復】防止取消後進度事件重新激活UI
 
         if (!myToken) {
             window.location.href = 'index.html';
@@ -703,7 +703,9 @@
         // 開始戰鬥
         document.getElementById('start-btn').onclick = () => {
             if (!selectedMonster || isBattling) return;
-            
+
+            battleCancelRequested = false; // 【修復】開始新戰鬥時重置取消標記
+
             socket.emit('startAutoBattle', {
                 monsterKey: selectedMonster,
                 count: selectedCount
@@ -712,6 +714,7 @@
 
         // 取消戰鬥
         document.getElementById('cancel-btn').onclick = () => {
+            battleCancelRequested = true; // 【修復】設置取消標記
             socket.emit('cancelAutoBattle');
         };
 
@@ -730,6 +733,12 @@
 
         // 戰鬥進度
         socket.on('autoBattleProgress', (data) => {
+            // 【修復】如果用戶已取消，忽略所有進度事件
+            if (battleCancelRequested) {
+                console.log('[Battle] 收到進度但已取消，忽略');
+                return;
+            }
+
             // 隱藏休息覆蓋層
             document.getElementById('resting-overlay').style.display = 'none';
             
@@ -911,6 +920,12 @@
 
         // 恢復戰鬥
         socket.on('autoBattleResumed', (data) => {
+            // 【修復】如果用戶已取消，忽略恢復事件
+            if (battleCancelRequested) {
+                console.log('[Battle] 收到恢復事件但已取消，忽略');
+                return;
+            }
+
             isBattling = true;
             document.getElementById('progress-panel').classList.add('visible');
             document.getElementById('cancel-btn').classList.add('visible');
@@ -930,6 +945,12 @@
         // 戰鬥狀態查詢
         socket.on('autoBattleStatus', (data) => {
             if (data && data.isActive) {
+                // 【修復】如果用戶已取消，忽略狀態查詢
+                if (battleCancelRequested) {
+                    console.log('[Battle] 收到狀態查詢但已取消，忽略');
+                    return;
+                }
+
                 isBattling = true;
                 document.getElementById('progress-panel').classList.add('visible');
                 document.getElementById('cancel-btn').classList.add('visible');
