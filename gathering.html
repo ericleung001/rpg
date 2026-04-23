@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>資源採集</title>
+    <title>資源採集v4 - 自動採集版</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -210,7 +210,6 @@
                 <button class="count-btn" onclick="setCount(100)">x100</button>
                 <button class="count-btn" onclick="setCount(200)">x200</button>
                 <button class="count-btn" onclick="setCount(500)">x500</button>
-                <button class="count-btn" onclick="setCount(1000)">x1000</button>
             </div>
 
             <div id="node-list" class="node-container">
@@ -272,6 +271,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         let collectedItems = {};
         let hasRequestedStatus = false; // 🟢 防止重複請求
         let collectedItemNames = {}; // 🟢 物品中文名稱映射
+        let gatherCancelRequested = false; // 🟢【修復】防止取消後進度事件重新激活UI
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
@@ -358,6 +358,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function initGatherSequence(nodeId, duration, name) {
             if (isGathering) return;
 
+            gatherCancelRequested = false; // 🟢【修復】開始新任務時重置取消標記
             currentGatherNodeId = nodeId;
             currentGatherTime = duration || 3000;
             currentActionName = name;
@@ -389,6 +390,11 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         // 🟢 監聽採集進度
         socket.on('autoGatherProgress', (data) => {
+            // 🟢【修復】如果用戶已取消，忽略所有進度事件（防止取消後進度事件重新激活UI）
+            if (gatherCancelRequested) {
+                console.log('[Gather] 收到進度但已取消，忽略');
+                return;
+            }
             if (!isGathering) {
                 // 🟢 如果收到進度但不在採集狀態，說明是恢復的任務
                 isGathering = true;
@@ -470,13 +476,107 @@ const socket = io('https://mmo.ttctv-105.cc', {
             }
         });
 
-        // 🟢 監聽採集恢復（服務器主動推送）
+        // 🟢 監聯採集恢復（服務器主動推送）
         socket.on('autoGatherResumed', (data) => {
             console.log('[Gather] 收到恢復事件:', data);
+            // 🟢【修復】如果用戶已取消，忽略恢復事件
+            if (gatherCancelRequested) {
+                console.log('[Gather] 收到恢復事件但已取消，忽略');
+                return;
+            }
             if (!isGathering) {
                 showGatheringUI(data);
             }
         });
+
+        // 🟢🟢 離線採集獎勵通知
+        socket.on('offlineGatherResults', (data) => {
+            console.log('[Gather] 收到離線獎勵:', data);
+            showOfflineGatherModal(data);
+        });
+
+        // 🟢🟢 離線採集獎勵彈窗
+        function showOfflineGatherModal(data) {
+            const modal = document.createElement('div');
+            modal.id = 'offline-gather-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.85);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 30000;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: linear-gradient(135deg, #27ae60, #1e8449);
+                border: 3px solid #f1c40f;
+                border-radius: 15px;
+                padding: 20px;
+                max-width: 350px;
+                width: 90%;
+                text-align: center;
+                animation: popIn 0.3s ease-out;
+                font-family: 'Press Start 2P', monospace;
+            `;
+
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes popIn {
+                    from { transform: scale(0.8); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+
+            content.innerHTML = `
+                <h2 style="color: #f1c40f; margin-bottom: 15px; font-size: 14px;">
+                    🌿 離線採集獎勵
+                </h2>
+                <div style="text-align: left; margin-bottom: 15px; font-size: 10px; line-height: 1.8; color: white;">
+                    <p>⏱️ 離線時間: <span style="color: #3498db;">${Math.floor(data.offlineSeconds / 60)} 分鐘</span></p>
+                    <p>⛏️ 採集次數: <span style="color: #2ecc71;">${data.gathersCompleted} 次</span></p>
+                    <hr style="border-color: rgba(255,255,255,0.3); margin: 10px 0;">
+                    <p>✨ 採集經驗: <span style="color: #f1c40f;">+${data.totalGatherExp}</span></p>
+                    ${data.itemNames && data.itemNames.length > 0 ? `
+                    <div style="margin-top: 10px;">
+                        <p style="color: #f1c40f;">📦 獲得物品:</p>
+                        <div style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 5px; margin-top: 5px;">
+                            ${data.itemNames.map(name => `<p style="margin: 3px 0; color: #ecf0f1;">${name}</p>`).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                <button id="close-offline-gather-modal" style="
+                    background: #2ecc71;
+                    color: white;
+                    border: 2px solid #27ae60;
+                    padding: 10px 30px;
+                    border-radius: 5px;
+                    font-size: 12px;
+                    cursor: pointer;
+                    font-family: inherit;
+                ">確定</button>
+            `;
+
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+
+            document.getElementById('close-offline-gather-modal').addEventListener('click', () => {
+                modal.remove();
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
 
         // 🟢 顯示採集中的 UI
         function showGatheringUI(data) {
@@ -551,6 +651,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
             currentGatherNodeId = null;
             collectedItems = {};
             collectedItemNames = {}; // 🟢 清除物品名稱映射
+            // 🟢【修復】不要在這裡重置 gatherCancelRequested，只在開始新任務時重置
 
             document.getElementById('lock-overlay').style.display = 'none';
             document.getElementById('collected-summary').style.display = 'none';
@@ -562,7 +663,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
         // 🟢 真正取消採集（會通知伺服器停止後台任務）
         function stopGathering() {
             if (isGathering) {
-                socket.emit('cancelAutoGather', { token: myToken });
+                socket.emit('cancelAutoGather');
+                gatherCancelRequested = true; // 🟢【修復】設置取消標記，防止進度事件重新激活
             }
 
             resetGatheringUI();
@@ -595,7 +697,7 @@ const socket = io('https://mmo.ttctv-105.cc', {
                 let dropInfo = '';
                 if (node.dropNames && node.dropNames.length > 0) {
                     const dropStr = node.dropNames.map(d => `${d.name}`).join(', ');
-                    dropInfo = `<div style="font-size:8px; color:#f1c40f; margin-top:3px;">可能獲得: ${dropStr}</div>`;
+                    dropInfo = `<div style="font-size:8px; color:#aaa; margin-top:3px;">可能獲得: ${dropStr}</div>`;
                 }
 
                 div.innerHTML = `
