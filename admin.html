@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GM 超級後台</title>
+    <title>GM 超級後台2</title>
     <style>
         body { background: #222; color: #fff; font-family: monospace; padding: 20px; text-align: center; }
         input, select, button { padding: 10px; margin: 5px; width: 100%; max-width: 300px; box-sizing: border-box; }
@@ -520,6 +520,23 @@
             <option value="safe_stone">✨ 防爆石</option>
         </optgroup>
 
+        <optgroup label="=== 🔥 神話鍛造裝備 (最強) ===">
+            <option value="myth_weapon">⚔️ 神話·毀滅之刃 (武)</option>
+            <option value="myth_armor">🛡️ 神話·絕對防禦 (甲)</option>
+            <option value="myth_acc">💍 神話·命運之環 (飾)</option>
+        </optgroup>
+
+        <optgroup label="=== 🔥 神話鍛造素材 ===">
+            <option value="myth_essence_fire">🔥 烈焰精華</option>
+            <option value="myth_essence_ice">❄️ 永恆冰精華</option>
+            <option value="myth_essence_dark">🌑 暗淵精華</option>
+            <option value="myth_essence_light">✨ 神聖精華</option>
+            <option value="myth_essence_chaos">🌀 混沌精華</option>
+            <option value="myth_core">💎 神話核心 (神器素材)</option>
+            <option value="myth_dragon_soul">🐲 龍魂結晶 (神器素材)</option>
+            <option value="myth_void_crystal">🔮 虛空神晶 (神器素材)</option>
+        </optgroup>
+
         <optgroup label="=== ⚛️ Lv.500 奇點裝備 (頂級) ===">
             <option value="singularity_weapon">奇點·萬象崩壞 (武)</option>
             <option value="singularity_armor">奇點·絕對防禦 (甲)</option>
@@ -701,9 +718,9 @@
     
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
 
         socket.on('connect', () => {
             log("✅ 連線成功，請輸入密碼與玩家名稱。");
