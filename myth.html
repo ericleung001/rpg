@@ -257,6 +257,7 @@
         <div class="tab-btn active" onclick="switchTab('essence')">🔥 精華煉製</div>
         <div class="tab-btn" onclick="switchTab('artifact')">💎 素材凝聚</div>
         <div class="tab-btn" onclick="switchTab('gear')">🌟 神話鍛造</div>
+        <div class="tab-btn" onclick="switchTab('gear2')" style="background:linear-gradient(135deg,#1a1200,#2a1500);border-color:#c9a84c;color:#c9a84c;">🌟 神話II代</div>
     </div>
 
     <!-- Layer 1: Essence -->
@@ -275,6 +276,12 @@
     <div class="tab-panel" id="tab-gear">
         <div class="section-label">第三層：神器素材 → 神話裝備</div>
         <div class="gear-grid" id="gear-grid"></div>
+    </div>
+
+    <!-- Layer 4: Gen 2 Gear -->
+    <div class="tab-panel" id="tab-gear2">
+        <div class="section-label">神話II代鍛造（需要I代裝備 + 高級材料）</div>
+        <div class="gear-grid" id="gear2-grid"></div>
     </div>
 </div>
 
@@ -315,6 +322,12 @@ const GEAR_CONFIG = {
     myth_acc:    { name: '神話·命運之環', icon: '💍', artifacts: { myth_dragon_soul: 1, myth_void_crystal: 1 }, gold: 5000000, shard: 50000, stats: 'ATK+80萬 DEF+80萬 HP+800萬 MP+200萬' },
 };
 
+const GEAR2_CONFIG = {
+    myth2_weapon: { name: '神話II·天裁之劍', icon: '⚔️', type: 'weapon', materials: { myth_weapon: 1, divinity_core: 15, entropy_origin: 50, multiverse_shard: 100 }, gold: 50000000000, shard: 100000, stats: 'ATK+380萬 DEF+65萬 HP+1000萬 MP+300萬' },
+    myth2_armor:  { name: '神話II·永恆聖壁', icon: '🛡️', type: 'armor',  materials: { myth_armor: 1, divinity_core: 15, entropy_origin: 50, multiverse_shard: 100 }, gold: 50000000000, shard: 100000, stats: 'DEF+650萬 HP+1800萬 MP+500萬' },
+    myth2_acc:    { name: '神話II·命運輪迴', icon: '💍', type: 'acc',    materials: { myth_acc: 1, divinity_core: 10, entropy_origin: 30, multiverse_shard: 80 }, gold: 40000000000, shard: 80000, stats: 'ATK+110萬 DEF+250萬 HP+1500萬 MP+400萬' },
+};
+
 const MAT_NAMES = {
     fire_core:'火焰核心', lava_rock:'熔岩石', dragon_scale:'龍鱗',
     ice_crystal:'永恆冰晶', yeti_fur:'雪怪毛皮', spirit_dust:'靈魂粉末',
@@ -325,11 +338,14 @@ const MAT_NAMES = {
     myth_essence_dark:'暗淵精華', myth_essence_light:'神聖精華',
     myth_essence_chaos:'混沌精華',
     myth_core:'神話核心', myth_dragon_soul:'龍魂結晶', myth_void_crystal:'虛空神晶',
+    // 神話II代材料
+    divinity_core:'創世神格', multiverse_shard:'多元宇宙碎片',
+    myth_weapon:'神話·毀滅之刃', myth_armor:'神話·絕對防禦', myth_acc:'神話·命運之環',
 };
 
 // ── Tab switching ──────────────────────────────────────────────────────
 function switchTab(id) {
-    document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', ['essence','artifact','gear'][i]===id));
+    document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', ['essence','artifact','gear','gear2'][i]===id));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.getElementById('tab-'+id).classList.add('active');
     renderAll();
@@ -446,6 +462,7 @@ function renderAll() {
     renderEssences();
     renderArtifacts();
     renderGears();
+    renderGears2();
 }
 
 // ── Forge actions ──────────────────────────────────────────────────────
@@ -475,6 +492,51 @@ function forgeGear(id) {
     if (!confirm(`⚠️ 確定要鍛造【${cfg.name}】？\n\n消耗：\n• 神器素材\n• ${cfg.gold.toLocaleString()} G\n• ${cfg.shard.toLocaleString()} 碎片\n\n此操作不可逆！`)) return;
     showAnim('神話鍛造中...');
     socket.emit('mythForgeGear', { gearId: id });
+}
+
+function renderGears2() {
+    const grid = document.getElementById('gear2-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    for (const [id, cfg] of Object.entries(GEAR2_CONFIG)) {
+        const mats = Object.entries(cfg.materials);
+        const canCraft = mats.every(([m,n]) => inv(m) >= n) && (myData.gold||0) >= cfg.gold && inv('skill_shard') >= cfg.shard;
+        const matChips = mats.map(([m,n]) => {
+            const has = inv(m); const ok = has >= n;
+            const mName = MAT_NAMES[m] || m;
+            return `<div class="artifact-chip ${ok?'ok':'no'}" style="font-size:10px;">${mName} ${has}/${n}</div>`;
+        }).join('');
+        const goldOk = (myData.gold||0) >= cfg.gold;
+        const shardOk = inv('skill_shard') >= cfg.shard;
+        grid.innerHTML += `
+        <div class="gear-card" style="border-color:#3a2a00;">
+            <div class="gc-header">
+                <div class="gc-icon">${cfg.icon}</div>
+                <div class="gc-info">
+                    <div class="gc-name" style="font-size:14px;">${cfg.name}</div>
+                    <div class="gc-stats">${cfg.stats}</div>
+                    <div style="font-size:9px;color:#e05c20;margin-top:2px;">神話II代 | 需要1代裝備+高級材料</div>
+                </div>
+                <div style="font-size:10px;color:#555;">持有：${inv(id)}</div>
+            </div>
+            <div class="gc-mats">${matChips}</div>
+            <div class="gc-cost">
+                💰 <span style="color:${goldOk?'#4caf50':'#e74c3c'}">${(myData.gold||0).toLocaleString()}</span> / ${cfg.gold.toLocaleString()} G　　
+                💎 <span style="color:${shardOk?'#4caf50':'#e74c3c'}">${inv('skill_shard').toLocaleString()}</span> / ${cfg.shard.toLocaleString()} 碎片
+            </div>
+            <button class="forge-btn ${canCraft?'ready':'disabled'}" style="width:100%;padding:10px;" ${canCraft?`onclick="forgeGear2('${id}')"`:' disabled'}>
+                ${canCraft?'🌟 開始神話II代鍛造':'材料/費用不足'}
+            </button>
+        </div>`;
+    }
+}
+
+function forgeGear2(id) {
+    const cfg = GEAR2_CONFIG[id];
+    const matList = Object.entries(cfg.materials).map(([m,n]) => '• ' + (MAT_NAMES[m]||m) + ' x' + n).join('\n');
+    if (!confirm('⚠️ 確定要鍛造【' + cfg.name + '】？\n\n此操作會消耗1代神話裝備！\n\n消耗材料：\n' + matList + '\n• 💰 ' + cfg.gold.toLocaleString() + ' G\n• 💎 ' + cfg.shard.toLocaleString() + ' 碎片\n\n此操作不可逆！')) return;
+    showAnim('神話II代鍛造中...');
+    socket.emit('mythForgeGear2', { gearId: id });
 }
 
 // ── Socket ─────────────────────────────────────────────────────────────
