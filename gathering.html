@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>資源採集v4 - 自動採集版</title>
+    <title>資源採集2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -271,7 +271,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
         let collectedItems = {};
         let hasRequestedStatus = false; // 🟢 防止重複請求
         let collectedItemNames = {}; // 🟢 物品中文名稱映射
-        let gatherCancelRequested = false; // 🟢【修復】防止取消後進度事件重新激活UI
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken);
@@ -358,7 +357,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function initGatherSequence(nodeId, duration, name) {
             if (isGathering) return;
 
-            gatherCancelRequested = false; // 🟢【修復】開始新任務時重置取消標記
             currentGatherNodeId = nodeId;
             currentGatherTime = duration || 3000;
             currentActionName = name;
@@ -390,18 +388,8 @@ const socket = io('https://mmo.ttctv-105.cc', {
 
         // 🟢 監聽採集進度
         socket.on('autoGatherProgress', (data) => {
-            // 🟢【修復】如果用戶已取消，忽略所有進度事件（防止取消後進度事件重新激活UI）
-            if (gatherCancelRequested) {
-                console.log('[Gather] 收到進度但已取消，忽略');
-                return;
-            }
-            if (!isGathering) {
-                // 🟢 如果收到進度但不在採集狀態，說明是恢復的任務
-                isGathering = true;
-                document.querySelectorAll('.count-btn').forEach(b => b.style.opacity = '0.5');
-                document.querySelectorAll('.tab-btn').forEach(b => b.style.opacity = '0.5');
-                document.getElementById('lock-overlay').style.display = 'flex';
-            }
+            // 【修復】如果不在採集狀態，忽略進度事件（防止取消後 stale 事件重新激活 UI）
+            if (!isGathering) return;
 
             remainingCount = data.remainingCount;
             document.getElementById('queue-text').innerText = `剩餘次數: ${remainingCount}`;
@@ -476,14 +464,9 @@ const socket = io('https://mmo.ttctv-105.cc', {
             }
         });
 
-        // 🟢 監聯採集恢復（服務器主動推送）
+        // 🟢 監聽採集恢復（服務器主動推送）
         socket.on('autoGatherResumed', (data) => {
             console.log('[Gather] 收到恢復事件:', data);
-            // 🟢【修復】如果用戶已取消，忽略恢復事件
-            if (gatherCancelRequested) {
-                console.log('[Gather] 收到恢復事件但已取消，忽略');
-                return;
-            }
             if (!isGathering) {
                 showGatheringUI(data);
             }
@@ -651,7 +634,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
             currentGatherNodeId = null;
             collectedItems = {};
             collectedItemNames = {}; // 🟢 清除物品名稱映射
-            // 🟢【修復】不要在這裡重置 gatherCancelRequested，只在開始新任務時重置
 
             document.getElementById('lock-overlay').style.display = 'none';
             document.getElementById('collected-summary').style.display = 'none';
@@ -664,7 +646,6 @@ const socket = io('https://mmo.ttctv-105.cc', {
         function stopGathering() {
             if (isGathering) {
                 socket.emit('cancelAutoGather');
-                gatherCancelRequested = true; // 🟢【修復】設置取消標記，防止進度事件重新激活
             }
 
             resetGatheringUI();
