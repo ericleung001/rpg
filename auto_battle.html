@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>自動戰鬥2</title>
+    <title>自動戰鬥</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -541,6 +541,7 @@
                 <button class="count-btn" data-count="100">100次</button>
                 <button class="count-btn" data-count="200">200次</button>
                 <button class="count-btn" data-count="500">500次</button>
+                <button class="count-btn" data-count="1000">1000次</button>
             </div>
             <div class="action-btns">
                 <button class="start-btn" id="start-btn" disabled>⚔️ 開始戰鬥</button>
@@ -838,6 +839,19 @@
                                 const skillNames = skillBonus.activeSkills.join(', ');
                                 logText += ` <span style="color:#87ceeb;">[${skillNames}]</span>`;
                             }
+                        }
+                    }
+                    
+                    // 🐾 顯示寵物 Buff 加成效果
+                    if (data.lastResult.petAtkDefBuffActive || data.lastResult.petExpBuffActive || data.lastResult.petGoldBuffActive || data.lastResult.petDropAllBuffActive || data.lastResult.petDropRareBuffActive) {
+                        let petParts = [];
+                        if (data.lastResult.petAtkDefBuffActive) petParts.push('攻防x2');
+                        if (data.lastResult.petExpBuffActive) petParts.push('經驗x2');
+                        if (data.lastResult.petGoldBuffActive) petParts.push('金錢x2');
+                        if (data.lastResult.petDropAllBuffActive) petParts.push('掉落+10%');
+                        if (data.lastResult.petDropRareBuffActive) petParts.push('稀有掉落+10%');
+                        if (petParts.length > 0) {
+                            logText += ` <span style="color:#2ecc71;">[🐾 寵物:${petParts.join(' ')}]</span>`;
                         }
                     }
                     
