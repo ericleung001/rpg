@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -871,6 +871,105 @@
             filter: brightness(0.85);
         }
         /* =================================================== */
+
+        /* ==================== 寵物系統樣式 ==================== */
+        #pet-buff-panel {
+            transition: opacity 0.3s ease, max-height 0.3s ease;
+            max-height: 0; opacity: 0; overflow: hidden;
+            margin-top: 0; padding: 0;
+            background: linear-gradient(135deg, #0a1a1a 0%, #1a2e2e 50%, #0a1a1a 100%);
+            border: 1px solid rgba(46,204,113,0.3);
+            border-radius: 6px;
+        }
+        #pet-buff-panel.pet-buff-visible {
+            max-height: 60px; opacity: 1;
+            margin-top: 6px; padding: 6px 8px;
+        }
+        #pet-buff-panel .pet-buff-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
+        }
+        #pet-buff-panel .pet-buff-title {
+            color: #2ecc71; font-weight: bold; font-size: 9px;
+        }
+        #pet-buff-panel .pet-buff-timers {
+            display: flex; flex-wrap: wrap; gap: 4px;
+        }
+        .pet-buff-chip {
+            background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;
+            font-size: 8px; color: #2ecc71; display: flex; align-items: center; gap: 3px;
+        }
+        .pet-buff-chip .buff-timer { color: #f1c40f; font-weight: bold; }
+
+        /* 寵物 Modal */
+        .pet-modal-box {
+            background: #2c3e50; color: #ecf0f1; width: 90%; max-width: 400px;
+            border: 3px solid #2ecc71; border-radius: 12px; padding: 15px;
+            max-height: 75vh; overflow-y: auto; text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .pet-modal-title {
+            font-family: var(--font-display); font-size: 13px; color: #2ecc71;
+            margin-bottom: 12px; font-weight: bold;
+        }
+        .pet-info-section {
+            background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; margin-bottom: 10px; text-align: left;
+        }
+        .pet-stat-row {
+            display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .pet-stat-row:last-child { border-bottom: none; }
+        .pet-stat-label { color: #bdc3c7; }
+        .pet-stat-val { color: #f1c40f; font-weight: bold; }
+        .pet-hunger-bar-bg {
+            width: 100%; height: 10px; background: #333; border-radius: 5px; overflow: hidden; margin: 6px 0;
+        }
+        .pet-hunger-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #27ae60, #2ecc71); transition: width 0.3s; border-radius: 5px;
+        }
+        .pet-hunger-bar-fill.full { background: linear-gradient(90deg, #f39c12, #f1c40f); }
+        .pet-btn {
+            display: inline-block; padding: 8px 16px; border-radius: 6px; cursor: pointer;
+            font-family: var(--font-body); font-size: 11px; font-weight: bold; border: none;
+            margin: 4px; transition: all 0.15s; touch-action: manipulation;
+        }
+        .pet-btn:active { transform: scale(0.95); filter: brightness(0.85); }
+        .pet-btn-buy { background: #2ecc71; color: white; }
+        .pet-btn-feed { background: #3498db; color: white; font-size: 10px; padding: 5px 10px; }
+        .pet-btn-buff { background: #e67e22; color: white; font-size: 10px; padding: 5px 10px; margin: 2px; }
+        .pet-btn-levelup { background: #9b59b6; color: white; }
+        .pet-btn-close { background: #e74c3c; color: white; margin-top: 8px; width: 80%; }
+        .pet-material-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0;
+        }
+        .pet-material-item {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px; padding: 6px; text-align: center; cursor: pointer;
+            font-size: 10px; transition: all 0.15s; touch-action: manipulation;
+        }
+        .pet-material-item:active { transform: scale(0.95); background: rgba(52,152,219,0.3); }
+        .pet-material-name { color: #ecf0f1; font-weight: bold; }
+        .pet-material-count { color: #f1c40f; margin-top: 2px; }
+        .pet-material-hunger { color: #2ecc71; font-size: 9px; }
+        .pet-buff-grid {
+            display: grid; grid-template-columns: 1fr; gap: 6px; margin: 8px 0;
+        }
+        .pet-buff-option {
+            background: rgba(230,126,34,0.15); border: 2px solid rgba(230,126,34,0.4);
+            border-radius: 8px; padding: 8px; cursor: pointer; text-align: center;
+            transition: all 0.15s; touch-action: manipulation;
+        }
+        .pet-buff-option:active { transform: scale(0.97); background: rgba(230,126,34,0.3); }
+        .pet-buff-option-name { font-size: 12px; font-weight: bold; color: #e67e22; }
+        .pet-buff-option-desc { font-size: 9px; color: #bdc3c7; margin-top: 3px; }
+        .pet-section-title {
+            font-size: 10px; color: #f1c40f; font-weight: bold; margin: 8px 0 6px;
+            text-align: left; border-bottom: 1px dashed #555; padding-bottom: 4px;
+        }
+        .pet-no-materials {
+            color: #95a5a6; font-size: 10px; padding: 10px; font-style: italic;
+        }
+        /* =================================================== */
     </style>
 </head>
 <body>
@@ -883,8 +982,8 @@
         <div class="sidebar-content">
 <!-- 自動戰鬥 -->
             <div class="sidebar-section-title">自動戰鬥</div>
-	<a href="auto_battle.html" class="facility-btn" style="background:linear-gradient(135deg, #c0392b, #e74c3c); border-color:#e74c3c;">⚔️ 自動戰鬥</a>
-		
+        <a href="auto_battle.html" class="facility-btn" style="background:linear-gradient(135deg, #c0392b, #e74c3c); border-color:#e74c3c;">⚔️ 自動戰鬥</a>
+                
             <!-- 📦 物品管理 -->
             <div class="sidebar-section-title">📦 物品管理</div>
             <a href="bag.html" class="facility-btn" style="background:linear-gradient(135deg, #16a085, #1abc9c); border-color:#1abc9c;">🎒 背包</a>
@@ -935,6 +1034,15 @@
             <div class="facility-btn" style="background:linear-gradient(135deg, #e67e22, #b9770e); border-color:#d35400;" onclick="openDailyQuests(); toggleSidebar();">📜 每日任務</div>
             <div class="facility-btn" style="background:linear-gradient(135deg, #e67e22, #ca6f1e); border-color:#d35400;" onclick="openPromoCode(); toggleSidebar();">🎫 優惠碼</div>
             <a href="manual.html" class="facility-btn" style="background:linear-gradient(135deg, #7f8c8d, #5d6d7e); border-color:#95a5a6;">📜 圖鑑</a>
+            
+            <div class="sidebar-divider"></div>
+            
+            <!-- 🐾 寵物系統 -->
+            <div class="sidebar-section-title">🐾 寵物系統</div>
+            <div class="facility-btn" style="background:linear-gradient(135deg, #27ae60, #2ecc71); border-color:#2ecc71;" onclick="openPetModal(); toggleSidebar();">
+                🐾 寵物
+                <div id="pet-unread-badge" class="unread-badge" style="display:none;">!</div>
+            </div>
         </div>
     </div>
     
@@ -1186,7 +1294,15 @@
                     <div style="color:#f1c40f; margin-bottom:4px; font-weight:bold;">⭐ 專用優惠生效中</div>
                     <div id="special-offers-timers" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
                 </div>
-		
+                
+                <!-- 🐾 寵物 Buff 狀態 -->
+                <div id="pet-buff-panel">
+                    <div class="pet-buff-header">
+                        <span class="pet-buff-title">🐾 寵物技能生效中</span>
+                    </div>
+                    <div id="pet-buff-timers" class="pet-buff-timers"></div>
+                </div>
+                
                 
                 <!-- 🔴 自動戰鬥狀態 -->
                 <div id="battle-status-panel">
@@ -1873,7 +1989,7 @@
             { id: 'city_11', name: '維度盡頭', reqLv: 1, desc: '⏳ 時間與空間的終點 (Lv.280-300)', monsters: [{ id: 'time_keeper', name: '時空裁決者', lv: 280 }, { id: 'dimension_breaker', name: '維度粉碎者', lv: 290 }, { id: 'entropy_god', name: '👑 終焉·熱寂之神 (GOD)', lv: 300 }] },
             { id: 'city_12', name: '終焉奇點', reqLv: 1, desc: '⚛️ 宇宙重啟之地 (Lv.450-500)', monsters: [{ id: 'chaos_boss', name: '🌀 混沌幻影 (隨機)', lv: '350+' }, { id: 'akashic_record', name: '👁️ 全知者·阿卡西 (BOSS)', lv: 550 }] },
             { id: 'city_13', name: '零之領域', reqLv: 1, desc: '☠️ 宇宙的終焉 (Lv.580+)', monsters: [{ id: 'void_devourer_god', name: '🌌 零界·虛無吞噬者 (GOD)', lv: 580}] },
-			{ id: 'city_14', name: '深淵邊界', reqLv: 1, desc: '🌀 深淵與虛無的交界 (Lv.700-780)', monsters: [
+                        { id: 'city_14', name: '深淵邊界', reqLv: 1, desc: '🌀 深淵與虛無的交界 (Lv.700-780)', monsters: [
                 { id: 'abyss_watcher', name: '深淵守望者', lv: 700 },
                 { id: 'dark_star_archmage', name: '暗星魔導師', lv: 720 },
                 { id: 'void_tyrant', name: '虛空暴君', lv: 740 },
@@ -1910,6 +2026,7 @@
             socket.emit('joinGame', myToken);
             // 請求目前有效優惠碼
             socket.emit('getActivePromoCodes');
+            socket.emit('getPetInfo');
         });
 
         socket.on('disconnect', () => {
@@ -2029,17 +2146,25 @@
             if (p.specialOffers) {
                 if (p.specialOffers.atk_boost && p.specialOffers.atk_boost.activeUntil > now) {
                     displayAtk = Math.floor(displayAtk * 2);
-                    document.getElementById('atk').style.color = '#e74c3c'; // 特效顏色提示
+                    document.getElementById('atk').style.color = '#e74c3c';
                 } else {
                     document.getElementById('atk').style.color = 'white';
                 }
                 
                 if (p.specialOffers.def_boost && p.specialOffers.def_boost.activeUntil > now) {
                     displayDef = Math.floor(displayDef * 2);
-                    document.getElementById('def').style.color = '#3498db'; // 特效顏色提示
+                    document.getElementById('def').style.color = '#3498db';
                 } else {
                     document.getElementById('def').style.color = 'white';
                 }
+            }
+            
+            // [新增] 寵物 Buff - 攻防x2 數值顯示
+            if (p.pet && p.pet.activeBuff && p.pet.activeBuff.type === 'atk_def_x2' && p.pet.activeBuff.expiresAt > now) {
+                displayAtk = Math.floor(displayAtk * 2);
+                displayDef = Math.floor(displayDef * 2);
+                document.getElementById('atk').style.color = '#2ecc71';
+                document.getElementById('def').style.color = '#2ecc71';
             }
 
             // 顯示縮寫後的 ATK / DEF
@@ -2393,7 +2518,274 @@
             if (Object.keys(hubSpecialOffers).length > 0) {
                 renderSpecialOffersTimers();
             }
+            // 同時更新寵物 Buff 計時器
+            renderPetBuffTimers();
         }, 1000);
+
+    // ==========================================
+    //  [新增] 寵物系統
+    // ==========================================
+    let hubPetData = null;
+
+    // 格式化剩餘時間
+    function formatPetTime(ms) {
+        if (ms <= 0) return '00:00:00';
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // 更新寵物 Buff 顯示
+    function updatePetBuffDisplay(petData) {
+        hubPetData = petData;
+        renderPetBuffTimers();
+    }
+
+    // 渲染寵物 Buff 計時器
+    function renderPetBuffTimers() {
+        const panel = document.getElementById('pet-buff-panel');
+        const timers = document.getElementById('pet-buff-timers');
+        if (!panel || !timers) return;
+
+        const now = Date.now();
+        panel.classList.remove('pet-buff-visible');
+
+        if (!hubPetData || !hubPetData.activeBuff) return;
+        if (hubPetData.activeBuff.remaining <= 0) {
+            hubPetData.activeBuff = null;
+            return;
+        }
+
+        panel.classList.add('pet-buff-visible');
+        const remaining = Math.max(0, hubPetData.activeBuff.expiresAt - now);
+        timers.innerHTML = `<div class="pet-buff-chip">
+            ${hubPetData.activeBuff.name} <span class="buff-timer">${formatPetTime(remaining)}</span>
+        </div>`;
+    }
+
+    // 打開寵物 Modal
+    function openPetModal() {
+        socket.emit('getPetInfo');
+
+        const modal = document.createElement('div');
+        modal.id = 'pet-modal';
+        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;';
+        modal.innerHTML = `
+            <div class="pet-modal-box">
+                <div class="pet-modal-title">🐾 寵物系統</div>
+                <div id="pet-modal-content">
+                    <div style="color:#95a5a6; padding:20px;">載入中...</div>
+                </div>
+                <button class="pet-btn pet-btn-close" onclick="document.getElementById('pet-modal').remove()">關閉</button>
+            </div>
+        `;
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        document.body.appendChild(modal);
+    }
+
+    // 渲染寵物 Modal 內容
+    function renderPetModal(petData) {
+        const content = document.getElementById('pet-modal-content');
+        if (!content) return;
+
+        if (!petData.owned) {
+            // 未擁有寵物 - 顯示購買界面
+            content.innerHTML = `
+                <div style="padding:15px 0;">
+                    <div style="font-size:40px; margin-bottom:10px;">🐾</div>
+                    <div style="font-size:13px; color:#ecf0f1; margin-bottom:8px;">你還沒有寵物！</div>
+                    <div style="font-size:10px; color:#bdc3c7; margin-bottom:15px;">
+                        購買寵物需要 <b style="color:#a569bd;">10,000 碎片</b><br>
+                        寵物可以透過餵食垃圾材料來獲得強力 Buff！
+                    </div>
+                    <div style="font-size:9px; color:#95a5a6; margin-bottom:10px;">
+                        可用 Buff：攻防x2、金錢x2、經驗x2、掉落+10%、稀有掉落+10%<br>
+                        每次餵飽後選擇一種技能，持續 3 小時
+                    </div>
+                    <button class="pet-btn pet-btn-buy" onclick="buyPet()">💎 購買寵物 (10,000 碎片)</button>
+                </div>
+            `;
+            return;
+        }
+
+        // 已擁有寵物 - 顯示寵物資訊
+        const hungerPct = Math.min(100, (petData.hunger / petData.maxHunger) * 100);
+        const isFull = petData.hunger >= petData.maxHunger;
+        const hasActiveBuff = petData.activeBuff && petData.activeBuff.remaining > 0;
+        const canLevelUp = petData.canLevelUp;
+
+        let html = `
+            <!-- 寵物基本資訊 -->
+            <div class="pet-info-section">
+                <div class="pet-stat-row">
+                    <span class="pet-stat-label">🐾 寵物等級</span>
+                    <span class="pet-stat-val">Lv.${petData.level} / ${petData.maxLevel}</span>
+                </div>
+                <div class="pet-stat-row">
+                    <span class="pet-stat-label">📊 寵物經驗</span>
+                    <span class="pet-stat-val">${petData.exp}${petData.nextLevelExp ? ' / ' + petData.nextLevelExp : ' (MAX)'}</span>
+                </div>
+        `;
+
+        if (hasActiveBuff) {
+            html += `
+                <div class="pet-stat-row" style="border-top:1px solid #2ecc71; padding-top:6px; margin-top:4px;">
+                    <span class="pet-stat-label">✨ 當前技能</span>
+                    <span class="pet-stat-val" style="color:#e67e22;">${petData.activeBuff.name}</span>
+                </div>
+                <div class="pet-stat-row">
+                    <span class="pet-stat-label">⏰ 剩餘時間</span>
+                    <span class="pet-stat-val" id="pet-modal-buff-timer" style="color:#f1c40f;">${formatPetTime(petData.activeBuff.remaining)}</span>
+                </div>
+            `;
+        }
+
+        html += `</div>`;
+
+        // 升級按鈕
+        if (canLevelUp) {
+            html += `
+                <div style="background:rgba(155,89,182,0.2); border:2px solid #9b59b6; border-radius:8px; padding:8px; margin-bottom:10px;">
+                    <div style="font-size:10px; color:#9b59b6; font-weight:bold;">寵物可以升級！</div>
+                    <div style="font-size:9px; color:#bdc3c7;">升級需要 <b style="color:#f1c40f;">${formatNumberShort(petData.nextLevelCost)} G</b></div>
+                    <button class="pet-btn pet-btn-levelup" onclick="levelUpPet()">⬆️ 升級到 Lv.${petData.level + 1}</button>
+                </div>
+            `;
+        }
+
+        // 飽食度條
+        html += `
+            <div class="pet-section-title">🍖 飽食度 (${Math.floor(petData.hunger)} / ${petData.maxHunger})</div>
+            <div class="pet-hunger-bar-bg">
+                <div class="pet-hunger-bar-fill ${isFull ? 'full' : ''}" style="width:${hungerPct}%"></div>
+            </div>
+        `;
+
+        if (isFull) {
+            // 飽了 - 顯示技能選擇
+            html += `
+                <div style="color:#f1c40f; font-size:11px; font-weight:bold; margin:8px 0;">寵物已飽！請選擇一種技能 Buff：</div>
+                <div class="pet-buff-grid">
+                    <div class="pet-buff-option" onclick="activatePetBuff('atk_def_x2')">
+                        <div class="pet-buff-option-name">⚔️ 攻防x2</div>
+                        <div class="pet-buff-option-desc">攻擊力和防禦力翻倍 (3小時)</div>
+                    </div>
+                    <div class="pet-buff-option" onclick="activatePetBuff('gold_x2')">
+                        <div class="pet-buff-option-name">💰 金錢x2</div>
+                        <div class="pet-buff-option-desc">戰鬥獲得金幣翻倍 (3小時)</div>
+                    </div>
+                    <div class="pet-buff-option" onclick="activatePetBuff('exp_x2')">
+                        <div class="pet-buff-option-name">📈 經驗x2</div>
+                        <div class="pet-buff-option-desc">戰鬥獲得經驗翻倍 (3小時)</div>
+                    </div>
+                    <div class="pet-buff-option" onclick="activatePetBuff('drop_all_10')">
+                        <div class="pet-buff-option-name">🎁 掉落+10%</div>
+                        <div class="pet-buff-option-desc">戰鬥物品掉落率提升10% (3小時)</div>
+                    </div>
+                    <div class="pet-buff-option" onclick="activatePetBuff('drop_rare_10')">
+                        <div class="pet-buff-option-name">🎯 稀有掉落+10%</div>
+                        <div class="pet-buff-option-desc">稀有物品掉落率提升10% (3小時)</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // 未飽 - 顯示可餵食的材料
+            html += `<div class="pet-section-title">🍖 餵食材料 (點擊餵食)</div>`;
+            if (petData.feedMaterials && petData.feedMaterials.length > 0) {
+                html += `<div class="pet-material-grid">`;
+                petData.feedMaterials.forEach(mat => {
+                    html += `
+                        <div class="pet-material-item" onclick="feedPet('${mat.id}')">
+                            <div class="pet-material-name">${mat.name}</div>
+                            <div class="pet-material-count">x${mat.count}</div>
+                            <div class="pet-material-hunger">+${mat.hunger} 飽食</div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            } else {
+                html += `<div class="pet-no-materials">背包中沒有可用的飼料材料<br>去採集或戰鬥獲取垃圾材料吧！</div>`;
+            }
+        }
+
+        content.innerHTML = html;
+
+        // 如果有活動 buff，啟動倒計時
+        if (hasActiveBuff) {
+            const timerEl = document.getElementById('pet-modal-buff-timer');
+            if (timerEl) {
+                const interval = setInterval(() => {
+                    if (!document.getElementById('pet-modal')) { clearInterval(interval); return; }
+                    const now = Date.now();
+                    const remaining = Math.max(0, hubPetData && hubPetData.activeBuff ? hubPetData.activeBuff.expiresAt - now : 0);
+                    timerEl.innerText = formatPetTime(remaining);
+                }, 1000);
+            }
+        }
+    }
+
+    // 購買寵物
+    function buyPet() {
+        socket.emit('buyPet');
+    }
+
+    // 餵食寵物
+    function feedPet(materialId) {
+        socket.emit('feedPet', materialId);
+    }
+
+    // 寵物升級
+    function levelUpPet() {
+        socket.emit('levelUpPet');
+    }
+
+    // 激活寵物 Buff
+    function activatePetBuff(buffType) {
+        socket.emit('activatePetBuff', buffType);
+    }
+
+    // Socket 監聽：寵物資訊
+    socket.on('petInfoData', (data) => {
+        hubPetData = data;
+        updatePetBuffDisplay(data);
+
+        // 如果 Modal 打開中，更新內容
+        if (document.getElementById('pet-modal')) {
+            renderPetModal(data);
+        }
+
+        // 更新側邊欄通知角標
+        const badge = document.getElementById('pet-unread-badge');
+        if (badge) {
+            if (data.owned && data.hunger >= (data.maxHunger || 100)) {
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    });
+
+    socket.on('petBuyResult', (data) => {
+        if (data.success) showToast(data.message);
+    });
+
+    socket.on('petFeedResult', (data) => {
+        if (data.success) {
+            showToast(`${data.materialName} +${data.hungerGain} 飽食度 (${data.currentHunger}/${PET_CONFIG?.maxHunger || 100})`);
+            if (data.isFull) showToast('寵物已飽！請選擇技能 Buff！');
+            if (data.canLevelUp) showToast('寵物經驗已滿，可以升級了！');
+        }
+    });
+
+    socket.on('petLevelUpResult', (data) => {
+        if (data.success) showToast(data.message);
+    });
+
+    socket.on('petBuffResult', (data) => {
+        if (data.success) showToast(data.message);
+    });
 
         socket.on('hirelingsData', (data) => {
             const panel = document.getElementById('hireling-panel');
