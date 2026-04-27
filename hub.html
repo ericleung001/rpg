@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -2529,7 +2529,9 @@
 
     // 格式化剩餘時間
     function formatPetTime(ms) {
-        if (ms <= 0) return '00:00:00';
+        // 強制轉為數字，防止 JSON 反序列化後變成 string 導致 NaN
+        ms = Number(ms);
+        if (!ms || isNaN(ms) || ms <= 0) return '00:00:00';
         const totalSeconds = Math.floor(ms / 1000);
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -2559,7 +2561,7 @@
         }
 
         panel.classList.add('pet-buff-visible');
-        const remaining = Math.max(0, hubPetData.activeBuff.expiresAt - now);
+        const remaining = Math.max(0, Number(hubPetData.activeBuff.expiresAt) - now);
         timers.innerHTML = `<div class="pet-buff-chip">
             ${hubPetData.activeBuff.name} <span class="buff-timer">${formatPetTime(remaining)}</span>
         </div>`;
@@ -2719,7 +2721,7 @@
                 const interval = setInterval(() => {
                     if (!document.getElementById('pet-modal')) { clearInterval(interval); return; }
                     const now = Date.now();
-                    const remaining = Math.max(0, hubPetData && hubPetData.activeBuff ? hubPetData.activeBuff.expiresAt - now : 0);
+                    const remaining = Math.max(0, hubPetData && hubPetData.activeBuff ? Number(hubPetData.activeBuff.expiresAt) - now : 0);
                     timerEl.innerText = formatPetTime(remaining);
                 }, 1000);
             }
@@ -2731,8 +2733,12 @@
         socket.emit('buyPet');
     }
 
-    // 餵食寵物
+    // 餵食寵物 (加冷卻防止重複點擊)
+    let feedPetCooldown = false;
     function feedPet(materialId) {
+        if (feedPetCooldown) return;
+        feedPetCooldown = true;
+        setTimeout(() => { feedPetCooldown = false; }, 600);
         socket.emit('feedPet', materialId);
     }
 
