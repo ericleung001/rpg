@@ -3,120 +3,344 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的背包v2</title>
+    <title>我的背包2</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        
+        /* === 字體系統 === */
+        :root {
+            --font-display: 'Press Start 2P', monospace;
+            --font-body: 'Noto Sans TC', sans-serif;
+        }
+        
         body { 
             background-color: #2c3e50; color: #fff; 
-            font-family: 'Press Start 2P', monospace; 
+            font-family: var(--font-body); 
             text-align: center; padding: 15px; 
             display:flex; flex-direction:column; align-items:center; 
             height: 100dvh; margin:0; box-sizing:border-box; 
             overflow: hidden;
         }
-        .header { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .gold-display { color: #f1c40f; font-size: 14px; font-weight: bold; }
-        h1 { font-size: 20px; margin: 0; }
-        
-        /* 分類按鈕列 */
-        .category-bar, .category-bar-2 {
-            width: 100%; max-width: 600px;
-            display: grid; gap: 5px; 
-            margin-bottom: 5px;
+        .header { 
+            width: 100%; max-width: 600px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
         }
-        .category-bar { grid-template-columns: repeat(5, 1fr); } 
-        .category-bar-2 { grid-template-columns: repeat(3, 1fr); margin-bottom: 15px; } 
+        .gold-display { 
+            color: #f1c40f; 
+            font-size: 16px; 
+            font-weight: bold;
+            font-family: var(--font-display);
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+        }
+        h1 { 
+            font-size: 18px; 
+            margin: 0; 
+            font-family: var(--font-display);
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+        }
+        
+        /* === 分類按鈕列 (改善排版) === */
+        .category-wrapper {
+            width: 100%; max-width: 600px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 8px;
+            margin-bottom: 12px;
+        }
+        .category-bar, .category-bar-2 {
+            width: 100%;
+            display: flex; gap: 6px; 
+            flex-wrap: wrap;
+        }
+        .category-bar { margin-bottom: 6px; }
+        .category-bar-2 { margin-bottom: 0; }
 
         .cat-btn {
-            background: #34495e; color: #bdc3c7; border: 2px solid #7f8c8d;
-            padding: 8px 0; font-family: inherit; font-size: 10px; cursor: pointer;
-            border-radius: 6px; outline: none; white-space: nowrap;
+            flex: 1;
+            min-width: 60px;
+            background: linear-gradient(180deg, #3d566e 0%, #2c3e50 100%);
+            color: #bdc3c7; 
+            border: 2px solid #5d6d7e;
+            padding: 12px 8px; 
+            font-family: var(--font-body); 
+            font-size: 12px; 
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px; 
+            outline: none; 
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            min-height: 44px;
+        }
+        .cat-btn:active {
+            transform: scale(0.95);
+        }
+        .cat-btn:focus {
+            box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.5);
         }
         .cat-btn.active { 
-            background: #e67e22; color: #fff; border-color: #fff; font-weight: bold;
+            background: linear-gradient(180deg, #f39c12 0%, #e67e22 100%);
+            color: #fff; 
+            border-color: #fff; 
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
         }
 
         .container { 
             display: flex; flex: 1; width: 100%; max-width: 600px; 
-            flex-direction: column; overflow: hidden; margin-bottom: 15px; 
+            flex-direction: column; overflow: hidden; margin-bottom: 12px; 
         }
         .bag-list { 
-            flex: 1; background: #34495e; border: 3px solid #bdc3c7; 
-            overflow-y: auto; padding: 10px; border-radius: 8px; 
+            flex: 1; 
+            background: linear-gradient(180deg, #34495e 0%, #2c3e50 100%); 
+            border: 3px solid #5d6d7e; 
+            overflow-y: auto; 
+            padding: 12px; 
+            border-radius: 12px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
         }
+        /* === 物品卡片設計 (改善) === */
         .item-card { 
-            background: #ecf0f1; color: #2c3e50; 
-            padding: 15px; margin-bottom: 10px; 
-            border-radius: 8px; text-align: left; 
-            border-bottom: 4px solid #95a5a6;
+            background: linear-gradient(135deg, #ffffff 0%, #ecf0f1 100%); 
+            color: #2c3e50; 
+            padding: 16px; 
+            margin-bottom: 12px; 
+            border-radius: 12px; 
+            text-align: left; 
+            border-left: 4px solid #3498db;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .item-name { font-size: 14px; font-weight: bold; color: #2980b9; }
-        .item-count { font-size: 14px; background: #2c3e50; color: #fff; padding: 2px 6px; border-radius: 4px; }
-        .item-desc { font-size: 10px; color: #7f8c8d; margin-bottom: 10px; }
-        .plus-tag { color: #f1c40f; font-weight: bold; margin-left: 5px; }
+        .item-card:active {
+            transform: scale(0.98);
+        }
+        .item-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .item-name { 
+            font-size: 16px; 
+            font-weight: 700; 
+            color: #2980b9;
+            font-family: var(--font-body);
+            flex: 1;
+        }
+        .item-count { 
+            font-size: 14px; 
+            background: linear-gradient(180deg, #34495e 0%, #2c3e50 100%); 
+            color: #fff; 
+            padding: 4px 10px; 
+            border-radius: 20px;
+            font-weight: bold;
+            min-width: 40px;
+            text-align: center;
+        }
+        .item-desc { 
+            font-size: 13px; 
+            color: #5d6d7e; 
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .plus-tag { 
+            color: #f39c12; 
+            font-weight: bold; 
+            margin-left: 6px;
+            font-size: 14px;
+        }
 
-        .action-btns { display: flex; gap: 8px; flex-wrap: wrap; }
-        
-        .btn { 
-            padding: 10px; font-family: inherit; font-size: 10px; cursor: pointer; flex: 1;
-            border: 2px solid rgba(0,0,0,0.2); color: white; border-radius: 6px; font-weight: bold;
+        .action-btns { 
+            display: flex; 
+            gap: 8px; 
+            flex-wrap: wrap;
+            margin-top: 4px;
         }
-        .btn:active { transform: translateY(2px); filter: brightness(0.9); }
-        .btn-npc { background: #e74c3c; } 
-        .btn-market { background: #3498db; }
-        .btn-dismantle { background: #8e44ad; } 
-        .btn-use { background: #27ae60; } 
+        
+        /* === 按鈕觸控區域改善 === */
+        .btn { 
+            padding: 14px 12px; 
+            font-family: var(--font-body); 
+            font-size: 13px; 
+            font-weight: 600;
+            cursor: pointer; 
+            flex: 1;
+            min-width: 80px;
+            border: 2px solid rgba(0,0,0,0.2); 
+            color: white; 
+            border-radius: 8px;
+            min-height: 48px;
+            transition: all 0.15s ease;
+        }
+        .btn:active { 
+            transform: scale(0.95); 
+            filter: brightness(0.85); 
+        }
+        .btn:focus {
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+        }
+        .btn-npc { 
+            background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+        } 
+        .btn-market { 
+            background: linear-gradient(180deg, #3498db 0%, #2980b9 100%);
+        }
+        .btn-dismantle { 
+            background: linear-gradient(180deg, #9b59b6 0%, #8e44ad 100%);
+        } 
+        .btn-use { 
+            background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%);
+        } 
+        .btn-batch { 
+            background: linear-gradient(180deg, #e67e22 0%, #d35400 100%);
+        }
 
         .back-btn { 
-            background: #7f8c8d; color: white; padding: 15px; 
-            text-decoration: none; font-size: 14px; 
-            border: 3px solid #fff; display: block; 
-            width: 100%; max-width: 600px; box-sizing: border-box; border-radius: 8px;
+            background: linear-gradient(180deg, #7f8c8d 0%, #5d6d7e 100%); 
+            color: white; 
+            padding: 18px; 
+            text-decoration: none; 
+            font-size: 15px;
+            font-family: var(--font-body);
+            font-weight: 600;
+            border: 3px solid #fff; 
+            display: block; 
+            width: 100%; max-width: 600px; 
+            box-sizing: border-box; 
+            border-radius: 10px;
+            min-height: 52px;
+            transition: all 0.2s ease;
+        }
+        .back-btn:active {
+            transform: scale(0.98);
+            filter: brightness(0.9);
         }
 
-        /* === 彈窗樣式 === */
+        /* === Modal 彈窗改善 === */
         .modal-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.85); display: none; 
-            flex-direction: column; justify-content: center; align-items: center; z-index: 100;
+            background: rgba(0,0,0,0.9); 
+            display: none; 
+            flex-direction: column; justify-content: center; align-items: center; 
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.show {
+            opacity: 1;
         }
         .modal-box { 
-            background: #fff; color: #000; 
-            padding: 25px; border: 6px solid #f1c40f; 
-            width: 80%; max-width: 300px; border-radius: 12px; text-align: center;
+            background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%); 
+            color: #2c3e50; 
+            padding: 28px 24px; 
+            border: 4px solid #f1c40f; 
+            width: 85%; 
+            max-width: 340px; 
+            border-radius: 16px; 
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.show .modal-box {
+            transform: scale(1);
         }
         
-        .input-group { margin: 15px 0; }
-        .input-label { display: block; font-size: 10px; color: #555; margin-bottom: 5px; text-align: left;}
+        .input-group { margin: 18px 0; }
+        .input-label { 
+            display: block; 
+            font-size: 13px; 
+            color: #5d6d7e; 
+            margin-bottom: 8px; 
+            text-align: left;
+            font-weight: 500;
+        }
         input { 
-            width: 100%; padding: 12px; margin-bottom: 5px;
-            font-family: inherit; font-size: 14px; 
-            box-sizing: border-box; border: 2px solid #ccc; text-align: center;
+            width: 100%; 
+            padding: 14px; 
+            margin-bottom: 6px;
+            font-family: var(--font-body); 
+            font-size: 16px; 
+            box-sizing: border-box; 
+            border: 2px solid #bdc3c7; 
+            border-radius: 8px;
+            text-align: center;
+            transition: border-color 0.2s ease;
+        }
+        input:focus {
+            outline: none;
+            border-color: #3498db;
         }
         
-        /* 數量調整按鈕樣式 */
+        /* === 數量調整按鈕 (觸控友善) === */
         .qty-controls {
-            display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 10px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 8px; 
+            margin-bottom: 12px;
         }
         .qty-btn {
-            width: 35px; height: 35px; background: #bdc3c7; border: none; 
-            font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 5px;
-            font-family: inherit; color: #2c3e50;
+            width: 48px; 
+            height: 48px; 
+            background: linear-gradient(180deg, #bdc3c7 0%, #95a5a6 100%); 
+            border: none; 
+            font-size: 22px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border-radius: 10px;
+            font-family: var(--font-body); 
+            color: #2c3e50;
+            transition: all 0.15s ease;
         }
-        .qty-btn:active { background: #95a5a6; }
-        .qty-input { width: 60px !important; margin: 0 !important; }
+        .qty-btn:active { 
+            transform: scale(0.95);
+            background: #7f8c8d;
+        }
+        .qty-input { 
+            width: 70px !important; 
+            margin: 0 !important; 
+            font-size: 18px !important;
+        }
         .max-btn {
-            background: #f39c12; color: white; border: none; 
-            font-size: 10px; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-family: inherit;
+            background: linear-gradient(180deg, #f39c12 0%, #e67e22 100%); 
+            color: white; 
+            border: none; 
+            font-size: 13px; 
+            padding: 10px 16px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-family: var(--font-body);
+            font-weight: 600;
+            min-height: 48px;
+            transition: all 0.15s ease;
+        }
+        .max-btn:active {
+            transform: scale(0.95);
         }
 
         #game-toast {
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.95); border: 2px solid #f1c40f;
-            color: #fff; padding: 15px 30px; border-radius: 30px; z-index: 9999;
-            font-size: 14px; font-weight: bold; transition: top 0.5s ease-in-out;
+            position: fixed; 
+            top: -100px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95); 
+            border: 2px solid #f1c40f;
+            color: #fff; 
+            padding: 16px 32px; 
+            border-radius: 30px; 
+            z-index: 9999;
+            font-size: 15px; 
+            font-family: var(--font-body);
+            font-weight: 600;
+            transition: top 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             pointer-events: none;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
     </style>
 </head>
@@ -128,17 +352,19 @@
         <div class="gold-display">💰 <span id="my-gold">0</span> G</div>
     </div>
 
-    <div class="category-bar">
-        <button class="cat-btn active" onclick="setFilter('all')">全部</button>
-        <button class="cat-btn" onclick="setFilter('consumable')">消耗品</button>
-        <button class="cat-btn" onclick="setFilter('food')">料理</button>
-        <button class="cat-btn" onclick="setFilter('material')">材料</button>
-        <button class="cat-btn" onclick="setFilter('card')">卡牌</button>
-    </div>
-    <div class="category-bar-2">
-        <button class="cat-btn" onclick="setFilter('weapon')">武器</button>
-        <button class="cat-btn" onclick="setFilter('armor')">防具</button>
-        <button class="cat-btn" onclick="setFilter('accessory')">飾品</button>
+    <div class="category-wrapper">
+        <div class="category-bar">
+            <button class="cat-btn active" onclick="setFilter('all')">📋 全部</button>
+            <button class="cat-btn" onclick="setFilter('consumable')">💊 消耗品</button>
+            <button class="cat-btn" onclick="setFilter('food')">🍱 料理</button>
+            <button class="cat-btn" onclick="setFilter('material')">🪨 材料</button>
+            <button class="cat-btn" onclick="setFilter('card')">🃏 卡牌</button>
+        </div>
+        <div class="category-bar-2">
+            <button class="cat-btn" onclick="setFilter('weapon')">⚔️ 武器</button>
+            <button class="cat-btn" onclick="setFilter('armor')">🛡️ 防具</button>
+            <button class="cat-btn" onclick="setFilter('accessory')">💍 飾品</button>
+        </div>
     </div>
 
     <div class="container">
@@ -166,6 +392,26 @@
 
             <button class="btn btn-market" style="width:100%; margin-bottom:10px;" onclick="confirmMarketSell()">確認上架</button>
             <button class="btn" style="background:#555; width:100%;" onclick="closeAllModals()">取消</button>
+        </div>
+    </div>
+
+    <div id="batch-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 style="font-size:16px; margin-bottom:10px; color:#e67e22;">🧧 批量開啟福袋</h3>
+            
+            <div style="margin-bottom:15px; font-size:12px; color:#555;">
+                <div style="color:#2980b9; font-weight:bold; font-size:14px; margin-bottom:5px;">選擇開啟數量</div>
+                <div style="color:#888; font-size:11px;">擁有: <span id="batch-owned-count" style="color:#f1c40f; font-weight:bold;">0</span> 個奇蹟福袋</div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                <button class="btn btn-batch" style="font-size:16px;" onclick="confirmBatchOpen(10)">x10</button>
+                <button class="btn btn-batch" style="font-size:16px;" onclick="confirmBatchOpen(100)">x100</button>
+                <button class="btn btn-batch" style="font-size:16px;" onclick="confirmBatchOpen(500)">x500</button>
+                <button class="btn" style="background:#c0392b; font-size:14px;" onclick="confirmBatchOpen('all')">✨ 全部</button>
+            </div>
+
+            <button class="btn" style="background:#7f8c8d; width:100%;" onclick="closeAllModals()">◀ 取消</button>
         </div>
     </div>
 
@@ -234,6 +480,7 @@
             'shard_blade_novice', 'shard_axe_crystal', 'shard_scythe_void', 
             'shard_spear_galaxy', 'shard_wep_dimension', 'shard_wep_origin',
             'myth_weapon', 'myth_armor', 'myth_acc',
+            'myth2_weapon', 'myth2_armor', 'myth2_acc',
             'myth_essence_fire', 'myth_essence_ice', 'myth_essence_dark', 'myth_essence_light', 'myth_essence_chaos',
             'myth_core', 'myth_dragon_soul', 'myth_void_crystal'
         ];
@@ -267,7 +514,8 @@
             'shard_spear_galaxy':480,'shard_plate_galaxy':480,'shard_core_galaxy':480,
             'shard_wep_dimension':550,'shard_armor_dimension':550,
             'shard_wep_origin':600,'shard_armor_origin':600,'shard_crown_infinity':600,
-            'myth_weapon':700,'myth_armor':700,'myth_acc':700,
+            'myth_weapon':200,'myth_armor':200,'myth_acc':200,
+            'myth2_weapon':450,'myth2_armor':450,'myth2_acc':450,
         };
         const REPAIR_TIERS_CLIENT = [
             { maxItemLv: 30,   repairPerPoint: 0.01 },
@@ -493,6 +741,9 @@
             'myth_weapon': { name: "神話·毀滅之刃", cost: 0, desc: "Lv.700 [神話] ATK+200萬 DEF+50萬 HP+500萬 MP+100萬" },
             'myth_armor':  { name: "神話·絕對防禦", cost: 0, desc: "Lv.700 [神話] DEF+150萬 HP+1000萬 MP+300萬" },
             'myth_acc':    { name: "神話·命運之環", cost: 0, desc: "Lv.700 [神話] ATK+80萬 DEF+80萬 HP+800萬 MP+200萬" },
+            'myth2_weapon': { name: "神話II·天裁之劍", cost: 0, desc: "Lv.900 [神話II代] ATK+380萬 DEF+65萬 HP+1000萬 MP+300萬" },
+            'myth2_armor':  { name: "神話II·永恆聖壁", cost: 0, desc: "Lv.900 [神話II代] DEF+650萬 HP+1800萬 MP+500萬" },
+            'myth2_acc':    { name: "神話II·命運輪迴", cost: 0, desc: "Lv.900 [神話II代] ATK+110萬 DEF+250萬 HP+1500萬 MP+400萬" },
             'myth_essence_fire':  { name: "烈焰精華",   cost: 0, desc: "神話鍛造素材 (第一層)" },
             'myth_essence_ice':   { name: "永恆冰精華", cost: 0, desc: "神話鍛造素材 (第一層)" },
             'myth_essence_dark':  { name: "暗淵精華",   cost: 0, desc: "神話鍛造素材 (第一層)" },
@@ -528,11 +779,11 @@
             closeAllModals();
         });
 
-        function showMsg(text) {
+        function showMsg(text, duration) {
             const t = document.getElementById('game-toast');
             t.innerHTML = text; // allow html
             t.style.top = "30px"; 
-            setTimeout(() => { t.style.top = "-100px"; }, 3000);
+            setTimeout(() => { t.style.top = "-100px"; }, duration || 3000);
         }
 
         // 切換分類函數
@@ -623,6 +874,9 @@
                 let useBtn = '';
                 if (key === 'lucky_bag') { 
                     useBtn = `<button class="btn btn-use" onclick="useItem('${key}')">使用</button>`;
+                    if (availableCount >= 2) {
+                        useBtn += `<button class="btn btn-batch" onclick="openBatchModal()">批量開啟</button>`;
+                    }
                 }
 
                 let sellBtns = '';
@@ -696,6 +950,29 @@
             }
         }
 
+        function openBatchModal() {
+            const owned = myInventory['lucky_bag'] || 0;
+            document.getElementById('batch-owned-count').innerText = owned;
+            const modal = document.getElementById('batch-modal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+
+        function confirmBatchOpen(count) {
+            const owned = myInventory['lucky_bag'] || 0;
+            if (count === 'all') count = owned;
+            count = parseInt(count);
+            if (isNaN(count) || count < 1 || owned <= 0) {
+                showMsg('❌ 數量不正確');
+                closeAllModals();
+                return;
+            }
+            count = Math.min(count, owned);
+            closeAllModals();
+            showMsg('⏳ 正在開啟 ' + count + ' 個福袋...');
+            socket.emit('useLuckyBagBatch', count);
+        }
+
         function confirmDismantle(id, name) {
             if (confirm(`⚠️ 確定要分解【${name}】嗎？\n\n1. 裝備將會消失。\n2. 僅退還 50% 製作材料 / 碎片。`)) {
                 socket.emit('dismantleItem', id);
@@ -749,7 +1026,9 @@
             input.max = currentNpcMax;
             
             updateNpcTotal();
-            document.getElementById('npc-modal').style.display = 'flex';
+            const modal = document.getElementById('npc-modal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
         }
 
         function adjustNpcSell(delta) {
@@ -795,7 +1074,9 @@
             amountInput.max = Math.min(30, count); 
             document.getElementById('owned-count').innerText = count;
 
-            document.getElementById('market-modal').style.display = 'flex';
+            const modal = document.getElementById('market-modal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
         }
 
         function confirmMarketSell() {
@@ -822,9 +1103,31 @@
             socket.emit('marketSell', { itemId: currentItemId, price: price, amount: amount });
         }
 
+        socket.on('bagBatchResult', (res) => {
+            if(res.success) {
+                const lines = res.msg.split('\n');
+                const html = lines.map(l => l.trim()).filter(Boolean).join('<br>');
+                showMsg(html, 8000);
+            } else {
+                showMsg('❌ ' + res.msg);
+            }
+            closeAllModals();
+        });
+
         function closeAllModals() {
-            document.getElementById('market-modal').style.display = 'none';
-            document.getElementById('npc-modal').style.display = 'none';
+            const marketModal = document.getElementById('market-modal');
+            const npcModal = document.getElementById('npc-modal');
+            const batchModal = document.getElementById('batch-modal');
+            
+            marketModal.classList.remove('show');
+            npcModal.classList.remove('show');
+            batchModal.classList.remove('show');
+            
+            setTimeout(() => {
+                marketModal.style.display = 'none';
+                npcModal.style.display = 'none';
+                batchModal.style.display = 'none';
+            }, 300);
         }
     </script>
 </body>
