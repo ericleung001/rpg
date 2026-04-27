@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -2693,22 +2693,34 @@
                 </div>
             `;
         } else {
-            // 未飽 - 顯示可餵食的材料
-            html += `<div class="pet-section-title">🍖 餵食材料 (點擊餵食)</div>`;
-            if (petData.feedMaterials && petData.feedMaterials.length > 0) {
-                html += `<div class="pet-material-grid">`;
-                petData.feedMaterials.forEach(mat => {
-                    html += `
-                        <div class="pet-material-item" onclick="feedPet('${mat.id}')">
-                            <div class="pet-material-name">${mat.name}</div>
-                            <div class="pet-material-count">x${mat.count}</div>
-                            <div class="pet-material-hunger">+${mat.hunger} 飽食</div>
+            // 未飽 - 顯示隨機餵食任務
+            const task = petData.feedingTask;
+            if (task && task.materialId) {
+                const pct = Math.min(100, (task.ownedCount / task.requiredQty) * 100);
+                const enough = task.canFeed;
+                html += `
+                    <div class="pet-section-title">🍖 餵食任務</div>
+                    <div style="background:rgba(52,73,94,0.5); border:1px solid #34495e; border-radius:8px; padding:12px; margin-bottom:10px;">
+                        <div style="font-size:12px; color:#ecf0f1; margin-bottom:6px;">
+                            寵物想吃 <b style="color:#e67e22;">${task.materialName}</b>
                         </div>
-                    `;
-                });
-                html += `</div>`;
+                        <div style="font-size:11px; color:#bdc3c7; margin-bottom:8px;">
+                            需要 <b style="color:#f39c12;">${task.requiredQty.toLocaleString()}</b> 個
+                            &nbsp;|&nbsp;
+                            目前有 <b style="color:${enough ? '#2ecc71' : '#e74c3c'};">${task.ownedCount.toLocaleString()}</b> 個
+                        </div>
+                        <div class="pet-hunger-bar-bg" style="margin-bottom:8px;">
+                            <div class="pet-hunger-bar-fill ${enough ? 'full' : ''}" style="width:${pct}%; background:${enough ? '#2ecc71' : '#e67e22'};"></div>
+                        </div>
+                        <button class="pet-btn ${enough ? 'pet-btn-buy' : ''}" onclick="feedPet()" 
+                            style="${enough ? '' : 'opacity:0.5; cursor:not-allowed; background:#555;'}"
+                            ${enough ? '' : 'disabled'}>
+                            ${enough ? '🍖 餵食寵物' : '❌ 材料不足'}
+                        </button>
+                    </div>
+                `;
             } else {
-                html += `<div class="pet-no-materials">背包中沒有可用的飼料材料<br>去採集或戰鬥獲取垃圾材料吧！</div>`;
+                html += `<div class="pet-no-materials">載入餵食任務中...</div>`;
             }
         }
 
@@ -2733,13 +2745,13 @@
         socket.emit('buyPet');
     }
 
-    // 餵食寵物 (加冷卻防止重複點擊)
+    // 餵食寵物 (一次過餵齊任務材料)
     let feedPetCooldown = false;
-    function feedPet(materialId) {
+    function feedPet() {
         if (feedPetCooldown) return;
         feedPetCooldown = true;
-        setTimeout(() => { feedPetCooldown = false; }, 600);
-        socket.emit('feedPet', materialId);
+        setTimeout(() => { feedPetCooldown = false; }, 1000);
+        socket.emit('feedPet');
     }
 
     // 寵物升級
