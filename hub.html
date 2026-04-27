@@ -1,8 +1,9 @@
+<!DOCTYPE html>
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -2714,6 +2715,25 @@
                     <div class="pet-buff-option" onclick="showRareDropSelection()">
                         <div class="pet-buff-option-name">🎯 稀有掉落+10%</div>
                         <div class="pet-buff-option-desc">指定物品保底10%掉落 + 稀有素材池 (${durationStr})</div>
+                        <div class="pet-buff-option-desc" style="margin-top:2px;"><span style="color:#9b59b6;cursor:pointer;text-decoration:underline;font-size:9px;" onclick="event.stopPropagation();toggleRarePoolInfo();">▸ 查看稀有素材池掉落率</span></div>
+                        <div id="rare-pool-info" style="display:none;margin-top:6px;background:rgba(0,0,0,0.3);border:1px solid #555;border-radius:6px;padding:8px;font-size:9px;color:#ccc;text-align:left;line-height:1.7;max-height:150px;overflow-y:auto;">
+                            <div style="color:#f1c40f;font-weight:bold;margin-bottom:4px;">📦 稀有素材池掉落率（每次戰鬥）</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px 10px;">
+                                <div>龍鱗 3%</div><div>秘銀 3%</div><div>虛空之塵 3%</div>
+                                <div>惡魔之角 2.5%</div><div>暗之精華 2.5%</div><div>精金 2%</div>
+                                <div>紅寶石 2.5%</div><div>鑽石 2%</div><div>神之血 1.5%</div>
+                                <div>混沌寶珠 1.5%</div><div>天使之羽 1.5%</div><div>泰坦神鋼 1.2%</div>
+                                <div>星之碎片 1.2%</div><div>虛空碎片 1%</div><div>暗物質 1%</div>
+                                <div>宇宙鋼 0.8%</div><div>恆星核心 0.8%</div><div>遠古神木 3%</div>
+                                <div>混沌神木 2%</div><div>虛空木 2.5%</div><div>龍骨木 2.5%</div>
+                                <div>靈木 2.5%</div><div>神之鯉 1.5%</div><div>珍珠 2.5%</div>
+                                <div style="color:#f39c12;">奇蹟福袋 0.5%</div><div style="color:#2ecc71;">技能碎片 4%</div><div>量子殘渣 0.8%</div>
+                                <div>多元宇宙碎片 0.5%</div><div style="color:#e67e22;">火焰精華 0.5%</div><div style="color:#3498db;">冰霜精華 0.5%</div>
+                                <div style="color:#8e44ad;">暗影精華 0.5%</div><div style="color:#f1c40f;">神聖精華 0.5%</div><div style="color:#e74c3c;">混沌精華 0.5%</div>
+                                <div>時光之沙 0.5%</div><div>維度寶石 0.5%</div><div style="color:#ff6b6b;">熱寂原點 0.3%</div>
+                            </div>
+                            <div style="margin-top:6px;color:#e74c3c;font-size:8px;">⛔ 不包含：神話核心、龍魂結晶、虛空神晶</div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -2892,6 +2912,13 @@
         document.body.appendChild(wrapper.firstElementChild);
         // 自動聚焦搜尋框
         setTimeout(() => { const inp = document.getElementById('rare-drop-input'); if (inp) inp.focus(); }, 100);
+    }
+
+    // 切換稀有素材池顯示
+    function toggleRarePoolInfo() {
+        const el = document.getElementById('rare-pool-info');
+        if (!el) return;
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
     }
 
     // 搜尋過濾
