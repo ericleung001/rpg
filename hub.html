@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -2693,32 +2693,35 @@
                 </div>
             `;
         } else {
-            // 未飽 - 顯示隨機餵食任務
+            // 未飽 - 顯示隨機餵食任務 (3~5 種材料)
             const task = petData.feedingTask;
-            if (task && task.materialId) {
-                const pct = Math.min(100, (task.ownedCount / task.requiredQty) * 100);
-                const enough = task.canFeed;
+            if (task && task.materials && task.materials.length > 0) {
+                const allReady = task.allReady;
+                html += `<div class="pet-section-title">🍖 餵食任務 (${task.materials.length} 種材料)</div>`;
+                html += `<div style="background:rgba(52,73,94,0.5); border:1px solid #34495e; border-radius:8px; padding:10px; margin-bottom:10px;">`;
+                // 逐種顯示材料
+                task.materials.forEach(m => {
+                    const pct = Math.min(100, (m.ownedCount / m.requiredQty) * 100);
+                    const ok = m.canFeed;
+                    html += `
+                        <div style="margin-bottom:6px;">
+                            <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;">
+                                <span style="color:#ecf0f1;">${m.materialName}</span>
+                                <span style="color:${ok ? '#2ecc71' : '#e74c3c'};">${m.ownedCount.toLocaleString()} / ${m.requiredQty.toLocaleString()}</span>
+                            </div>
+                            <div class="pet-hunger-bar-bg" style="height:10px;">
+                                <div class="pet-hunger-bar-fill ${ok ? 'full' : ''}" style="width:${pct}%; background:${ok ? '#2ecc71' : '#e67e22'};"></div>
+                            </div>
+                        </div>
+                    `;
+                });
                 html += `
-                    <div class="pet-section-title">🍖 餵食任務</div>
-                    <div style="background:rgba(52,73,94,0.5); border:1px solid #34495e; border-radius:8px; padding:12px; margin-bottom:10px;">
-                        <div style="font-size:12px; color:#ecf0f1; margin-bottom:6px;">
-                            寵物想吃 <b style="color:#e67e22;">${task.materialName}</b>
-                        </div>
-                        <div style="font-size:11px; color:#bdc3c7; margin-bottom:8px;">
-                            需要 <b style="color:#f39c12;">${task.requiredQty.toLocaleString()}</b> 個
-                            &nbsp;|&nbsp;
-                            目前有 <b style="color:${enough ? '#2ecc71' : '#e74c3c'};">${task.ownedCount.toLocaleString()}</b> 個
-                        </div>
-                        <div class="pet-hunger-bar-bg" style="margin-bottom:8px;">
-                            <div class="pet-hunger-bar-fill ${enough ? 'full' : ''}" style="width:${pct}%; background:${enough ? '#2ecc71' : '#e67e22'};"></div>
-                        </div>
-                        <button class="pet-btn ${enough ? 'pet-btn-buy' : ''}" onclick="feedPet()" 
-                            style="${enough ? '' : 'opacity:0.5; cursor:not-allowed; background:#555;'}"
-                            ${enough ? '' : 'disabled'}>
-                            ${enough ? '🍖 餵食寵物' : '❌ 材料不足'}
-                        </button>
-                    </div>
-                `;
+                    <button class="pet-btn" onclick="feedPet()" 
+                        style="margin-top:8px; width:100%; ${allReady ? 'background:#27ae60;' : 'opacity:0.5; cursor:not-allowed; background:#555;'}"
+                        ${allReady ? '' : 'disabled'}>
+                        ${allReady ? '🍖 餵食寵物' : '❌ 材料不足'}
+                    </button>
+                </div>`;
             } else {
                 html += `<div class="pet-no-materials">載入餵食任務中...</div>`;
             }
