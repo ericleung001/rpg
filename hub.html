@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會3</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -2632,10 +2632,15 @@
         `;
 
         if (hasActiveBuff) {
+            // 如果是稀有掉落 buff，顯示指定物品名稱
+            let buffDisplayName = petData.activeBuff.name;
+            if (petData.activeBuff.type === 'drop_rare_10' && petData.activeBuff.rareItemName) {
+                buffDisplayName = `🎯 ${petData.activeBuff.rareItemName} +10%`;
+            }
             html += `
                 <div class="pet-stat-row" style="border-top:1px solid #2ecc71; padding-top:6px; margin-top:4px;">
                     <span class="pet-stat-label">✨ 當前技能</span>
-                    <span class="pet-stat-val" style="color:#e67e22;">${petData.activeBuff.name}</span>
+                    <span class="pet-stat-val" style="color:#e67e22;">${buffDisplayName}</span>
                 </div>
                 <div class="pet-stat-row">
                     <span class="pet-stat-label">⏰ 剩餘時間</span>
@@ -2667,28 +2672,49 @@
 
         if (isFull) {
             // 飽了 - 顯示技能選擇
+            // 計算技能持續時間：基礎 3 小時 + 每級多 15 分鐘
+            const baseMin = 180; // 3 小時 = 180 分鐘
+            const levelBonusMin = (petData.level - 1) * 15;
+            const totalMin = baseMin + levelBonusMin;
+            const totalHours = Math.floor(totalMin / 60);
+            const totalMins = totalMin % 60;
+            const durationStr = totalHours > 0 ? `${totalHours} 小時 ${totalMins} 分鐘` : `${totalMins} 分鐘`;
+
+            // 如果已有技能使用中，顯示警告
+            let activeBuffWarning = '';
+            if (hasActiveBuff) {
+                const remainingMin = Math.ceil(petData.activeBuff.remaining / 60000);
+                activeBuffWarning = `
+                    <div style="background:rgba(231,76,60,0.2); border:1px solid #e74c3c; border-radius:8px; padding:8px; margin-bottom:10px; font-size:10px; color:#e74c3c;">
+                        ⚠️ 目前已有技能 <b>${petData.activeBuff.name}</b> 使用中（剩餘 ${remainingMin} 分鐘）<br>
+                        選擇新技能將會 <b>取消</b> 當前技能！
+                    </div>`;
+            }
+
             html += `
                 <div style="color:#f1c40f; font-size:11px; font-weight:bold; margin:8px 0;">寵物已飽！請選擇一種技能 Buff：</div>
+                <div style="font-size:9px; color:#95a5a6; margin-bottom:6px;">⏱ 持續時間：<b style="color:#f1c40f;">${durationStr}</b> (Lv.${petData.level} 加成 +${levelBonusMin}分鐘)</div>
+                ${activeBuffWarning}
                 <div class="pet-buff-grid">
                     <div class="pet-buff-option" onclick="activatePetBuff('atk_def_x2')">
                         <div class="pet-buff-option-name">⚔️ 攻防x2</div>
-                        <div class="pet-buff-option-desc">攻擊力和防禦力翻倍 (3小時)</div>
+                        <div class="pet-buff-option-desc">攻擊力和防禦力翻倍 (${durationStr})</div>
                     </div>
                     <div class="pet-buff-option" onclick="activatePetBuff('gold_x2')">
                         <div class="pet-buff-option-name">💰 金錢x2</div>
-                        <div class="pet-buff-option-desc">戰鬥獲得金幣翻倍 (3小時)</div>
+                        <div class="pet-buff-option-desc">戰鬥獲得金幣翻倍 (${durationStr})</div>
                     </div>
                     <div class="pet-buff-option" onclick="activatePetBuff('exp_x2')">
                         <div class="pet-buff-option-name">📈 經驗x2</div>
-                        <div class="pet-buff-option-desc">戰鬥獲得經驗翻倍 (3小時)</div>
+                        <div class="pet-buff-option-desc">戰鬥獲得經驗翻倍 (${durationStr})</div>
                     </div>
                     <div class="pet-buff-option" onclick="activatePetBuff('drop_all_10')">
                         <div class="pet-buff-option-name">🎁 掉落+10%</div>
-                        <div class="pet-buff-option-desc">戰鬥物品掉落率提升10% (3小時)</div>
+                        <div class="pet-buff-option-desc">戰鬥物品掉落率提升10% (${durationStr})</div>
                     </div>
-                    <div class="pet-buff-option" onclick="activatePetBuff('drop_rare_10')">
+                    <div class="pet-buff-option" onclick="showRareDropSelection()">
                         <div class="pet-buff-option-name">🎯 稀有掉落+10%</div>
-                        <div class="pet-buff-option-desc">稀有物品掉落率提升10% (3小時)</div>
+                        <div class="pet-buff-option-desc">選擇指定物品掉落率+10% (${durationStr})</div>
                     </div>
                 </div>
             `;
@@ -2764,7 +2790,118 @@
 
     // 激活寵物 Buff
     function activatePetBuff(buffType) {
+        // 如果已有技能使用中，彈出確認
+        if (hubPetData && hubPetData.activeBuff && hubPetData.activeBuff.remaining > 0) {
+            const remainingMin = Math.ceil(hubPetData.activeBuff.remaining / 60000);
+            const buffNames = {
+                'atk_def_x2': '⚔️ 攻防x2',
+                'gold_x2': '💰 金錢x2',
+                'exp_x2': '📈 經驗x2',
+                'drop_all_10': '🎁 掉落+10%',
+                'drop_rare_10': '🎯 稀有掉落+10%'
+            };
+            const oldName = hubPetData.activeBuff.name || hubPetData.activeBuff.type;
+            const newName = buffNames[buffType] || buffType;
+            if (!confirm(`⚠️ 目前已有技能【${oldName}】使用中（剩餘 ${remainingMin} 分鐘）\n\n確定要激活新技能【${newName}】嗎？\n之前的技能將會被取消！`)) {
+                return;
+            }
+        }
         socket.emit('activatePetBuff', buffType);
+    }
+
+    // 顯示稀有掉落物品選擇面板
+    function showRareDropSelection() {
+        // 如果已有技能使用中，彈出確認
+        if (hubPetData && hubPetData.activeBuff && hubPetData.activeBuff.remaining > 0) {
+            const remainingMin = Math.ceil(hubPetData.activeBuff.remaining / 60000);
+            const oldName = hubPetData.activeBuff.name || hubPetData.activeBuff.type;
+            if (!confirm(`⚠️ 目前已有技能【${oldName}】使用中（剩餘 ${remainingMin} 分鐘）\n\n確定要激活新技能【🎯 稀有掉落+10%】嗎？\n之前的技能將會被取消！`)) {
+                return;
+            }
+        }
+        // 收集所有可選擇的材料/物品
+        const materials = [
+            { id: 'copper_ore', name: '銅礦石' }, { id: 'soft_fur', name: '柔軟皮毛' },
+            { id: 'beast_fang', name: '野獸尖牙' }, { id: 'slime_gel', name: '黏液' },
+            { id: 'iron_ore', name: '鐵礦石' }, { id: 'leather', name: '皮革' },
+            { id: 'tough_hide', name: '硬皮革' }, { id: 'magic_dust', name: '魔粉' },
+            { id: 'poison_sac', name: '毒囊' }, { id: 'bone_shard', name: '碎骨片' },
+            { id: 'silver_ore', name: '銀礦石' }, { id: 'fire_core', name: '火焰核心' },
+            { id: 'lava_rock', name: '熔岩石' }, { id: 'coal', name: '煤炭' },
+            { id: 'dragon_scale', name: '龍鱗' }, { id: 'gold_ore', name: '金礦石' },
+            { id: 'ice_crystal', name: '永恆冰晶' }, { id: 'yeti_fur', name: '雪怪毛皮' },
+            { id: 'spirit_dust', name: '靈魂粉末' }, { id: 'mithril', name: '秘銀' },
+            { id: 'void_dust', name: '虛空之塵' }, { id: 'demon_horn', name: '惡魔之角' },
+            { id: 'dark_essence', name: '暗之精華' }, { id: 'adamantite', name: '精金' },
+            { id: 'ruby', name: '紅寶石' }, { id: 'diamond', name: '鑽石' },
+            { id: 'god_blood', name: '神之血' }, { id: 'chaos_orb', name: '混沌寶珠' },
+            { id: 'angel_feather', name: '天使之羽' }, { id: 'titan_steel', name: '泰坦神鋼' },
+            { id: 'star_fragment', name: '星之碎片' }, { id: 'void_shard', name: '虛空碎片' },
+            { id: 'dark_matter', name: '暗物質' }, { id: 'cosmic_steel', name: '宇宙鋼' },
+            { id: 'star_core', name: '恆星核心' }, { id: 'time_sand', name: '時光之沙' },
+            { id: 'dimension_gem', name: '維度寶石' }, { id: 'entropy_origin', name: '熱寂原點' },
+            { id: 'oak_log', name: '橡木原木' }, { id: 'maple_log', name: '楓木原木' },
+            { id: 'yew_log', name: '紫杉原木' }, { id: 'ancient_log', name: '遠古神木' },
+            { id: 'spirit_wood', name: '靈木' }, { id: 'dragon_wood', name: '龍骨木' },
+            { id: 'void_wood', name: '虛空木' }, { id: 'chaos_wood', name: '混沌神木' },
+            { id: 'carp', name: '鯉魚' }, { id: 'salmon', name: '鮭魚' },
+            { id: 'koi', name: '錦鯉' }, { id: 'magic_fish', name: '魔力魚' },
+            { id: 'tuna', name: '黑鮪魚' }, { id: 'shark', name: '大白鯊' },
+            { id: 'lava_eel', name: '熔岩鰻' }, { id: 'void_squid', name: '虛空烏賊' },
+            { id: 'god_carp', name: '神之鯉' }, { id: 'pearl', name: '珍珠' },
+            { id: 'skill_shard', name: '技能碎片' }
+        ];
+
+        let html = `
+            <div id="rare-drop-modal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:99999;">
+                <div style="background:#1a1a2e;border:2px solid #9b59b6;border-radius:12px;padding:15px;max-width:90vw;width:400px;max-height:70vh;display:flex;flex-direction:column;">
+                    <div style="font-size:14px;font-weight:bold;color:#f1c40f;margin-bottom:10px;text-align:center;">🎯 選擇稀有掉落物品</div>
+                    <div style="font-size:10px;color:#95a5a6;margin-bottom:8px;text-align:center;">選擇一種物品，該物品的掉落率將提升 10%</div>
+                    <div id="rare-drop-search" style="margin-bottom:8px;">
+                        <input type="text" id="rare-drop-input" placeholder="搜尋物品..." 
+                            style="width:100%;padding:6px 10px;border:1px solid #34495e;border-radius:6px;background:#0d0d1a;color:#ecf0f1;font-size:11px;box-sizing:border-box;"
+                            oninput="filterRareDrops(this.value)">
+                    </div>
+                    <div id="rare-drop-list" style="flex:1;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:4px;padding-right:4px;">
+                        ${materials.map(m => `
+                            <div class="rare-drop-item" data-name="${m.name}" data-id="${m.id}"
+                                style="background:rgba(52,73,94,0.5);border:1px solid #34495e;border-radius:6px;padding:6px 8px;cursor:pointer;font-size:10px;color:#ecf0f1;transition:all 0.15s;"
+                                onmouseover="this.style.borderColor='#9b59b6';this.style.background='rgba(155,89,182,0.2)'"
+                                onmouseout="this.style.borderColor='#34495e';this.style.background='rgba(52,73,94,0.5)'"
+                                onclick="selectRareDrop('${m.id}','${m.name}')">
+                                ${m.name}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button style="margin-top:10px;padding:8px;background:#555;color:#aaa;border:1px solid #666;border-radius:6px;font-size:11px;cursor:pointer;" 
+                        onclick="document.getElementById('rare-drop-modal').remove()">取消</button>
+                </div>
+            </div>
+        `;
+        // 在 body 最後加入
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = html;
+        wrapper.firstElementChild.addEventListener('click', (e) => { if (e.target.id === 'rare-drop-modal') e.target.remove(); });
+        document.body.appendChild(wrapper.firstElementChild);
+        // 自動聚焦搜尋框
+        setTimeout(() => { const inp = document.getElementById('rare-drop-input'); if (inp) inp.focus(); }, 100);
+    }
+
+    // 搜尋過濾
+    function filterRareDrops(keyword) {
+        const items = document.querySelectorAll('.rare-drop-item');
+        const kw = keyword.toLowerCase();
+        items.forEach(item => {
+            const name = item.getAttribute('data-name').toLowerCase();
+            item.style.display = name.includes(kw) ? '' : 'none';
+        });
+    }
+
+    // 確認選擇
+    function selectRareDrop(itemId, itemName) {
+        if (!confirm(`確定選擇【${itemName}】？\n該物品的掉落率將提升 10%`)) return;
+        document.getElementById('rare-drop-modal').remove();
+        socket.emit('activatePetBuff', { buffType: 'drop_rare_10', rareItemId: itemId });
     }
 
     // Socket 監聽：寵物資訊
