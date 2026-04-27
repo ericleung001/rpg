@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會3</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -2794,9 +2794,9 @@
 
     socket.on('petFeedResult', (data) => {
         if (data.success) {
-            showToast(`${data.materialName} +${data.hungerGain} 飽食度 (${data.currentHunger}/${PET_CONFIG?.maxHunger || 100})`);
+            showToast(`🍖 寵物已餵飽！飽食度 ${data.currentHunger}/${PET_CONFIG?.maxHunger || 100}`);
             if (data.isFull) showToast('寵物已飽！請選擇技能 Buff！');
-            if (data.canLevelUp) showToast('寵物經驗已滿，可以升級了！');
+            if (data.canLevelUp) showToast('⬆️ 寵物經驗已滿，可以升級了！');
         }
     });
 
