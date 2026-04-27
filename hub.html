@@ -2714,7 +2714,7 @@
                     </div>
                     <div class="pet-buff-option" onclick="showRareDropSelection()">
                         <div class="pet-buff-option-name">🎯 稀有掉落+10%</div>
-                        <div class="pet-buff-option-desc">選擇指定物品掉落率+10% (${durationStr})</div>
+                        <div class="pet-buff-option-desc">指定物品保底10%掉落 + 稀有素材池 (${durationStr})</div>
                     </div>
                 </div>
             `;
@@ -2819,7 +2819,7 @@
                 return;
             }
         }
-        // 收集所有可選擇的材料/物品
+        // 收集所有可選擇的材料/物品（不含神話核心、龍魂結晶、虛空神晶）
         const materials = [
             { id: 'copper_ore', name: '銅礦石' }, { id: 'soft_fur', name: '柔軟皮毛' },
             { id: 'beast_fang', name: '野獸尖牙' }, { id: 'slime_gel', name: '黏液' },
@@ -2849,14 +2849,22 @@
             { id: 'tuna', name: '黑鮪魚' }, { id: 'shark', name: '大白鯊' },
             { id: 'lava_eel', name: '熔岩鰻' }, { id: 'void_squid', name: '虛空烏賊' },
             { id: 'god_carp', name: '神之鯉' }, { id: 'pearl', name: '珍珠' },
-            { id: 'skill_shard', name: '技能碎片' }
+            { id: 'skill_shard', name: '技能碎片' },
+            { id: 'lucky_bag', name: '奇蹟福袋' },
+            { id: 'quantum_residue', name: '量子殘渣' },
+            { id: 'multiverse_shard', name: '多元宇宙碎片' },
+            { id: 'myth_essence_fire', name: '火焰精華' },
+            { id: 'myth_essence_ice', name: '冰霜精華' },
+            { id: 'myth_essence_dark', name: '暗影精華' },
+            { id: 'myth_essence_light', name: '神聖精華' },
+            { id: 'myth_essence_chaos', name: '混沌精華' }
         ];
 
         let html = `
             <div id="rare-drop-modal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:99999;">
                 <div style="background:#1a1a2e;border:2px solid #9b59b6;border-radius:12px;padding:15px;max-width:90vw;width:400px;max-height:70vh;display:flex;flex-direction:column;">
                     <div style="font-size:14px;font-weight:bold;color:#f1c40f;margin-bottom:10px;text-align:center;">🎯 選擇稀有掉落物品</div>
-                    <div style="font-size:10px;color:#95a5a6;margin-bottom:8px;text-align:center;">選擇一種物品，該物品的掉落率將提升 10%</div>
+                    <div style="font-size:10px;color:#95a5a6;margin-bottom:8px;text-align:center;">選擇一種物品：怪物無論是否掉落該物品都有10%機率獲得，另加稀有素材（含福袋）掉落機會</div>
                     <div id="rare-drop-search" style="margin-bottom:8px;">
                         <input type="text" id="rare-drop-input" placeholder="搜尋物品..." 
                             style="width:100%;padding:6px 10px;border:1px solid #34495e;border-radius:6px;background:#0d0d1a;color:#ecf0f1;font-size:11px;box-sizing:border-box;"
@@ -2899,7 +2907,7 @@
 
     // 確認選擇
     function selectRareDrop(itemId, itemName) {
-        if (!confirm(`確定選擇【${itemName}】？\n該物品的掉落率將提升 10%`)) return;
+        if (!confirm(`確定選擇【${itemName}】？\n\n🎯 效果：\n・怪物無論是否掉落該物品，都有10%機率獲得\n・同時增加稀有素材（含福袋）掉落機會\n・不包含：神話核心、龍魂結晶、虛空神晶`)) return;
         document.getElementById('rare-drop-modal').remove();
         socket.emit('activatePetBuff', { buffType: 'drop_rare_10', rareItemId: itemId });
     }
