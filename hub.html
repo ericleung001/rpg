@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -108,7 +108,7 @@
             display: flex; flex-direction: column;
             overflow-y: auto; 
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 45px; /* 新增：預留聊天室高度，防止遮擋底部按鈕 */
+            padding: 10px 0 45px 0; /* 上方留空，下方預留聊天室高度 */
         }
 
         /* ==================== 側邊欄選單系統 ==================== */
@@ -629,6 +629,118 @@
             border: 1px solid rgba(241,196,15,0.3);
         }
 
+        /* ==================== 摺疊摘要 Bar 系統 ==================== */
+        .collapse-bar {
+            display: none;
+            width: 100%;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .collapse-bar.bar-visible { display: block; }
+
+        .collapse-bar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            gap: 6px;
+        }
+        .collapse-bar-header:active { filter: brightness(0.85); }
+
+        .collapse-bar-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .collapse-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .chip-offer {
+            background: rgba(241,196,15,0.15);
+            border: 1px solid rgba(241,196,15,0.4);
+            color: #f1c40f;
+        }
+        .chip-pet {
+            background: rgba(46,204,113,0.15);
+            border: 1px solid rgba(46,204,113,0.4);
+            color: #2ecc71;
+        }
+        .chip-battle {
+            background: rgba(231,76,60,0.15);
+            border: 1px solid rgba(231,76,60,0.4);
+            color: #e74c3c;
+        }
+        .chip-gather {
+            background: rgba(46,204,113,0.15);
+            border: 1px solid rgba(46,204,113,0.4);
+            color: #2ecc71;
+        }
+
+        .collapse-bar-arrow {
+            font-size: 10px;
+            color: #888;
+            transition: transform 0.25s;
+            flex-shrink: 0;
+            display: inline-block;
+        }
+        .collapse-bar-arrow.expanded { transform: rotate(90deg); }
+
+        .collapse-bar-content {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.25s ease;
+        }
+        .collapse-bar-content.expanded {
+            max-height: 300px;
+            opacity: 1;
+            overflow: visible;
+        }
+
+        /* 內面板在摺疊模式下由外層 collapse-bar-content 控制顯示 */
+        .collapse-bar-content #special-offers-panel,
+        .collapse-bar-content #pet-buff-panel,
+        .collapse-bar-content #battle-status-panel,
+        .collapse-bar-content #gather-status-panel {
+            margin-top: 4px;
+            border-radius: 4px;
+        }
+        /* 覆蓋原有面板的 max-height transition，改由摺疊控制 */
+        .collapse-bar-content #special-offers-panel,
+        .collapse-bar-content #pet-buff-panel,
+        .collapse-bar-content #battle-status-panel,
+        .collapse-bar-content #gather-status-panel {
+            max-height: none !important;
+            opacity: 1 !important;
+            overflow: visible !important;
+            margin-top: 4px;
+        }
+        .collapse-bar-content #special-offers-panel.offer-visible,
+        .collapse-bar-content #pet-buff-panel.pet-buff-visible,
+        .collapse-bar-content #battle-status-panel.battle-visible,
+        .collapse-bar-content #gather-status-panel.gather-visible {
+            padding: 6px 8px;
+        }
+        /* ======================================================= */
+
         /* 🔴 自動戰鬥狀態顯示 */
         #battle-status-panel {
             transition: opacity 0.3s ease, max-height 0.3s ease;
@@ -1005,6 +1117,8 @@
             <a href="smithy.html" class="facility-btn" style="background:linear-gradient(135deg, #c0392b, #e74c3c); border-color:#e74c3c;">🔨 鍛造</a>
             <a href="enhance.html" class="facility-btn" style="background:linear-gradient(135deg, #d35400, #e67e22); border-color:#e67e22;">🔥 強化</a>
             <a href="myth.html" class="facility-btn" style="background:linear-gradient(135deg, #4a0080, #6a0dad); border-color:#8b00ff;">⚗️ 神話</a>
+            <a href="gacha_city.html" class="facility-btn" style="background:linear-gradient(135deg, #6c3483, #a569bd); border-color:#a569bd;">🎰 轉蛋城</a>
+            <a href="ultimate_boss.html" class="facility-btn" style="background:linear-gradient(135deg, #0a0a2e, #1a0a4e); border-color:#e05c20; color:#e05c20;">💀 終極Boss</a>
             <a href="skills.html" class="facility-btn" style="background:linear-gradient(135deg, #8e44ad, #5b2c6f); border-color:#9b59b6;">⚡ 技能升級</a>
             
             <div class="sidebar-divider"></div>
@@ -1050,15 +1164,23 @@
 
     <div id="notice-modal">
         <div class="notice-box">
-            <div class="notice-title">📢 Ver 6.0 更新公告</div>
+            <div class="notice-title">📢 Ver 6.1 更新公告</div>
 <button class="close-notice-btn" onclick="closeNotice()">我知道了，立即體驗！</button>
             <div class="notice-content">
-<b style="color:#8e44ad;">新增【自動系統】</b>
+
+<b style="color:#16a085;">新增【寵物功能】</b>
+- <b>購買</b>：花費 10,000 技能碎片 購買寵物。
+- <b>餵食</b>：寵物需要餵食 3～5 種隨機垃圾材料才能飽。
+- <b>升級</b>：每次餵飽獲得 10 EXP；花費金幣可升級（最高 Lv.10）；每升一級，Buff 持續時間 +15 分鐘。
+- <b>Buff 技能（餵飽後選一種）</b>：
+-         攻防x2/金錢x2/經驗x2/掉落+10%/稀有掉落+10%(指定物品保底 10% + 額外稀有素材池)
+
+<b style="color:#3498db;">新增【自動系統】</b>
 - <b>自動戰鬥系統</b>：後台運作，離開網頁也會繼續戰鬥直至完成
 -         可選擇戰鬥次數及怪物，如死亡，只需要等候10秒就會繼續戰鬥剩餘次數。
 - <b>自動採集系統</b>：後台採集系統，離開網頁也會繼續採集直至完成。
 
-<b style="color:#8e44ad;">新增【專用優惠】</b>
+<b style="color:#16a085;">新增【專用優惠】</b>
 - <b>專用優惠</b>：只需要每次10億，可以限時6小時得到不同技能增強。
 - 包括有：攻x2、防x2、技能碎片x10(每次戰鬥後)、經驗值x2。
 
@@ -1222,123 +1344,140 @@
                 <div id="conn-status" style="color:#e74c3c"> 連線中</div>
             </div>
             
-            <div class="status-bar">
-                <div class="status-row-top">
-                    <div class="status-item"><span class="label">LV</span> <span id="lvl" class="val">1</span></div>
-                    <div class="status-item"><span id="pid" class="val" style="color:#2ecc71;">---</span></div>
-                    <div class="status-item"><span class="label">💰</span> <span id="gold" class="val">---</span></div>
-                </div>
-
-                <div class="status-row-bars">
-                    <div class="bar-container">
-                        <div class="bar-label"><span style="color:#e74c3c">HP</span> <span id="hp">---/---</span></div>
-                        <div class="bar-bg">
-                            <div id="hp-bar-fill" style="width:100%; height:100%; background:#e74c3c; transition:width 0.3s;"></div>
-                        </div>
-                    </div>
-                    <div class="bar-container">
-                        <div class="bar-label"><span style="color:#3498db">MP</span> <span id="mp">---/---</span></div>
-                        <div class="bar-bg">
-                            <div id="mp-bar-fill" style="width:100%; height:100%; background:#3498db; transition:width 0.3s;"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="status-row-stats">
-                    <div class="status-item"><span class="label">⚔️ ATK</span> <span id="atk" class="val">---</span></div>
-                    <div class="status-item"><span class="label">🛡️ DEF</span> <span id="def" class="val">---</span></div>
-                </div>
-
-                <div id="durability-section" style="background:#1a1a2e; border-radius:6px; font-size:9px;">
-                    <div style="color:#666; margin-bottom:4px; font-size:8px; letter-spacing:1px;">🔧 耐久度</div>
-                    <div style="display:flex; gap:6px;">
-                        <div id="dur-weapon" style="flex:1; display:none;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-                                <span style="color:#e67e22;">⚔️</span>
-                                <span id="dur-weapon-val" style="color:#ccc;">100</span>
-                            </div>
-                            <div style="background:#333; border-radius:2px; height:3px;">
-                                <div id="dur-weapon-bar" style="background:#27ae60; height:3px; border-radius:2px; width:100%; transition:width 0.3s;"></div>
-                            </div>
-                        </div>
-                        <div id="dur-armor" style="flex:1; display:none;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-                                <span style="color:#3498db;">🛡️</span>
-                                <span id="dur-armor-val" style="color:#ccc;">100</span>
-                            </div>
-                            <div style="background:#333; border-radius:2px; height:3px;">
-                                <div id="dur-armor-bar" style="background:#27ae60; height:3px; border-radius:2px; width:100%; transition:width 0.3s;"></div>
-                            </div>
-                        </div>
-                        <div id="dur-acc" style="flex:1; display:none;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-                                <span style="color:#9b59b6;">💍</span>
-                                <span id="dur-acc-val" style="color:#ccc;">100</span>
-                            </div>
-                            <div style="background:#333; border-radius:2px; height:3px;">
-                                <div id="dur-acc-bar" style="background:#27ae60; height:3px; border-radius:2px; width:100%; transition:width 0.3s;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="exp-container">
-                    <div style="display:flex; justify-content:space-between; font-size:8px; color:#bdc3c7; margin-bottom:1px;">
-                        <span>EXP</span> <span id="exp-txt">---/---</span>
-                    </div>
-                    <div class="exp-bar"><div id="exp-fill" class="exp-fill"></div></div>
-                </div>
-                
-                <!-- 專用優惠狀態 -->
-                <div id="special-offers-panel" style="background:linear-gradient(135deg, #1a0a00 0%, #2d1a00 50%, #1a0a00 100%); border-radius:6px; font-size:8px; border: 1px solid rgba(241,196,15,0.3);">
-                    <div style="color:#f1c40f; margin-bottom:4px; font-weight:bold;">⭐ 專用優惠生效中</div>
-                    <div id="special-offers-timers" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
-                </div>
-                
-                <!-- 🐾 寵物 Buff 狀態 -->
-                <div id="pet-buff-panel">
-                    <div class="pet-buff-header">
-                        <span class="pet-buff-title">🐾 寵物技能生效中</span>
-                    </div>
-                    <div id="pet-buff-timers" class="pet-buff-timers"></div>
-                </div>
-                
-                
-                <!-- 🔴 自動戰鬥狀態 -->
-                <div id="battle-status-panel">
-                    <div class="battle-header">
-                        <span class="battle-title">⚔️ 自動戰鬥中</span>
-                        <span class="battle-count" id="battle-count-text">剩餘 0 次</span>
-                    </div>
-                    <div class="battle-bar-bg">
-                        <div class="battle-bar-fill" id="battle-progress-bar" style="width:0%;"></div>
-                    </div>
-                    <div class="battle-info">
-                        <span id="battle-map-name">---</span>
-                        <a href="auto_battle.html" style="color:#e74c3c; text-decoration:none;">查看詳情 →</a>
-                    </div>
-                </div>
-                
-                <!-- 🟢 採集狀態 -->
-                <div id="gather-status-panel">
-                    <div class="gather-header">
-                        <span class="gather-title">⛏️ 後台採集中</span>
-                        <span class="gather-count" id="gather-count-text">剩餘 0 次</span>
-                    </div>
-                    <div class="gather-bar-bg">
-                        <div class="gather-bar-fill" id="gather-progress-bar" style="width:0%;"></div>
-                    </div>
-                    <div class="gather-info">
-                        <span id="gather-node-name">---</span>
-                        <a href="gathering.html" style="color:#2ecc71; text-decoration:none;">查看詳情 →</a>
-                    </div>
-                </div>
-            </div>
-
             <!-- 🎫 優惠碼展示區 -->
             <div id="promo-display-area"></div>
 
             <div class="main-content">
+                <div class="status-bar">
+                    <div class="status-row-top">
+                        <div class="status-item"><span class="label">LV</span> <span id="lvl" class="val">1</span></div>
+                        <div class="status-item"><span id="pid" class="val" style="color:#2ecc71;">---</span></div>
+                        <div class="status-item"><span class="label">💰</span> <span id="gold" class="val">---</span></div>
+                    </div>
+
+                    <div class="status-row-bars">
+                        <div class="bar-container">
+                            <div class="bar-label"><span style="color:#e74c3c">HP</span> <span id="hp">---/---</span></div>
+                            <div class="bar-bg">
+                                <div id="hp-bar-fill" style="width:100%; height:100%; background:#e74c3c; transition:width 0.3s;"></div>
+                            </div>
+                        </div>
+                        <div class="bar-container">
+                            <div class="bar-label"><span style="color:#3498db">MP</span> <span id="mp">---/---</span></div>
+                            <div class="bar-bg">
+                                <div id="mp-bar-fill" style="width:100%; height:100%; background:#3498db; transition:width 0.3s;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="status-row-stats">
+                        <div class="status-item"><span class="label">⚔️ ATK</span> <span id="atk" class="val">---</span></div>
+                        <div class="status-item"><span class="label">🛡️ DEF</span> <span id="def" class="val">---</span></div>
+                    </div>
+
+                    <div id="durability-section" style="background:#1a1a2e; border-radius:6px; font-size:9px;">
+                        <div style="color:#666; margin-bottom:4px; font-size:8px; letter-spacing:1px;">🔧 耐久度</div>
+                        <div style="display:flex; gap:6px;">
+                            <div id="dur-weapon" style="flex:1; display:none;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                    <span style="color:#e67e22;">⚔️</span>
+                                    <span id="dur-weapon-val" style="color:#ccc;">100</span>
+                                </div>
+                                <div style="background:#333; border-radius:2px; height:3px;">
+                                    <div id="dur-weapon-bar" style="background:#27ae60; height:3px; border-radius:2px; width:100%; transition:width 0.3s;"></div>
+                                </div>
+                            </div>
+                            <div id="dur-armor" style="flex:1; display:none;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                    <span style="color:#3498db;">🛡️</span>
+                                    <span id="dur-armor-val" style="color:#ccc;">100</span>
+                                </div>
+                                <div style="background:#333; border-radius:2px; height:3px;">
+                                    <div id="dur-armor-bar" style="background:#27ae60; height:3px; border-radius:2px; width:100%; transition:width 0.3s;"></div>
+                                </div>
+                            </div>
+                            <div id="dur-acc" style="flex:1; display:none;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                                    <span style="color:#9b59b6;">💍</span>
+                                    <span id="dur-acc-val" style="color:#ccc;">100</span>
+                                </div>
+                                <div style="background:#333; border-radius:2px; height:3px;">
+                                    <div id="dur-acc-bar" style="background:#27ae60; height:3px; border-radius:2px; width:100%; transition:width 0.3s;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="exp-container">
+                        <div style="display:flex; justify-content:space-between; font-size:8px; color:#bdc3c7; margin-bottom:1px;">
+                            <span>EXP</span> <span id="exp-txt">---/---</span>
+                        </div>
+                        <div class="exp-bar"><div id="exp-fill" class="exp-fill"></div></div>
+                    </div>
+                    
+                    <!-- ⭐ 摺疊 Bar：限時加強技能（專用優惠 + 寵物技能） -->
+                    <div id="buffs-collapse-bar" class="collapse-bar">
+                        <div class="collapse-bar-header" onclick="toggleCollapse('buffs')">
+                            <div class="collapse-bar-summary" id="buffs-summary"></div>
+                            <span class="collapse-bar-arrow" id="buffs-arrow">▶</span>
+                        </div>
+                        <div class="collapse-bar-content" id="buffs-content">
+                            <!-- 專用優惠狀態 -->
+                            <div id="special-offers-panel" style="background:linear-gradient(135deg, #1a0a00 0%, #2d1a00 50%, #1a0a00 100%); border-radius:6px; font-size:8px; border: 1px solid rgba(241,196,15,0.3);">
+                                <div style="color:#f1c40f; margin-bottom:4px; font-weight:bold;">⭐ 專用優惠生效中</div>
+                                <div id="special-offers-timers" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
+                            </div>
+                            
+                            <!-- 🐾 寵物 Buff 狀態 -->
+                            <div id="pet-buff-panel">
+                                <div class="pet-buff-header">
+                                    <span class="pet-buff-title">🐾 寵物技能生效中</span>
+                                </div>
+                                <div id="pet-buff-timers" class="pet-buff-timers"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ⚔️ 摺疊 Bar：自動戰鬥及採集 -->
+                    <div id="tasks-collapse-bar" class="collapse-bar">
+                        <div class="collapse-bar-header" onclick="toggleCollapse('tasks')">
+                            <div class="collapse-bar-summary" id="tasks-summary"></div>
+                            <span class="collapse-bar-arrow" id="tasks-arrow">▶</span>
+                        </div>
+                        <div class="collapse-bar-content" id="tasks-content">
+                            <!-- 🔴 自動戰鬥狀態 -->
+                            <div id="battle-status-panel">
+                                <div class="battle-header">
+                                    <span class="battle-title">⚔️ 自動戰鬥中</span>
+                                    <span class="battle-count" id="battle-count-text">剩餘 0 次</span>
+                                </div>
+                                <div class="battle-bar-bg">
+                                    <div class="battle-bar-fill" id="battle-progress-bar" style="width:0%;"></div>
+                                </div>
+                                <div class="battle-info">
+                                    <span id="battle-map-name">---</span>
+                                    <a href="auto_battle.html" style="color:#e74c3c; text-decoration:none;">查看詳情 →</a>
+                                </div>
+                            </div>
+                            
+                            <!-- 🟢 採集狀態 -->
+                            <div id="gather-status-panel">
+                                <div class="gather-header">
+                                    <span class="gather-title">⛏️ 後台採集中</span>
+                                    <span class="gather-count" id="gather-count-text">剩餘 0 次</span>
+                                </div>
+                                <div class="gather-bar-bg">
+                                    <div class="gather-bar-fill" id="gather-progress-bar" style="width:0%;"></div>
+                                </div>
+                                <div class="gather-info">
+                                    <span id="gather-node-name">---</span>
+                                    <a href="gathering.html" style="color:#2ecc71; text-decoration:none;">查看詳情 →</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="event-banner">
                     <div class="event-header">
                         <div class="event-title-row">
@@ -2026,7 +2165,8 @@
             socket.emit('joinGame', myToken);
             // 請求目前有效優惠碼
             socket.emit('getActivePromoCodes');
-            socket.emit('getPetInfo');
+            // 注意：petInfoData 現在由 joinGame 登入完成後伺服器主動推送，不再需要手動請求
+            // （避免與 joinGame 產生競爭條件導致寵物技能有時顯示不出來）
         });
 
         socket.on('disconnect', () => {
@@ -2236,8 +2376,10 @@
                 
                 // 顯示怪物名稱
                 mapName.textContent = data.monsterName || data.mapName || '戰鬥中...';
+                updateTasksCollapseSummary();
             } else {
                 panel.classList.remove('battle-visible');
+                updateTasksCollapseSummary();
             }
         });
         
@@ -2276,8 +2418,10 @@
                 
                 // 顯示採集點名稱
                 nodeName.textContent = data.nodeName || '採集中...';
+                updateTasksCollapseSummary();
             } else {
                 panel.classList.remove('gather-visible');
+                updateTasksCollapseSummary();
             }
         });
         
@@ -2451,6 +2595,87 @@
         }
         
         // ==========================================
+        //  摺疊 Bar 系統
+        // ==========================================
+        function toggleCollapse(type) {
+            const content = document.getElementById(type + '-content');
+            const arrow = document.getElementById(type + '-arrow');
+            if (!content || !arrow) return;
+            content.classList.toggle('expanded');
+            arrow.classList.toggle('expanded');
+        }
+
+        // 更新限時加強技能摺疊 bar 摘要
+        function updateBuffsCollapseSummary() {
+            const bar = document.getElementById('buffs-collapse-bar');
+            const summary = document.getElementById('buffs-summary');
+            if (!bar || !summary) return;
+
+            let chips = [];
+            const now = Date.now();
+
+            // 檢查專用優惠
+            const offerNames = {
+                'atk_boost': '⚔️ 攻x2',
+                'def_boost': '🛡️ 防x2',
+                'skill_shard_drop': '✨ 技能碎片',
+                'exp_boost': '📈 經驗x2'
+            };
+            let offerCount = 0;
+            for (const offerId in hubSpecialOffers) {
+                const offer = hubSpecialOffers[offerId];
+                if (offer.activeUntil && offer.activeUntil > now) offerCount++;
+            }
+            if (offerCount > 0) {
+                chips.push(`<span class="collapse-chip chip-offer">⭐ 專用優優生效中 x${offerCount}</span>`);
+            }
+
+            // 檢查寵物技能
+            if (hubPetData && hubPetData.activeBuff && Number(hubPetData.activeBuff.remaining) > 0) {
+                chips.push(`<span class="collapse-chip chip-pet">🐾 寵物技能生效中</span>`);
+            }
+
+            if (chips.length > 0) {
+                bar.classList.add('bar-visible');
+                summary.innerHTML = chips.join('');
+            } else {
+                bar.classList.remove('bar-visible');
+            }
+        }
+
+        // 更新自動戰鬥/採集摺疊 bar 摘要
+        function updateTasksCollapseSummary() {
+            const bar = document.getElementById('tasks-collapse-bar');
+            const summary = document.getElementById('tasks-summary');
+            if (!bar || !summary) return;
+
+            let chips = [];
+
+            // 檢查自動戰鬥
+            const battlePanel = document.getElementById('battle-status-panel');
+            if (battlePanel && battlePanel.classList.contains('battle-visible')) {
+                const countText = document.getElementById('battle-count-text');
+                const countStr = countText ? countText.textContent : '';
+                chips.push(`<span class="collapse-chip chip-battle">⚔️ 戰鬥中 ${countStr}</span>`);
+            }
+
+            // 檢查採集
+            const gatherPanel = document.getElementById('gather-status-panel');
+            if (gatherPanel && gatherPanel.classList.contains('gather-visible')) {
+                const countText = document.getElementById('gather-count-text');
+                const countStr = countText ? countText.textContent : '';
+                chips.push(`<span class="collapse-chip chip-gather">⛏️ 採集中 ${countStr}</span>`);
+            }
+
+            if (chips.length > 0) {
+                bar.classList.add('bar-visible');
+                summary.innerHTML = chips.join('');
+            } else {
+                bar.classList.remove('bar-visible');
+            }
+        }
+
+        // ==========================================
         //  專用優惠系統
         // ==========================================
         let hubSpecialOffers = {};
@@ -2511,6 +2736,7 @@
                     ${o.name}: <span id="timer-${o.id}">${formatOfferTime(o.remaining)}</span>
                 </div>`
             ).join('');
+            updateBuffsCollapseSummary();
         }
         
         // 定時更新計時器
@@ -2520,6 +2746,9 @@
             }
             // 同時更新寵物 Buff 計時器
             renderPetBuffTimers();
+            // 更新摺疊 bar 摘要
+            updateBuffsCollapseSummary();
+            updateTasksCollapseSummary();
         }, 1000);
 
     // ==========================================
@@ -2565,6 +2794,7 @@
         timers.innerHTML = `<div class="pet-buff-chip">
             ${hubPetData.activeBuff.name} <span class="buff-timer">${formatPetTime(remaining)}</span>
         </div>`;
+        updateBuffsCollapseSummary();
     }
 
     // 打開寵物 Modal
