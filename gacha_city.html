@@ -482,7 +482,8 @@
             🚪 進入費用：<span>💎 100,000 碎片</span><br>
             ➡️ 下一層費用：<span>💎 5,000 碎片</span><br>
             ⚡ 傳送費用：<span>💎 50,000 × 層數</span><br>
-            <span style="color:#e74c3c; font-size:10px;">⚠️ HP 歸零會被自動踢出！</span>
+            <span style="color:#e74c3c; font-size:10px;">⚠️ HP 歸零會被自動踢出！</span><br>
+            <span style="color:#e67e22; font-size:10px;">🚫 每層有技能傷害上限（越高層越低）</span>
         </div>
 
         <div class="card" id="saved-floor-card" style="display:none; text-align:center;">
@@ -602,6 +603,7 @@
             <div class="monster-icon" id="monster-icon">👾</div>
             <div class="monster-name" id="monster-name">轉蛋史萊姆</div>
             <div class="monster-level" id="monster-level">LV. 1</div>
+            <div id="dmg-cap-badge" style="font-size:10px; color:var(--orange); margin-top:6px; display:none;">🚫 技能上限：<span id="dmg-cap-badge-pct">50%</span></div>
 
             <div class="hp-bar-container">
                 <div class="hp-label">
@@ -730,6 +732,10 @@
                     <span class="fi-label" style="color:var(--red);">⚠️ HP歸零</span>
                     <span class="fi-val" style="color:var(--red);">自動踢出</span>
                 </div>
+                <div class="fi-row" style="border:none;">
+                    <span class="fi-label" style="color:var(--orange);">🚫 技能傷害上限</span>
+                    <span class="fi-val" id="dmg-cap-display" style="color:var(--orange);">怪HP的 50%</span>
+                </div>
             </div>
         </div>
     </div>
@@ -762,7 +768,7 @@ const SKILL_INFO = {
     'divine_slash':  { name: '次元斬',     mp: 150,  cat: 'atk',  desc: '傷x5.0(AOE)' },
     'void_crush':    { name: '虛空碎擊',   mp: 1000, cat: 'atk',  desc: '傷x10(AOE)' },
     'entropy_decay': { name: '熱寂·衰變', mp: 2500, cat: 'atk',  desc: '5%真傷(AOE)' },
-    'big_bang':      { name: '宇宙大爆炸', mp: 5000, cat: 'atk',  desc: '傷x25(AOE)' },
+    'big_bang':      { name: '宇宙大爆炸', mp: 5000, cat: 'atk',  desc: '傷x50(受上限限制)' },
     'holy_shield':   { name: '聖光守護',   mp: 40,   cat: 'buff', desc: '防禦x2' },
     'berserk':       { name: '狂暴',       mp: 60,   cat: 'buff', desc: '攻x2(自殘)' },
     'god_mode':      { name: '天神下凡',   mp: 300,  cat: 'buff', desc: '全能x3' },
@@ -1004,6 +1010,24 @@ function updateDungeonDisplay(state) {
         document.getElementById('saved-max-floor').innerText = state.maxFloor;
     } else {
         savedCard.style.display = 'none';
+    }
+
+    // Skill damage cap display
+    if (state.skillDmgCapPct !== undefined) {
+        const pct = Math.round(state.skillDmgCapPct * 100);
+        const capEl = document.getElementById('dmg-cap-display');
+        if (capEl) {
+            capEl.innerText = '怪HP的 ' + pct + '%' + (state.isBossFloor ? ' (Boss)' : '');
+            capEl.style.color = pct <= 15 ? 'var(--red)' : pct <= 25 ? 'var(--orange)' : 'var(--orange)';
+        }
+        // Badge in monster panel
+        const badge = document.getElementById('dmg-cap-badge');
+        const badgePct = document.getElementById('dmg-cap-badge-pct');
+        if (badge && badgePct) {
+            badge.style.display = 'block';
+            badgePct.innerText = pct + '%';
+            badge.style.color = pct <= 15 ? '#e74c3c' : pct <= 25 ? '#e67e22' : '#e67e22';
+        }
     }
 }
 
