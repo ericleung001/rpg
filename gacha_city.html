@@ -591,7 +591,8 @@
                 <div style="display:flex; gap:10px; margin-top:4px; font-size:10px; color:var(--text-dim);">
                     <span>⚔️ ATK: <span id="player-atk-val" style="color:var(--orange);">0</span></span>
                     <span>🛡️ DEF: <span id="player-def-val" style="color:var(--blue);">0</span></span>
-                    <span>🔥 怪物DEF: <span id="monster-def-val" style="color:var(--red);">0</span></span>
+                    <span>👹 怪ATK: <span id="monster-atk-val" style="color:var(--red);">0</span></span>
+                    <span>🔥 怪DEF: <span id="monster-def-val" style="color:var(--red);">0</span></span>
                 </div>
             </div>
         </div>
@@ -917,7 +918,7 @@ function updateDungeonDisplay(state) {
 
     mIcon.textContent = state.monsterIcon || MONSTER_ICONS[(state.currentFloor - 1) % MONSTER_ICONS.length];
     mName.textContent = state.monsterName || '轉蛋怪物';
-    mLevel.textContent = 'LV. ' + (state.monsterLevel || state.currentFloor);
+    mLevel.textContent = '第 ' + (state.monsterLevel || state.currentFloor) + ' 層' + (state.monsterAtkMult ? ' (ATK x' + state.monsterAtkMult + ' / DEF x' + state.monsterDefMult + ')' : '');
 
     // HP
     const hp = state.monsterHp || 0;
@@ -969,11 +970,15 @@ function updateDungeonDisplay(state) {
         document.getElementById('player-def-val').innerText = formatNum(state.playerDef);
     }
 
-    // Monster effective DEF display
+    // Monster ATK & DEF display
+    const mAtkEl = document.getElementById('monster-atk-val');
+    if (mAtkEl && state.monsterAtk) {
+        mAtkEl.innerText = formatNum(state.monsterAtk);
+    }
     const mDefEl = document.getElementById('monster-def-val');
-    if (mDefEl && state.monsterBuffDef) {
-        mDefEl.innerText = formatNum(state.monsterMaxHp ? Math.floor(Math.pow(1.12, (state.currentFloor || 1)) * 10000 * 2) : 0) + ' (x2!)';
-        mDefEl.style.color = '#ff0';
+    if (mDefEl && state.monsterDef) {
+        mDefEl.innerText = state.monsterBuffDef ? formatNum(state.monsterDef * 2) + ' (x2!)' : formatNum(state.monsterDef);
+        mDefEl.style.color = state.monsterBuffDef ? '#ff0' : 'var(--red)';
     }
 
     // Death floor
