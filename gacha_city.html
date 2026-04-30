@@ -508,39 +508,45 @@
         <!-- Materials preview -->
         <div class="card" style="margin-top:20px;">
             <div class="card-label">💎 轉蛋城素材一覽</div>
+            <div style="font-size:10px; color:var(--text-dim); margin-bottom:10px; line-height:1.8;">
+                <span style="color:#4fc3f7;">■ 低層 (1-33F)</span>：轉蛋之焰、轉蛋冰晶<br>
+                <span style="color:#e67e22;">■ 中層 (34-66F)</span>：+ 轉蛋暗核、轉蛋神輝<br>
+                <span style="color:#e74c3c;">■ 高層 (67-100F)</span>：+ 轉蛋混沌石<br>
+                <span style="color:#666;">■ 每層額外掉落雜物材料</span>
+            </div>
             <div class="mat-grid">
                 <div class="mat-item">
                     <span class="mat-icon">🔥</span>
                     <div class="mat-info">
-                        <div class="mat-name">轉蛋之焰</div>
+                        <div class="mat-name">轉蛋之焰 <span style="color:#4fc3f7; font-size:9px;">[低層+]</span></div>
                         <div class="mat-count" id="mat-gacha_ember">0</div>
                     </div>
                 </div>
                 <div class="mat-item">
                     <span class="mat-icon">❄️</span>
                     <div class="mat-info">
-                        <div class="mat-name">轉蛋冰晶</div>
+                        <div class="mat-name">轉蛋冰晶 <span style="color:#4fc3f7; font-size:9px;">[低層+]</span></div>
                         <div class="mat-count" id="mat-gacha_ice">0</div>
                     </div>
                 </div>
                 <div class="mat-item">
                     <span class="mat-icon">🌑</span>
                     <div class="mat-info">
-                        <div class="mat-name">轉蛋暗核</div>
+                        <div class="mat-name">轉蛋暗核 <span style="color:#e67e22; font-size:9px;">[中層+]</span></div>
                         <div class="mat-count" id="mat-gacha_dark">0</div>
                     </div>
                 </div>
                 <div class="mat-item">
                     <span class="mat-icon">✨</span>
                     <div class="mat-info">
-                        <div class="mat-name">轉蛋神輝</div>
+                        <div class="mat-name">轉蛋神輝 <span style="color:#e67e22; font-size:9px;">[中層+]</span></div>
                         <div class="mat-count" id="mat-gacha_divine">0</div>
                     </div>
                 </div>
                 <div class="mat-item" style="grid-column: 1 / -1;">
                     <span class="mat-icon">🌀</span>
                     <div class="mat-info">
-                        <div class="mat-name">轉蛋混沌石</div>
+                        <div class="mat-name">轉蛋混沌石 <span style="color:#e74c3c; font-size:9px;">[高層]</span></div>
                         <div class="mat-count" id="mat-gacha_chaos">0</div>
                     </div>
                 </div>
@@ -668,35 +674,35 @@
                 <div class="mat-item">
                     <span class="mat-icon">🔥</span>
                     <div class="mat-info">
-                        <div class="mat-name">轉蛋之焰</div>
+                        <div class="mat-name">轉蛋之焰 <span style="color:#4fc3f7; font-size:9px;">[1F+]</span></div>
                         <div class="mat-count" id="dmat-gacha_ember">0</div>
                     </div>
                 </div>
                 <div class="mat-item">
                     <span class="mat-icon">❄️</span>
                     <div class="mat-info">
-                        <div class="mat-name">轉蛋冰晶</div>
+                        <div class="mat-name">轉蛋冰晶 <span style="color:#4fc3f7; font-size:9px;">[1F+]</span></div>
                         <div class="mat-count" id="dmat-gacha_ice">0</div>
                     </div>
                 </div>
                 <div class="mat-item">
                     <span class="mat-icon">🌑</span>
                     <div class="mat-info">
-                        <div class="mat-name">轉蛋暗核</div>
+                        <div class="mat-name">轉蛋暗核 <span style="color:#e67e22; font-size:9px;">[34F+]</span></div>
                         <div class="mat-count" id="dmat-gacha_dark">0</div>
                     </div>
                 </div>
                 <div class="mat-item">
                     <span class="mat-icon">✨</span>
                     <div class="mat-info">
-                        <div class="mat-name">轉蛋神輝</div>
+                        <div class="mat-name">轉蛋神輝 <span style="color:#e67e22; font-size:9px;">[34F+]</span></div>
                         <div class="mat-count" id="dmat-gacha_divine">0</div>
                     </div>
                 </div>
                 <div class="mat-item" style="grid-column: 1 / -1;">
                     <span class="mat-icon">🌀</span>
                     <div class="mat-info">
-                        <div class="mat-name">轉蛋混沌石</div>
+                        <div class="mat-name">轉蛋混沌石 <span style="color:#e74c3c; font-size:9px;">[67F+]</span></div>
                         <div class="mat-count" id="dmat-gacha_chaos">0</div>
                     </div>
                 </div>
@@ -860,7 +866,14 @@ function showRewardPopup(rewards) {
                     gacha_chaos: '轉蛋混沌石 🌀',
                     gold: '金幣 💰',
                     skill_shard: '技能碎片 💎',
-                    exp: '經驗值 ⭐'
+                    exp: '經驗值 ⭐',
+                    copper_ore: '銅礦石 🪨', iron_ore: '鐵礦石 🪨', silver_ore: '銀礦石 🪨',
+                    slime_gel: '黏液 💧', coal: '煤炭 ⬛', soft_fur: '柔軟皮毛 🐑',
+                    oak_log: '橡木原木 🪵', carp: '鯉魚 🐟', leather: '皮革 🧤',
+                    bone_shard: '碎骨片 🦴', beast_fang: '野獸尖牙 🦷',
+                    tough_hide: '硬皮革 🛡️', magic_dust: '魔粉 ✨', poison_sac: '毒囊 ☠️',
+                    maple_log: '楓木原木 🍁', salmon: '鮭魚 🐟', koi: '錦鯉 🐡',
+                    yew_log: '紫杉原木 🪵', potion_hp: '小紅藥水 🧪', potion_mp: '小藍藥水 🧪',
                 };
                 div.innerText = (matNames[key] || key) + ' ×' + formatNum(val);
                 itemsEl.appendChild(div);
