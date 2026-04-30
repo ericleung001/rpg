@@ -496,6 +496,15 @@
             🚪 進入轉蛋城
         </button>
 
+        <!-- Death floor return -->
+        <div id="death-floor-card" style="display:none; text-align:center; margin-top:8px;">
+            <div style="font-size:11px; color:var(--red); margin-bottom:6px;">💀 上次死於第 <span id="death-floor-num">0</span> 層</div>
+            <button class="btn" onclick="returnToDeathFloor()" style="max-width:300px; margin:0 auto; background:linear-gradient(135deg,#c0392b,#e74c3c); color:#fff; font-size:13px;">
+                ⚡ 付費返回第 <span id="death-floor-btn-num">0</span> 層
+            </button>
+            <div style="font-size:10px; color:var(--text-dim); margin-top:4px;" id="death-floor-cost"></div>
+        </div>
+
         <!-- Materials preview -->
         <div class="card" style="margin-top:20px;">
             <div class="card-label">💎 轉蛋城素材一覽</div>
@@ -572,6 +581,12 @@
                 </div>
                 <!-- Active Buffs -->
                 <div id="buff-display" style="margin-top:4px; font-size:10px; min-height:16px;"></div>
+                <!-- Player Stats -->
+                <div style="display:flex; gap:10px; margin-top:4px; font-size:10px; color:var(--text-dim);">
+                    <span>⚔️ ATK: <span id="player-atk-val" style="color:var(--orange);">0</span></span>
+                    <span>🛡️ DEF: <span id="player-def-val" style="color:var(--blue);">0</span></span>
+                    <span>🔥 怪物DEF: <span id="monster-def-val" style="color:var(--red);">0</span></span>
+                </div>
             </div>
         </div>
 
@@ -935,6 +950,31 @@ function updateDungeonDisplay(state) {
     document.getElementById('player-mp-numbers').innerText = formatNum(mp) + ' / ' + formatNum(maxMp);
     document.getElementById('player-mp-percent').innerText = Math.round(mpPercent) + '%';
 
+    // Player Stats
+    if (state.playerAtk !== undefined) {
+        document.getElementById('player-atk-val').innerText = formatNum(state.playerAtk);
+        document.getElementById('player-def-val').innerText = formatNum(state.playerDef);
+    }
+
+    // Monster effective DEF display
+    const mDefEl = document.getElementById('monster-def-val');
+    if (mDefEl && state.monsterBuffDef) {
+        mDefEl.innerText = formatNum(state.monsterMaxHp ? Math.floor(Math.pow(1.12, (state.currentFloor || 1)) * 10000 * 2) : 0) + ' (x2!)';
+        mDefEl.style.color = '#ff0';
+    }
+
+    // Death floor
+    if (state.deathFloor > 0) {
+        const deathCard = document.getElementById('death-floor-card');
+        if (deathCard) {
+            deathCard.style.display = 'block';
+            document.getElementById('death-floor-num').innerText = state.deathFloor;
+            document.getElementById('death-floor-btn-num').innerText = state.deathFloor;
+            const deathCost = state.deathFloor * 100000;
+            document.getElementById('death-floor-cost').innerText = '費用：💎 ' + formatNum(deathCost) + ' 碎片';
+        }
+    }
+
     // Teleport input
     document.getElementById('teleport-input').max = state.maxFloor || 1;
     document.getElementById('teleport-input').placeholder = '最大第 ' + (state.maxFloor || 1) + ' 層';
@@ -1110,6 +1150,32 @@ function leaveGachaCity() {
     }
 }
 
+// ── Death Floor Return ─────────────────────────────────────────────
+function returnToDeathFloor() {
+    if (isInDungeon) return;
+    const deathFloor = myData.gachaCityDeathFloor || 0;
+    if (!deathFloor) return;
+    const cost = deathFloor * 100000;
+    if (inv('skill_shard') < cost) {
+        showToast('碎片不足！需要 ' + formatNum(cost) + ' 碎片', true);
+        return;
+    }
+    if (confirm('⚡ 確定要付費返回第 ' + deathFloor + ' 層嗎？\n\n消耗：💎 ' + formatNum(cost) + ' 碎片\n（仍需支付進入費用 💎 100,000）')) {
+        // 先進入轉蛋城（會回到第1層），然後傳送到死亡層
+        enterGachaCity();
+        // 監聽進入成功後自動傳送
+        const waitForEntry = (e) => {
+            if (e.type === 'entered') {
+                socket.off('gachaCityResult', waitForEntry);
+                setTimeout(() => {
+                    socket.emit('gachaCityTeleport', deathFloor);
+                }, 500);
+            }
+        };
+        socket.on('gachaCityResult', waitForEntry);
+    }
+}
+
 // ── Monster Hit Animation ────────────────────────────────────────────
 function animateMonsterHit() {
     const icon = document.getElementById('monster-icon');
@@ -1154,9 +1220,11 @@ socket.on('gachaCityResult', (res) => {
             if (res.state) {
                 updateDungeonDisplay(res.state);
             }
-            // Battle log
+            // Player action log
             if (res.logMsg) {
-                addBattleLog(`<span style="color:#c8c8d4;">⚔️ ${res.logMsg}</span>`);
+                addBattleLog(`<span style="color:#c8c8d4;">🧙 ${res.logMsg}</span>`);
+            } else if (res.damage) {
+                addBattleLog(`<span style="color:#c8c8d4;">⚔️ 普通攻擊！造成 ${formatNum(res.damage)} 傷害</span>`);
             }
             // Show damage dealt to monster
             if (res.damage) {
@@ -1165,11 +1233,25 @@ socket.on('gachaCityResult', (res) => {
             // Show heal amount
             if (res.healAmount) {
                 showPlayerDamage(-res.healAmount);
+                addBattleLog(`<span style="color:#2ecc71;">💚 回復 ${formatNum(res.healAmount)} HP</span>`);
+            }
+            // Monster action log
+            if (res.monsterAction && res.monsterAction.logMsg) {
+                setTimeout(() => {
+                    if (res.monsterAction.action === 'heal') {
+                        addBattleLog(`<span style="color:#9b59b6;">${res.monsterAction.logMsg}</span>`);
+                    } else if (res.monsterAction.action === 'buff') {
+                        addBattleLog(`<span style="color:#e67e22;">${res.monsterAction.logMsg}</span>`);
+                    } else if (res.monsterAction.action === 'magic') {
+                        addBattleLog(`<span style="color:#e74c3c;">${res.monsterAction.logMsg}</span>`);
+                    } else {
+                        addBattleLog(`<span style="color:#e74c3c;">${res.monsterAction.logMsg}</span>`);
+                    }
+                }, 150);
             }
             // Show damage received from monster
             if (res.monsterDmg && !res.monsterDefeated) {
-                setTimeout(() => showPlayerDamage(res.monsterDmg), 200);
-                if (res.monsterDmg) addBattleLog(`<span style="color:#e74c3c;">💥 怪物反擊！受到 ${formatNum(res.monsterDmg)} 傷害</span>`);
+                setTimeout(() => showPlayerDamage(res.monsterDmg), 300);
             }
             // Monster defeated
             if (res.monsterDefeated) {
@@ -1203,7 +1285,20 @@ socket.on('gachaCityResult', (res) => {
 
         case 'kicked':
             showEntryScreen();
-            showToast('💀 你被踢出了轉蛋城！HP 歸零！', true);
+            const df = res.deathFloor || 0;
+            if (df > 0) {
+                const deathCard = document.getElementById('death-floor-card');
+                if (deathCard) {
+                    deathCard.style.display = 'block';
+                    document.getElementById('death-floor-num').innerText = df;
+                    document.getElementById('death-floor-btn-num').innerText = df;
+                    const dCost = df * 100000;
+                    document.getElementById('death-floor-cost').innerText = '費用：💎 ' + formatNum(dCost) + ' 碎片';
+                }
+                showToast('💀 你在第 ' + df + ' 層死亡！回到第 1 層', true);
+            } else {
+                showToast('💀 你被踢出了轉蛋城！HP 歸零！', true);
+            }
             break;
 
         case 'status':
@@ -1216,6 +1311,17 @@ socket.on('gachaCityResult', (res) => {
                     const savedCard = document.getElementById('saved-floor-card');
                     savedCard.style.display = 'block';
                     document.getElementById('saved-max-floor').innerText = res.state.maxFloor;
+                }
+                // Death floor return
+                if (res.state && res.state.deathFloor > 0) {
+                    const deathCard = document.getElementById('death-floor-card');
+                    if (deathCard) {
+                        deathCard.style.display = 'block';
+                        document.getElementById('death-floor-num').innerText = res.state.deathFloor;
+                        document.getElementById('death-floor-btn-num').innerText = res.state.deathFloor;
+                        const dCost = res.state.deathFloor * 100000;
+                        document.getElementById('death-floor-cost').innerText = '費用：💎 ' + formatNum(dCost) + ' 碎片';
+                    }
                 }
             }
             break;
