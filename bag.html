@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的背包2</title>
+    <title>我的背包</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;500;700&display=swap');
         
@@ -408,7 +408,7 @@
                 <button class="btn btn-batch" style="font-size:16px;" onclick="confirmBatchOpen(10)">x10</button>
                 <button class="btn btn-batch" style="font-size:16px;" onclick="confirmBatchOpen(100)">x100</button>
                 <button class="btn btn-batch" style="font-size:16px;" onclick="confirmBatchOpen(500)">x500</button>
-                <button class="btn" style="background:#c0392b; font-size:14px;" onclick="confirmBatchOpen('all')">✨ 全部</button>
+                <button class="btn" style="background:#c0392b; font-size:14px;" onclick="confirmBatchOpen('all')">x1000</button>
             </div>
 
             <button class="btn" style="background:#7f8c8d; width:100%;" onclick="closeAllModals()">◀ 取消</button>
@@ -482,7 +482,9 @@
             'myth_weapon', 'myth_armor', 'myth_acc',
             'myth2_weapon', 'myth2_armor', 'myth2_acc',
             'myth_essence_fire', 'myth_essence_ice', 'myth_essence_dark', 'myth_essence_light', 'myth_essence_chaos',
-            'myth_core', 'myth_dragon_soul', 'myth_void_crystal'
+            'myth_core', 'myth_dragon_soul', 'myth_void_crystal',
+            'myth3_blueprint', 'gacha_ember', 'gacha_ice', 'gacha_dark', 'gacha_divine', 'gacha_chaos',
+            'myth3_weapon', 'myth3_armor', 'myth3_acc',
         ];
 
         // 禁止分解的物品（消耗品、材料、特殊道具）
@@ -516,6 +518,8 @@
             'shard_wep_origin':600,'shard_armor_origin':600,'shard_crown_infinity':600,
             'myth_weapon':200,'myth_armor':200,'myth_acc':200,
             'myth2_weapon':450,'myth2_armor':450,'myth2_acc':450,
+            'myth3_blueprint':999,'gacha_ember':500,'gacha_ice':500,'gacha_dark':500,'gacha_divine':500,'gacha_chaos':500,
+            'myth3_weapon':700,'myth3_armor':700,'myth3_acc':700,
         };
         const REPAIR_TIERS_CLIENT = [
             { maxItemLv: 30,   repairPerPoint: 0.01 },
@@ -751,7 +755,16 @@
             'myth_essence_chaos': { name: "混沌精華",   cost: 0, desc: "神話鍛造素材 (第二層)" },
             'myth_core':         { name: "神話核心",   cost: 0, desc: "神話鍛造素材 (第三層)" },
             'myth_dragon_soul':  { name: "龍魂結晶",   cost: 0, desc: "神話鍛造素材 (第三層)" },
-            'myth_void_crystal': { name: "虛空神晶",   cost: 0, desc: "神話鍛造素材 (第三層)" }
+            'myth_void_crystal': { name: "虛空神晶",   cost: 0, desc: "神話鍛造素材 (第三層)" },
+            'myth3_blueprint':  { name: "📜 神話III代圖紙", cost: 0, desc: "轉蛋城100層Boss掉落（不可交易）" },
+            'gacha_ember':      { name: "轉蛋之焰",   cost: 0, desc: "轉蛋城專用素材（不可交易）" },
+            'gacha_ice':        { name: "轉蛋冰晶",   cost: 0, desc: "轉蛋城專用素材（不可交易）" },
+            'gacha_dark':       { name: "轉蛋暗核",   cost: 0, desc: "轉蛋城專用素材（不可交易）" },
+            'gacha_divine':     { name: "轉蛋神輝",   cost: 0, desc: "轉蛋城專用素材（不可交易）" },
+            'gacha_chaos':      { name: "轉蛋混沌石", cost: 0, desc: "轉蛋城專用素材（不可交易）" },
+            'myth3_weapon': { name: "神話III·宇宙終焉之刃", cost: 0, desc: "神話III代 | ATK+800萬 DEF+150萬 HP+2000萬 MP+500萬" },
+            'myth3_armor':  { name: "神話III·永恆宇宙聖壁", cost: 0, desc: "神話III代 | DEF+1500萬 HP+3000萬 MP+800萬" },
+            'myth3_acc':    { name: "神話III·宇宙命運之環", cost: 0, desc: "神話III代 | ATK+300萬 DEF+300萬 HP+2500萬 MP+600萬" }
         };
 
         socket.on('connect', () => {
