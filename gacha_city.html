@@ -551,6 +551,17 @@
                 <span class="status-label">🏆 最高層數</span>
                 <span class="status-value" style="color:var(--purple);">第 <span id="max-floor">1</span> 層</span>
             </div>
+            <div style="margin-top:8px;">
+                <div class="hp-label">
+                    <span>🧡 玩家 HP</span>
+                    <span id="player-hp-numbers">0 / 0</span>
+                </div>
+                <div class="hp-bar-outer" style="height:12px;">
+                    <div class="hp-bar-inner" id="player-hp-bar" style="width:100%; background: linear-gradient(90deg, #27ae60, #2ecc71, #58d68d);">
+                        <div class="hp-text" id="player-hp-percent" style="font-size:8px;">100%</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Monster Panel -->
@@ -733,6 +744,20 @@ function showDamageNumber(dmg, isCrit) {
     setTimeout(() => el.remove(), 1000);
 }
 
+function showPlayerDamage(dmg) {
+    const bar = document.getElementById('player-hp-bar');
+    const rect = bar.getBoundingClientRect();
+    const el = document.createElement('div');
+    el.className = 'damage-float';
+    el.innerText = '-' + formatNum(dmg);
+    el.style.color = '#ff6b6b';
+    el.style.fontSize = '20px';
+    el.style.left = (rect.left + rect.width / 2 - 30) + 'px';
+    el.style.top = (rect.top - 10) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+}
+
 function showRewardPopup(rewards) {
     const overlay = document.getElementById('reward-overlay');
     const itemsEl = document.getElementById('reward-items');
@@ -811,6 +836,26 @@ function updateDungeonDisplay(state) {
     // Next floor button
     const btnNext = document.getElementById('btn-next');
     btnNext.disabled = hp > 0;
+
+    // Player HP bar
+    if (state.playerHp !== undefined && state.playerMaxHp) {
+        const php = state.playerHp;
+        const pmax = state.playerMaxHp;
+        const phpPercent = Math.max(0, Math.min(100, (php / pmax) * 100));
+
+        const pBar = document.getElementById('player-hp-bar');
+        pBar.style.width = phpPercent + '%';
+        if (phpPercent < 25) {
+            pBar.style.background = 'linear-gradient(90deg, #8b0000, #c0392b)';
+        } else if (phpPercent < 50) {
+            pBar.style.background = 'linear-gradient(90deg, #e67e22, #f39c12)';
+        } else {
+            pBar.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71, #58d68d)';
+        }
+
+        document.getElementById('player-hp-numbers').innerText = formatNum(php) + ' / ' + formatNum(pmax);
+        document.getElementById('player-hp-percent').innerText = Math.round(phpPercent) + '%';
+    }
 
     // Teleport input
     document.getElementById('teleport-input').max = state.maxFloor || 1;
@@ -943,9 +988,13 @@ socket.on('gachaCityResult', (res) => {
             if (res.state) {
                 updateDungeonDisplay(res.state);
             }
-            // Show damage
+            // Show damage dealt to monster
             if (res.damage) {
                 showDamageNumber(res.damage, res.isCrit || false);
+            }
+            // Show damage received from monster
+            if (res.monsterDmg && !res.monsterDefeated) {
+                setTimeout(() => showPlayerDamage(res.monsterDmg), 200);
             }
             // Monster defeated
             if (res.monsterDefeated) {
