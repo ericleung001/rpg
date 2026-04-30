@@ -258,6 +258,7 @@
         <div class="tab-btn" onclick="switchTab('artifact')">💎 素材凝聚</div>
         <div class="tab-btn" onclick="switchTab('gear')">🌟 神話鍛造</div>
         <div class="tab-btn" onclick="switchTab('gear2')" style="background:linear-gradient(135deg,#1a1200,#2a1500);border-color:#c9a84c;color:#c9a84c;">🌟 神話II代</div>
+        <div class="tab-btn" onclick="switchTab('gear3')" style="background:linear-gradient(135deg,#1a0010,#2a0020);border-color:#e05c20;color:#e05c20;">🌟 神話III代</div>
     </div>
 
     <!-- Layer 1: Essence -->
@@ -282,6 +283,17 @@
     <div class="tab-panel" id="tab-gear2">
         <div class="section-label">神話II代鍛造（需要I代裝備 + 高級材料）</div>
         <div class="gear-grid" id="gear2-grid"></div>
+    </div>
+
+    <!-- Layer 5: Gen 3 Gear -->
+    <div class="tab-panel" id="tab-gear3">
+        <div class="section-label" style="color:#e05c20;">神話III代鍛造（需要圖紙 + II代裝備 + 轉蛋城材料 · 100%保底）</div>
+        <div style="font-size:10px;color:#888;margin-bottom:12px;padding:8px;background:#1a0010;border:1px solid #3a2a00;border-radius:6px;text-align:left;line-height:1.8;">
+            ⚠️ 神話III代鍛造為 <b style="color:#2ecc71;">100% 保底成功</b>，不會爆裝。<br>
+            📜 需要先在 <b style="color:#a569bd;">轉蛋城</b> 擊敗第 100 層 Boss 獲得<b style="color:#e05c20;">圖紙</b>。<br>
+            💎 代價極大：1000億金幣 + 50萬碎片 + 大量轉蛋城材料。
+        </div>
+        <div class="gear-grid" id="gear3-grid"></div>
     </div>
 </div>
 
@@ -323,9 +335,15 @@ const GEAR_CONFIG = {
 };
 
 const GEAR2_CONFIG = {
-    myth2_weapon: { name: '神話II·天裁之劍', icon: '⚔️', type: 'weapon', materials: { myth_weapon: 1, divinity_core: 15, entropy_origin: 50, multiverse_shard: 100 }, gold: 50000000000, shard: 100000, stats: 'ATK+380萬 DEF+65萬 HP+1000萬 MP+300萬' },
-    myth2_armor:  { name: '神話II·永恆聖壁', icon: '🛡️', type: 'armor',  materials: { myth_armor: 1, divinity_core: 15, entropy_origin: 50, multiverse_shard: 100 }, gold: 50000000000, shard: 100000, stats: 'DEF+650萬 HP+1800萬 MP+500萬' },
-    myth2_acc:    { name: '神話II·命運輪迴', icon: '💍', type: 'acc',    materials: { myth_acc: 1, divinity_core: 10, entropy_origin: 30, multiverse_shard: 80 }, gold: 40000000000, shard: 80000, stats: 'ATK+110萬 DEF+250萬 HP+1500萬 MP+400萬' },
+    myth2_weapon: { name: '神話II·天裁之劍', icon: '⚔️', type: 'weapon', materials: { myth_weapon: 1, divinity_core: 150000, entropy_origin: 500000, multiverse_shard: 100000 }, gold: 60000000000, shard: 100000, stats: 'ATK+380萬 DEF+65萬 HP+1000萬 MP+300萬' },
+    myth2_armor:  { name: '神話II·永恆聖壁', icon: '🛡️', type: 'armor',  materials: { myth_armor: 1, divinity_core: 150000, entropy_origin: 500000, multiverse_shard: 100000 }, gold: 60000000000, shard: 100000, stats: 'DEF+650萬 HP+1800萬 MP+500萬' },
+    myth2_acc:    { name: '神話II·命運輪迴', icon: '💍', type: 'acc',    materials: { myth_acc: 1, divinity_core: 100000, entropy_origin: 300000, multiverse_shard: 800000 }, gold: 60000000000, shard: 80000, stats: 'ATK+110萬 DEF+250萬 HP+1500萬 MP+400萬' },
+};
+
+const GEAR3_CONFIG = {
+    myth3_weapon: { name: '神話III·宇宙終焉之刃', icon: '⚔️', type: 'weapon', materials: { myth2_weapon: 1, myth3_blueprint: 1, gacha_ember: 1000000, gacha_dark: 500000, gacha_chaos: 300000 }, gold: 100000000000, shard: 500000, stats: 'ATK+800萬 DEF+150萬 HP+2000萬 MP+500萬' },
+    myth3_armor:  { name: '神話III·永恆宇宙聖壁', icon: '🛡️', type: 'armor',  materials: { myth2_armor: 1, myth3_blueprint: 1, gacha_ice: 1000000, gacha_divine: 500000, gacha_chaos: 300000 }, gold: 100000000000, shard: 500000, stats: 'DEF+1500萬 HP+3000萬 MP+800萬' },
+    myth3_acc:    { name: '神話III·宇宙命運之環', icon: '💍', type: 'acc',    materials: { myth2_acc: 1, myth3_blueprint: 1, gacha_ember: 500000, gacha_ice: 500000, gacha_dark: 500000, gacha_divine: 500000 }, gold: 100000000000, shard: 400000, stats: 'ATK+300萬 DEF+300萬 HP+2500萬 MP+600萬' },
 };
 
 const MAT_NAMES = {
@@ -341,11 +359,17 @@ const MAT_NAMES = {
     // 神話II代材料
     divinity_core:'創世神格', multiverse_shard:'多元宇宙碎片',
     myth_weapon:'神話·毀滅之刃', myth_armor:'神話·絕對防禦', myth_acc:'神話·命運之環',
+    myth2_weapon:'神話II·天裁之劍', myth2_armor:'神話II·永恆聖壁', myth2_acc:'神話II·命運輪迴',
+    // 神話III代材料
+    myth3_blueprint:'神話III代鍛造圖紙',
+    gacha_ember:'轉蛋之焰', gacha_ice:'轉蛋冰晶', gacha_dark:'轉蛋暗核',
+    gacha_divine:'轉蛋神輝', gacha_chaos:'轉蛋混沌石',
+    myth3_weapon:'神話III·宇宙終焉之刃', myth3_armor:'神話III·永恆宇宙聖壁', myth3_acc:'神話III·宇宙命運之環',
 };
 
 // ── Tab switching ──────────────────────────────────────────────────────
 function switchTab(id) {
-    document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', ['essence','artifact','gear','gear2'][i]===id));
+    document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', ['essence','artifact','gear','gear2','gear3'][i]===id));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     document.getElementById('tab-'+id).classList.add('active');
     renderAll();
@@ -463,6 +487,7 @@ function renderAll() {
     renderArtifacts();
     renderGears();
     renderGears2();
+    renderGears3();
 }
 
 // ── Forge actions ──────────────────────────────────────────────────────
@@ -537,6 +562,51 @@ function forgeGear2(id) {
     if (!confirm('⚠️ 確定要鍛造【' + cfg.name + '】？\n\n此操作會消耗1代神話裝備！\n\n消耗材料：\n' + matList + '\n• 💰 ' + cfg.gold.toLocaleString() + ' G\n• 💎 ' + cfg.shard.toLocaleString() + ' 碎片\n\n此操作不可逆！')) return;
     showAnim('神話II代鍛造中...');
     socket.emit('mythForgeGear2', { gearId: id });
+}
+
+function renderGears3() {
+    const grid = document.getElementById('gear3-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    for (const [id, cfg] of Object.entries(GEAR3_CONFIG)) {
+        const mats = Object.entries(cfg.materials);
+        const canCraft = mats.every(([m,n]) => inv(m) >= n) && (myData.gold||0) >= cfg.gold && inv('skill_shard') >= cfg.shard;
+        const matChips = mats.map(([m,n]) => {
+            const has = inv(m); const ok = has >= n;
+            const mName = MAT_NAMES[m] || m;
+            return `<div class="artifact-chip ${ok?'ok':'no'}" style="font-size:10px;">${mName} ${has.toLocaleString()}/${n.toLocaleString()}</div>`;
+        }).join('');
+        const goldOk = (myData.gold||0) >= cfg.gold;
+        const shardOk = inv('skill_shard') >= cfg.shard;
+        grid.innerHTML += `
+        <div class="gear-card" style="border-color:#e05c20;">
+            <div class="gc-header">
+                <div class="gc-icon" style="font-size:32px;">${cfg.icon}</div>
+                <div class="gc-info">
+                    <div class="gc-name" style="font-size:14px;color:#e05c20;">${cfg.name}</div>
+                    <div class="gc-stats">${cfg.stats}</div>
+                    <div style="font-size:9px;color:#e05c20;margin-top:2px;">神話III代 | 100%保底 · 需要圖紙+II代裝備+轉蛋城材料</div>
+                </div>
+                <div style="font-size:10px;color:#555;">持有：${inv(id)}</div>
+            </div>
+            <div class="gc-mats">${matChips}</div>
+            <div class="gc-cost">
+                💰 <span style="color:${goldOk?'#4caf50':'#e74c3c'}">${(myData.gold||0).toLocaleString()}</span> / ${cfg.gold.toLocaleString()} G　　
+                💎 <span style="color:${shardOk?'#4caf50':'#e74c3c'}">${inv('skill_shard').toLocaleString()}</span> / ${cfg.shard.toLocaleString()} 碎片
+            </div>
+            <button class="forge-btn ${canCraft?'ready':'disabled'}" style="width:100%;padding:10px;background:${canCraft?'linear-gradient(135deg,#e05c20,#c0392b)':'#1a1a2a'};" ${canCraft?`onclick="forgeGear3('${id}')"`:' disabled'}>
+                ${canCraft?'🌟 神話III代鍛造 (100%保底)':'材料/費用不足'}
+            </button>
+        </div>`;
+    }
+}
+
+function forgeGear3(id) {
+    const cfg = GEAR3_CONFIG[id];
+    const matList = Object.entries(cfg.materials).map(([m,n]) => '• ' + (MAT_NAMES[m]||m) + ' x' + n.toLocaleString()).join('\n');
+    if (!confirm('⚠️ 確定要鍛造【' + cfg.name + '】？\n\n此操作會消耗II代神話裝備和圖紙！\n\n消耗材料：\n' + matList + '\n• 💰 ' + cfg.gold.toLocaleString() + ' G\n• 💎 ' + cfg.shard.toLocaleString() + ' 碎片\n\n⚠️ 100% 保底成功，不會爆裝！')) return;
+    showAnim('神話III代鍛造中...');
+    socket.emit('mythForgeGear3', { gearId: id });
 }
 
 // ── Socket ─────────────────────────────────────────────────────────────
