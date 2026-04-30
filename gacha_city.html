@@ -561,6 +561,17 @@
                         <div class="hp-text" id="player-hp-percent" style="font-size:8px;">100%</div>
                     </div>
                 </div>
+                <div class="hp-label" style="margin-top:4px;">
+                    <span>💧 玩家 MP</span>
+                    <span id="player-mp-numbers">0 / 0</span>
+                </div>
+                <div class="hp-bar-outer" style="height:10px;">
+                    <div class="hp-bar-inner" id="player-mp-bar" style="width:100%; background: linear-gradient(90deg, #2471a3, #3498db, #5dade2);">
+                        <div class="hp-text" id="player-mp-percent" style="font-size:7px;">100%</div>
+                    </div>
+                </div>
+                <!-- Active Buffs -->
+                <div id="buff-display" style="margin-top:4px; font-size:10px; min-height:16px;"></div>
             </div>
         </div>
 
@@ -583,15 +594,46 @@
             </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="action-grid">
+        <!-- Battle Log -->
+        <div class="card" style="max-height:80px; overflow-y:auto;">
+            <div class="card-label">📜 戰鬥日誌</div>
+            <div id="battle-log" style="font-size:11px; line-height:1.6; color:#aaa;">準備戰鬥...</div>
+        </div>
+
+        <!-- Action Buttons (main menu) -->
+        <div class="action-grid" id="action-main">
             <button class="btn btn-attack" id="btn-attack" onclick="attackMonster()">
                 ⚔️ 攻擊
             </button>
-            <button class="btn btn-next" id="btn-next" onclick="nextFloor()" disabled>
-                ➡️ 下一層 (💎 5,000)
+            <button class="btn" id="btn-skill" onclick="openSkillPanel()" style="background:linear-gradient(135deg,#6a0dad,#9b59b6); color:#fff;">
+                🔮 魔法
             </button>
-            <div class="sep"></div>
+            <button class="btn" id="btn-item" onclick="openItemPanel()" style="background:linear-gradient(135deg,#117a65,#1abc9c); color:#fff;">
+                🧪 物品
+            </button>
+            <button class="btn btn-next" id="btn-next" onclick="nextFloor()" disabled>
+                ➡️ 下一層
+            </button>
+        </div>
+
+        <!-- Skill Panel (hidden) -->
+        <div id="skill-panel" style="display:none;">
+            <button class="btn" onclick="backToMainMenu()" style="width:100%; background:var(--panel2); border:1px solid var(--border); color:#aaa; margin-bottom:8px; font-size:12px;">
+                ◀ 返回
+            </button>
+            <div id="skill-list" class="action-grid"></div>
+        </div>
+
+        <!-- Item Panel (hidden) -->
+        <div id="item-panel" style="display:none;">
+            <button class="btn" onclick="backToMainMenu()" style="width:100%; background:var(--panel2); border:1px solid var(--border); color:#aaa; margin-bottom:8px; font-size:12px;">
+                ◀ 返回
+            </button>
+            <div id="item-list" class="action-grid"></div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="action-grid" style="margin-top:8px;">
             <div class="teleport-row">
                 <input type="number" class="teleport-input" id="teleport-input"
                        placeholder="輸入目標層數..." min="1">
@@ -687,6 +729,34 @@ let isOnCooldown = false;
 let dungeonState = null;
 
 const GACHA_MATS = ['gacha_ember', 'gacha_ice', 'gacha_dark', 'gacha_divine', 'gacha_chaos'];
+
+const SKILL_INFO = {
+    'fireball':      { name: '火球術',     mp: 5,    cat: 'atk',  desc: '傷x1.5' },
+    'thunder':       { name: '雷擊',       mp: 15,   cat: 'atk',  desc: '傷x1.2+暈' },
+    'drain':         { name: '吸血',       mp: 20,   cat: 'atk',  desc: '吸血100%' },
+    'frost_nova':    { name: '冰霜新星',   mp: 30,   cat: 'atk',  desc: '傷x1.2+降防' },
+    'poison_touch':  { name: '劇毒之觸',   mp: 25,   cat: 'atk',  desc: '傷x2.5' },
+    'meteor':        { name: '隕石術',     mp: 80,   cat: 'atk',  desc: '傷x3.5(AOE)' },
+    'divine_slash':  { name: '次元斬',     mp: 150,  cat: 'atk',  desc: '傷x5.0(AOE)' },
+    'void_crush':    { name: '虛空碎擊',   mp: 1000, cat: 'atk',  desc: '傷x10(AOE)' },
+    'entropy_decay': { name: '熱寂·衰變', mp: 2500, cat: 'atk',  desc: '5%真傷(AOE)' },
+    'big_bang':      { name: '宇宙大爆炸', mp: 5000, cat: 'atk',  desc: '傷x25(AOE)' },
+    'holy_shield':   { name: '聖光守護',   mp: 40,   cat: 'buff', desc: '防禦x2' },
+    'berserk':       { name: '狂暴',       mp: 60,   cat: 'buff', desc: '攻x2(自殘)' },
+    'god_mode':      { name: '天神下凡',   mp: 300,  cat: 'buff', desc: '全能x3' },
+    'heal_light':    { name: '小回復',     mp: 10,   cat: 'heal', desc: 'HP+20%' },
+    'god_light':     { name: '神之光',     mp: 50,   cat: 'heal', desc: 'HP+50%' },
+    'heal_all':      { name: '聖光普照',   mp: 100,  cat: 'heal', desc: '全隊滿HP' },
+    'full_heal':     { name: '大天使息',   mp: 200,  cat: 'heal', desc: 'HP全滿' }
+};
+
+const ITEM_NAMES = {
+    'potion_hp': '紅水(小)', 'potion_mid': '紅水(中)', 'potion_high': '紅水(大)',
+    'potion_max': '秘藥', 'elixir': '甘露', 'void_soup': '虛空湯',
+    'potion_mp': '藍水(小)', 'potion_mp_mid': '藍水(中)', 'potion_mp_high': '藍水(大)',
+    'grilled_carp': '烤鯉魚', 'tuna_steak': '鮪魚排', 'sushi_plate': '壽司拼盤',
+    'eel_rice': '鰻魚飯', 'salmon_sushi': '鮭魚壽司'
+};
 
 const MONSTER_ICONS = [
     '👾', '👹', '👺', '🤖', '👽', '🦑', '🐉', '🦇', '🕷️', '🐙',
@@ -857,6 +927,14 @@ function updateDungeonDisplay(state) {
         document.getElementById('player-hp-percent').innerText = Math.round(phpPercent) + '%';
     }
 
+    // Player MP bar
+    const mp = myData.mp || 0;
+    const maxMp = myData.maxMp || 100;
+    const mpPercent = Math.max(0, Math.min(100, (mp / maxMp) * 100));
+    document.getElementById('player-mp-bar').style.width = mpPercent + '%';
+    document.getElementById('player-mp-numbers').innerText = formatNum(mp) + ' / ' + formatNum(maxMp);
+    document.getElementById('player-mp-percent').innerText = Math.round(mpPercent) + '%';
+
     // Teleport input
     document.getElementById('teleport-input').max = state.maxFloor || 1;
     document.getElementById('teleport-input').placeholder = '最大第 ' + (state.maxFloor || 1) + ' 層';
@@ -896,6 +974,94 @@ function attackMonster() {
         btn.classList.remove('on-cooldown');
         btn.removeAttribute('data-cd');
     }, 800);
+}
+
+// ── Skill / Item Panels ──────────────────────────────────────────────
+function openSkillPanel() {
+    if (!isInDungeon) return;
+    document.getElementById('action-main').style.display = 'none';
+    document.getElementById('skill-panel').style.display = 'block';
+    document.getElementById('item-panel').style.display = 'none';
+
+    const list = document.getElementById('skill-list');
+    list.innerHTML = '';
+    const mySkills = myData.skills || ['fireball'];
+    mySkills.forEach(skillId => {
+        const info = SKILL_INFO[skillId];
+        if (!info) return;
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        let color = '#9b59b6';
+        if (info.cat === 'heal') color = '#27ae60';
+        if (info.cat === 'buff') color = '#e67e22';
+        const mp = myData.mp || 0;
+        const canUse = mp >= info.mp;
+        btn.style.cssText = `justify-content:space-between; padding:10px 14px; font-size:12px; color:${color};`;
+        btn.innerHTML = `<span style="font-weight:700;">${info.name}</span><span style="font-size:10px; color:#3498db;">MP-${info.mp} ${info.desc}</span>`;
+        if (!canUse) { btn.disabled = true; btn.style.opacity = '0.4'; }
+        btn.onclick = () => { useSkill(skillId); };
+        list.appendChild(btn);
+    });
+}
+
+function openItemPanel() {
+    if (!isInDungeon) return;
+    document.getElementById('action-main').style.display = 'none';
+    document.getElementById('skill-panel').style.display = 'none';
+    document.getElementById('item-panel').style.display = 'block';
+
+    const list = document.getElementById('item-list');
+    list.innerHTML = '';
+    const items = ['potion_hp', 'potion_mid', 'potion_high', 'potion_max', 'elixir', 'void_soup',
+                   'potion_mp', 'potion_mp_mid', 'potion_mp_high', 'grilled_carp', 'tuna_steak', 'sushi_plate', 'eel_rice', 'salmon_sushi'];
+    items.forEach(itemId => {
+        const count = inv(itemId);
+        if (count > 0) {
+            const btn = document.createElement('button');
+            btn.className = 'btn';
+            btn.style.cssText = 'font-size:11px; padding:10px; color:#1abc9c;';
+            btn.innerText = `${ITEM_NAMES[itemId] || itemId} (${count})`;
+            btn.onclick = () => { useItem(itemId); };
+            list.appendChild(btn);
+        }
+    });
+    if (list.children.length === 0) {
+        list.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#666; padding:15px;">冇可用物品</div>';
+    }
+}
+
+function backToMainMenu() {
+    document.getElementById('action-main').style.display = 'grid';
+    document.getElementById('skill-panel').style.display = 'none';
+    document.getElementById('item-panel').style.display = 'none';
+}
+
+function useSkill(skillId) {
+    if (!isInDungeon || isOnCooldown) return;
+    isOnCooldown = true;
+    socket.emit('gachaCitySkillAction', { type: 'skill', skillId });
+    backToMainMenu();
+    setTimeout(() => { isOnCooldown = false; }, 800);
+}
+
+function useItem(itemId) {
+    if (!isInDungeon || isOnCooldown) return;
+    isOnCooldown = true;
+    socket.emit('gachaCitySkillAction', { type: 'item', itemId });
+    backToMainMenu();
+    setTimeout(() => { isOnCooldown = false; }, 800);
+}
+
+function addBattleLog(msg) {
+    const logEl = document.getElementById('battle-log');
+    if (!logEl) return;
+    const div = document.createElement('div');
+    div.innerHTML = msg;
+    div.style.animation = 'fadeIn 0.3s ease';
+    logEl.appendChild(div);
+    logEl.scrollTop = logEl.scrollHeight;
+    // Keep only last 30 messages
+    while (logEl.children.length > 30) logEl.removeChild(logEl.firstChild);
 }
 
 function nextFloor() {
@@ -988,13 +1154,22 @@ socket.on('gachaCityResult', (res) => {
             if (res.state) {
                 updateDungeonDisplay(res.state);
             }
+            // Battle log
+            if (res.logMsg) {
+                addBattleLog(`<span style="color:#c8c8d4;">⚔️ ${res.logMsg}</span>`);
+            }
             // Show damage dealt to monster
             if (res.damage) {
                 showDamageNumber(res.damage, res.isCrit || false);
             }
+            // Show heal amount
+            if (res.healAmount) {
+                showPlayerDamage(-res.healAmount);
+            }
             // Show damage received from monster
             if (res.monsterDmg && !res.monsterDefeated) {
                 setTimeout(() => showPlayerDamage(res.monsterDmg), 200);
+                if (res.monsterDmg) addBattleLog(`<span style="color:#e74c3c;">💥 怪物反擊！受到 ${formatNum(res.monsterDmg)} 傷害</span>`);
             }
             // Monster defeated
             if (res.monsterDefeated) {
