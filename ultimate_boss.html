@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>終極Boss</title>
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Cinzel:wght@700;900&display=swap');
+
+    :root {
+        --gold: #c9a84c;
+        --gold-light: #f0d080;
+        --gold-dim: #8a7030;
+        --red: #e74c3c;
+        --red-deep: #8b0000;
+        --orange: #e05c20;
+        --orange-light: #ff8c42;
+        --crimson: #c0392b;
+        --ember: #ff4500;
+        --bg: #06060e;
+        --panel: #0c0c1a;
+        --panel2: #10101f;
+        --border: #2a1520;
+        --text: #c8c8d4;
+        --text-dim: #666680;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Noto Sans TC', sans-serif;
+        min-height: 100dvh;
+        display: flex;
+        justify-content: center;
+        overflow-x: hidden;
+    }
+
+    /* ── Cosmic Starfield Background ────────────────────────── */
+    #starfield {
+        position: fixed; inset: 0; z-index: 0;
+        pointer-events: none; overflow: hidden;
+    }
+    .star {
+        position: absolute;
+        width: 2px; height: 2px;
+        background: #fff;
+        border-radius: 50%;
+        animation: twinkle var(--dur) ease-in-out infinite alternate;
+    }
+    .star.large { width: 3px; height: 3px; background: rgba(255,200,100,0.8); }
+    @keyframes twinkle {
+        0% { opacity: 0.1; transform: scale(0.5); }
+        100% { opacity: var(--max-op, 0.7); transform: scale(1); }
+    }
+
+    /* Cosmic radial glows */
+    body::before {
+        content: '';
+        position: fixed; inset: 0; z-index: 0;
+        background:
+            radial-gradient(ellipse 60% 50% at 50% 30%, rgba(224,92,32,0.08) 0%, transparent 60%),
+            radial-gradient(ellipse 40% 30% at 20% 70%, rgba(192,57,43,0.06) 0%, transparent 50%),
+            radial-gradient(ellipse 40% 30% at 80% 80%, rgba(139,0,0,0.05) 0%, transparent 50%),
+            radial-gradient(ellipse 30% 20% at 50% 100%, rgba(255,69,0,0.07) 0%, transparent 40%);
+        pointer-events: none;
+        animation: cosmicPulse 10s ease-in-out infinite alternate;
+    }
+    @keyframes cosmicPulse {
+        0% { opacity: 0.6; }
+        100% { opacity: 1; }
+    }
+
+    #app-layout {
+        position: relative; z-index: 1;
+        width: 100%; max-width: 600px;
+        min-height: 100dvh;
+        display: flex; flex-direction: column;
+        padding: 0 14px 20px;
+    }
+
+    /* ── Back Button ────────────────────────────────────────── */
+    .btn-back {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 8px 14px; background: var(--panel);
+        border: 1px solid var(--border); border-radius: 6px;
+        color: #888; font-size: 12px; cursor: pointer;
+        text-decoration: none; margin-top: 14px; margin-bottom: 14px;
+        font-family: 'Noto Sans TC', sans-serif;
+        transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-back:hover { border-color: var(--orange); color: var(--orange); }
+
+    /* ── Header ────────────────────────────────────────────── */
+    .page-header {
+        text-align: center;
+        padding: 18px 0 14px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 14px;
+        animation: headerGlow 3s ease-in-out infinite alternate;
+    }
+    @keyframes headerGlow {
+        0% { filter: drop-shadow(0 0 8px rgba(224,92,32,0.2)); }
+        100% { filter: drop-shadow(0 0 16px rgba(192,57,43,0.3)); }
+    }
+    .page-title {
+        font-family: 'Cinzel', serif;
+        font-size: 26px; font-weight: 900;
+        background: linear-gradient(135deg, var(--ember), var(--orange-light), var(--crimson), var(--ember));
+        background-size: 300% 300%;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        letter-spacing: 4px;
+        animation: titleShimmer 4s ease-in-out infinite;
+    }
+    @keyframes titleShimmer {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+    .page-sub {
+        font-size: 10px; color: var(--text-dim);
+        margin-top: 4px; letter-spacing: 3px;
+    }
+    .page-sub span { color: var(--crimson); font-weight: 700; }
+
+    /* ── Card ──────────────────────────────────────────────── */
+    .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 12px;
+        position: relative;
+        overflow: hidden;
+        animation: cardEnter 0.6s ease-out both;
+    }
+    .card:nth-child(2) { animation-delay: 0.1s; }
+    .card:nth-child(3) { animation-delay: 0.2s; }
+    .card:nth-child(4) { animation-delay: 0.3s; }
+    .card:nth-child(5) { animation-delay: 0.4s; }
+    .card:nth-child(6) { animation-delay: 0.5s; }
+    @keyframes cardEnter {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(224,92,32,0.4), transparent);
+    }
+    .card.boss-card::before {
+        background: linear-gradient(90deg, transparent, rgba(192,57,43,0.6), rgba(255,69,0,0.4), transparent);
+        height: 2px;
+    }
+    .card-label {
+        font-size: 10px; color: var(--text-dim);
+        letter-spacing: 1.5px; text-transform: uppercase;
+        margin-bottom: 10px;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .card-label::after {
+        content: ''; flex: 1; height: 1px;
+        background: var(--border);
+    }
+
+    /* ── Boss Panel ────────────────────────────────────────── */
+    .boss-panel {
+        text-align: center; padding: 24px 14px 18px;
+        background: linear-gradient(180deg, #12080a, var(--panel), #0a0508);
+    }
+    .boss-avatar-container {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 12px;
+    }
+    .boss-avatar {
+        font-size: 72px;
+        display: block;
+        animation: bossIdle 3s ease-in-out infinite;
+        filter: drop-shadow(0 0 20px rgba(255,69,0,0.4));
+    }
+    @keyframes bossIdle {
+        0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 20px rgba(255,69,0,0.4)); }
+        25% { transform: translateY(-6px) scale(1.02); filter: drop-shadow(0 0 30px rgba(224,92,32,0.5)); }
+        50% { transform: translateY(-3px) scale(1.04); filter: drop-shadow(0 0 40px rgba(192,57,43,0.6)); }
+        75% { transform: translateY(-8px) scale(1.01); filter: drop-shadow(0 0 25px rgba(255,140,66,0.4)); }
+    }
+    .boss-glow-ring {
+        position: absolute; inset: -20px;
+        border: 2px solid rgba(255,69,0,0.15);
+        border-radius: 50%;
+        animation: ringPulse 2s ease-in-out infinite;
+    }
+    .boss-glow-ring:nth-child(2) {
+        inset: -35px;
+        animation-delay: 0.5s;
+        border-color: rgba(192,57,43,0.1);
+    }
+    .boss-glow-ring:nth-child(3) {
+        inset: -50px;
+        animation-delay: 1s;
+        border-color: rgba(224,92,32,0.06);
+    }
+    @keyframes ringPulse {
+        0%, 100% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 1; }
+    }
+    .boss-name {
+        font-size: 20px; font-weight: 900;
+        color: #fff;
+        text-shadow: 0 0 20px rgba(255,69,0,0.5), 0 2px 4px rgba(0,0,0,0.8);
+        margin-bottom: 4px;
+        letter-spacing: 2px;
+    }
+    .boss-level {
+        font-size: 12px; color: var(--ember);
+        letter-spacing: 2px; margin-bottom: 16px;
+        font-weight: 700;
+    }
+    .boss-level span {
+        color: var(--orange-light);
+        font-size: 16px;
+    }
+
+    /* Boss HP Bar */
+    .boss-hp-container {
+        width: 100%; margin-bottom: 14px;
+    }
+    .boss-hp-label {
+        display: flex; justify-content: space-between;
+        font-size: 10px; margin-bottom: 4px; color: var(--text-dim);
+    }
+    .boss-hp-label span:last-child { color: var(--crimson); font-weight: 700; }
+    .boss-hp-outer {
+        width: 100%; height: 22px;
+        background: #1a0808; border-radius: 12px;
+        border: 1px solid #3a1515;
+        overflow: hidden; position: relative;
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+    }
+    .boss-hp-inner {
+        height: 100%; border-radius: 12px;
+        background: linear-gradient(90deg, var(--red-deep), var(--crimson), var(--ember), var(--orange));
+        background-size: 200% 100%;
+        animation: hpShimmer 3s linear infinite;
+        transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        box-shadow: 0 0 12px rgba(192,57,43,0.5);
+    }
+    @keyframes hpShimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    .boss-hp-inner::after {
+        content: ''; position: absolute;
+        top: 3px; left: 6px; right: 6px; height: 6px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.15), transparent);
+        border-radius: 4px;
+    }
+    .boss-hp-text {
+        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 9px; font-weight: 900; color: #fff;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+        letter-spacing: 1px;
+    }
+
+    /* Boss Stats Grid */
+    .boss-stats-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+        margin-top: 10px;
+    }
+    .boss-stat {
+        display: flex; flex-direction: column; align-items: center;
+        background: rgba(192,57,43,0.08);
+        border: 1px solid rgba(192,57,43,0.15);
+        border-radius: 8px; padding: 10px 8px;
+    }
+    .boss-stat-icon { font-size: 16px; margin-bottom: 4px; }
+    .boss-stat-label { font-size: 9px; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 2px; }
+    .boss-stat-value {
+        font-size: 14px; font-weight: 900;
+        color: var(--orange-light);
+        text-shadow: 0 0 8px rgba(255,140,66,0.3);
+    }
+
+    /* ── Player Stats Panel ────────────────────────────────── */
+    .player-stats-grid {
+        display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+        margin-bottom: 12px;
+    }
+    .player-stat {
+        text-align: center;
+        background: var(--panel2); border: 1px solid var(--border);
+        border-radius: 8px; padding: 10px 6px;
+    }
+    .player-stat-icon { font-size: 18px; margin-bottom: 4px; }
+    .player-stat-label { font-size: 9px; color: var(--text-dim); letter-spacing: 1px; }
+    .player-stat-value { font-size: 13px; font-weight: 700; color: var(--gold-light); margin-top: 2px; }
+
+    /* Check Results */
+    .check-result {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 12px; border-radius: 8px;
+        margin-bottom: 6px; font-size: 12px; font-weight: 500;
+    }
+    .check-result.pass {
+        background: rgba(46,204,113,0.08);
+        border: 1px solid rgba(46,204,113,0.2);
+        color: #2ecc71;
+    }
+    .check-result.fail {
+        background: rgba(231,76,60,0.08);
+        border: 1px solid rgba(231,76,60,0.2);
+        color: #e74c3c;
+    }
+    .check-icon { font-size: 16px; }
+
+    /* ── Requirements Panel ────────────────────────────────── */
+    .req-list { font-size: 11px; line-height: 2.4; }
+    .req-row {
+        display: flex; align-items: center; gap: 8px;
+        padding: 4px 0;
+    }
+    .req-row + .req-row { border-top: 1px solid rgba(42,21,32,0.6); }
+    .req-icon { font-size: 14px; flex-shrink: 0; }
+    .req-text { flex: 1; color: var(--text); }
+    .req-val { color: var(--orange-light); font-weight: 700; white-space: nowrap; }
+
+    /* Comparison Box */
+    .comparison-box {
+        margin-top: 12px;
+        background: var(--panel2);
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        padding: 12px;
+    }
+    .comp-title {
+        font-size: 9px; color: var(--text-dim);
+        letter-spacing: 1.5px; text-align: center;
+        margin-bottom: 10px;
+    }
+    .comp-row {
+        display: flex; align-items: center; gap: 6px;
+        margin-bottom: 6px; font-size: 11px;
+    }
+    .comp-label { flex: 1; color: var(--text-dim); }
+    .comp-vs { color: var(--crimson); font-weight: 700; font-size: 10px; }
+    .comp-player { color: var(--gold-light); font-weight: 700; text-align: right; flex: 1; }
+    .comp-boss { color: var(--orange-light); font-weight: 700; text-align: left; flex: 1; }
+    .comp-result {
+        text-align: center; padding: 8px;
+        border-radius: 6px; font-size: 12px; font-weight: 700;
+        margin-top: 6px;
+    }
+    .comp-result.pass { background: rgba(46,204,113,0.1); color: #2ecc71; }
+    .comp-result.fail { background: rgba(231,76,60,0.1); color: #e74c3c; }
+
+    /* ── Reward Preview ────────────────────────────────────── */
+    .reward-preview {
+        text-align: center;
+    }
+    .reward-title-preview {
+        font-size: 20px; font-weight: 900;
+        background: linear-gradient(135deg, var(--gold-dim), var(--gold-light), var(--gold), var(--gold-light));
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
+        letter-spacing: 3px;
+    }
+    .reward-items-preview {
+        display: flex; flex-direction: column; gap: 6px;
+    }
+    .reward-item-row {
+        display: flex; align-items: center; gap: 10px;
+        background: var(--panel2); border: 1px solid var(--border);
+        border-radius: 8px; padding: 10px 14px;
+        font-size: 12px;
+    }
+    .reward-item-icon { font-size: 20px; }
+    .reward-item-text { flex: 1; color: #bbb; }
+    .reward-item-text strong { color: var(--gold-light); }
+
+    /* ── Challenge Button ──────────────────────────────────── */
+    .btn-challenge {
+        width: 100%; padding: 18px;
+        border: none; border-radius: 12px;
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 18px; font-weight: 900;
+        cursor: pointer; transition: all 0.3s;
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        position: relative; overflow: hidden;
+        background: linear-gradient(135deg, var(--red-deep), var(--crimson), var(--ember));
+        color: #fff;
+        box-shadow: 0 6px 30px rgba(192,57,43,0.4), 0 2px 8px rgba(0,0,0,0.5);
+        letter-spacing: 3px;
+        animation: challengePulse 2s ease-in-out infinite;
+    }
+    @keyframes challengePulse {
+        0%, 100% { box-shadow: 0 6px 30px rgba(192,57,43,0.4), 0 2px 8px rgba(0,0,0,0.5); }
+        50% { box-shadow: 0 8px 40px rgba(255,69,0,0.5), 0 2px 8px rgba(0,0,0,0.5), 0 0 60px rgba(224,92,32,0.15); }
+    }
+    .btn-challenge:hover:not(:disabled) {
+        filter: brightness(1.15);
+        transform: translateY(-1px);
+    }
+    .btn-challenge:active:not(:disabled) { transform: scale(0.98); }
+    .btn-challenge:disabled {
+        opacity: 0.35; cursor: not-allowed;
+        transform: none; filter: none;
+        animation: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .btn-challenge::before {
+        content: '';
+        position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        animation: btnSweep 3s ease-in-out infinite;
+    }
+    @keyframes btnSweep {
+        0% { left: -100%; }
+        50% { left: 100%; }
+        100% { left: 100%; }
+    }
+    .btn-challenge:disabled::before { display: none; }
+
+    /* ── Victory Screen ────────────────────────────────────── */
+    #victory-screen {
+        display: none;
+        position: fixed; inset: 0; z-index: 500;
+        background: radial-gradient(ellipse at center, rgba(40,30,5,0.97), rgba(6,6,14,0.99));
+        justify-content: center; align-items: center;
+        flex-direction: column; gap: 16px;
+        animation: victoryFadeIn 0.8s ease-out;
+    }
+    #victory-screen.show { display: flex; }
+    @keyframes victoryFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .victory-particles {
+        position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+    }
+    .v-particle {
+        position: absolute;
+        width: 4px; height: 4px;
+        background: var(--gold-light);
+        border-radius: 50%;
+        animation: particleRise var(--p-dur, 3s) ease-out infinite;
+        animation-delay: var(--p-delay, 0s);
+    }
+    @keyframes particleRise {
+        0% { transform: translateY(100vh) scale(0); opacity: 0; }
+        20% { opacity: 1; }
+        100% { transform: translateY(-20vh) scale(1.5); opacity: 0; }
+    }
+
+    .victory-crown {
+        font-size: 60px;
+        animation: crownFloat 2s ease-in-out infinite;
+        filter: drop-shadow(0 0 20px rgba(240,208,128,0.6));
+    }
+    @keyframes crownFloat {
+        0%, 100% { transform: translateY(0) rotate(-3deg); }
+        50% { transform: translateY(-10px) rotate(3deg); }
+    }
+
+    .victory-title {
+        font-family: 'Cinzel', serif;
+        font-size: 36px; font-weight: 900;
+        background: linear-gradient(135deg, var(--gold-dim), var(--gold-light), #fff, var(--gold-light), var(--gold));
+        background-size: 400% 400%;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        animation: victoryShimmer 3s ease-in-out infinite, victoryPulse 2s ease-in-out infinite;
+        letter-spacing: 6px;
+        text-shadow: none;
+    }
+    @keyframes victoryShimmer {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+    @keyframes victoryPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .victory-subtitle {
+        font-size: 14px; color: var(--gold);
+        text-align: center;
+        line-height: 2;
+        letter-spacing: 2px;
+        animation: victoryTextIn 1s ease-out 0.5s both;
+    }
+    @keyframes victoryTextIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .victory-title-badge {
+        font-size: 12px; color: var(--text-dim);
+        background: rgba(201,168,76,0.1);
+        border: 1px solid rgba(201,168,76,0.2);
+        border-radius: 20px; padding: 6px 18px;
+        letter-spacing: 1px;
+        animation: victoryTextIn 1s ease-out 0.8s both;
+    }
+
+    .btn-victory-back {
+        margin-top: 10px; padding: 14px 40px;
+        background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+        border: none; border-radius: 8px;
+        color: #0a0a14; font-family: 'Noto Sans TC', sans-serif;
+        font-size: 14px; font-weight: 900;
+        cursor: pointer; letter-spacing: 2px;
+        transition: all 0.2s;
+        animation: victoryTextIn 1s ease-out 1.1s both;
+        text-decoration: none; display: inline-block;
+    }
+    .btn-victory-back:hover { filter: brightness(1.2); }
+    .btn-victory-back:active { transform: scale(0.97); }
+
+    /* ── Toast ─────────────────────────────────────────────── */
+    #boss-toast {
+        position: fixed; top: -80px; left: 50%; transform: translateX(-50%);
+        background: var(--panel2); border: 1px solid var(--crimson);
+        color: var(--orange-light); padding: 12px 24px;
+        border-radius: 8px; font-size: 13px;
+        transition: top 0.4s cubic-bezier(0.34,1.56,0.64,1);
+        z-index: 1000; white-space: nowrap; max-width: 90vw;
+        box-shadow: 0 4px 20px rgba(192,57,43,0.3);
+    }
+    #boss-toast.show { top: 20px; }
+    #boss-toast.error { border-color: var(--red); color: var(--red); }
+    #boss-toast.success { border-color: #2ecc71; color: #2ecc71; }
+
+    /* ── Loading State ─────────────────────────────────────── */
+    .loading-text {
+        text-align: center; color: var(--text-dim);
+        font-size: 12px; padding: 40px 0;
+    }
+    .loading-dots::after {
+        content: '';
+        animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+        0% { content: ''; }
+        25% { content: '.'; }
+        50% { content: '..'; }
+        75% { content: '...'; }
+    }
+
+    /* ── Entrance Animations ───────────────────────────────── */
+    .entrance-anim {
+        animation: entranceRise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    @keyframes entranceRise {
+        from { opacity: 0; transform: translateY(40px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ── Defeated Badge ────────────────────────────────────── */
+    .defeated-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+        color: #0a0a14;
+        font-size: 10px; font-weight: 900;
+        padding: 3px 10px; border-radius: 10px;
+        letter-spacing: 1px;
+        animation: badgePulse 2s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+        0%, 100% { box-shadow: 0 0 8px rgba(201,168,76,0.3); }
+        50% { box-shadow: 0 0 16px rgba(201,168,76,0.5); }
+    }
+
+    /* ── Separator ─────────────────────────────────────────── */
+    .sep {
+        height: 1px; background: var(--border);
+        margin: 6px 0;
+    }
+
+    /* ── Result Overlay ────────────────────────────────────── */
+    .result-overlay {
+        display: none; position: fixed; inset: 0; z-index: 500;
+        background: rgba(0,0,0,0.9);
+        justify-content: center; align-items: center;
+        flex-direction: column; gap: 16px;
+        animation: fadeIn 0.4s ease;
+    }
+    .result-overlay.show { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .result-icon { font-size: 64px; animation: resultBounce 0.6s ease-out; }
+    @keyframes resultBounce {
+        0% { transform: scale(0); }
+        60% { transform: scale(1.3); }
+        100% { transform: scale(1); }
+    }
+    .result-title {
+        font-family: 'Cinzel', serif;
+        font-size: 24px; font-weight: 900;
+        letter-spacing: 3px;
+    }
+    .result-title.win { color: var(--gold-light); text-shadow: 0 0 20px rgba(240,208,128,0.5); }
+    .result-title.lose { color: var(--crimson); text-shadow: 0 0 20px rgba(192,57,43,0.5); }
+    .result-desc {
+        font-size: 13px; color: var(--text-dim);
+        text-align: center; line-height: 1.8;
+        max-width: 300px;
+    }
+    .result-rewards {
+        background: var(--panel2); border: 1px solid var(--border);
+        border-radius: 10px; padding: 14px 20px;
+        font-size: 13px; text-align: center;
+        min-width: 250px;
+    }
+    .result-reward-item { margin-bottom: 4px; color: #ccc; }
+    .result-reward-item:last-child { margin-bottom: 0; }
+    .result-close {
+        margin-top: 8px; padding: 12px 36px;
+        background: var(--panel); border: 1px solid var(--border);
+        border-radius: 8px; color: var(--gold);
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 14px; font-weight: 700;
+        cursor: pointer; transition: border-color 0.2s;
+        letter-spacing: 1px;
+    }
+    .result-close:hover { border-color: var(--gold); }
+</style>
+</head>
+<body>
+
+<div id="starfield"></div>
+<div id="boss-toast"></div>
+
+<!-- Result Overlay -->
+<div class="result-overlay" id="result-overlay">
+    <div class="result-icon" id="result-icon">💀</div>
+    <div class="result-title" id="result-title">挑戰失敗</div>
+    <div class="result-desc" id="result-desc"></div>
+    <div class="result-rewards" id="result-rewards" style="display:none;"></div>
+    <button class="result-close" id="result-close-btn" onclick="closeResult()">確認</button>
+</div>
+
+<!-- Victory Screen (for already defeated) -->
+<div id="victory-screen">
+    <div class="victory-particles" id="victory-particles"></div>
+    <div class="victory-crown">👑</div>
+    <div class="victory-title">宇宙最強</div>
+    <div class="victory-subtitle">
+        你已成為這個宇宙中最強的存在
+    </div>
+    <div class="victory-title-badge" id="victory-badge">稱號：宇宙最強</div>
+    <a class="btn-victory-back" href="hub.html">返回主城</a>
+</div>
+
+<div id="app-layout">
+    <a class="btn-back" href="hub.html">← 返回主城</a>
+
+    <div class="page-header entrance-anim">
+        <div class="page-title">💀 終極Boss</div>
+        <div class="page-sub">Lv.<span>1000</span> · <span>宇宙終焉者</span></div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading-section">
+        <div class="loading-text">正在載入Boss資料<span class="loading-dots"></span></div>
+    </div>
+
+    <!-- Main Content (hidden until data loads) -->
+    <div id="main-content" style="display:none;">
+
+        <!-- Boss Panel -->
+        <div class="card boss-card boss-panel entrance-anim">
+            <div class="boss-avatar-container">
+                <div class="boss-glow-ring"></div>
+                <div class="boss-glow-ring"></div>
+                <div class="boss-glow-ring"></div>
+                <span class="boss-avatar">👹</span>
+            </div>
+            <div class="boss-name" id="boss-name">宇宙終焉者·阿卡西</div>
+            <div class="boss-level">Lv. <span id="boss-level">1000</span></div>
+
+            <div id="boss-defeated-tag" style="display:none; margin-bottom: 12px;">
+                <span class="defeated-badge">✦ 已被擊敗 ✦</span>
+            </div>
+
+            <div class="boss-hp-container">
+                <div class="boss-hp-label">
+                    <span>💀 HP</span>
+                    <span id="boss-hp-text">99,999,999,999,999</span>
+                </div>
+                <div class="boss-hp-outer">
+                    <div class="boss-hp-inner" id="boss-hp-bar" style="width:100%;">
+                        <div class="boss-hp-text" id="boss-hp-percent">999T</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="boss-stats-grid">
+                <div class="boss-stat">
+                    <span class="boss-stat-icon">⚔️</span>
+                    <span class="boss-stat-label">ATK</span>
+                    <span class="boss-stat-value" id="boss-atk">500,000,000</span>
+                </div>
+                <div class="boss-stat">
+                    <span class="boss-stat-icon">🛡️</span>
+                    <span class="boss-stat-label">DEF</span>
+                    <span class="boss-stat-value" id="boss-def">900,000,000</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Stats Panel -->
+        <div class="card entrance-anim">
+            <div class="card-label">📊 玩家戰力分析</div>
+            <div class="player-stats-grid">
+                <div class="player-stat">
+                    <span class="player-stat-icon">⚔️</span>
+                    <span class="player-stat-label">ATK</span>
+                    <span class="player-stat-value" id="player-atk">-</span>
+                </div>
+                <div class="player-stat">
+                    <span class="player-stat-icon">🛡️</span>
+                    <span class="player-stat-label">DEF</span>
+                    <span class="player-stat-value" id="player-def">-</span>
+                </div>
+                <div class="player-stat">
+                    <span class="player-stat-icon">❤️</span>
+                    <span class="player-stat-label">MAX HP</span>
+                    <span class="player-stat-value" id="player-hp">-</span>
+                </div>
+            </div>
+
+            <div class="sep" style="margin:10px 0;"></div>
+
+            <div id="check-def" class="check-result fail">
+                <span class="check-icon">⏳</span>
+                <span>破防判定：載入中...</span>
+            </div>
+            <div id="check-survive" class="check-result fail">
+                <span class="check-icon">⏳</span>
+                <span>存活判定：載入中...</span>
+            </div>
+        </div>
+
+        <!-- Requirements Panel -->
+        <div class="card entrance-anim">
+            <div class="card-label">📋 挑戰需求</div>
+            <div class="req-list">
+                <div class="req-row">
+                    <span class="req-icon">⚔️</span>
+                    <span class="req-text">最低攻擊力（破防95%DEF）</span>
+                    <span class="req-val">855,000,000</span>
+                </div>
+                <div class="req-row">
+                    <span class="req-icon">🛡️</span>
+                    <span class="req-text">最低防禦力（承受Boss攻擊）</span>
+                    <span class="req-val">475,000,000</span>
+                </div>
+                <div class="req-row">
+                    <span class="req-icon">❤️</span>
+                    <span class="req-text">最低生命值</span>
+                    <span class="req-val">500,000,000</span>
+                </div>
+                <div class="req-row">
+                    <span class="req-icon">⚔️</span>
+                    <span class="req-text">裝備需求</span>
+                    <span class="req-val">神話3裝 +30</span>
+                </div>
+            </div>
+
+            <div class="comparison-box" id="comparison-box">
+                <div class="comp-title">⚔️ vs ⚔️ 戰力對比</div>
+                <div class="comp-row">
+                    <span class="comp-label"></span>
+                    <span class="comp-player" id="comp-player-label">你</span>
+                    <span class="comp-vs">VS</span>
+                    <span class="comp-boss" id="comp-boss-label">Boss</span>
+                </div>
+                <div class="comp-row">
+                    <span class="comp-label">⚔️ ATK</span>
+                    <span class="comp-player" id="comp-player-atk">-</span>
+                    <span class="comp-vs">VS</span>
+                    <span class="comp-boss" id="comp-boss-atk">500M</span>
+                </div>
+                <div class="comp-row">
+                    <span class="comp-label">🛡️ DEF</span>
+                    <span class="comp-player" id="comp-player-def">-</span>
+                    <span class="comp-vs">VS</span>
+                    <span class="comp-boss" id="comp-boss-def">900M</span>
+                </div>
+                <div class="comp-row">
+                    <span class="comp-label">❤️ HP</span>
+                    <span class="comp-player" id="comp-player-hp">-</span>
+                    <span class="comp-vs">VS</span>
+                    <span class="comp-boss" id="comp-boss-hp">999T</span>
+                </div>
+                <div class="comp-result" id="comp-result">
+                    載入中...
+                </div>
+            </div>
+        </div>
+
+        <!-- Reward Preview -->
+        <div class="card entrance-anim">
+            <div class="card-label">🏆 擊敗獎勵</div>
+            <div class="reward-preview">
+                <div class="reward-title-preview">「宇宙最強」</div>
+                <div class="sep" style="margin:10px 0;"></div>
+                <div class="reward-items-preview">
+                    <div class="reward-item-row">
+                        <span class="reward-item-icon">🏅</span>
+                        <span class="reward-item-text">專屬稱號：<strong>宇宙最強</strong></span>
+                    </div>
+                    <div class="reward-item-row">
+                        <span class="reward-item-icon">💎</span>
+                        <span class="reward-item-text">碎片 ×<strong>1,000,000</strong></span>
+                    </div>
+                    <div class="reward-item-row">
+                        <span class="reward-item-icon">🔮</span>
+                        <span class="reward-item-text">轉蛋城材料（大量）</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Challenge Button -->
+        <button class="btn-challenge" id="btn-challenge" onclick="challengeBoss()" disabled>
+            💀 挑戰終極Boss
+        </button>
+
+    </div>
+</div>
+
+<script>
+// ── Globals ──────────────────────────────────────────────────────────
+const myToken = localStorage.getItem('rpg_token');
+if (!myToken) { location.href = 'index.html'; }
+
+const socket = io('https://mmo.ttctv-105.cc', {
+    transports: ['websocket', 'polling'],
+    secure: true
+});
+
+let bossData = null;
+let playerData = null;
+let alreadyDefeated = false;
+let isChallenging = false;
+
+// ── Starfield ────────────────────────────────────────────────────────
+function createStarfield() {
+    const container = document.getElementById('starfield');
+    const count = 80;
+    for (let i = 0; i < count; i++) {
+        const star = document.createElement('div');
+        star.className = 'star' + (Math.random() > 0.85 ? ' large' : '');
+        star.style.left = Math.random() * 100 + '%';
+        star.style.top = Math.random() * 100 + '%';
+        star.style.setProperty('--dur', (2 + Math.random() * 4) + 's');
+        star.style.setProperty('--max-op', (0.3 + Math.random() * 0.7));
+        star.style.animationDelay = Math.random() * 5 + 's';
+        container.appendChild(star);
+    }
+}
+createStarfield();
+
+// ── Victory Particles ────────────────────────────────────────────────
+function createVictoryParticles() {
+    const container = document.getElementById('victory-particles');
+    container.innerHTML = '';
+    const count = 40;
+    for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        p.className = 'v-particle';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.setProperty('--p-dur', (2 + Math.random() * 3) + 's');
+        p.style.setProperty('--p-delay', (Math.random() * 3) + 's');
+        p.style.background = Math.random() > 0.5
+            ? 'var(--gold-light)'
+            : 'var(--orange-light)';
+        p.style.width = (2 + Math.random() * 4) + 'px';
+        p.style.height = p.style.width;
+        container.appendChild(p);
+    }
+}
+createVictoryParticles();
+
+// ── Toast ────────────────────────────────────────────────────────────
+function showToast(msg, type) {
+    const t = document.getElementById('boss-toast');
+    t.innerText = msg;
+    t.className = (type || '') + ' show';
+    setTimeout(() => { t.className = ''; }, 3500);
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────
+function formatNum(n) {
+    if (n === undefined || n === null) return '-';
+    n = Number(n);
+    if (isNaN(n)) return '-';
+    return n.toLocaleString();
+}
+
+function formatShort(n) {
+    if (n === undefined || n === null) return '-';
+    n = Number(n);
+    if (isNaN(n)) return '-';
+    if (n >= 1e12) return (n / 1e12).toFixed(n % 1e12 === 0 ? 0 : 1) + 'T';
+    if (n >= 1e9) return (n / 1e9).toFixed(n % 1e9 === 0 ? 0 : 1) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(n % 1e6 === 0 ? 0 : 1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(n % 1e3 === 0 ? 0 : 1) + 'K';
+    return n.toLocaleString();
+}
+
+// ── Update UI ────────────────────────────────────────────────────────
+function updateBossDisplay(data) {
+    if (!data) return;
+    bossData = data;
+
+    document.getElementById('boss-name').textContent = data.name || '宇宙終焉者·阿卡西';
+    document.getElementById('boss-level').textContent = data.level || 1000;
+    document.getElementById('boss-atk').textContent = formatNum(data.atk || 500000000);
+    document.getElementById('boss-def').textContent = formatNum(data.def || 900000000);
+
+    const hp = data.hp !== undefined ? data.hp : 99999999999999;
+    const maxHp = data.maxHp !== undefined ? data.maxHp : 99999999999999;
+    document.getElementById('boss-hp-text').textContent = formatNum(maxHp);
+    document.getElementById('boss-hp-percent').textContent = formatShort(maxHp);
+    document.getElementById('boss-hp-bar').style.width = '100%';
+
+    // Defeated state
+    alreadyDefeated = data.defeated || false;
+    if (alreadyDefeated) {
+        document.getElementById('boss-defeated-tag').style.display = 'block';
+        document.getElementById('btn-challenge').disabled = true;
+        document.getElementById('btn-challenge').innerHTML = '✦ 已被擊敗 ✦';
+
+        // Show victory screen
+        showVictoryScreen();
+    }
+}
+
+function updatePlayerStats(stats) {
+    if (!stats) return;
+    playerData = stats;
+
+    const pAtk = stats.attack || stats.atk || 0;
+    const pDef = stats.defense || stats.def || 0;
+    const pMaxHp = stats.maxHp || stats.hp || 0;
+
+    document.getElementById('player-atk').textContent = formatShort(pAtk);
+    document.getElementById('player-def').textContent = formatShort(pDef);
+    document.getElementById('player-hp').textContent = formatShort(pMaxHp);
+
+    // Comparison
+    document.getElementById('comp-player-atk').textContent = formatShort(pAtk);
+    document.getElementById('comp-player-def').textContent = formatShort(pDef);
+    document.getElementById('comp-player-hp').textContent = formatShort(pMaxHp);
+
+    // Boss stats for comparison
+    const bAtk = bossData ? (bossData.atk || 500000000) : 500000000;
+    const bDef = bossData ? (bossData.def || 900000000) : 900000000;
+    document.getElementById('comp-boss-atk').textContent = formatShort(bAtk);
+    document.getElementById('comp-boss-def').textContent = formatShort(bDef);
+
+    // DEF check: player ATK >= 95% of boss DEF
+    const defThreshold = Math.floor(bDef * 0.95);
+    const canBreakDef = pAtk >= defThreshold;
+
+    const checkDefEl = document.getElementById('check-def');
+    if (canBreakDef) {
+        checkDefEl.className = 'check-result pass';
+        checkDefEl.innerHTML = '<span class="check-icon">✅</span><span>破防判定：可以破防！攻擊力足夠（需要 ' + formatNum(defThreshold) + '）</span>';
+    } else {
+        checkDefEl.className = 'check-result fail';
+        checkDefEl.innerHTML = '<span class="check-icon">❌</span><span>破防失敗！攻擊力不足（需要 ' + formatNum(defThreshold) + '，差距 ' + formatNum(defThreshold - pAtk) + '）</span>';
+    }
+
+    // Survivability: can player survive boss hit? (player HP > boss ATK or player DEF reduces enough)
+    const bossDmg = Math.max(1, bAtk - pDef);
+    const canSurvive = pMaxHp > bossDmg || pDef >= bAtk;
+
+    const checkSurviveEl = document.getElementById('check-survive');
+    if (canSurvive) {
+        checkSurviveEl.className = 'check-result pass';
+        checkSurviveEl.innerHTML = '<span class="check-icon">✅</span><span>存活判定：可以存活！Boss每次攻擊預計 ' + formatNum(bossDmg) + ' 傷害</span>';
+    } else {
+        checkSurviveEl.className = 'check-result fail';
+        checkSurviveEl.innerHTML = '<span class="check-icon">❌</span><span>存活判定：無法存活！Boss每次攻擊預計 ' + formatNum(bossDmg) + ' 傷害（超過你的HP）</span>';
+    }
+
+    // Overall comparison result
+    const compResult = document.getElementById('comp-result');
+    if (canBreakDef && canSurvive) {
+        compResult.className = 'comp-result pass';
+        compResult.textContent = '⚡ 滿足挑戰條件！可以嘗試挑戰！';
+    } else {
+        compResult.className = 'comp-result fail';
+        const missing = [];
+        if (!canBreakDef) missing.push('攻擊力不足以破防');
+        if (!canSurvive) missing.push('無法承受Boss攻擊');
+        compResult.textContent = '❌ 未滿足條件：' + missing.join('，');
+    }
+
+    // Enable challenge button if not defeated
+    if (!alreadyDefeated) {
+        document.getElementById('btn-challenge').disabled = false;
+    }
+}
+
+// ── Victory Screen ───────────────────────────────────────────────────
+function showVictoryScreen() {
+    const vs = document.getElementById('victory-screen');
+    vs.classList.add('show');
+    createVictoryParticles();
+}
+
+// ── Challenge Boss ───────────────────────────────────────────────────
+function challengeBoss() {
+    if (alreadyDefeated || isChallenging) return;
+
+    if (confirm('💀 終極Boss 挑戰確認\n\n' +
+        '對手：宇宙終焉者·阿卡西 (Lv.1000)\n' +
+        'HP：999,999,999,999,999\n' +
+        'DEF：900,000,000 | ATK：500,000,000\n\n' +
+        '⚠️ 這是一次性挑戰，失敗後可能無法再次挑戰！\n\n' +
+        '確定要挑戰嗎？')) {
+        isChallenging = true;
+        const btn = document.getElementById('btn-challenge');
+        btn.disabled = true;
+        btn.innerHTML = '⚡ 挑戰中...';
+        socket.emit('challengeUltimateBoss');
+        showToast('⚡ 正在發起終極挑戰...', '');
+    }
+}
+
+// ── Result Overlay ───────────────────────────────────────────────────
+function showResultOverlay(data) {
+    const overlay = document.getElementById('result-overlay');
+    const icon = document.getElementById('result-icon');
+    const title = document.getElementById('result-title');
+    const desc = document.getElementById('result-desc');
+    const rewards = document.getElementById('result-rewards');
+
+    if (data && data.victory) {
+        icon.textContent = '👑';
+        title.textContent = '勝利！';
+        title.className = 'result-title win';
+        desc.textContent = '你擊敗了宇宙終焉者·阿卡西！\n你已成為這個宇宙中最強的存在！';
+
+        if (data.rewards) {
+            rewards.style.display = 'block';
+            let html = '';
+            if (data.rewards.title) html += '<div class="result-reward-item">🏅 獲得稱號：<strong>' + data.rewards.title + '</strong></div>';
+            if (data.rewards.shards) html += '<div class="result-reward-item">💎 碎片 +' + formatNum(data.rewards.shards) + '</div>';
+            if (data.rewards.materials) html += '<div class="result-reward-item">🔮 轉蛋城材料（大量）</div>';
+            if (typeof data.rewards === 'object' && !data.rewards.title) {
+                for (const [key, val] of Object.entries(data.rewards)) {
+                    const names = { skill_shard: '技能碎片 💎', gold: '金幣 💰' };
+                    html += '<div class="result-reward-item">' + (names[key] || key) + ' +' + formatNum(val) + '</div>';
+                }
+            }
+            rewards.innerHTML = html || '<div class="result-reward-item">🏆 獲得豐厚獎勵！</div>';
+        } else {
+            rewards.style.display = 'block';
+            rewards.innerHTML = '<div class="result-reward-item">🏅 獲得稱號：宇宙最強</div>' +
+                '<div class="result-reward-item">💎 碎片 +1,000,000</div>' +
+                '<div class="result-reward-item">🔮 轉蛋城材料（大量）</div>';
+        }
+    } else {
+        icon.textContent = '💀';
+        title.textContent = '挑戰失敗';
+        title.className = 'result-title lose';
+        desc.textContent = data && data.message
+            ? data.message
+            : '你的力量不足以擊敗宇宙終焉者·阿卡西...\n繼續提升實力再來挑戰吧！';
+        rewards.style.display = 'none';
+    }
+
+    overlay.classList.add('show');
+}
+
+function closeResult() {
+    document.getElementById('result-overlay').classList.remove('show');
+    isChallenging = false;
+
+    // If victory, reload data and show victory screen
+    if (bossData && bossData.defeated) {
+        showVictoryScreen();
+    } else {
+        const btn = document.getElementById('btn-challenge');
+        if (!alreadyDefeated) {
+            btn.disabled = false;
+        }
+        btn.innerHTML = '💀 挑戰終極Boss';
+    }
+}
+
+// ── Socket Events ────────────────────────────────────────────────────
+socket.on('connect', () => {
+    socket.emit('joinGame', myToken);
+    socket.emit('getUltimateBossInfo');
+});
+
+socket.on('playerStatsUpdate', (p) => {
+    if (p) {
+        playerData = p;
+        updatePlayerStats(p);
+    }
+});
+
+socket.on('ultimateBossResult', (res) => {
+    if (!res) return;
+
+    // Hide loading
+    document.getElementById('loading-section').style.display = 'none';
+    document.getElementById('main-content').style.display = 'block';
+
+    if (res.boss) {
+        updateBossDisplay(res.boss);
+    }
+    if (res.player) {
+        updatePlayerStats(res.player);
+    }
+
+    // Challenge result
+    if (res.challengeResult) {
+        if (res.challengeResult.victory) {
+            alreadyDefeated = true;
+            document.getElementById('boss-defeated-tag').style.display = 'block';
+            document.getElementById('btn-challenge').disabled = true;
+            document.getElementById('btn-challenge').innerHTML = '✦ 已被擊敗 ✦';
+            showResultOverlay({ victory: true, rewards: res.challengeResult.rewards });
+            showToast('👑 恭喜！你擊敗了終極Boss！', 'success');
+        } else {
+            showResultOverlay({ victory: false, message: res.challengeResult.message });
+            showToast('💀 挑戰失敗...', 'error');
+        }
+        isChallenging = false;
+    }
+
+    // If already defeated from server data
+    if (res.defeated) {
+        alreadyDefeated = true;
+        updateBossDisplay({ ...(bossData || {}), defeated: true });
+    }
+});
+
+socket.on('errorMessage', (msg) => {
+    showToast(msg, 'error');
+    console.error('[UltimateBoss Error]', msg);
+    isChallenging = false;
+    document.getElementById('loading-section').style.display = 'none';
+    document.getElementById('main-content').style.display = 'block';
+    if (!alreadyDefeated) {
+        const btn = document.getElementById('btn-challenge');
+        btn.disabled = false;
+        btn.innerHTML = '💀 挑戰終極Boss';
+    }
+});
+
+// ── Init ─────────────────────────────────────────────────────────────
+// Show content after a timeout in case socket is slow
+setTimeout(() => {
+    const loading = document.getElementById('loading-section');
+    if (loading.style.display !== 'none') {
+        loading.style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+        // Show default boss stats
+        updateBossDisplay({
+            name: '宇宙終焉者·阿卡西',
+            level: 1000,
+            hp: 99999999999999,
+            maxHp: 99999999999999,
+            atk: 500000000,
+            def: 900000000,
+            defeated: false
+        });
+    }
+}, 5000);
+</script>
+</body>
+</html>
