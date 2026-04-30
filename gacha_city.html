@@ -1098,7 +1098,7 @@ function teleportToFloor() {
     }
 
     if (confirm('⚡ 確定要傳送到第 ' + target + ' 層嗎？\n\n消耗：💎 ' + formatNum(cost) + ' 碎片')) {
-        socket.emit('gachaCityTeleport', { targetFloor: target });
+        socket.emit('gachaCityTeleport', target);
         input.value = '';
     }
 }
