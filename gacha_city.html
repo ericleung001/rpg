@@ -483,7 +483,8 @@
             ➡️ 下一層費用：<span>💎 5,000 碎片</span><br>
             ⚡ 傳送費用：<span>💎 50,000 × 層數</span><br>
             <span style="color:#e74c3c; font-size:10px;">⚠️ HP 歸零會被自動踢出！</span><br>
-            <span style="color:#e67e22; font-size:10px;">🚫 每層有技能傷害上限（越高層越低）</span>
+            <span style="color:#e67e22; font-size:10px;">🚫 每層有技能傷害上限（越高層越低）</span><br>
+            <span style="color:#9b59b6; font-size:10px;">🌀 次元干擾場：回復魔法完全失效，請攜帶恢復道具！</span>
         </div>
 
         <div class="card" id="saved-floor-card" style="display:none; text-align:center;">
@@ -761,7 +762,7 @@ const GACHA_MATS = ['gacha_ember', 'gacha_ice', 'gacha_dark', 'gacha_divine', 'g
 const SKILL_INFO = {
     'fireball':      { name: '火球術',     mp: 5,    cat: 'atk',  desc: '傷x1.5' },
     'thunder':       { name: '雷擊',       mp: 15,   cat: 'atk',  desc: '傷x1.2+暈' },
-    'drain':         { name: '吸血',       mp: 20,   cat: 'atk',  desc: '吸血100%' },
+    'drain':         { name: '吸血',       mp: 20,   cat: 'heal', desc: '❌ 次元封印' },
     'frost_nova':    { name: '冰霜新星',   mp: 30,   cat: 'atk',  desc: '傷x1.2+降防' },
     'poison_touch':  { name: '劇毒之觸',   mp: 25,   cat: 'atk',  desc: '傷x2.5' },
     'meteor':        { name: '隕石術',     mp: 80,   cat: 'atk',  desc: '傷x3.5(AOE)' },
@@ -772,10 +773,10 @@ const SKILL_INFO = {
     'holy_shield':   { name: '聖光守護',   mp: 40,   cat: 'buff', desc: '防禦x2' },
     'berserk':       { name: '狂暴',       mp: 60,   cat: 'buff', desc: '攻x2(自殘)' },
     'god_mode':      { name: '天神下凡',   mp: 300,  cat: 'buff', desc: '全能x3' },
-    'heal_light':    { name: '小回復',     mp: 10,   cat: 'heal', desc: 'HP+20%' },
-    'god_light':     { name: '神之光',     mp: 50,   cat: 'heal', desc: 'HP+50%' },
-    'heal_all':      { name: '聖光普照',   mp: 100,  cat: 'heal', desc: '全隊滿HP' },
-    'full_heal':     { name: '大天使息',   mp: 200,  cat: 'heal', desc: 'HP全滿' }
+    'heal_light':    { name: '小回復',     mp: 10,   cat: 'heal', desc: '❌ 次元封印' },
+    'god_light':     { name: '神之光',     mp: 50,   cat: 'heal', desc: '❌ 次元封印' },
+    'heal_all':      { name: '聖光普照',   mp: 100,  cat: 'heal', desc: '❌ 次元封印' },
+    'full_heal':     { name: '大天使息',   mp: 200,   cat: 'heal', desc: '❌ 次元封印' }
 };
 
 const ITEM_NAMES = {
@@ -1077,10 +1078,11 @@ function openSkillPanel() {
         if (info.cat === 'heal') color = '#27ae60';
         if (info.cat === 'buff') color = '#e67e22';
         const mp = myData.mp || 0;
-        const canUse = mp >= info.mp;
+        const isSealed = info.cat === 'heal'; // 轉蛋城內回復技能被封印
+        const canUse = mp >= info.mp && !isSealed;
         btn.style.cssText = `justify-content:space-between; padding:10px 14px; font-size:12px; color:${color};`;
         btn.innerHTML = `<span style="font-weight:700;">${info.name}</span><span style="font-size:10px; color:#3498db;">MP-${info.mp} ${info.desc}</span>`;
-        if (!canUse) { btn.disabled = true; btn.style.opacity = '0.4'; }
+        if (!canUse) { btn.disabled = true; btn.style.opacity = '0.35'; }
         btn.onclick = () => { useSkill(skillId); };
         list.appendChild(btn);
     });
