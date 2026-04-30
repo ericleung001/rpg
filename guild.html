@@ -229,7 +229,34 @@
             'shard_blade_novice': '碎光長劍', 'shard_axe_crystal': '晶體戰斧', 'shard_scythe_void': '虛空撕裂者',
             'shard_spear_galaxy': '星河·貫穿之槍', 'shard_wep_dimension': '維度·終焉裁決', 'shard_wep_origin': '原初·萬物歸零',
             'shard_armor_novice': '碎光輕甲', 'shard_armor_crystal': '晶體戰甲', 'shard_robe_void': '虛空行者法袍',
-            'shard_plate_galaxy': '星河·不滅壁壘', 'shard_armor_dimension': '維度·虛數裝甲', 'shard_armor_origin': '原初·混沌神軀'
+            'shard_plate_galaxy': '星河·不滅壁壘', 'shard_armor_dimension': '維度·虛數裝甲', 'shard_armor_origin': '原初·混沌神軀',
+            'potion_high': '大紅藥水', 'potion_max': '特級秘藥',
+            'potion_mp_mid': '中藍藥水', 'potion_mp_high': '大藍藥水',
+            'grilled_carp': '烤鯉魚', 'salmon_sushi': '鮭魚壽司', 'tuna_steak': '煎鮪魚排',
+            'eel_rice': '鰻魚飯', 'void_soup': '虛空海鮮湯', 'sushi_plate': '壽司拼盤',
+            'wood_sword': '木劍', 'copper_dagger': '銅匕首', 'oak_bow': '橡木弓',
+            'iron_sword': '鐵劍', 'maple_staff': '楓木法杖', 'silver_blade': '銀刃',
+            'spike_club': '狼牙棒', 'poison_dag': '劇毒匕首', 'shark_tooth': '鯊魚牙匕首',
+            'flame_staff': '火焰法杖', 'emerald_staff': '翡翠法杖', 'gold_axe': '黃金巨斧',
+            'obsidian_blade': '黑曜石之劍', 'frost_bow': '寒冰弓', 'dragon_spear': '龍骨長槍',
+            'mithril_saber': '秘銀軍刀', 'void_reaper': '虛空收割者',
+            'void_reaper_dark': '闇·虛空收割者', 'god_slayer': '弒神劍', 'chaos_staff': '混沌法杖',
+            'hero_sword': '勇者之劍', 'steel_blade': '精鋼劍', 'assassin_dag': '刺客短刀',
+            'entropy_sword': '終焉·熱寂之劍',
+            'cloth_armor': '布衣', 'hunt_vest': '獵人背心', 'plate_mail': '板金甲',
+            'dragon_mail': '龍鱗甲', 'magma_plate': '熔岩胸甲', 'ice_robe': '冰霜法袍',
+            'yeti_cloak': '雪怪斗篷', 'demon_armor': '惡魔戰甲', 'angel_armor': '熾天使鎧甲',
+            'entropy_god_armor': '終焉·神之庇護',
+            'bone_ring': '骨戒', 'fish_ring': '魚鱗戒指', 'snake_boots': '蛇皮長靴',
+            'ring_str': '力量戒指', 'bracelet_def': '堅毅手環',
+            'necklace_hp': '紅水晶項鍊', 'necklace_mp': '藍水晶項鍊',
+            'ring_life': '生命護符', 'ring_magic': '魔力耳環',
+            'pearl_necklace': '珍珠項鍊', 'amulet_soul': '靈魂護符',
+            'ring_lord': '領主指環', 'crown_chaos': '混沌之冠', 'dimension_ring': '維度指環',
+            'safe_stone': '防爆石', 'skill_shard': '技能碎片',
+            'myth_essence_fire': '烈焰精華', 'myth_essence_ice': '永恆冰精華',
+            'myth_essence_dark': '暗淵精華', 'myth_essence_light': '神聖精華',
+            'myth_essence_chaos': '混沌精華'
         };
 
         let currentTab = 'members';
@@ -251,6 +278,7 @@
         socket.on('refreshGuildUI', () => { socket.emit('getGuildInfo'); });
 
         socket.on('guildChatUpdate', (history) => {
+            if (myGuildData) myGuildData.chatHistory = history;
             const chatBox = document.getElementById('g-chat-box');
             if (chatBox) renderChatHistory(history);
         });
@@ -506,11 +534,14 @@
                 } else {
                     for (const [itemId, qty] of Object.entries(vaultItems)) {
                         const name = ITEM_NAME_MAP[itemId] || itemId;
+                        const safeItemId = itemId.replace(/'/g, "\\'");
                         html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:#1a1a2e;border-radius:5px;margin-bottom:4px;">'
                               + '<span style="font-size:12px;">' + name + '</span>'
-                              + '<div style="display:flex;align-items:center;gap:8px;">'
-                              + '<span style="color:#f1c40f;font-size:11px;">x' + qty + '</span>'
-                              + '<button onclick="vaultWithdraw(\'' + itemId + '\',1)" style="padding:2px 8px;background:#c0392b;border:none;color:#fff;border-radius:3px;cursor:pointer;font-size:10px;">取出</button>'
+                              + '<div style="display:flex;align-items:center;gap:4px;">'
+                              + '<span style="color:#f1c40f;font-size:11px;margin-right:2px;">x' + qty + '</span>'
+                              + '<input type="number" min="1" max="' + qty + '" value="1" id="vw-' + safeItemId + '" style="width:50px;padding:2px 4px;background:#222;border:1px solid #444;color:#fff;border-radius:3px;font-size:10px;text-align:center;">'
+                              + '<button onclick="vaultWithdrawFromInput(\'' + safeItemId + '\')" style="padding:2px 8px;background:#c0392b;border:none;color:#fff;border-radius:3px;cursor:pointer;font-size:10px;">取出</button>'
+                              + '<button onclick="vaultWithdraw(\'' + safeItemId + '\',100)" style="padding:2px 8px;background:#e67e22;border:none;color:#fff;border-radius:3px;cursor:pointer;font-size:10px;">x100</button>'
                               + '</div></div>';
                     }
                 }
@@ -674,21 +705,42 @@
             socket.emit('guildVaultWithdraw', { itemId, count });
         }
 
+        function vaultWithdrawFromInput(itemId) {
+            const input = document.getElementById('vw-' + itemId);
+            if (!input) return;
+            const count = parseInt(input.value) || 1;
+            if (count < 1) return;
+            socket.emit('guildVaultWithdraw', { itemId, count });
+        }
+
+        function vaultWithdrawAll() {
+            if (!confirm('確定要取出倉庫中所有物品嗎？')) return;
+            const vaultItems = myVaultData || {};
+            for (const [itemId, qty] of Object.entries(vaultItems)) {
+                if (qty > 0) {
+                    socket.emit('guildVaultWithdraw', { itemId, count: qty });
+                }
+            }
+        }
+
         socket.on('guildFacilitiesData', (data) => {
             myFacilities = data.facilities || { temple: 0, expedition: 0, vault: 0 };
             guildShard = data.guildShard || 0;
             myVaultData = (data.vault && data.vault.items) || {};
             renderMyGuild();
+            if (myGuildData && myGuildData.chatHistory) renderChatHistory(myGuildData.chatHistory);
         });
 
         socket.on('guildFacilityUpdate', (fac) => {
             myFacilities = fac;
             renderMyGuild();
+            if (myGuildData && myGuildData.chatHistory) renderChatHistory(myGuildData.chatHistory);
         });
 
         socket.on('guildVaultUpdate', (vault) => {
             myVaultData = (vault && vault.items) || {};
             renderMyGuild();
+            if (myGuildData && myGuildData.chatHistory) renderChatHistory(myGuildData.chatHistory);
         });
     </script>
 </body>
