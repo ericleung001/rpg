@@ -1686,6 +1686,16 @@
                     const logLines = data.log.split('\n');
                     logLines.forEach(l => log(l));
                 }
+                // Client-side death check: stop auto-battle if this player is dead
+                if (data.players) {
+                    const myName = document.getElementById('my-name-display').textContent;
+                    const myP = data.players.find(p => p.name === myName || p.name === myName.replace(/<[^>]*>/g, ''));
+                    if (myP && myP.hp <= 0) {
+                        isMyTurn = false;
+                        if (isAuto) toggleAuto();
+                        document.getElementById('turn-bar').innerText = '💀 你已陣亡...';
+                    }
+                }
             }
         });
 
