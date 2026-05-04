@@ -687,11 +687,11 @@
             <div class="boss-hp-container">
                 <div class="boss-hp-label">
                     <span>💀 HP</span>
-                    <span id="boss-hp-text">99,999,999,999,999</span>
+                    <span id="boss-hp-text">15,000,000,000</span>
                 </div>
                 <div class="boss-hp-outer">
                     <div class="boss-hp-inner" id="boss-hp-bar" style="width:100%;">
-                        <div class="boss-hp-text" id="boss-hp-percent">999T</div>
+                        <div class="boss-hp-text" id="boss-hp-percent">15B</div>
                     </div>
                 </div>
             </div>
@@ -700,12 +700,12 @@
                 <div class="boss-stat">
                     <span class="boss-stat-icon">⚔️</span>
                     <span class="boss-stat-label">ATK</span>
-                    <span class="boss-stat-value" id="boss-atk">500,000,000</span>
+                    <span class="boss-stat-value" id="boss-atk">200,000,000</span>
                 </div>
                 <div class="boss-stat">
                     <span class="boss-stat-icon">🛡️</span>
                     <span class="boss-stat-label">DEF</span>
-                    <span class="boss-stat-value" id="boss-def">900,000,000</span>
+                    <span class="boss-stat-value" id="boss-def">130,000,000</span>
                 </div>
             </div>
         </div>
@@ -749,23 +749,23 @@
             <div class="req-list">
                 <div class="req-row">
                     <span class="req-icon">⚔️</span>
-                    <span class="req-text">最低攻擊力（破防95%DEF）</span>
-                    <span class="req-val">855,000,000</span>
+                    <span class="req-text">最低攻擊力（破防Boss DEF）</span>
+                    <span class="req-val">65,000,000</span>
                 </div>
                 <div class="req-row">
                     <span class="req-icon">🛡️</span>
                     <span class="req-text">最低防禦力（承受Boss攻擊）</span>
-                    <span class="req-val">475,000,000</span>
+                    <span class="req-val">280,000,000</span>
                 </div>
                 <div class="req-row">
                     <span class="req-icon">❤️</span>
                     <span class="req-text">最低生命值</span>
-                    <span class="req-val">500,000,000</span>
+                    <span class="req-val">1,000,000,000</span>
                 </div>
                 <div class="req-row">
                     <span class="req-icon">⚔️</span>
                     <span class="req-text">裝備需求</span>
-                    <span class="req-val">神話3裝 +30</span>
+                    <span class="req-val">神話III代 +28~30</span>
                 </div>
             </div>
 
@@ -781,19 +781,19 @@
                     <span class="comp-label">⚔️ ATK</span>
                     <span class="comp-player" id="comp-player-atk">-</span>
                     <span class="comp-vs">VS</span>
-                    <span class="comp-boss" id="comp-boss-atk">500M</span>
+                    <span class="comp-boss" id="comp-boss-atk">200M</span>
                 </div>
                 <div class="comp-row">
                     <span class="comp-label">🛡️ DEF</span>
                     <span class="comp-player" id="comp-player-def">-</span>
                     <span class="comp-vs">VS</span>
-                    <span class="comp-boss" id="comp-boss-def">900M</span>
+                    <span class="comp-boss" id="comp-boss-def">130M</span>
                 </div>
                 <div class="comp-row">
                     <span class="comp-label">❤️ HP</span>
                     <span class="comp-player" id="comp-player-hp">-</span>
                     <span class="comp-vs">VS</span>
-                    <span class="comp-boss" id="comp-boss-hp">999T</span>
+                    <span class="comp-boss" id="comp-boss-hp">15B</span>
                 </div>
                 <div class="comp-result" id="comp-result">
                     載入中...
@@ -825,9 +825,14 @@
         </div>
 
         <!-- Challenge Button -->
-        <button class="btn-challenge" id="btn-challenge" onclick="challengeBoss()" disabled>
+        <button class="btn-challenge" id="btn-challenge" onclick="challengeBoss()">
             💀 挑戰終極Boss
         </button>
+
+        <!-- 次元干擾場警告 -->
+        <div style="text-align:center; margin-top:12px; font-size:10px; color:var(--orange); opacity:0.8;">
+            ⚠️ 終極次元干擾場：回復技能與增益技能全部被封印！
+        </div>
 
     </div>
 
@@ -1041,8 +1046,8 @@ function updatePlayerStats(stats) {
     document.getElementById('comp-player-atk').textContent = formatShort(pAtk);
     document.getElementById('comp-player-def').textContent = formatShort(pDef);
     document.getElementById('comp-player-hp').textContent = formatShort(pMaxHp);
-    const bAtk = bossData ? (bossData.atk || 180000000) : 180000000;
-    const bDef = bossData ? (bossData.def || 120000000) : 120000000;
+    const bAtk = bossData ? (bossData.atk || 200000000) : 200000000;
+    const bDef = bossData ? (bossData.def || 130000000) : 130000000;
     document.getElementById('comp-boss-atk').textContent = formatShort(bAtk);
     document.getElementById('comp-boss-def').textContent = formatShort(bDef);
     const defThreshold = Math.floor(bDef * 0.5);
@@ -1134,7 +1139,7 @@ function enterBattleUI(state) {
     document.getElementById('battle-section').style.display = 'block';
     isInBattle = true;
     updateBattleUI(state);
-    document.getElementById('battle-log').innerHTML = '⚔️ 終極Boss戰鬥開始！\n';
+    document.getElementById('battle-log').innerHTML = '⚔️ 終極Boss戰鬥開始！\n🌀 終極次元干擾場生效中：回復/增益技能已被封印！\n';
 }
 
 function exitBattleUI() {
@@ -1213,6 +1218,8 @@ function openBossSkillPanel() {
     document.getElementById('boss-item-panel').style.display = 'none';
     const list = document.getElementById('boss-skill-list');
     list.innerHTML = '';
+    // 次元干擾場：被禁的技能類型
+    const BANNED_IN_ULTIMATE = ['heal', 'heal_all', 'drain', 'buff_atk', 'buff_def', 'god'];
     (mySkills || []).forEach(skillId => {
         const info = SKILL_INFO[skillId];
         if (!info) return;
@@ -1223,10 +1230,19 @@ function openBossSkillPanel() {
         if (info.cat === 'heal') color = '#27ae60';
         const mp = myData ? (myData.mp || 0) : 0;
         const canUse = mp >= (info.mp || 0);
+        // 檢查是否被次元干擾場禁制
+        const isBanned = BANNED_IN_ULTIMATE.includes(info.cat) || ['heal_light','god_light','heal_all','full_heal','vampiric','drain','berserk','holy_shield','god_mode'].includes(skillId);
         btn.style.cssText = 'border:none; border-radius:8px; padding:10px; font-size:11px; color:' + color + '; background:var(--panel); cursor:pointer; font-family:"Noto Sans TC",sans-serif; text-align:left; display:flex; flex-direction:column; gap:2px;';
-        btn.innerHTML = '<span style="font-weight:700;">' + info.name + '</span><span style="font-size:9px; color:#3498db;">MP-' + info.mp + '</span>';
-        if (!canUse) { btn.disabled = true; btn.style.opacity = '0.35'; }
-        btn.onclick = () => { useBossSkill(skillId); };
+        if (isBanned) {
+            btn.innerHTML = '<span style="font-weight:700;">🌀 ' + info.name + ' (被封印)</span><span style="font-size:9px; color:#e74c3c;">次元干擾場禁止</span>';
+            btn.disabled = true;
+            btn.style.opacity = '0.35';
+            btn.style.cursor = 'not-allowed';
+        } else {
+            btn.innerHTML = '<span style="font-weight:700;">' + info.name + '</span><span style="font-size:9px; color:#3498db;">MP-' + info.mp + '</span>';
+            if (!canUse) { btn.disabled = true; btn.style.opacity = '0.35'; }
+            btn.onclick = () => { useBossSkill(skillId); };
+        }
         list.appendChild(btn);
     });
 }
@@ -1305,6 +1321,9 @@ socket.on('ultimateBossInfo', (res) => {
         document.getElementById('btn-challenge').disabled = true;
         document.getElementById('btn-challenge').innerHTML = '✦ 已被擊敗 ✦';
         showVictoryScreen();
+    } else {
+        // 確保按鈕可用（修復按鈕無反應問題）
+        document.getElementById('btn-challenge').disabled = false;
     }
     // If already in battle (reconnected)
     if (res.inBattle) {
@@ -1374,7 +1393,7 @@ setTimeout(() => {
         document.getElementById('main-content').style.display = 'block';
         updateBossDisplay({
             name: '宇宙終焉者·阿卡西', level: 1000,
-            hp: 8000000000, atk: 180000000, def: 120000000
+            hp: 15000000000, atk: 200000000, def: 130000000
         });
     }
 }, 5000);
