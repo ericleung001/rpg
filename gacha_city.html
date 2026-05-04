@@ -635,6 +635,13 @@
                         <div class="mat-count" id="mat-gacha_chaos">0</div>
                     </div>
                 </div>
+                <div class="mat-item" style="grid-column: 1 / -1;">
+                    <span class="mat-icon">📜</span>
+                    <div class="mat-info">
+                        <div class="mat-name">神話III代鍛造圖紙 <span style="color:#ff69b4; font-size:9px;">[100F Boss]</span></div>
+                        <div class="mat-count" id="mat-myth3_blueprint">0</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -793,6 +800,13 @@
                         <div class="mat-count" id="dmat-gacha_chaos">0</div>
                     </div>
                 </div>
+                <div class="mat-item" style="grid-column: 1 / -1;">
+                    <span class="mat-icon">📜</span>
+                    <div class="mat-info">
+                        <div class="mat-name">神話III代鍛造圖紙 <span style="color:#ff69b4; font-size:9px;">[100F Boss]</span></div>
+                        <div class="mat-count" id="dmat-myth3_blueprint">0</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -840,7 +854,7 @@ let isInDungeon = false;
 let isOnCooldown = false;
 let dungeonState = null;
 
-const GACHA_MATS = ['gacha_ember', 'gacha_ice', 'gacha_dark', 'gacha_divine', 'gacha_chaos'];
+const GACHA_MATS = ['gacha_ember', 'gacha_ice', 'gacha_dark', 'gacha_divine', 'gacha_chaos', 'myth3_blueprint'];
 
 const SKILL_INFO = {
     'fireball':      { name: '火球術',     mp: 5,    cat: 'atk',  desc: '傷x1.5' },
@@ -955,6 +969,7 @@ function showRewardPopup(rewards) {
                     gacha_dark: '轉蛋暗核 🌑',
                     gacha_divine: '轉蛋神輝 ✨',
                     gacha_chaos: '轉蛋混沌石 🌀',
+                    myth3_blueprint: '神話III代鍛造圖紙 📜',
                     gold: '金幣 💰',
                     skill_shard: '技能碎片 💎',
                     exp: '經驗值 ⭐',
