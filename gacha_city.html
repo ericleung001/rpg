@@ -1443,7 +1443,7 @@ function startGachaCityAutoFromDeathFloor() {
         return;
     }
     if (confirm('⚡ 確定付費返回第 ' + deathFloor + ' 層並開始自動戰鬥？\n\n⏱️ 時間：' + selectedAutoDuration + ' 分鐘\n📍 起始層：第 ' + deathFloor + ' 層\n💰 費用：進入費 💎 ' + formatNum(entryCost) + ' + 傳送費 💎 ' + formatNum(teleportCost) + ' + 每層 💎 5,000\n\n⏰ 設定時間結束/碎片耗盡後自動停止。')) {
-        socket.emit('startGachaCityAuto', { duration: selectedAutoDuration, startFloor: deathFloor });
+        socket.emit('startGachaCityAuto', { duration: selectedAutoDuration, startFloor: deathFloor, deathFloorReturn: true });
         showToast('⚡ 正在返回第 ' + deathFloor + ' 層並啟動自動戰鬥...');
         document.getElementById('auto-death-floor-card').style.display = 'none';
     }
