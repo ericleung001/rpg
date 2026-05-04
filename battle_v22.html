@@ -1096,6 +1096,11 @@
             if(document.getElementById('atk-val')) document.getElementById('atk-val').innerText = p.atk;
             if(document.getElementById('def-val')) document.getElementById('def-val').innerText = p.def;
             updateShortcutStates(p);
+            
+            // Re-check host status for Ultimate Boss if lobby is visible
+            if (isUltimateBoss && ubMode && document.getElementById('lobby-overlay').style.display !== 'none') {
+                socket.emit('getUltimateBossRoomInfo', { roomId: ubRoomId });
+            }
         });
 
         function updateShortcutStates(p) {
@@ -1750,8 +1755,10 @@
             document.getElementById('turn-bar').style.background = '#8b0000';
             document.getElementById('auto-panel').style.display = 'none';
             
-            const myName = document.getElementById('my-name-display').textContent;
-            const isHost = (data.host === myName);
+            const myNameRaw = document.getElementById('my-name-display').textContent;
+            const myNameClean = myNameRaw.replace(/\+\d+$/, '').trim(); // strip rebirth suffix like +5
+            const hostClean = (data.host || '').replace(/\+\d+$/, '').trim();
+            const isHost = (hostClean === myNameClean) || (data.host === myNameRaw);
             document.getElementById('start-btn').style.display = isHost ? 'block' : 'none';
             document.getElementById('waiting-txt').style.display = isHost ? 'none' : 'block';
             
