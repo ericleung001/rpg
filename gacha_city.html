@@ -1298,6 +1298,7 @@ function animateMonsterDefeat() {
 // ══════════════════════════════════════════════════════════════
 let selectedAutoDuration = 30;
 let autoProgressInterval = null;
+let autoStatusChecked = false; // 防止重複查詢
 
 function selectAutoDuration(min) {
     selectedAutoDuration = min;
@@ -1386,11 +1387,17 @@ socket.on('connect', () => {
     socket.emit('joinGame', myToken);
     // Request status on reconnect
     socket.emit('getGachaCityStatus');
+    autoStatusChecked = false; // 重連時重置
 });
 
 socket.on('playerStatsUpdate', (p) => {
     myData = p;
     updateUI();
+    // ⚡ [修正] 收到 playerStatsUpdate 表示 joinGame 成功，首次才檢查自動戰鬥狀態
+    if (!autoStatusChecked) {
+        autoStatusChecked = true;
+        socket.emit('getGachaCityAutoStatus');
+    }
 });
 
 socket.on('gachaCityResult', (res) => {
@@ -1534,7 +1541,7 @@ socket.on('errorMessage', (msg) => {
 socket.on('gachaCityAutoResult', (res) => {
     if (!res) return;
     if (res.success && res.task && !res.finished) {
-        // 開始成功，切換到進度顯示
+        // 開始成功 或 離線恢復 或 重連恢復 → 切換到進度顯示
         document.getElementById('auto-battle-setup').style.display = 'none';
         document.getElementById('auto-battle-progress').style.display = 'block';
         document.getElementById('auto-battle-result').style.display = 'none';
@@ -1546,12 +1553,27 @@ socket.on('gachaCityAutoResult', (res) => {
             socket.emit('getGachaCityAutoStatus');
         }, 3000);
     } else if (res.success && res.offlineFloors) {
-        // 離線恢復
+        // 離線期間完成了一些層，繼續顯示進度
         showToast(res.msg);
+        document.getElementById('auto-battle-setup').style.display = 'none';
+        document.getElementById('auto-battle-progress').style.display = 'block';
+        document.getElementById('auto-battle-result').style.display = 'none';
+        if (res.task) updateAutoProgressUI(res.task);
     } else if (res.finished && res.task) {
-        // 戰鬥結束，顯示結果
-        showAutoResultPanel(res.task, res.msg);
-        showToast(res.msg);
+        // 戰鬥結束
+        if (autoProgressInterval) { clearInterval(autoProgressInterval); autoProgressInterval = null; }
+        if (res.cancelled) {
+            // 取消 → 顯示簡短結果，2秒後回到設定畫面
+            showAutoResultPanel(res.task, res.msg);
+            showToast(res.msg);
+            setTimeout(() => {
+                closeAutoResult();
+            }, 2000);
+        } else {
+            // 正常結束（時間到/碎片耗盡/離線）→ 顯示結果
+            showAutoResultPanel(res.task, res.msg);
+            showToast(res.msg);
+        }
     } else {
         showToast(res.msg || '無法開始自動戰鬥', true);
     }
@@ -1584,7 +1606,7 @@ socket.on('gachaCityAutoStatus', (res) => {
 
 // ── Init ─────────────────────────────────────────────────────────────
 updateUI();
-socket.emit('getGachaCityAutoStatus'); // 檢查是否有進行中的自動戰鬥
+// ⚡ [修正] 不在這裡發 getGachaCityAutoStatus，改為 playerStatsUpdate 後才發
 </script>
 </body>
 </html>
