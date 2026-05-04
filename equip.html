@@ -76,9 +76,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
         
         let myToken = localStorage.getItem('rpg_token');
         if (!myToken) window.location.href = 'index.html';
@@ -126,6 +126,8 @@
             'shard_wep_dimension':  { name: "維度·終焉裁決", cost: 0, desc: "ATK+18萬 HP+400萬" },
             'shard_wep_origin':     { name: "原初·萬物歸零", cost: 0, desc: "ATK+35萬 HP+800萬" },
             'myth_weapon':          { name: "神話·毀滅之刃", cost: 0, desc: "ATK+200萬 DEF+50萬 HP+500萬 MP+100萬" },
+            'myth2_weapon':         { name: "神話II·天裁之劍", cost: 0, desc: "ATK+380萬 DEF+65萬 HP+1000萬 MP+300萬" },
+            'myth3_weapon':         { name: "神話III·宇宙終焉之刃", cost: 0, desc: "ATK+800萬 DEF+150萬 HP+2000萬 MP+500萬" },
 
             // 採集武器
             'oak_bow':          { name: "橡木弓", cost: 200, desc: "ATK+25" },
@@ -163,6 +165,8 @@
             'shard_armor_dimension':{ name: "維度·虛數裝甲", cost: 0, desc: "DEF+50萬 HP+800萬" },
             'shard_armor_origin':   { name: "原初·混沌神軀", cost: 0, desc: "DEF+80萬 HP+1500萬" },
             'myth_armor':           { name: "神話·絕對防禦", cost: 0, desc: "DEF+150萬 HP+1000萬 MP+300萬" },
+            'myth2_armor':          { name: "神話II·永恆聖壁", cost: 0, desc: "DEF+650萬 HP+1800萬 MP+500萬" },
+            'myth3_armor':          { name: "神話III·永恆宇宙聖壁", cost: 0, desc: "DEF+1500萬 HP+3000萬 MP+800萬" },
 
             // === 💍 飾品 ===
             'bone_ring':        { name: "骨戒", cost: 0, desc: "ATK+15 HP+100" }, 
@@ -198,7 +202,9 @@
             'shard_ring_void':      { name: "虛空碎片之戒", desc: "ATK+15000 MP+5000 HP+50000" },
             'shard_core_galaxy':    { name: "銀河碎片核心", desc: "ATK+100000 DEF+100000 HP+3000000 MP+550000" },
             'shard_crown_infinity': { name: "無限碎片皇冠", desc: "ATK+150000 DEF+130000 HP+5000000 MP+700000" },
-            'myth_acc':             { name: "神話·命運之環", cost: 0, desc: "ATK+80萬 DEF+80萬 HP+800萬 MP+200萬" }
+            'myth_acc':             { name: "神話·命運之環", cost: 0, desc: "ATK+80萬 DEF+80萬 HP+800萬 MP+200萬" },
+            'myth2_acc':            { name: "神話II·命運輪迴", cost: 0, desc: "ATK+110萬 DEF+250萬 HP+1500萬 MP+400萬" },
+            'myth3_acc':            { name: "神話III·宇宙命運之環", cost: 0, desc: "ATK+300萬 DEF+300萬 HP+2500萬 MP+600萬" }
         };
 
         // 裝備等級限制 (同 server EQUIP_REQ_LV)
@@ -235,7 +241,11 @@
             'shard_ring_vampire':1,'shard_earring_holy':1,'shard_belt_titan':1,
             'shard_pendant_dragon':1,'shard_ring_void':1,'shard_core_galaxy':1,'shard_crown_infinity':1,
             // 神話 (最強 = Lv.450)
-            'myth_weapon':200,'myth_armor':200,'myth_acc':200
+            'myth_weapon':200,'myth_armor':200,'myth_acc':200,
+            // 神話II代 (Lv.700+)
+            'myth2_weapon':450,'myth2_armor':450,'myth2_acc':450,
+            // 神話III代
+            'myth3_weapon':700,'myth3_armor':700,'myth3_acc':700
         };
 
         let myLevel = 1;
@@ -251,15 +261,15 @@
             'obsidian_blade':75,'dragon_spear':80,'frost_bow':85,'mithril_saber':90,
             'void_reaper':100,'void_reaper_dark':110,'god_slayer':130,'chaos_staff':150,
             'genesis_weapon':200,'void_blade':230,'galaxy_saber':260,'entropy_sword':300,
-            'infinity_blade':450,'singularity_weapon':500,'myth_weapon':600,
+            'infinity_blade':450,'singularity_weapon':500,'myth_weapon':700,'myth2_weapon':900,'myth3_weapon':1000,
             'cloth_armor':1,'plate_mail':5,'leather_armor':10,'hunt_vest':15,'dragon_mail':20,
             'chain_mail':25,'iron_armor':35,'magma_plate':45,'ice_robe':55,'yeti_cloak':65,
             'demon_armor':90,'angel_armor':120,'genesis_armor':200,'void_armor':230,
-            'nebula_plate':260,'entropy_god_armor':300,'event_horizon':450,'singularity_armor':500,'myth_armor':600,
+            'nebula_plate':260,'entropy_god_armor':300,'event_horizon':450,'singularity_armor':500,'myth_armor':700,'myth2_armor':900,'myth3_armor':1000,
             'bone_ring':5,'snake_boots':8,'ring_life':10,'ring_magic':12,'fish_ring':15,
             'ring_str':20,'bracelet_def':22,'necklace_hp':25,'necklace_mp':28,'pearl_necklace':30,
             'amulet_soul':80,'ring_lord':100,'crown_chaos':150,'ring_galaxy':200,
-            'dimension_ring':280,'mobius_ring':450,'singularity_acc':500,'myth_acc':600
+            'dimension_ring':280,'mobius_ring':450,'singularity_acc':500,'myth_acc':700,'myth2_acc':900,'myth3_acc':1000
         };
         const REPAIR_TIERS = [
             { maxItemLv: 30, rate: 0.01 }, { maxItemLv: 80, rate: 0.01 },
