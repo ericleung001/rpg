@@ -498,6 +498,63 @@
             🚪 進入轉蛋城
         </button>
 
+        <!-- 🤖 自動戰鬥面板 -->
+        <div class="card" style="margin-top:12px; border:1px solid var(--gold-dim);">
+            <div class="card-label">🤖 後台自動戰鬥</div>
+            <div style="font-size:10px; color:var(--text-dim); margin-bottom:8px; line-height:1.6;">
+                設定時間後可在後台自動推層，戰鬥計算同手動模式。<br>
+                死亡後從第1層重新開始，斷線也會繼續計算。
+            </div>
+
+            <!-- 時間選擇 -->
+            <div id="auto-battle-setup" style="display:block;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px;">
+                    <button class="btn auto-dur-btn" onclick="selectAutoDuration(15)" data-dur="15" style="font-size:12px; padding:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); cursor:pointer; border-radius:6px;">15 分鐘</button>
+                    <button class="btn auto-dur-btn" onclick="selectAutoDuration(30)" data-dur="30" style="font-size:12px; padding:8px; border:1px solid var(--gold-dim); background:rgba(201,168,76,0.15); color:var(--gold-light); cursor:pointer; border-radius:6px; font-weight:700;">30 分鐘</button>
+                    <button class="btn auto-dur-btn" onclick="selectAutoDuration(45)" data-dur="45" style="font-size:12px; padding:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); cursor:pointer; border-radius:6px;">45 分鐘</button>
+                    <button class="btn auto-dur-btn" onclick="selectAutoDuration(60)" data-dur="60" style="font-size:12px; padding:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); cursor:pointer; border-radius:6px;">60 分鐘</button>
+                </div>
+                <div style="font-size:10px; color:var(--text-dim); margin-bottom:6px;">
+                    💰 入場費：100,000 碎片 + 每層 5,000 碎片
+                </div>
+                <button class="btn" id="btn-start-auto" onclick="startGachaCityAuto()" style="width:100%; padding:10px; font-size:14px; font-weight:700; background:linear-gradient(135deg,#2c3e50,#3498db); color:#fff; border:none; border-radius:8px; cursor:pointer;">
+                    🤖 開始自動戰鬥
+                </button>
+            </div>
+
+            <!-- 進度顯示 -->
+            <div id="auto-battle-progress" style="display:none;">
+                <div style="margin-bottom:8px;">
+                    <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:4px;">
+                        <span>⏱️ 進度</span>
+                        <span id="auto-time-remaining">--:--</span>
+                    </div>
+                    <div style="width:100%; height:8px; background:var(--panel); border-radius:4px; overflow:hidden;">
+                        <div id="auto-progress-bar" style="height:100%; background:linear-gradient(90deg,#2ecc71,#27ae60); border-radius:4px; transition:width 1s; width:0%;"></div>
+                    </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; font-size:10px; color:var(--text);">
+                    <div>📍 當前層：<span id="auto-current-floor" style="color:var(--gold-light); font-weight:700;">1</span></div>
+                    <div>🏆 最高層：<span id="auto-max-floor" style="color:var(--gold-light); font-weight:700;">1</span></div>
+                    <div>✅ 通关層數：<span id="auto-floors-cleared" style="color:#2ecc71;">0</span></div>
+                    <div>💀 死亡次數：<span id="auto-deaths" style="color:#e74c3c;">0</span></div>
+                    <div>⭐ EXP：<span id="auto-total-exp" style="color:#3498db;">0</span></div>
+                    <div>💰 金幣：<span id="auto-total-gold" style="color:#f1c40f;">0</span></div>
+                </div>
+                <button class="btn" id="btn-cancel-auto" onclick="cancelGachaCityAuto()" style="width:100%; margin-top:8px; padding:8px; font-size:12px; background:var(--panel); color:var(--red); border:1px solid var(--red); border-radius:6px; cursor:pointer;">
+                    🛑 停止自動戰鬥
+                </button>
+            </div>
+
+            <!-- 結果顯示 -->
+            <div id="auto-battle-result" style="display:none;">
+                <div id="auto-result-content" style="font-size:11px; line-height:1.8; color:var(--text);"></div>
+                <button class="btn" onclick="closeAutoResult()" style="width:100%; margin-top:8px; padding:8px; font-size:12px; background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:6px; cursor:pointer;">
+                    關閉
+                </button>
+            </div>
+        </div>
+
         <!-- Death floor return -->
         <div id="death-floor-card" style="display:none; text-align:center; margin-top:8px;">
             <div style="font-size:11px; color:var(--red); margin-bottom:6px;">💀 上次死於第 <span id="death-floor-num">0</span> 層</div>
@@ -1236,6 +1293,94 @@ function animateMonsterDefeat() {
     setTimeout(() => icon.classList.remove('defeated'), 800);
 }
 
+// ══════════════════════════════════════════════════════════════
+//  🤖 轉蛋城自動戰鬥 UI
+// ══════════════════════════════════════════════════════════════
+let selectedAutoDuration = 30;
+let autoProgressInterval = null;
+
+function selectAutoDuration(min) {
+    selectedAutoDuration = min;
+    document.querySelectorAll('.auto-dur-btn').forEach(btn => {
+        const d = parseInt(btn.getAttribute('data-dur'));
+        if (d === min) {
+            btn.style.borderColor = 'var(--gold-dim)';
+            btn.style.background = 'rgba(201,168,76,0.15)';
+            btn.style.color = 'var(--gold-light)';
+            btn.style.fontWeight = '700';
+        } else {
+            btn.style.borderColor = 'var(--border)';
+            btn.style.background = 'var(--panel)';
+            btn.style.color = 'var(--text)';
+            btn.style.fontWeight = '400';
+        }
+    });
+}
+
+function startGachaCityAuto() {
+    if (!confirm(`🤖 確定開始自動戰鬥？\n\n⏱️ 時間：${selectedAutoDuration} 分鐘\n💰 入場費：100,000 碎片\n💎 每層消耗：5,000 碎片\n\n⏰ 設定時間結束/碎片耗盡後自動停止。`)) return;
+    socket.emit('startGachaCityAuto', { duration: selectedAutoDuration });
+    showToast('🤖 自動戰鬥啟動中...');
+}
+
+function cancelGachaCityAuto() {
+    if (confirm('🛑 確定停止自動戰鬥？已完成的進度會保留。')) {
+        socket.emit('cancelGachaCityAuto');
+    }
+}
+
+function closeAutoResult() {
+    document.getElementById('auto-battle-result').style.display = 'none';
+    document.getElementById('auto-battle-setup').style.display = 'block';
+    if (autoProgressInterval) clearInterval(autoProgressInterval);
+}
+
+function updateAutoProgressUI(task) {
+    if (!task) return;
+    document.getElementById('auto-current-floor').textContent = task.currentFloor;
+    document.getElementById('auto-max-floor').textContent = task.maxReachedFloor;
+    document.getElementById('auto-floors-cleared').textContent = task.floorsCleared;
+    document.getElementById('auto-deaths').textContent = task.deaths;
+    document.getElementById('auto-total-exp').textContent = formatShort(task.totalExp);
+    document.getElementById('auto-total-gold').textContent = formatShort(task.totalGold);
+
+    const min = Math.floor(task.remainingSec / 60);
+    const sec = task.remainingSec % 60;
+    document.getElementById('auto-time-remaining').textContent = `${min}:${sec.toString().padStart(2,'0')}`;
+    document.getElementById('auto-progress-bar').style.width = task.progress + '%';
+}
+
+function showAutoResultPanel(task, msg) {
+    document.getElementById('auto-battle-progress').style.display = 'none';
+    document.getElementById('auto-battle-setup').style.display = 'none';
+    document.getElementById('auto-battle-result').style.display = 'block';
+
+    if (autoProgressInterval) clearInterval(autoProgressInterval);
+
+    let dropsHtml = '';
+    if (task.totalDrops) {
+        Object.entries(task.totalDrops).forEach(([id, count]) => {
+            const name = ITEM_NAMES[id] || id;
+            dropsHtml += `<div>  ${name} ×${count}</div>`;
+        });
+    }
+
+    document.getElementById('auto-result-content').innerHTML = `
+        <div style="text-align:center; font-size:13px; font-weight:700; color:var(--gold-light); margin-bottom:8px;">${msg}</div>
+        <div style="background:var(--panel); border-radius:6px; padding:8px; margin-bottom:6px;">
+            <div>📍 到達最高層：<b style="color:var(--gold-light);">第 ${task.maxReachedFloor} 層</b></div>
+            <div>✅ 通关層數：<b style="color:#2ecc71;">${task.floorsCleared} 層</b></div>
+            <div>💀 死亡次數：<b style="color:#e74c3c;">${task.deaths} 次</b></div>
+            <div>⭐ 總經驗：<b style="color:#3498db;">${formatShort(task.totalExp)}</b></div>
+            <div>💰 總金幣：<b style="color:#f1c40f;">${formatShort(task.totalGold)}</b></div>
+            <div>💎 碎片消耗：<b style="color:#e67e22;">${formatShort(task.totalShards)}</b></div>
+        </div>
+        ${dropsHtml ? '<div style="font-weight:700; margin-top:4px;">📦 獲得物品：</div>' + dropsHtml : ''}
+    `;
+}
+
+// ══════════════════════════════════════════════════════════════
+
 // ── Socket Events ────────────────────────────────────────────────────
 socket.on('connect', () => {
     socket.emit('joinGame', myToken);
@@ -1385,8 +1530,61 @@ socket.on('errorMessage', (msg) => {
     console.error('[GachaCity Error]', msg);
 });
 
+// ── 自動戰鬥 Socket Events ──────────────────────────────────────
+socket.on('gachaCityAutoResult', (res) => {
+    if (!res) return;
+    if (res.success && res.task && !res.finished) {
+        // 開始成功，切換到進度顯示
+        document.getElementById('auto-battle-setup').style.display = 'none';
+        document.getElementById('auto-battle-progress').style.display = 'block';
+        document.getElementById('auto-battle-result').style.display = 'none';
+        updateAutoProgressUI(res.task);
+        showToast(res.msg);
+        // 啟動進度更新計時器
+        if (autoProgressInterval) clearInterval(autoProgressInterval);
+        autoProgressInterval = setInterval(() => {
+            socket.emit('getGachaCityAutoStatus');
+        }, 3000);
+    } else if (res.success && res.offlineFloors) {
+        // 離線恢復
+        showToast(res.msg);
+    } else if (res.finished && res.task) {
+        // 戰鬥結束，顯示結果
+        showAutoResultPanel(res.task, res.msg);
+        showToast(res.msg);
+    } else {
+        showToast(res.msg || '無法開始自動戰鬥', true);
+    }
+});
+
+socket.on('gachaCityAutoProgress', (task) => {
+    if (!task) return;
+    updateAutoProgressUI(task);
+});
+
+socket.on('gachaCityAutoStatus', (res) => {
+    if (!res) return;
+    if (res.active && res.task) {
+        document.getElementById('auto-battle-setup').style.display = 'none';
+        document.getElementById('auto-battle-progress').style.display = 'block';
+        document.getElementById('auto-battle-result').style.display = 'none';
+        updateAutoProgressUI(res.task);
+        // 啟動計時器
+        if (!autoProgressInterval) {
+            autoProgressInterval = setInterval(() => {
+                socket.emit('getGachaCityAutoStatus');
+            }, 3000);
+        }
+    } else {
+        if (autoProgressInterval) { clearInterval(autoProgressInterval); autoProgressInterval = null; }
+        document.getElementById('auto-battle-progress').style.display = 'none';
+        document.getElementById('auto-battle-setup').style.display = 'block';
+    }
+});
+
 // ── Init ─────────────────────────────────────────────────────────────
 updateUI();
+socket.emit('getGachaCityAutoStatus'); // 檢查是否有進行中的自動戰鬥
 </script>
 </body>
 </html>
