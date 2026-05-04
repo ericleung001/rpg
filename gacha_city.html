@@ -529,7 +529,7 @@
                         <span style="font-size:10px; color:var(--text-dim); white-space:nowrap;">層</span>
                     </div>
                     <div style="font-size:10px; color:var(--text-dim); margin-top:4px;">
-                        📍 你目前可到達的最高層：<span id="custom-floor-max-hint" style="color:var(--gold-light); font-weight:700;">1</span> 層（可輸入 1~<span id="custom-floor-max-range">100</span>）
+                        📍 已達最高層：<span id="custom-floor-max-hint" style="color:var(--gold-light); font-weight:700;">1</span> 層（可輸入 1~<span id="custom-floor-max-range">100</span><span id="custom-floor-death-note"></span>）
                     </div>
                 </div>
                 <button class="btn" id="btn-start-auto" onclick="startGachaCityAuto()" style="width:100%; padding:10px; font-size:14px; font-weight:700; background:linear-gradient(135deg,#2c3e50,#3498db); color:#fff; border:none; border-radius:8px; cursor:pointer;">
@@ -1098,15 +1098,19 @@ function updateDungeonDisplay(state) {
     } else {
         savedCard.style.display = 'none';
     }
-    // Custom floor max hint（含死亡樓層）
+    // Custom floor max hint（同步手動轉蛋樓層）
     const hintEl = document.getElementById('custom-floor-max-hint');
     const rangeEl = document.getElementById('custom-floor-max-range');
-    const maxReachable = Math.max(state.maxFloor || 1, state.deathFloor || 0, state.maxReachableFloor || 0);
-    if (hintEl) hintEl.innerText = maxReachable;
-    if (rangeEl) rangeEl.innerText = maxReachable;
+    const deathNoteEl = document.getElementById('custom-floor-death-note');
+    const maxFloor = state.maxFloor || 1;
+    const deathFloor = state.deathFloor || 0;
+    const maxRange = Math.max(maxFloor, deathFloor, state.maxReachableFloor || 0);
+    if (hintEl) hintEl.innerText = maxFloor;
+    if (rangeEl) rangeEl.innerText = maxRange;
+    if (deathNoteEl) deathNoteEl.innerHTML = deathFloor > maxFloor ? '，死亡層第 ' + deathFloor + ' 層可用碎片返回' : '';
     // 同步更新 input max 屬性
     const inputEl = document.getElementById('auto-floor-input');
-    if (inputEl) inputEl.max = maxReachable;
+    if (inputEl) inputEl.max = maxRange;
 
     // Skill damage cap display
     if (state.skillDmgCapPct !== undefined) {
@@ -1644,14 +1648,18 @@ socket.on('gachaCityResult', (res) => {
                     savedCard.style.display = 'block';
                     document.getElementById('saved-max-floor').innerText = res.state.maxFloor;
                 }
-                // Custom floor max hint（含死亡樓層）
+                // Custom floor max hint（同步手動轉蛋樓層）
                 const hintEl = document.getElementById('custom-floor-max-hint');
                 const rangeEl = document.getElementById('custom-floor-max-range');
-                const sMaxReachable = Math.max((res.state && res.state.maxFloor) || 0, (res.state && res.state.deathFloor) || 0, (res.state && res.state.maxReachableFloor) || 0);
-                if (hintEl && sMaxReachable > 0) hintEl.innerText = sMaxReachable;
-                if (rangeEl && sMaxReachable > 0) rangeEl.innerText = sMaxReachable;
+                const deathNoteEl = document.getElementById('custom-floor-death-note');
+                const sMaxFloor = (res.state && res.state.maxFloor) || 0;
+                const sDeathFloor = (res.state && res.state.deathFloor) || 0;
+                const sMaxRange = Math.max(sMaxFloor, sDeathFloor, (res.state && res.state.maxReachableFloor) || 0);
+                if (hintEl && sMaxFloor > 0) hintEl.innerText = sMaxFloor;
+                if (rangeEl && sMaxRange > 0) rangeEl.innerText = sMaxRange;
+                if (deathNoteEl) deathNoteEl.innerHTML = sDeathFloor > sMaxFloor ? '，死亡層第 ' + sDeathFloor + ' 層可用碎片返回' : '';
                 const sInputEl = document.getElementById('auto-floor-input');
-                if (sInputEl && sMaxReachable > 0) sInputEl.max = sMaxReachable;
+                if (sInputEl && sMaxRange > 0) sInputEl.max = sMaxRange;
                 // Death floor return
                 if (res.state && res.state.deathFloor > 0) {
                     const deathCard = document.getElementById('death-floor-card');
@@ -1733,13 +1741,15 @@ socket.on('gachaCityAutoResult', (res) => {
             // ⚡ 立即同步 deathFloor 到 myData，確保按鈕能正確讀取
             if (myData) myData.gachaCityDeathFloor = res.task.deathFloor;
             updateAutoDeathFloorCard(res.task.deathFloor);
-            // 更新 max hint（死亡樓層可能高於之前顯示的 maxFloor）
-            const fHintEl = document.getElementById('custom-floor-max-hint');
+            // 更新 range 和死亡提示（hint 主數字保持 maxFloor 不變）
             const fRangeEl = document.getElementById('custom-floor-max-range');
             const fInputEl = document.getElementById('auto-floor-input');
-            if (fHintEl) fHintEl.innerText = res.task.deathFloor;
+            const fDeathNoteEl = document.getElementById('custom-floor-death-note');
+            const fHintEl = document.getElementById('custom-floor-max-hint');
+            const currentMax = parseInt(fHintEl.innerText) || 1;
             if (fRangeEl) fRangeEl.innerText = res.task.deathFloor;
             if (fInputEl) fInputEl.max = res.task.deathFloor;
+            if (fDeathNoteEl) fDeathNoteEl.innerHTML = res.task.deathFloor > currentMax ? '，死亡層第 ' + res.task.deathFloor + ' 層可用碎片返回' : '';
         } else {
             // 沒有死亡樓層，清除 myData 中的記錄
             if (myData) delete myData.gachaCityDeathFloor;
@@ -1775,6 +1785,33 @@ socket.on('gachaCityAutoStatus', (res) => {
         if (autoProgressInterval) { clearInterval(autoProgressInterval); autoProgressInterval = null; }
         document.getElementById('auto-battle-progress').style.display = 'none';
         document.getElementById('auto-battle-setup').style.display = 'block';
+        // ⚡ 更新樓層提示（首次載入時同步手動轉蛋數據）
+        if (res.maxFloor || res.deathFloor) {
+            const hEl = document.getElementById('custom-floor-max-hint');
+            const rEl = document.getElementById('custom-floor-max-range');
+            const dnEl = document.getElementById('custom-floor-death-note');
+            const iEl = document.getElementById('auto-floor-input');
+            const mf = res.maxFloor || 1;
+            const df = res.deathFloor || 0;
+            const mr = Math.max(mf, df);
+            if (hEl) hEl.innerText = mf;
+            if (rEl) rEl.innerText = mr;
+            if (dnEl) dnEl.innerHTML = df > mf ? '，死亡層第 ' + df + ' 層可用碎片返回' : '';
+            if (iEl) iEl.max = mr;
+            // 同步更新死亡樓層卡片
+            if (df > 0) {
+                updateAutoDeathFloorCard(df);
+                if (myData) myData.gachaCityDeathFloor = df;
+            }
+            // 同步更新已保存樓層卡
+            if (res.maxFloor > 1) {
+                const savedCard = document.getElementById('saved-floor-card');
+                if (savedCard) {
+                    savedCard.style.display = 'block';
+                    document.getElementById('saved-max-floor').innerText = res.maxFloor;
+                }
+            }
+        }
     }
 });
 
