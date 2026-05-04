@@ -628,323 +628,54 @@
 </style>
 </head>
 <body>
-
 <div id="starfield"></div>
-<div id="boss-toast"></div>
-
-<!-- Result Overlay -->
-<div class="result-overlay" id="result-overlay">
-    <div class="result-icon" id="result-icon">💀</div>
-    <div class="result-title" id="result-title">挑戰失敗</div>
-    <div class="result-desc" id="result-desc"></div>
-    <div class="result-rewards" id="result-rewards" style="display:none;"></div>
-    <button class="result-close" id="result-close-btn" onclick="closeResult()">確認</button>
-</div>
-
-<!-- Victory Screen (for already defeated) -->
-<div id="victory-screen">
-    <div class="victory-particles" id="victory-particles"></div>
-    <div class="victory-crown">👑</div>
-    <div class="victory-title">宇宙最強</div>
-    <div class="victory-subtitle">
-        你已成為這個宇宙中最強的存在
-    </div>
-    <div class="victory-title-badge" id="victory-badge">稱號：宇宙最強</div>
-    <a class="btn-victory-back" href="hub.html">返回主城</a>
-</div>
-
 <div id="app-layout">
     <a class="btn-back" href="hub.html">← 返回主城</a>
-
     <div class="page-header entrance-anim">
         <div class="page-title">💀 終極Boss</div>
         <div class="page-sub">Lv.<span>1000</span> · <span>宇宙終焉者</span></div>
     </div>
-
-    <!-- Loading -->
-    <div id="loading-section">
-        <div class="loading-text">正在載入Boss資料<span class="loading-dots"></span></div>
-    </div>
-
-    <!-- Main Content (hidden until data loads) -->
-    <div id="main-content" style="display:none;">
-
-        <!-- Boss Panel -->
-        <div class="card boss-card boss-panel entrance-anim">
-            <div class="boss-avatar-container">
-                <div class="boss-glow-ring"></div>
-                <div class="boss-glow-ring"></div>
-                <div class="boss-glow-ring"></div>
-                <span class="boss-avatar">👹</span>
+    <div class="card entrance-anim" style="margin-top:20px;">
+        <div class="card-label">⚔️ 選擇戰鬥模式</div>
+        <div style="display:flex; flex-direction:column; gap:12px; margin-top:14px;">
+            <button class="btn-challenge" onclick="createUBRoom('solo')" style="animation:none;">
+                🗡️ 單人挑戰
+            </button>
+            <button class="btn-challenge" onclick="createUBRoom('public')" style="animation:none; background:linear-gradient(135deg,#1a5276,#2980b9);">
+                🌐 公開房間
+            </button>
+            <div style="margin-top:6px;">
+                <input type="text" id="ub-password" placeholder="輸入房間密碼（選填）" style="width:100%;padding:14px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:14px;box-sizing:border-box;">
             </div>
-            <div class="boss-name" id="boss-name">宇宙終焉者·阿卡西</div>
-            <div class="boss-level">Lv. <span id="boss-level">1000</span></div>
-
-            <div id="boss-defeated-tag" style="display:none; margin-bottom: 12px;">
-                <span class="defeated-badge">✦ 已被擊敗 ✦</span>
+            <button class="btn-challenge" onclick="createUBRoom('private')" style="animation:none; background:linear-gradient(135deg,#4a235a,#7d3c98);">
+                🔒 私人房間
+            </button>
+        </div>
+        <div style="margin-top:16px;">
+            <div style="font-size:10px; color:var(--orange); opacity:0.8;">
+                ⚠️ 終極次元干擾場：回復技能與增益技能全部被封印！
             </div>
-
-            <div class="boss-hp-container">
-                <div class="boss-hp-label">
-                    <span>💀 HP</span>
-                    <span id="boss-hp-text">15,000,000,000</span>
-                </div>
-                <div class="boss-hp-outer">
-                    <div class="boss-hp-inner" id="boss-hp-bar" style="width:100%;">
-                        <div class="boss-hp-text" id="boss-hp-percent">15B</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="boss-stats-grid">
-                <div class="boss-stat">
-                    <span class="boss-stat-icon">⚔️</span>
-                    <span class="boss-stat-label">ATK</span>
-                    <span class="boss-stat-value" id="boss-atk">200,000,000</span>
-                </div>
-                <div class="boss-stat">
-                    <span class="boss-stat-icon">🛡️</span>
-                    <span class="boss-stat-label">DEF</span>
-                    <span class="boss-stat-value" id="boss-def">130,000,000</span>
-                </div>
+            <div style="font-size:10px; color:var(--text-dim); margin-top:8px;">
+                📋 挑戰需求：神話III代全套 +28~30
             </div>
         </div>
-
-        <!-- Player Stats Panel -->
-        <div class="card entrance-anim">
-            <div class="card-label">📊 玩家戰力分析</div>
-            <div class="player-stats-grid">
-                <div class="player-stat">
-                    <span class="player-stat-icon">⚔️</span>
-                    <span class="player-stat-label">ATK</span>
-                    <span class="player-stat-value" id="player-atk">-</span>
-                </div>
-                <div class="player-stat">
-                    <span class="player-stat-icon">🛡️</span>
-                    <span class="player-stat-label">DEF</span>
-                    <span class="player-stat-value" id="player-def">-</span>
-                </div>
-                <div class="player-stat">
-                    <span class="player-stat-icon">❤️</span>
-                    <span class="player-stat-label">MAX HP</span>
-                    <span class="player-stat-value" id="player-hp">-</span>
-                </div>
-            </div>
-
+    </div>
+    <!-- Reward info -->
+    <div class="card entrance-anim">
+        <div class="card-label">🏆 擊敗獎勵</div>
+        <div class="reward-preview">
+            <div class="reward-title-preview">「宇宙最強」</div>
             <div class="sep" style="margin:10px 0;"></div>
-
-            <div id="check-def" class="check-result fail">
-                <span class="check-icon">⏳</span>
-                <span>破防判定：載入中...</span>
+            <div class="reward-items-preview">
+                <div class="reward-item-row"><span class="reward-item-icon">🏅</span><span class="reward-item-text">專屬稱號：<strong>宇宙最強</strong></span></div>
+                <div class="reward-item-row"><span class="reward-item-icon">💎</span><span class="reward-item-text">碎片 ×<strong>1,000,000</strong></span></div>
+                <div class="reward-item-row"><span class="reward-item-icon">🔮</span><span class="reward-item-text">轉蛋城材料（大量）</span></div>
             </div>
-            <div id="check-survive" class="check-result fail">
-                <span class="check-icon">⏳</span>
-                <span>存活判定：載入中...</span>
-            </div>
-        </div>
-
-        <!-- Requirements Panel -->
-        <div class="card entrance-anim">
-            <div class="card-label">📋 挑戰需求</div>
-            <div class="req-list">
-                <div class="req-row">
-                    <span class="req-icon">⚔️</span>
-                    <span class="req-text">最低攻擊力（破防Boss DEF）</span>
-                    <span class="req-val">65,000,000</span>
-                </div>
-                <div class="req-row">
-                    <span class="req-icon">🛡️</span>
-                    <span class="req-text">最低防禦力（承受Boss攻擊）</span>
-                    <span class="req-val">280,000,000</span>
-                </div>
-                <div class="req-row">
-                    <span class="req-icon">❤️</span>
-                    <span class="req-text">最低生命值</span>
-                    <span class="req-val">1,000,000,000</span>
-                </div>
-                <div class="req-row">
-                    <span class="req-icon">⚔️</span>
-                    <span class="req-text">裝備需求</span>
-                    <span class="req-val">神話III代 +28~30</span>
-                </div>
-            </div>
-
-            <div class="comparison-box" id="comparison-box">
-                <div class="comp-title">⚔️ vs ⚔️ 戰力對比</div>
-                <div class="comp-row">
-                    <span class="comp-label"></span>
-                    <span class="comp-player" id="comp-player-label">你</span>
-                    <span class="comp-vs">VS</span>
-                    <span class="comp-boss" id="comp-boss-label">Boss</span>
-                </div>
-                <div class="comp-row">
-                    <span class="comp-label">⚔️ ATK</span>
-                    <span class="comp-player" id="comp-player-atk">-</span>
-                    <span class="comp-vs">VS</span>
-                    <span class="comp-boss" id="comp-boss-atk">200M</span>
-                </div>
-                <div class="comp-row">
-                    <span class="comp-label">🛡️ DEF</span>
-                    <span class="comp-player" id="comp-player-def">-</span>
-                    <span class="comp-vs">VS</span>
-                    <span class="comp-boss" id="comp-boss-def">130M</span>
-                </div>
-                <div class="comp-row">
-                    <span class="comp-label">❤️ HP</span>
-                    <span class="comp-player" id="comp-player-hp">-</span>
-                    <span class="comp-vs">VS</span>
-                    <span class="comp-boss" id="comp-boss-hp">15B</span>
-                </div>
-                <div class="comp-result" id="comp-result">
-                    載入中...
-                </div>
-            </div>
-        </div>
-
-        <!-- Reward Preview -->
-        <div class="card entrance-anim">
-            <div class="card-label">🏆 擊敗獎勵</div>
-            <div class="reward-preview">
-                <div class="reward-title-preview">「宇宙最強」</div>
-                <div class="sep" style="margin:10px 0;"></div>
-                <div class="reward-items-preview">
-                    <div class="reward-item-row">
-                        <span class="reward-item-icon">🏅</span>
-                        <span class="reward-item-text">專屬稱號：<strong>宇宙最強</strong></span>
-                    </div>
-                    <div class="reward-item-row">
-                        <span class="reward-item-icon">💎</span>
-                        <span class="reward-item-text">碎片 ×<strong>1,000,000</strong></span>
-                    </div>
-                    <div class="reward-item-row">
-                        <span class="reward-item-icon">🔮</span>
-                        <span class="reward-item-text">轉蛋城材料（大量）</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Challenge Button -->
-        <button class="btn-challenge" id="btn-challenge" onclick="challengeBoss()">
-            💀 挑戰終極Boss
-        </button>
-
-        <!-- 次元干擾場警告 -->
-        <div style="text-align:center; margin-top:12px; font-size:10px; color:var(--orange); opacity:0.8;">
-            ⚠️ 終極次元干擾場：回復技能與增益技能全部被封印！
-        </div>
-
-    </div>
-
-    <!-- Battle Section (hidden until battle starts) -->
-    <div id="battle-section" style="display:none;">
-        <!-- Boss Panel (battle version with dynamic HP) -->
-        <div class="card boss-card">
-            <div style="text-align:center; padding:10px 0;">
-                <span style="font-size:48px;">👹</span>
-                <div style="font-size:16px; font-weight:900; color:#fff; margin-top:8px;" id="battle-boss-name">宇宙終焉者·阿卡西</div>
-                <div style="font-size:11px; color:var(--ember); margin-top:4px;">Lv.1000 · 回合 <span id="battle-rounds">0</span></div>
-                <!-- Boss Buff Indicators -->
-                <div id="boss-buffs" style="font-size:10px; margin-top:4px; min-height:18px; color:var(--orange);"></div>
-            </div>
-            <div class="boss-hp-container">
-                <div class="boss-hp-label">
-                    <span>💀 Boss HP</span>
-                    <span id="battle-boss-hp-text">0 / 0</span>
-                </div>
-                <div class="boss-hp-outer">
-                    <div class="boss-hp-inner" id="battle-boss-hp-bar" style="width:100%;">
-                        <div class="boss-hp-text" id="battle-boss-hp-pct">100%</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Player Panel (battle version with dynamic HP) -->
-        <div class="card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <div style="font-size:12px; font-weight:700;">❤️ 你的HP</div>
-                <div style="font-size:11px; color:var(--gold-light);" id="battle-player-hp-text">0 / 0</div>
-            </div>
-            <div style="width:100%; height:16px; background:#1a0808; border-radius:8px; border:1px solid #3a1515; overflow:hidden; margin-bottom:6px;">
-                <div id="battle-player-hp-bar" style="height:100%; background:linear-gradient(90deg,#27ae60,#2ecc71); border-radius:8px; transition:width 0.5s; width:100%;"></div>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <div style="font-size:11px; font-weight:700;">💧 MP</div>
-                <div style="font-size:11px; color:#3498db;" id="battle-player-mp-text">0 / 0</div>
-            </div>
-            <div style="display:flex; gap:10px; margin-top:6px; font-size:10px; color:var(--text-dim);">
-                <span>⚔️ ATK: <span id="battle-player-atk" style="color:var(--orange);">0</span></span>
-                <span>🛡️ DEF: <span id="battle-player-def" style="color:#3498db;">0</span></span>
-            </div>
-            <!-- Skill Seal Warning -->
-            <div id="skill-seal-warning" style="display:none; margin-top:6px; padding:6px 10px; background:rgba(155,89,182,0.15); border:1px solid rgba(155,89,182,0.3); border-radius:6px; font-size:11px; color:#bb6bd9;">
-                🌀 次元封印中！技能被封印 <span id="seal-turns-left">0</span> 回合
-            </div>
-        </div>
-
-        <!-- Battle Log -->
-        <div class="card" style="max-height:120px; overflow-y:auto;">
-            <div class="card-label">📜 戰鬥日誌</div>
-            <div id="battle-log" style="font-size:11px; line-height:1.8; color:#aaa;">⚔️ 戰鬥開始！</div>
-        </div>
-
-        <!-- Action Buttons (main menu) -->
-        <div class="action-grid" id="action-main" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-            <button class="btn-attack" id="btn-battle-attack" onclick="bossAttack()">
-                ⚔️ 攻擊
-            </button>
-            <button class="btn" id="btn-battle-skill" onclick="openBossSkillPanel()" style="background:linear-gradient(135deg,#6a0dad,#9b59b6); color:#fff; border:none; border-radius:8px; padding:14px; font-size:14px; font-weight:700; cursor:pointer; font-family:'Noto Sans TC',sans-serif;">
-                🔮 魔法
-            </button>
-            <button class="btn" id="btn-battle-item" onclick="openBossItemPanel()" style="background:linear-gradient(135deg,#117a65,#1abc9c); color:#fff; border:none; border-radius:8px; padding:14px; font-size:14px; font-weight:700; cursor:pointer; font-family:'Noto Sans TC',sans-serif;">
-                🧪 物品
-            </button>
-            <button class="btn" id="btn-battle-flee" onclick="bossFlee()" style="background:linear-gradient(135deg,#7f8c8d,#95a5a6); color:#fff; border:none; border-radius:8px; padding:14px; font-size:14px; font-weight:700; cursor:pointer; font-family:'Noto Sans TC',sans-serif; grid-column:1/-1;">
-                🏃 逃跑
-            </button>
-        </div>
-
-        <!-- Skill Panel (hidden) -->
-        <div id="boss-skill-panel" style="display:none;">
-            <button class="btn" onclick="backToBattleMain()" style="width:100%; background:var(--panel2); border:1px solid var(--border); color:#aaa; margin-bottom:8px; font-size:12px; padding:10px; border-radius:8px; cursor:pointer; font-family:'Noto Sans TC',sans-serif;">
-                ◀ 返回
-            </button>
-            <div id="boss-skill-list" style="display:grid; grid-template-columns:1fr 1fr; gap:6px;"></div>
-        </div>
-
-        <!-- Item Panel (hidden) -->
-        <div id="boss-item-panel" style="display:none;">
-            <button class="btn" onclick="backToBattleMain()" style="width:100%; background:var(--panel2); border:1px solid var(--border); color:#aaa; margin-bottom:8px; font-size:12px; padding:10px; border-radius:8px; cursor:pointer; font-family:'Noto Sans TC',sans-serif;">
-                ◀ 返回
-            </button>
-            <div id="boss-item-list" style="display:grid; grid-template-columns:1fr 1fr; gap:6px;"></div>
         </div>
     </div>
 </div>
 
 <script>
-// ── Globals ──────────────────────────────────────────────────────────
-const myToken = localStorage.getItem('rpg_token');
-if (!myToken) { location.href = 'index.html'; }
-
-const socket = io('https://mmo.ttctv-105.cc', {
-    transports: ['websocket', 'polling'],
-    secure: true
-});
-
-let bossData = null;
-let playerData = null;
-let alreadyDefeated = false;
-let isInBattle = false;
-let isOnCooldown = false;
-let myData = null;
-
-// Skill & Item data (will be populated from server)
-let SKILL_INFO = {};
-let ITEM_NAMES = {};
-let mySkills = [];
-
 // ── Starfield ────────────────────────────────────────────────────────
 function createStarfield() {
     const container = document.getElementById('starfield');
@@ -962,441 +693,27 @@ function createStarfield() {
 }
 createStarfield();
 
-// ── Victory Particles ────────────────────────────────────────────────
-function createVictoryParticles() {
-    const container = document.getElementById('victory-particles');
-    container.innerHTML = '';
-    const count = 40;
-    for (let i = 0; i < count; i++) {
-        const p = document.createElement('div');
-        p.className = 'v-particle';
-        p.style.left = Math.random() * 100 + '%';
-        p.style.setProperty('--p-dur', (2 + Math.random() * 3) + 's');
-        p.style.setProperty('--p-delay', (Math.random() * 3) + 's');
-        p.style.background = Math.random() > 0.5 ? 'var(--gold-light)' : 'var(--orange-light)';
-        p.style.width = (2 + Math.random() * 4) + 'px';
-        p.style.height = p.style.width;
-        container.appendChild(p);
-    }
-}
-createVictoryParticles();
+// ── Socket Connection ────────────────────────────────────────────────
+const myToken = localStorage.getItem('rpg_token');
+if (!myToken) { location.href = 'index.html'; }
+const socket = io('https://mmo.ttctv-105.cc', { transports: ['websocket', 'polling'], secure: true });
 
-// ── Toast ────────────────────────────────────────────────────────────
-function showToast(msg, type) {
-    const t = document.getElementById('boss-toast');
-    t.innerText = msg;
-    t.className = (type || '') + ' show';
-    setTimeout(() => { t.className = ''; }, 3500);
+function createUBRoom(mode) {
+    const password = document.getElementById('ub-password').value || '';
+    socket.emit('createUltimateBossRoom', { mode, password });
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────
-function formatNum(n) {
-    if (n === undefined || n === null) return '-';
-    n = Number(n);
-    if (isNaN(n)) return '-';
-    return n.toLocaleString();
-}
+socket.on('connect', () => { socket.emit('joinGame', myToken); });
 
-function formatShort(n) {
-    if (n === undefined || n === null) return '-';
-    n = Number(n);
-    if (isNaN(n)) return '-';
-    if (n >= 1e12) return (n / 1e12).toFixed(n % 1e12 === 0 ? 0 : 1) + 'T';
-    if (n >= 1e9) return (n / 1e9).toFixed(n % 1e9 === 0 ? 0 : 1) + 'B';
-    if (n >= 1e6) return (n / 1e6).toFixed(n % 1e6 === 0 ? 0 : 1) + 'M';
-    if (n >= 1e3) return (n / 1e3).toFixed(n % 1e3 === 0 ? 0 : 1) + 'K';
-    return n.toLocaleString();
-}
-
-function inv(id) { return (myData && myData.inventory && myData.inventory[id]) || 0; }
-
-// ── Update Info UI ───────────────────────────────────────────────────
-function updateBossDisplay(data) {
-    if (!data) return;
-    bossData = data;
-    document.getElementById('boss-name').textContent = data.name || '宇宙終焉者·阿卡西';
-    document.getElementById('boss-level').textContent = data.level || 1000;
-    document.getElementById('boss-atk').textContent = formatNum(data.atk || 180000000);
-    document.getElementById('boss-def').textContent = formatNum(data.def || 120000000);
-    const maxHp = data.hp || 8000000000;
-    document.getElementById('boss-hp-text').textContent = formatNum(maxHp);
-    document.getElementById('boss-hp-percent').textContent = formatShort(maxHp);
-    document.getElementById('boss-hp-bar').style.width = '100%';
-    // Update requirements display
-    document.querySelectorAll('.req-val')[0].textContent = formatNum(Math.floor((data.def || 120000000) * 0.5));
-    document.querySelectorAll('.req-val')[1].textContent = formatNum(Math.floor((data.atk || 180000000) * 0.3));
-    alreadyDefeated = alreadyDefeated || false;
-    if (alreadyDefeated) {
-        document.getElementById('boss-defeated-tag').style.display = 'block';
-        document.getElementById('btn-challenge').disabled = true;
-        document.getElementById('btn-challenge').innerHTML = '✦ 已被擊敗 ✦';
-        showVictoryScreen();
-    }
-}
-
-function updatePlayerStats(stats) {
-    if (!stats) return;
-    playerData = stats;
-    const pAtk = stats.atk || stats.attack || 0;
-    const pDef = stats.def || stats.defense || 0;
-    const pMaxHp = stats.maxHp || stats.hp || 0;
-    document.getElementById('player-atk').textContent = formatShort(pAtk);
-    document.getElementById('player-def').textContent = formatShort(pDef);
-    document.getElementById('player-hp').textContent = formatShort(pMaxHp);
-    document.getElementById('comp-player-atk').textContent = formatShort(pAtk);
-    document.getElementById('comp-player-def').textContent = formatShort(pDef);
-    document.getElementById('comp-player-hp').textContent = formatShort(pMaxHp);
-    const bAtk = bossData ? (bossData.atk || 200000000) : 200000000;
-    const bDef = bossData ? (bossData.def || 130000000) : 130000000;
-    document.getElementById('comp-boss-atk').textContent = formatShort(bAtk);
-    document.getElementById('comp-boss-def').textContent = formatShort(bDef);
-    const defThreshold = Math.floor(bDef * 0.5);
-    const canBreakDef = pAtk >= defThreshold;
-    const checkDefEl = document.getElementById('check-def');
-    if (canBreakDef) {
-        checkDefEl.className = 'check-result pass';
-        checkDefEl.innerHTML = '<span class="check-icon">✅</span><span>破防判定：可以破防！攻擊力足夠</span>';
-    } else {
-        checkDefEl.className = 'check-result fail';
-        checkDefEl.innerHTML = '<span class="check-icon">❌</span><span>破防失敗！攻擊力不足（需要 ' + formatNum(defThreshold) + '）</span>';
-    }
-    const bossDmg = Math.max(1, bAtk - pDef * 0.3);
-    const canSurvive = pMaxHp > bossDmg;
-    const checkSurviveEl = document.getElementById('check-survive');
-    if (canSurvive) {
-        checkSurviveEl.className = 'check-result pass';
-        checkSurviveEl.innerHTML = '<span class="check-icon">✅</span><span>存活判定：可以存活！預計每次 ' + formatNum(bossDmg) + ' 傷害</span>';
-    } else {
-        checkSurviveEl.className = 'check-result fail';
-        checkSurviveEl.innerHTML = '<span class="check-icon">❌</span><span>存活判定：無法存活！預計每次 ' + formatNum(bossDmg) + ' 傷害</span>';
-    }
-    const compResult = document.getElementById('comp-result');
-    if (canBreakDef && canSurvive) {
-        compResult.className = 'comp-result pass';
-        compResult.textContent = '⚡ 滿足挑戰條件！可以嘗試挑戰！';
-    } else {
-        compResult.className = 'comp-result fail';
-        const missing = [];
-        if (!canBreakDef) missing.push('攻擊力不足以破防');
-        if (!canSurvive) missing.push('無法承受Boss攻擊');
-        compResult.textContent = '❌ 未滿足條件：' + missing.join('，');
-    }
-    if (!alreadyDefeated) document.getElementById('btn-challenge').disabled = false;
-}
-
-// ── Victory Screen ───────────────────────────────────────────────────
-function showVictoryScreen() {
-    document.getElementById('victory-screen').classList.add('show');
-    createVictoryParticles();
-}
-
-// ── Challenge Boss ───────────────────────────────────────────────────
-function challengeBoss() {
-    if (alreadyDefeated || isInBattle) return;
-    if (confirm('💀 終極Boss 挑戰確認\n\n對手：宇宙終焉者·阿卡西 (Lv.1000)\n\n⚠️ 逃跑後Boss HP會重置！\n\n確定要挑戰嗎？')) {
-        socket.emit('challengeUltimateBoss');
-        showToast('⚡ 正在發起終極挑戰...', '');
-    }
-}
-
-// ── Result Overlay ───────────────────────────────────────────────────
-function showResultOverlay(type, title, desc, rewardsHtml) {
-    const overlay = document.getElementById('result-overlay');
-    const icon = document.getElementById('result-icon');
-    const titleEl = document.getElementById('result-title');
-    const descEl = document.getElementById('result-desc');
-    const rewardsEl = document.getElementById('result-rewards');
-    if (type === 'victory') {
-        icon.textContent = '👑';
-        titleEl.textContent = '勝利！';
-        titleEl.className = 'result-title win';
-        rewardsEl.style.display = 'block';
-        rewardsEl.innerHTML = rewardsHtml || '<div class="result-reward-item">🏅 獲得稱號：宇宙最強</div><div class="result-reward-item">💎 碎片 +1,000,000</div><div class="result-reward-item">🔮 轉蛋城材料（大量）</div>';
-    } else {
-        icon.textContent = '💀';
-        titleEl.textContent = '挑戰失敗';
-        titleEl.className = 'result-title lose';
-        rewardsEl.style.display = 'none';
-    }
-    descEl.textContent = desc;
-    overlay.classList.add('show');
-}
-
-function closeResult() {
-    document.getElementById('result-overlay').classList.remove('show');
-    isInBattle = false;
-    if (alreadyDefeated) {
-        showVictoryScreen();
-    } else {
-        exitBattleUI();
-    }
-}
-
-// ── Battle UI Functions ──────────────────────────────────────────────
-function enterBattleUI(state) {
-    document.getElementById('loading-section').style.display = 'none';
-    document.getElementById('main-content').style.display = 'none';
-    document.getElementById('battle-section').style.display = 'block';
-    isInBattle = true;
-    updateBattleUI(state);
-    document.getElementById('battle-log').innerHTML = '⚔️ 終極Boss戰鬥開始！\n🌀 終極次元干擾場生效中：回復/增益技能已被封印！\n';
-}
-
-function exitBattleUI() {
-    document.getElementById('battle-section').style.display = 'none';
-    document.getElementById('main-content').style.display = 'block';
-    isInBattle = false;
-    backToBattleMain();
-}
-
-function updateBattleUI(state) {
-    // Boss HP
-    const bossHpPct = state.bossMaxHp > 0 ? (state.bossHp / state.bossMaxHp * 100) : 0;
-    document.getElementById('battle-boss-hp-bar').style.width = bossHpPct + '%';
-    document.getElementById('battle-boss-hp-text').textContent = formatNum(state.bossHp) + ' / ' + formatNum(state.bossMaxHp);
-    document.getElementById('battle-boss-hp-pct').textContent = bossHpPct.toFixed(1) + '%';
-    // Player HP/MP
-    const playerHpPct = state.playerMaxHp > 0 ? (state.playerHp / state.playerMaxHp * 100) : 0;
-    document.getElementById('battle-player-hp-bar').style.width = playerHpPct + '%';
-    document.getElementById('battle-player-hp-text').textContent = formatNum(state.playerHp) + ' / ' + formatNum(state.playerMaxHp);
-    document.getElementById('battle-player-mp-text').textContent = formatNum(state.playerMp) + ' MP';
-    // Stats
-    document.getElementById('battle-player-atk').textContent = formatShort(state.playerAtk || 0);
-    document.getElementById('battle-player-def').textContent = formatShort(state.playerDef || 0);
-    // Rounds
-    document.getElementById('battle-rounds').textContent = state.rounds || 0;
-    // Buffs
-    const buffs = [];
-    if (state.atkBuffed) buffs.push('🔥 ATK x1.5 (' + (state.atkBuffTurns || 0) + 'T)');
-    if (state.monsterBuffDef) buffs.push('🛡️ DEF x2 (' + (state.monsterBuffTurns || 0) + 'T)');
-    document.getElementById('boss-buffs').innerHTML = buffs.join(' &nbsp; ');
-    // Skill seal
-    const sealWarning = document.getElementById('skill-seal-warning');
-    if (state.skillSealed) {
-        sealWarning.style.display = 'block';
-        document.getElementById('seal-turns-left').textContent = state.skillSealTurns || 0;
-    } else {
-        sealWarning.style.display = 'none';
-    }
-}
-
-function addBattleLog(msg) {
-    const logEl = document.getElementById('battle-log');
-    if (!logEl) return;
-    const div = document.createElement('div');
-    div.innerHTML = msg;
-    logEl.appendChild(div);
-    logEl.scrollTop = logEl.scrollHeight;
-    while (logEl.children.length > 50) logEl.removeChild(logEl.firstChild);
-}
-
-function backToBattleMain() {
-    document.getElementById('action-main').style.display = 'grid';
-    document.getElementById('boss-skill-panel').style.display = 'none';
-    document.getElementById('boss-item-panel').style.display = 'none';
-}
-
-// ── Battle Actions ───────────────────────────────────────────────────
-function bossAttack() {
-    if (!isInBattle || isOnCooldown) return;
-    isOnCooldown = true;
-    socket.emit('ultimateBossAttack');
-    setTimeout(() => { isOnCooldown = false; }, 800);
-}
-
-function bossFlee() {
-    if (!isInBattle) return;
-    if (confirm('🏃 確定要逃跑嗎？\nBoss HP會重置！')) {
-        socket.emit('ultimateBossFlee');
-    }
-}
-
-function openBossSkillPanel() {
-    if (!isInBattle) return;
-    document.getElementById('action-main').style.display = 'none';
-    document.getElementById('boss-skill-panel').style.display = 'block';
-    document.getElementById('boss-item-panel').style.display = 'none';
-    const list = document.getElementById('boss-skill-list');
-    list.innerHTML = '';
-    // 次元干擾場：被禁的技能類型
-    const BANNED_IN_ULTIMATE = ['heal', 'heal_all', 'drain', 'buff_atk', 'buff_def', 'god'];
-    (mySkills || []).forEach(skillId => {
-        const info = SKILL_INFO[skillId];
-        if (!info) return;
-        const btn = document.createElement('button');
-        btn.className = 'btn';
-        let color = '#9b59b6';
-        if (info.cat === 'buff') color = '#e67e22';
-        if (info.cat === 'heal') color = '#27ae60';
-        const mp = myData ? (myData.mp || 0) : 0;
-        const canUse = mp >= (info.mp || 0);
-        // 檢查是否被次元干擾場禁制
-        const isBanned = BANNED_IN_ULTIMATE.includes(info.cat) || ['heal_light','god_light','heal_all','full_heal','vampiric','drain','berserk','holy_shield','god_mode'].includes(skillId);
-        btn.style.cssText = 'border:none; border-radius:8px; padding:10px; font-size:11px; color:' + color + '; background:var(--panel); cursor:pointer; font-family:"Noto Sans TC",sans-serif; text-align:left; display:flex; flex-direction:column; gap:2px;';
-        if (isBanned) {
-            btn.innerHTML = '<span style="font-weight:700;">🌀 ' + info.name + ' (被封印)</span><span style="font-size:9px; color:#e74c3c;">次元干擾場禁止</span>';
-            btn.disabled = true;
-            btn.style.opacity = '0.35';
-            btn.style.cursor = 'not-allowed';
-        } else {
-            btn.innerHTML = '<span style="font-weight:700;">' + info.name + '</span><span style="font-size:9px; color:#3498db;">MP-' + info.mp + '</span>';
-            if (!canUse) { btn.disabled = true; btn.style.opacity = '0.35'; }
-            btn.onclick = () => { useBossSkill(skillId); };
-        }
-        list.appendChild(btn);
-    });
-}
-
-function openBossItemPanel() {
-    if (!isInBattle) return;
-    document.getElementById('action-main').style.display = 'none';
-    document.getElementById('boss-skill-panel').style.display = 'none';
-    document.getElementById('boss-item-panel').style.display = 'block';
-    const list = document.getElementById('boss-item-list');
-    list.innerHTML = '';
-    const items = ['potion_hp','potion_mid','potion_high','potion_max','elixir','void_soup',
-                   'potion_mp','potion_mp_mid','potion_mp_high','grilled_carp','tuna_steak','sushi_plate','eel_rice','salmon_sushi'];
-    items.forEach(itemId => {
-        const count = inv(itemId);
-        if (count > 0) {
-            const btn = document.createElement('button');
-            btn.className = 'btn';
-            btn.style.cssText = 'border:none; border-radius:8px; padding:10px; font-size:11px; color:#1abc9c; background:var(--panel); cursor:pointer; font-family:"Noto Sans TC",sans-serif;';
-            btn.innerText = (ITEM_NAMES[itemId] || itemId) + ' (' + count + ')';
-            btn.onclick = () => { useBossItem(itemId); };
-            list.appendChild(btn);
-        }
-    });
-    if (list.children.length === 0) {
-        list.innerHTML = '<div style="grid-column:1/-1; text-align:center; color:#666; padding:15px; font-size:12px;">冇可用物品</div>';
-    }
-}
-
-function useBossSkill(skillId) {
-    if (!isInBattle || isOnCooldown) return;
-    isOnCooldown = true;
-    socket.emit('ultimateBossSkillAction', { type: 'skill', skillId });
-    backToBattleMain();
-    setTimeout(() => { isOnCooldown = false; }, 800);
-}
-
-function useBossItem(itemId) {
-    if (!isInBattle || isOnCooldown) return;
-    isOnCooldown = true;
-    socket.emit('ultimateBossSkillAction', { type: 'item', itemId });
-    backToBattleMain();
-    setTimeout(() => { isOnCooldown = false; }, 800);
-}
-
-// ── Socket Events ────────────────────────────────────────────────────
-socket.on('connect', () => {
-    socket.emit('joinGame', myToken);
-    socket.emit('getUltimateBossInfo');
-});
-
-socket.on('playerStatsUpdate', (p) => {
-    if (p) {
-        myData = p;
-        mySkills = p.skills || [];
-        if (p.skillInfo) SKILL_INFO = p.skillInfo;
-        if (p.itemNames) ITEM_NAMES = p.itemNames;
-        updatePlayerStats(p);
+socket.on('ultimateBossRoomCreated', (res) => {
+    if (res && res.roomId) {
+        window.location.href = 'battle_v22.html?ub_room=' + res.roomId;
     }
 });
 
-socket.on('ultimateBossInfo', (res) => {
-    if (!res) return;
-    document.getElementById('loading-section').style.display = 'none';
-    document.getElementById('main-content').style.display = 'block';
-    if (res.boss) updateBossDisplay(res.boss);
-    if (res.playerAtk !== undefined) {
-        updatePlayerStats({
-            atk: res.playerAtk, def: res.playerDef,
-            maxHp: res.playerMaxHp, hp: res.playerHp
-        });
-    }
-    alreadyDefeated = res.hasDefeated || false;
-    if (alreadyDefeated) {
-        document.getElementById('boss-defeated-tag').style.display = 'block';
-        document.getElementById('btn-challenge').disabled = true;
-        document.getElementById('btn-challenge').innerHTML = '✦ 已被擊敗 ✦';
-        showVictoryScreen();
-    } else {
-        // 確保按鈕可用（修復按鈕無反應問題）
-        document.getElementById('btn-challenge').disabled = false;
-    }
-    // If already in battle (reconnected)
-    if (res.inBattle) {
-        socket.emit('challengeUltimateBoss'); // Re-enter
-    }
+socket.on('ultimateBossRoomError', (res) => {
+    alert(res.msg || '無法建立房間');
 });
-
-socket.on('ultimateBossResult', (res) => {
-    if (!res) return;
-    if (res.success && res.battleState) {
-        enterBattleUI(res.battleState);
-        showToast('⚔️ 終極Boss戰鬥開始！', 'success');
-    } else if (!res.success) {
-        showToast(res.msg || '無法挑戰', 'error');
-        isOnCooldown = false;
-    }
-});
-
-socket.on('ultimateBossBattleUpdate', (state) => {
-    if (!state) return;
-    // Log
-    if (state.log) {
-        state.log.split('\n').forEach(line => { if (line) addBattleLog(line); });
-    }
-    // Victory
-    if (state.victory) {
-        updateBattleUI(state);
-        isInBattle = false;
-        alreadyDefeated = true;
-        setTimeout(() => {
-            showResultOverlay('victory', '勝利！', '你擊敗了宇宙終焉者·阿卡西！獲得稱號「宇宙最強」！');
-        }, 500);
-        return;
-    }
-    // Defeat
-    if (state.defeat) {
-        updateBattleUI(state);
-        isInBattle = false;
-        setTimeout(() => {
-            showResultOverlay('defeat', '挑戰失敗', '你的力量不足以擊敗宇宙終焉者...\n繼續提升實力再來挑戰！');
-        }, 500);
-        return;
-    }
-    // Fled
-    if (state.fled) {
-        updateBattleUI(state);
-        isInBattle = false;
-        setTimeout(() => { exitBattleUI(); }, 1000);
-        return;
-    }
-    // Normal update
-    updateBattleUI(state);
-});
-
-socket.on('errorMessage', (msg) => {
-    showToast(msg, 'error');
-    isOnCooldown = false;
-    document.getElementById('loading-section').style.display = 'none';
-    document.getElementById('main-content').style.display = 'block';
-});
-
-// ── Init ─────────────────────────────────────────────────────────────
-setTimeout(() => {
-    const loading = document.getElementById('loading-section');
-    if (loading.style.display !== 'none') {
-        loading.style.display = 'none';
-        document.getElementById('main-content').style.display = 'block';
-        updateBossDisplay({
-            name: '宇宙終焉者·阿卡西', level: 1000,
-            hp: 15000000000, atk: 200000000, def: 130000000
-        });
-    }
-}, 5000);
 </script>
 </body>
 </html>
