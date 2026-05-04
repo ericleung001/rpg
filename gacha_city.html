@@ -529,7 +529,7 @@
                         <span style="font-size:10px; color:var(--text-dim); white-space:nowrap;">層</span>
                     </div>
                     <div style="font-size:10px; color:var(--text-dim); margin-top:4px;">
-                        📍 你目前到達的最高層：<span id="custom-floor-max-hint" style="color:var(--gold-light); font-weight:700;">1</span> 層（可輸入 1~100）
+                        📍 你目前可到達的最高層：<span id="custom-floor-max-hint" style="color:var(--gold-light); font-weight:700;">1</span> 層（可輸入 1~<span id="custom-floor-max-range">100</span>）
                     </div>
                 </div>
                 <button class="btn" id="btn-start-auto" onclick="startGachaCityAuto()" style="width:100%; padding:10px; font-size:14px; font-weight:700; background:linear-gradient(135deg,#2c3e50,#3498db); color:#fff; border:none; border-radius:8px; cursor:pointer;">
@@ -1098,9 +1098,15 @@ function updateDungeonDisplay(state) {
     } else {
         savedCard.style.display = 'none';
     }
-    // Custom floor max hint
+    // Custom floor max hint（含死亡樓層）
     const hintEl = document.getElementById('custom-floor-max-hint');
-    if (hintEl) hintEl.innerText = state.maxFloor || 1;
+    const rangeEl = document.getElementById('custom-floor-max-range');
+    const maxReachable = Math.max(state.maxFloor || 1, state.deathFloor || 0, state.maxReachableFloor || 0);
+    if (hintEl) hintEl.innerText = maxReachable;
+    if (rangeEl) rangeEl.innerText = maxReachable;
+    // 同步更新 input max 屬性
+    const inputEl = document.getElementById('auto-floor-input');
+    if (inputEl) inputEl.max = maxReachable;
 
     // Skill damage cap display
     if (state.skillDmgCapPct !== undefined) {
@@ -1380,9 +1386,13 @@ function selectAutoFloor(mode) {
 
 function startGachaCityAuto() {
     let startFloor;
+    const maxReachable = parseInt(document.getElementById('custom-floor-max-hint').innerText) || 100;
     if (selectedAutoFloorMode === 'custom') {
         startFloor = parseInt(document.getElementById('auto-floor-input').value) || 1;
-        startFloor = Math.max(1, Math.min(100, startFloor));
+        startFloor = Math.max(1, Math.min(maxReachable, startFloor));
+        if (startFloor !== parseInt(document.getElementById('auto-floor-input').value)) {
+            showToast('⚠️ 已自動調整為最高可達層第 ' + startFloor + ' 層');
+        }
     } else {
         startFloor = -1; // -1 表示使用儲存樓層
     }
@@ -1634,9 +1644,14 @@ socket.on('gachaCityResult', (res) => {
                     savedCard.style.display = 'block';
                     document.getElementById('saved-max-floor').innerText = res.state.maxFloor;
                 }
-                // Custom floor max hint
+                // Custom floor max hint（含死亡樓層）
                 const hintEl = document.getElementById('custom-floor-max-hint');
-                if (hintEl && res.state && res.state.maxFloor) hintEl.innerText = res.state.maxFloor;
+                const rangeEl = document.getElementById('custom-floor-max-range');
+                const sMaxReachable = Math.max((res.state && res.state.maxFloor) || 0, (res.state && res.state.deathFloor) || 0, (res.state && res.state.maxReachableFloor) || 0);
+                if (hintEl && sMaxReachable > 0) hintEl.innerText = sMaxReachable;
+                if (rangeEl && sMaxReachable > 0) rangeEl.innerText = sMaxReachable;
+                const sInputEl = document.getElementById('auto-floor-input');
+                if (sInputEl && sMaxReachable > 0) sInputEl.max = sMaxReachable;
                 // Death floor return
                 if (res.state && res.state.deathFloor > 0) {
                     const deathCard = document.getElementById('death-floor-card');
@@ -1713,9 +1728,16 @@ socket.on('gachaCityAutoResult', (res) => {
             showAutoResultPanel(res.task, res.msg);
             showToast(res.msg);
         }
-        // 如果結束時有死亡樓層，顯示死亡樓層返回按鈕
+        // 如果結束時有死亡樓層，顯示死亡樓層返回按鈕 & 更新 hint
         if (res.task.deathFloor > 0) {
             updateAutoDeathFloorCard(res.task.deathFloor);
+            // 更新 max hint（死亡樓層可能高於之前顯示的 maxFloor）
+            const fHintEl = document.getElementById('custom-floor-max-hint');
+            const fRangeEl = document.getElementById('custom-floor-max-range');
+            const fInputEl = document.getElementById('auto-floor-input');
+            if (fHintEl) fHintEl.innerText = res.task.deathFloor;
+            if (fRangeEl) fRangeEl.innerText = res.task.deathFloor;
+            if (fInputEl) fInputEl.max = res.task.deathFloor;
         }
     } else {
         showToast(res.msg || '無法開始自動戰鬥', true);
