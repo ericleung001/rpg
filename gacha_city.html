@@ -1342,8 +1342,8 @@ function updateAutoProgressUI(task) {
     document.getElementById('auto-max-floor').textContent = task.maxReachedFloor;
     document.getElementById('auto-floors-cleared').textContent = task.floorsCleared;
     document.getElementById('auto-deaths').textContent = task.deaths;
-    document.getElementById('auto-total-exp').textContent = formatShort(task.totalExp);
-    document.getElementById('auto-total-gold').textContent = formatShort(task.totalGold);
+    document.getElementById('auto-total-exp').textContent = formatNum(task.totalExp);
+    document.getElementById('auto-total-gold').textContent = formatNum(task.totalGold);
 
     const min = Math.floor(task.remainingSec / 60);
     const sec = task.remainingSec % 60;
@@ -1372,9 +1372,9 @@ function showAutoResultPanel(task, msg) {
             <div>📍 到達最高層：<b style="color:var(--gold-light);">第 ${task.maxReachedFloor} 層</b></div>
             <div>✅ 通关層數：<b style="color:#2ecc71;">${task.floorsCleared} 層</b></div>
             <div>💀 死亡次數：<b style="color:#e74c3c;">${task.deaths} 次</b></div>
-            <div>⭐ 總經驗：<b style="color:#3498db;">${formatShort(task.totalExp)}</b></div>
-            <div>💰 總金幣：<b style="color:#f1c40f;">${formatShort(task.totalGold)}</b></div>
-            <div>💎 碎片消耗：<b style="color:#e67e22;">${formatShort(task.totalShards)}</b></div>
+            <div>⭐ 總經驗：<b style="color:#3498db;">${formatNum(task.totalExp)}</b></div>
+            <div>💰 總金幣：<b style="color:#f1c40f;">${formatNum(task.totalGold)}</b></div>
+            <div>💎 碎片消耗：<b style="color:#e67e22;">${formatNum(task.totalShards)}</b></div>
         </div>
         ${dropsHtml ? '<div style="font-weight:700; margin-top:4px;">📦 獲得物品：</div>' + dropsHtml : ''}
     `;
