@@ -693,6 +693,11 @@
             border: 1px solid rgba(46,204,113,0.4);
             color: #2ecc71;
         }
+        .chip-gacha {
+            background: rgba(155,89,182,0.15);
+            border: 1px solid rgba(155,89,182,0.4);
+            color: #9b59b6;
+        }
 
         .collapse-bar-arrow {
             font-size: 10px;
@@ -832,6 +837,55 @@
             transition: width 0.3s ease;
         }
         #gather-status-panel .gather-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 8px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* 🟣 轉蛋城自動戰鬥狀態顯示 */
+        #gacha-auto-status-panel {
+            transition: opacity 0.3s ease, max-height 0.3s ease;
+            max-height: 0; opacity: 0; overflow: hidden;
+            margin-top: 0; padding: 0;
+            background: linear-gradient(135deg, #1a0a2e 0%, #2e1a3e 50%, #1a0a2e 100%);
+            border: 1px solid rgba(155,89,182,0.3);
+            border-radius: 6px;
+        }
+        #gacha-auto-status-panel.gacha-visible {
+            max-height: 80px; opacity: 1;
+            margin-top: 6px; padding: 8px;
+        }
+        #gacha-auto-status-panel .gacha-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        #gacha-auto-status-panel .gacha-title {
+            color: #9b59b6;
+            font-weight: bold;
+            font-size: 9px;
+        }
+        #gacha-auto-status-panel .gacha-count {
+            color: #f1c40f;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        #gacha-auto-status-panel .gacha-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        #gacha-auto-status-panel .gacha-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8e44ad, #9b59b6);
+            transition: width 0.3s ease;
+        }
+        #gacha-auto-status-panel .gacha-info {
             display: flex;
             justify-content: space-between;
             font-size: 8px;
@@ -1472,6 +1526,21 @@
                                 <div class="gather-info">
                                     <span id="gather-node-name">---</span>
                                     <a href="gathering.html" style="color:#2ecc71; text-decoration:none;">查看詳情 →</a>
+                                </div>
+                            </div>
+
+                            <!-- 🟣 轉蛋城自動戰鬥狀態 -->
+                            <div id="gacha-auto-status-panel">
+                                <div class="gacha-header">
+                                    <span class="gacha-title">🎰 轉蛋城自動戰鬥</span>
+                                    <span class="gacha-count" id="gacha-count-text">--:--</span>
+                                </div>
+                                <div class="gacha-bar-bg">
+                                    <div class="gacha-bar-fill" id="gacha-progress-bar" style="width:0%;"></div>
+                                </div>
+                                <div class="gacha-info">
+                                    <span id="gacha-floor-text">📍 第 1 層</span>
+                                    <a href="gacha_city.html" style="color:#9b59b6; text-decoration:none;">查看詳情 →</a>
                                 </div>
                             </div>
                         </div>
@@ -2438,6 +2507,50 @@
         }, 5000);
         
         // ==========================================
+        //  🟣 轉蛋城自動戰鬥狀態系統
+        // ==========================================
+        
+        // 監聽轉蛋城自動戰鬥狀態更新
+        socket.on('gachaCityAutoStatus', (data) => {
+            const panel = document.getElementById('gacha-auto-status-panel');
+            const countText = document.getElementById('gacha-count-text');
+            const progressBar = document.getElementById('gacha-progress-bar');
+            const floorText = document.getElementById('gacha-floor-text');
+            
+            if (data && data.active && data.task) {
+                panel.classList.add('gacha-visible');
+                
+                // 顯示剩餘時間
+                const task = data.task;
+                const min = Math.floor(task.remainingSec / 60);
+                const sec = task.remainingSec % 60;
+                countText.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+                
+                // 進度百分比
+                progressBar.style.width = (task.progress || 0) + '%';
+                
+                // 顯示當前樓層
+                floorText.textContent = `📍 第 ${task.currentFloor} 層 (最高 ${task.maxReachedFloor})`;
+                updateTasksCollapseSummary();
+            } else {
+                panel.classList.remove('gacha-visible');
+                updateTasksCollapseSummary();
+            }
+        });
+        
+        // 頁面載入時請求轉蛋城狀態
+        setTimeout(() => {
+            socket.emit('getGachaCityAutoStatus');
+        }, 2000);
+        
+        // 定期更新轉蛋城狀態
+        setInterval(() => {
+            if (socket.connected) {
+                socket.emit('getGachaCityAutoStatus');
+            }
+        }, 5000);
+        
+        // ==========================================
         //  🌙 離線獎勵通知系統
         // ==========================================
         
@@ -2665,6 +2778,14 @@
                 const countText = document.getElementById('gather-count-text');
                 const countStr = countText ? countText.textContent : '';
                 chips.push(`<span class="collapse-chip chip-gather">⛏️ 採集中 ${countStr}</span>`);
+            }
+
+            // 檢查轉蛋城自動戰鬥
+            const gachaPanel = document.getElementById('gacha-auto-status-panel');
+            if (gachaPanel && gachaPanel.classList.contains('gacha-visible')) {
+                const countText = document.getElementById('gacha-count-text');
+                const countStr = countText ? countText.textContent : '';
+                chips.push(`<span class="collapse-chip chip-gacha">🎰 轉蛋城 ${countStr}</span>`);
             }
 
             if (chips.length > 0) {
