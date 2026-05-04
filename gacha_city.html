@@ -1445,7 +1445,8 @@ function updateAutoDeathFloorCard(deathFloor) {
 }
 
 function startGachaCityAutoFromDeathFloor() {
-    const deathFloor = myData.gachaCityDeathFloor || 0;
+    // 從 myData 讀取，fallback 到 DOM 元素（防止 playerStatsUpdate 覆蓋）
+    const deathFloor = myData.gachaCityDeathFloor || parseInt(document.getElementById('auto-death-floor-num').innerText) || 0;
     if (!deathFloor) {
         showToast('沒有死亡樓層記錄！', true);
         return;
