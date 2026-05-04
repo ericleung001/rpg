@@ -526,12 +526,24 @@
                 <div id="auto-floor-custom-row" style="display:none; margin-bottom:8px;">
                     <div style="display:flex; align-items:center; gap:6px;">
                         <input type="number" id="auto-floor-input" min="1" max="100" value="1" style="flex:1; padding:6px 8px; font-size:12px; background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:6px; outline:none;">
-                        <span style="font-size:10px; color:var(--text-dim); white-space:nowrap;">層 (1~100)</span>
+                        <span style="font-size:10px; color:var(--text-dim); white-space:nowrap;">層</span>
+                    </div>
+                    <div style="font-size:10px; color:var(--text-dim); margin-top:4px;">
+                        📍 你目前到達的最高層：<span id="custom-floor-max-hint" style="color:var(--gold-light); font-weight:700;">1</span> 層（可輸入 1~100）
                     </div>
                 </div>
                 <button class="btn" id="btn-start-auto" onclick="startGachaCityAuto()" style="width:100%; padding:10px; font-size:14px; font-weight:700; background:linear-gradient(135deg,#2c3e50,#3498db); color:#fff; border:none; border-radius:8px; cursor:pointer;">
                     🤖 開始自動戰鬥
                 </button>
+            </div>
+
+            <!-- 自動戰鬥死亡樓層返回 -->
+            <div id="auto-death-floor-card" style="display:none; text-align:center; margin-top:8px; background:rgba(231,76,60,0.1); border:1px solid rgba(231,76,60,0.3); border-radius:8px; padding:10px;">
+                <div style="font-size:11px; color:var(--red); margin-bottom:6px;">💀 自動/手動時上次死於第 <span id="auto-death-floor-num">0</span> 層</div>
+                <button class="btn" onclick="startGachaCityAutoFromDeathFloor()" style="width:100%; padding:8px; font-size:12px; background:linear-gradient(135deg,#c0392b,#e74c3c); color:#fff; border:none; border-radius:6px; cursor:pointer;">
+                    ⚡ 付費返回第 <span id="auto-death-floor-btn-num">0</span> 層開始自動戰鬥
+                </button>
+                <div style="font-size:10px; color:var(--text-dim); margin-top:4px;" id="auto-death-floor-cost"></div>
             </div>
 
             <!-- 進度顯示 -->
@@ -547,9 +559,11 @@
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; font-size:10px; color:var(--text);">
                     <div>📍 當前層：<span id="auto-current-floor" style="color:var(--gold-light); font-weight:700;">1</span></div>
+                    <div>🏁 起始層：<span id="auto-start-floor" style="color:var(--purple); font-weight:700;">1</span></div>
                     <div>🏆 最高層：<span id="auto-max-floor" style="color:var(--gold-light); font-weight:700;">1</span></div>
                     <div>✅ 通关層數：<span id="auto-floors-cleared" style="color:#2ecc71;">0</span></div>
                     <div>💀 死亡次數：<span id="auto-deaths" style="color:#e74c3c;">0</span></div>
+                    <div></div>
                     <div>⭐ EXP：<span id="auto-total-exp" style="color:#3498db;">0</span></div>
                     <div>💰 金幣：<span id="auto-total-gold" style="color:#f1c40f;">0</span></div>
                 </div>
@@ -573,7 +587,7 @@
             <button class="btn" onclick="returnToDeathFloor()" style="max-width:300px; margin:0 auto; background:linear-gradient(135deg,#c0392b,#e74c3c); color:#fff; font-size:13px;">
                 ⚡ 付費返回第 <span id="death-floor-btn-num">0</span> 層
             </button>
-            <div style="font-size:10px; color:var(--text-dim); margin-top:4px;" id="death-floor-cost"></div>
+            <div style="font-size:10px; color:var(--text-dim); margin-top:4px;" id="death-floor-cost">進入費 💎 100,000 + 傳送費</div>
         </div>
 
         <!-- Materials preview -->
@@ -1064,9 +1078,12 @@ function updateDungeonDisplay(state) {
             deathCard.style.display = 'block';
             document.getElementById('death-floor-num').innerText = state.deathFloor;
             document.getElementById('death-floor-btn-num').innerText = state.deathFloor;
-            const deathCost = state.deathFloor * 100000;
-            document.getElementById('death-floor-cost').innerText = '費用：💎 ' + formatNum(deathCost) + ' 碎片';
+            const teleportCost = state.deathFloor * 100000;
+            const totalCost = 100000 + teleportCost;
+            document.getElementById('death-floor-cost').innerText = '進入費 💎 ' + formatNum(100000) + ' + 傳送費 💎 ' + formatNum(teleportCost) + ' = 共 💎 ' + formatNum(totalCost);
         }
+    } else {
+        document.getElementById('death-floor-card').style.display = 'none';
     }
 
     // Teleport input
@@ -1081,6 +1098,9 @@ function updateDungeonDisplay(state) {
     } else {
         savedCard.style.display = 'none';
     }
+    // Custom floor max hint
+    const hintEl = document.getElementById('custom-floor-max-hint');
+    if (hintEl) hintEl.innerText = state.maxFloor || 1;
 
     // Skill damage cap display
     if (state.skillDmgCapPct !== undefined) {
@@ -1272,24 +1292,18 @@ function returnToDeathFloor() {
     if (isInDungeon) return;
     const deathFloor = myData.gachaCityDeathFloor || 0;
     if (!deathFloor) return;
-    const cost = deathFloor * 100000;
-    if (inv('skill_shard') < cost) {
-        showToast('碎片不足！需要 ' + formatNum(cost) + ' 碎片', true);
+    const entryCost = 100000;
+    const teleportCost = deathFloor * 100000;
+    const totalCost = entryCost + teleportCost;
+    if (inv('skill_shard') < totalCost) {
+        showToast('碎片不足！需要進入費 💎 ' + formatNum(entryCost) + ' + 傳送費 💎 ' + formatNum(teleportCost) + ' = 共 💎 ' + formatNum(totalCost) + ' 碎片', true);
         return;
     }
-    if (confirm('⚡ 確定要付費返回第 ' + deathFloor + ' 層嗎？\n\n消耗：💎 ' + formatNum(cost) + ' 碎片\n（仍需支付進入費用 💎 100,000）')) {
-        // 先進入轉蛋城（會回到第1層），然後傳送到死亡層
-        enterGachaCity();
-        // 監聽進入成功後自動傳送
-        const waitForEntry = (e) => {
-            if (e.type === 'entered') {
-                socket.off('gachaCityResult', waitForEntry);
-                setTimeout(() => {
-                    socket.emit('gachaCityTeleport', deathFloor);
-                }, 500);
-            }
-        };
-        socket.on('gachaCityResult', waitForEntry);
+    if (confirm('⚡ 確定要付費返回第 ' + deathFloor + ' 層嗎？\n\n消耗：💎 進入費 ' + formatNum(entryCost) + ' + 傳送費 ' + formatNum(teleportCost) + ' = 共 ' + formatNum(totalCost) + ' 碎片')) {
+        socket.emit('enterGachaCity', { targetFloor: deathFloor });
+        showToast('正在返回第 ' + deathFloor + ' 層...');
+        // 隱藏死亡樓層卡
+        document.getElementById('death-floor-card').style.display = 'none';
     }
 }
 
@@ -1372,6 +1386,7 @@ function startGachaCityAuto() {
     } else {
         startFloor = -1; // -1 表示使用儲存樓層
     }
+    console.log(`[GachaAuto] 前端發送: mode=${selectedAutoFloorMode}, startFloor=${startFloor}`);
     const floorInfo = selectedAutoFloorMode === 'custom' ? `第 ${startFloor} 層` : '儲存樓層';
     if (!confirm(`🤖 確定開始自動戰鬥？\n\n⏱️ 時間：${selectedAutoDuration} 分鐘\n📍 起始層：${floorInfo}\n💰 入場費：100,000 碎片\n💎 每層消耗：5,000 碎片\n\n⏰ 設定時間結束/碎片耗盡後自動停止。`)) return;
     socket.emit('startGachaCityAuto', { duration: selectedAutoDuration, startFloor: startFloor });
@@ -1381,6 +1396,42 @@ function startGachaCityAuto() {
 function cancelGachaCityAuto() {
     if (confirm('🛑 確定停止自動戰鬥？已完成的進度會保留。')) {
         socket.emit('cancelGachaCityAuto');
+    }
+}
+
+function updateAutoDeathFloorCard(deathFloor) {
+    const card = document.getElementById('auto-death-floor-card');
+    if (!card) return;
+    if (deathFloor > 0) {
+        card.style.display = 'block';
+        document.getElementById('auto-death-floor-num').innerText = deathFloor;
+        document.getElementById('auto-death-floor-btn-num').innerText = deathFloor;
+        const entryCost = 100000;
+        const teleportCost = deathFloor * 100000;
+        const totalCost = entryCost + teleportCost;
+        document.getElementById('auto-death-floor-cost').innerText = '進入費 💎 ' + formatNum(entryCost) + ' + 傳送費 💎 ' + formatNum(teleportCost) + ' + 每層 💎 5,000';
+    } else {
+        card.style.display = 'none';
+    }
+}
+
+function startGachaCityAutoFromDeathFloor() {
+    const deathFloor = myData.gachaCityDeathFloor || 0;
+    if (!deathFloor) {
+        showToast('沒有死亡樓層記錄！', true);
+        return;
+    }
+    const entryCost = 100000;
+    const teleportCost = deathFloor * 100000;
+    const totalCost = entryCost + teleportCost;
+    if (inv('skill_shard') < totalCost) {
+        showToast('碎片不足！需要進入費 💎 ' + formatNum(entryCost) + ' + 傳送費 💎 ' + formatNum(teleportCost) + ' = 共 💎 ' + formatNum(totalCost), true);
+        return;
+    }
+    if (confirm('⚡ 確定付費返回第 ' + deathFloor + ' 層並開始自動戰鬥？\n\n⏱️ 時間：' + selectedAutoDuration + ' 分鐘\n📍 起始層：第 ' + deathFloor + ' 層\n💰 費用：進入費 💎 ' + formatNum(entryCost) + ' + 傳送費 💎 ' + formatNum(teleportCost) + ' + 每層 💎 5,000\n\n⏰ 設定時間結束/碎片耗盡後自動停止。')) {
+        socket.emit('startGachaCityAuto', { duration: selectedAutoDuration, startFloor: deathFloor });
+        showToast('⚡ 正在返回第 ' + deathFloor + ' 層並啟動自動戰鬥...');
+        document.getElementById('auto-death-floor-card').style.display = 'none';
     }
 }
 
@@ -1409,6 +1460,7 @@ function updateEnterButtonState() {
 function updateAutoProgressUI(task) {
     if (!task) return;
     document.getElementById('auto-current-floor').textContent = task.currentFloor;
+    document.getElementById('auto-start-floor').textContent = task.startFloor != null ? task.startFloor : '-';
     document.getElementById('auto-max-floor').textContent = task.maxReachedFloor;
     document.getElementById('auto-floors-cleared').textContent = task.floorsCleared;
     document.getElementById('auto-deaths').textContent = task.deaths;
@@ -1559,11 +1611,14 @@ socket.on('gachaCityResult', (res) => {
                     deathCard.style.display = 'block';
                     document.getElementById('death-floor-num').innerText = df;
                     document.getElementById('death-floor-btn-num').innerText = df;
-                    const dCost = df * 100000;
-                    document.getElementById('death-floor-cost').innerText = '費用：💎 ' + formatNum(dCost) + ' 碎片';
+                    const dTeleportCost = df * 100000;
+                    const dTotalCost = 100000 + dTeleportCost;
+                    document.getElementById('death-floor-cost').innerText = '進入費 💎 ' + formatNum(100000) + ' + 傳送費 💎 ' + formatNum(dTeleportCost) + ' = 共 💎 ' + formatNum(dTotalCost);
                 }
+                updateAutoDeathFloorCard(df);
                 showToast('💀 你在第 ' + df + ' 層死亡！回到第 1 層', true);
             } else {
+                updateAutoDeathFloorCard(0);
                 showToast('💀 你被踢出了轉蛋城！HP 歸零！', true);
             }
             break;
@@ -1579,6 +1634,9 @@ socket.on('gachaCityResult', (res) => {
                     savedCard.style.display = 'block';
                     document.getElementById('saved-max-floor').innerText = res.state.maxFloor;
                 }
+                // Custom floor max hint
+                const hintEl = document.getElementById('custom-floor-max-hint');
+                if (hintEl && res.state && res.state.maxFloor) hintEl.innerText = res.state.maxFloor;
                 // Death floor return
                 if (res.state && res.state.deathFloor > 0) {
                     const deathCard = document.getElementById('death-floor-card');
@@ -1586,9 +1644,14 @@ socket.on('gachaCityResult', (res) => {
                         deathCard.style.display = 'block';
                         document.getElementById('death-floor-num').innerText = res.state.deathFloor;
                         document.getElementById('death-floor-btn-num').innerText = res.state.deathFloor;
-                        const dCost = res.state.deathFloor * 100000;
-                        document.getElementById('death-floor-cost').innerText = '費用：💎 ' + formatNum(dCost) + ' 碎片';
+                        const sTeleportCost = res.state.deathFloor * 100000;
+                        const sTotalCost = 100000 + sTeleportCost;
+                        document.getElementById('death-floor-cost').innerText = '進入費 💎 ' + formatNum(100000) + ' + 傳送費 💎 ' + formatNum(sTeleportCost) + ' = 共 💎 ' + formatNum(sTotalCost);
                     }
+                    updateAutoDeathFloorCard(res.state.deathFloor);
+                } else {
+                    document.getElementById('death-floor-card').style.display = 'none';
+                    updateAutoDeathFloorCard(0);
                 }
             }
             break;
@@ -1616,6 +1679,7 @@ socket.on('gachaCityAutoResult', (res) => {
         autoGachaRunning = true;
         updateEnterButtonState();
         document.getElementById('auto-battle-setup').style.display = 'none';
+        document.getElementById('auto-death-floor-card').style.display = 'none';
         document.getElementById('auto-battle-progress').style.display = 'block';
         document.getElementById('auto-battle-result').style.display = 'none';
         updateAutoProgressUI(res.task);
@@ -1631,6 +1695,7 @@ socket.on('gachaCityAutoResult', (res) => {
         updateEnterButtonState();
         showToast(res.msg);
         document.getElementById('auto-battle-setup').style.display = 'none';
+        document.getElementById('auto-death-floor-card').style.display = 'none';
         document.getElementById('auto-battle-progress').style.display = 'block';
         document.getElementById('auto-battle-result').style.display = 'none';
         if (res.task) updateAutoProgressUI(res.task);
@@ -1647,6 +1712,10 @@ socket.on('gachaCityAutoResult', (res) => {
             // 正常結束（時間到/碎片耗盡/離線）→ 顯示結果
             showAutoResultPanel(res.task, res.msg);
             showToast(res.msg);
+        }
+        // 如果結束時有死亡樓層，顯示死亡樓層返回按鈕
+        if (res.task.deathFloor > 0) {
+            updateAutoDeathFloorCard(res.task.deathFloor);
         }
     } else {
         showToast(res.msg || '無法開始自動戰鬥', true);
