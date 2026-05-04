@@ -1730,6 +1730,8 @@ socket.on('gachaCityAutoResult', (res) => {
         }
         // 如果結束時有死亡樓層，顯示死亡樓層返回按鈕 & 更新 hint
         if (res.task.deathFloor > 0) {
+            // ⚡ 立即同步 deathFloor 到 myData，確保按鈕能正確讀取
+            if (myData) myData.gachaCityDeathFloor = res.task.deathFloor;
             updateAutoDeathFloorCard(res.task.deathFloor);
             // 更新 max hint（死亡樓層可能高於之前顯示的 maxFloor）
             const fHintEl = document.getElementById('custom-floor-max-hint');
@@ -1738,6 +1740,9 @@ socket.on('gachaCityAutoResult', (res) => {
             if (fHintEl) fHintEl.innerText = res.task.deathFloor;
             if (fRangeEl) fRangeEl.innerText = res.task.deathFloor;
             if (fInputEl) fInputEl.max = res.task.deathFloor;
+        } else {
+            // 沒有死亡樓層，清除 myData 中的記錄
+            if (myData) delete myData.gachaCityDeathFloor;
         }
     } else {
         showToast(res.msg || '無法開始自動戰鬥', true);
