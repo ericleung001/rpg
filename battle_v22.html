@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中_v9</title>
+    <title>戰鬥中_v7</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -291,9 +291,9 @@
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const socket = io('https://mmo.ttctv-105.cc', { 
-    transports: ['websocket', 'polling'],
-    secure: true // 因為你用 https，建議加呢個
-});
+            transports: ['websocket', 'polling'],
+            secure: true 
+        });
 
         // 🟢 [核心] 轉生稱號格式化工具 (新增)
         function formatName(name, rebirth) {
@@ -454,6 +454,12 @@
         let isMyTurn = false; 
         const params = new URLSearchParams(window.location.search);
         const roomId = params.get('room');
+        
+        // ── Ultimate Boss Room variables ──
+        let isUltimateBoss = false;
+        let ubRoomId = params.get('ub_room');
+        let ubMode = null; // solo, public, private
+        let ubBossData = null;
         let myPlayer = { mp: 0, hp: 0, maxMp: 100, maxHp: 100, skills: ['fireball'] };
         let battleTimer = null;
         let elapsedSeconds = 0;
@@ -743,11 +749,17 @@
         };
 
         if (!myToken) { window.location.href = 'index.html'; }
-        if (!roomId && roomId !== 'world_boss') { showMsg("無效的房間！"); setTimeout(()=>window.location.href = 'hub.html', 1000); }
+        if (!roomId && roomId !== 'world_boss' && !ubRoomId) { showMsg("無效的房間！"); setTimeout(()=>window.location.href = 'hub.html', 1000); }
 
         socket.on('connect', () => {
             socket.emit('joinGame', myToken); 
             setTimeout(() => {
+                // Check if this is an Ultimate Boss room
+                if (ubRoomId) {
+                    isUltimateBoss = true;
+                    socket.emit('getUltimateBossRoomInfo', { roomId: ubRoomId });
+                    return;
+                }
                 if (roomId === 'world_boss') {
                     socket.emit('connectToBossRoom');
                     document.getElementById('turn-bar').innerText = "🔥 世界 BOSS 討伐戰 🔥";
@@ -1226,6 +1238,10 @@
         }
         
         function tryFlee() {
+            if (isUltimateBoss && ubRoomId) {
+                socket.emit('ultimateBossRoomAction', { roomId: ubRoomId, action: 'flee' });
+                return;
+            }
             if (!roomId) return;
             socket.emit('flee', roomId);
         }
@@ -1236,6 +1252,11 @@
         });
 
         function leaveRoom() { 
+            if (isUltimateBoss && ubRoomId) {
+                socket.emit('ultimateBossRoomAction', { roomId: ubRoomId, action: 'flee' });
+                setTimeout(() => { window.location.href = 'hub.html'; }, 500);
+                return;
+            }
             if (socket && socket.connected) { socket.emit('leaveRoom', roomId); }
             setTimeout(() => { window.location.replace('hub.html'); }, 300); 
         }
@@ -1280,6 +1301,10 @@
         });
 
         function requestStart() {
+            if (isUltimateBoss && ubRoomId) {
+                socket.emit('startUltimateBossRoom', { roomId: ubRoomId });
+                return;
+            }
             socket.emit('startBattle', roomId);
 
             // 🤖 反 Bot: 開戰後 5 秒內防止重複點擊
@@ -1293,6 +1318,10 @@
         
         // 🟢 [修正] 普通攻擊與物品使用
         function act(type) {
+            if (isUltimateBoss && ubRoomId) {
+                socket.emit('ultimateBossRoomAction', { roomId: ubRoomId, action: 'attack' });
+                return;
+            }
             if (roomId === 'world_boss') { 
                 toggle(true); 
                 socket.emit('worldBossAction', { type: 'attack' }); 
@@ -1379,6 +1408,11 @@
                 updateShortcutStates(myPlayer);
             }
 
+            if (isUltimateBoss && ubRoomId) {
+                socket.emit('ultimateBossRoomAction', { roomId: ubRoomId, action: 'skill', skillId: skillId });
+                resetButtons();
+                return;
+            }
             if (roomId === 'world_boss') { 
                 toggle(true); socket.emit('worldBossAction', { type: 'skill', skillId: skillId }); setTimeout(() => toggle(false), 500); 
             } else { 
@@ -1398,6 +1432,11 @@
         }
 
         function useItem(itemId) {
+            if (isUltimateBoss && ubRoomId) {
+                socket.emit('ultimateBossRoomAction', { roomId: ubRoomId, action: 'item', itemId: itemId });
+                resetButtons();
+                return;
+            }
             if (roomId === 'world_boss') { showMsg("BOSS 戰無法使用道具！"); resetButtons(); }
             else { 
                 if(!isMyTurn) return; 
@@ -1530,6 +1569,237 @@
         function addRotation() { autoConfig.rotation.push({ actionType: 'attack', actionId: 'normal', count: 1 }); renderRotationList(); }
         function delRotation(i) { autoConfig.rotation.splice(i, 1); renderRotationList(); }
         function updateRotation(i, field, val) { autoConfig.rotation[i][field] = val; if (field === 'actionType') renderRotationList(); }
+
+        // ══════════════════════════════════════════════════════
+        // ── Ultimate Boss Room Mode Handlers ──
+        // ══════════════════════════════════════════════════════
+
+        function renderUltimateBoss(data) {
+            // Show boss as single monster
+            currentMonsters = [{
+                name: data.bossName || '宇宙終焉者·阿卡西',
+                img: 'none',
+                hp: data.bossHp,
+                maxHp: data.bossMaxHp,
+                isBoss: true,
+                level: data.bossLevel || 1000,
+                def: data.bossDef,
+                atk: data.bossAtk
+            }];
+            selectedTargetIndex = 0;
+            renderMonsters(currentMonsters);
+
+            // Override the monster display with a special ultimate boss rendering
+            const container = document.getElementById('monsters-container');
+            container.innerHTML = '';
+            const hpPct = data.bossMaxHp > 0 ? Math.max(0, (data.bossHp / data.bossMaxHp) * 100) : 0;
+            const bs = data.bossState || {};
+            let buffsHtml = '';
+            if (bs.atkBuffed) buffsHtml += '<span style="color:#e74c3c;margin-right:6px;">🔥 ATK×2 (' + (bs.atkBuffTurns||0) + 'T)</span>';
+            if (bs.monsterBuffDef) buffsHtml += '<span style="color:#3498db;margin-right:6px;">🛡️ DEF×2 (' + (bs.monsterBuffTurns||0) + 'T)</span>';
+            if (bs.skillSealed) buffsHtml += '<span style="color:#9b59b6;margin-right:6px;">🌀 封印 (' + (bs.skillSealTurns||0) + 'T)</span>';
+            container.innerHTML = `
+                <div style="width:100%;padding:6px 10px;background:rgba(139,0,0,0.15);border:2px solid #8b0000;border-radius:8px;text-align:center;">
+                    <div style="font-size:40px;animation:bossIdle 3s ease-in-out infinite;">👹</div>
+                    <div style="font-size:10px;font-weight:bold;color:#ff4500;margin-top:4px;">${escapeHtml(data.bossName || '宇宙終焉者·阿卡西')}</div>
+                    <div style="font-size:8px;color:#aaa;">Lv.${data.bossLevel || 1000} · 回合 ${data.rounds || 0}</div>
+                    <div style="font-size:8px;min-height:14px;margin-top:2px;color:#e05c20;">${buffsHtml}</div>
+                    <div style="margin-top:4px;">
+                        <div style="display:flex;justify-content:space-between;font-size:7px;color:#aaa;margin-bottom:1px;">
+                            <span>💀 HP</span>
+                            <span style="color:#c0392b;">${data.bossHp.toLocaleString()} / ${data.bossMaxHp.toLocaleString()}</span>
+                        </div>
+                        <div style="width:100%;height:10px;background:#1a0808;border-radius:5px;border:1px solid #3a1515;overflow:hidden;">
+                            <div style="height:100%;width:${hpPct}%;background:linear-gradient(90deg,#8b0000,#c0392b,#ff4500);border-radius:5px;transition:width 0.5s;"></div>
+                        </div>
+                        <div style="font-size:7px;color:#c0392b;margin-top:1px;">${hpPct.toFixed(2)}%</div>
+                    </div>
+                </div>
+            `;
+
+            // Update teammates
+            if (data.players) {
+                const myName = document.getElementById('my-name-display').textContent;
+                const myP = data.players.find(p => p.name === myName || p.name === myName.replace(/<[^>]*>/g, ''));
+                if (myP) {
+                    myPlayer.hp = myP.hp; myPlayer.maxHp = myP.maxHp;
+                    myPlayer.mp = myP.mp; myPlayer.maxMp = myP.maxMp;
+                    document.getElementById('php').style.width = (myP.hp / myP.maxHp * 100) + '%';
+                    document.getElementById('pmp').style.width = (myP.mp / myP.maxMp * 100) + '%';
+                    document.getElementById('hp-txt').innerText = `HP:${myP.hp}/${myP.maxHp}  MP:${myP.mp}/${myP.maxMp}`;
+                }
+                const teammates = data.players.filter(p => p.name !== myName && p.name !== myName.replace(/<[^>]*>/g, ''));
+                const teammatesBox = document.getElementById('teammates-box');
+                teammatesBox.innerHTML = '';
+                teammates.forEach(tp => {
+                    const hpPct = (tp.hp / tp.maxHp) * 100;
+                    teammatesBox.innerHTML += `
+                        <div class="mini-box" style="display:flex; flex-direction:column;">
+                            <div style="font-weight:bold;font-size:9px;">${escapeHtml(tp.name)}</div>
+                            <div class="mini-hp-bar"><div class="mini-hp-fill" style="width:${hpPct}%;"></div></div>
+                            <div style="font-size:7px;color:#888;">HP:${tp.hp}/${tp.maxHp}</div>
+                        </div>`;
+                });
+            }
+        }
+
+        socket.on('ultimateBossRoomCreated', (res) => {
+            if (res) {
+                ubRoomId = res.roomId;
+                ubMode = res.mode;
+                isUltimateBoss = true;
+                window.history.replaceState({}, '', 'battle_v22.html?ub_room=' + res.roomId);
+                document.getElementById('lobby-overlay').style.display = 'flex';
+                document.getElementById('lobby-players').innerHTML = '<div>你 (房主)</div><div style="font-size:10px;color:#888;">模式: ' + (res.mode === 'solo' ? '單人' : res.mode === 'public' ? '公開' : '私人') + '</div>';
+                document.getElementById('turn-bar').innerText = '💀 終極Boss 準備中';
+                document.getElementById('turn-bar').style.background = '#8b0000';
+                document.getElementById('auto-panel').style.display = 'none';
+                document.getElementById('start-btn').style.display = 'block';
+                document.getElementById('waiting-txt').style.display = 'none';
+                if (res.mode === 'solo') {
+                    document.getElementById('start-btn').disabled = false;
+                }
+            }
+        });
+
+        socket.on('ultimateBossRoomUpdate', (data) => {
+            if (data && data.players && !data.bossHp && data.bossHp !== 0) {
+                // Lobby update (just player list, no boss data)
+                const namesHtml = data.players.map((p, i) => {
+                    const isHost = (i === 0) ? ' (房主)' : '';
+                    return '<div>' + escapeHtml(p.name) + isHost + '</div>';
+                }).join('');
+                document.getElementById('lobby-players').innerHTML = namesHtml + '<div style="margin-top:8px;font-size:10px;color:#888;">模式: ' + (data.mode === 'solo' ? '單人' : data.mode === 'public' ? '公開房間' : '私人房間') + '</div>';
+                return;
+            }
+            if (data && data.bossHp !== undefined) {
+                // Battle update with boss data
+                renderUltimateBoss(data);
+                if (data.log) {
+                    const logLines = data.log.split('\n');
+                    logLines.forEach(l => log(l));
+                }
+            }
+        });
+
+        socket.on('ultimateBossRoomStarted', (data) => {
+            if (!data) return;
+            document.getElementById('lobby-overlay').style.display = 'none';
+            ubBossData = data;
+            
+            // Setup UI for ultimate boss
+            document.getElementById('turn-bar').innerText = '💀 終極Boss 戰鬥中';
+            document.getElementById('turn-bar').style.background = '#8b0000';
+            document.getElementById('auto-panel').style.display = 'none'; // Hide auto-battle for boss
+            document.getElementById('countdown-timer').style.display = 'block';
+
+            // Render ultimate boss display
+            renderUltimateBoss(data);
+            
+            // Update player stats from server data
+            if (data.players) {
+                const myName = document.getElementById('my-name-display').textContent;
+                const myP = data.players.find(p => p.name === myName || p.name === myName.replace(/<[^>]*>/g, ''));
+                if (myP) {
+                    myPlayer.hp = myP.hp; myPlayer.maxHp = myP.maxHp;
+                    myPlayer.mp = myP.mp; myPlayer.maxMp = myP.maxMp;
+                    myPlayer.atk = myP.atk; myPlayer.def = myP.def;
+                    myPlayer.skills = myP.skills;
+                    document.getElementById('php').style.width = (myP.hp / myP.maxHp * 100) + '%';
+                    document.getElementById('pmp').style.width = (myP.mp / myP.maxMp * 100) + '%';
+                    document.getElementById('hp-txt').innerText = `HP:${myP.hp}/${myP.maxHp}  MP:${myP.mp}/${myP.maxMp}`;
+                    if(document.getElementById('atk-val')) document.getElementById('atk-val').innerText = myP.atk;
+                    if(document.getElementById('def-val')) document.getElementById('def-val').innerText = myP.def;
+                }
+                // Show teammates
+                const teammates = data.players.filter(p => p.name !== myName && p.name !== myName.replace(/<[^>]*>/g, ''));
+                const teammatesBox = document.getElementById('teammates-box');
+                teammatesBox.innerHTML = '';
+                teammates.forEach(tp => {
+                    const hpPct = (tp.hp / tp.maxHp) * 100;
+                    teammatesBox.innerHTML += `
+                        <div class="mini-box" style="display:flex; flex-direction:column;">
+                            <div style="font-weight:bold;font-size:9px;">${escapeHtml(tp.name)}</div>
+                            <div class="mini-hp-bar"><div class="mini-hp-fill" style="width:${hpPct}%;"></div></div>
+                        </div>`;
+                });
+            }
+            
+            // Override turn system for ultimate boss - players take turns freely
+            isMyTurn = true;
+            document.getElementById('turn-bar').innerText = '💀 終極Boss · 你的回合';
+            resetButtons();
+            
+            log('⚔️ 終極Boss戰鬥開始！');
+            log('🌀 終極次元干擾場：回復/增益技能被封印！');
+        });
+
+        socket.on('ultimateBossRoomInfo', (data) => {
+            if (!data) return;
+            ubMode = data.mode;
+            isUltimateBoss = true;
+            
+            document.getElementById('lobby-overlay').style.display = 'flex';
+            const namesHtml = data.players.map((p, i) => {
+                const isHost = (i === 0) ? ' (房主)' : '';
+                return '<div>' + escapeHtml(p.name) + isHost + '</div>';
+            }).join('');
+            document.getElementById('lobby-players').innerHTML = namesHtml + '<div style="margin-top:8px;color:#888;font-size:10px;">模式: ' + (data.mode === 'solo' ? '單人' : data.mode === 'public' ? '公開房間' : '私人房間') + '</div>';
+            
+            document.getElementById('turn-bar').innerText = '💀 終極Boss 房間';
+            document.getElementById('turn-bar').style.background = '#8b0000';
+            document.getElementById('auto-panel').style.display = 'none';
+            
+            const myName = document.getElementById('my-name-display').textContent;
+            const isHost = (data.host === myName);
+            document.getElementById('start-btn').style.display = isHost ? 'block' : 'none';
+            document.getElementById('waiting-txt').style.display = isHost ? 'none' : 'block';
+            
+            if (data.started && data.bossHp !== undefined) {
+                // Rejoin ongoing battle
+                document.getElementById('lobby-overlay').style.display = 'none';
+                ubBossData = data;
+                data.bossName = data.bossName || '宇宙終焉者·阿卡西';
+                data.bossLevel = data.bossLevel || 1000;
+                renderUltimateBoss(data);
+                resetButtons();
+            }
+        });
+
+        socket.on('ultimateBossRoomResult', (data) => {
+            if (data.victory) {
+                if (data.log) {
+                    const logLines = data.log.split('\n');
+                    logLines.forEach(l => log(l));
+                }
+                showMsg('🏆 擊敗宇宙終焉者！');
+                const bar = document.getElementById('turn-bar');
+                bar.innerText = '👑 勝利！'; bar.style.background = 'gold'; bar.style.color = 'black';
+                const btnArea = document.getElementById('btns');
+                document.getElementById('fixed-top-area').style.display = 'none';
+                document.getElementById('shortcut-area').style.display = 'none';
+                btnArea.innerHTML = '<button class="btn" style="background:#e74c3c;color:white;font-weight:bold;" onclick="window.location.href=\'hub.html\'">🚪 返回主城</button>';
+                if(isAuto) toggleAuto();
+            } else if (data.defeat) {
+                if (data.log) {
+                    const logLines = data.log.split('\n');
+                    logLines.forEach(l => log(l));
+                }
+                showMsg('💀 挑戰失敗！');
+                const bar = document.getElementById('turn-bar');
+                bar.innerText = '💀 挑戰失敗'; bar.style.background = '#8b0000'; bar.style.color = '#fff';
+                const btnArea = document.getElementById('btns');
+                document.getElementById('fixed-top-area').style.display = 'none';
+                document.getElementById('shortcut-area').style.display = 'none';
+                btnArea.innerHTML = '<button class="btn" style="background:#e74c3c;color:white;font-weight:bold;" onclick="window.location.href=\'hub.html\'">🚪 返回主城</button>';
+                if(isAuto) toggleAuto();
+            }
+        });
+
+        socket.on('ultimateBossRoomError', (data) => {
+            showMsg(data.msg || '錯誤');
+            setTimeout(() => { window.location.href = 'hub.html'; }, 2000);
+        });
     </script>
 </body>
 </html>
