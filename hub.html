@@ -61,11 +61,14 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: 30px;}
+        .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: auto; min-height: 30px; padding: 2px 0;}
         .logout-btn { font-size: 12px; color: #e74c3c; cursor: pointer; text-decoration: underline; white-space: nowrap; padding: 8px 10px; border-radius: 4px; transition: background 0.2s; }
         .logout-btn:active { background: rgba(231,76,60,0.2); }
         h1 { font-family: var(--font-display); font-size: 14px; margin: 0; white-space: nowrap; }
         #conn-status { font-size: 11px; padding: 6px 10px; background: #333; border: 1px solid #fff; border-radius: 6px; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+        #server-stats { font-size: 9px; padding: 4px 8px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; white-space: nowrap; display: flex; align-items: center; gap: 6px; color: #bdc3c7; }
+        #server-stats .stat-item { display: inline-flex; align-items: center; gap: 2px; }
+        #server-stats .stat-num { color: #f1c40f; font-weight: bold; }
 
         .status-bar { 
             background: #34495e; border: 3px solid #fff; padding: 12px; 
@@ -1146,9 +1149,10 @@
             <button class="close-sidebar-btn" onclick="toggleSidebar()">×</button>
         </div>
         <div class="sidebar-content">
-<!-- 自動戰鬥 -->
+<!-- 戰鬥 -->
             <div class="sidebar-section-title">自動戰鬥</div>
         <a href="auto_battle.html" class="facility-btn" style="background:linear-gradient(135deg, #c0392b, #e74c3c); border-color:#e74c3c;">⚔️ 自動戰鬥</a>
+        <a href="ultimate_boss.html" class="facility-btn" style="background:linear-gradient(135deg, #0a0a2e, #1a0a4e); border-color:#e05c20; color:#e05c20;">💀 終極Boss</a>
                 
             <!-- 📦 物品管理 -->
             <div class="sidebar-section-title">📦 物品管理</div>
@@ -1172,7 +1176,7 @@
             <a href="enhance.html" class="facility-btn" style="background:linear-gradient(135deg, #d35400, #e67e22); border-color:#e67e22;">🔥 強化</a>
             <a href="myth.html" class="facility-btn" style="background:linear-gradient(135deg, #4a0080, #6a0dad); border-color:#8b00ff;">⚗️ 神話</a>
             <a href="gacha_city.html" class="facility-btn" style="background:linear-gradient(135deg, #6c3483, #a569bd); border-color:#a569bd;">🎰 轉蛋城</a>
-            <a href="ultimate_boss.html" class="facility-btn" style="background:linear-gradient(135deg, #0a0a2e, #1a0a4e); border-color:#e05c20; color:#e05c20;">💀 終極Boss</a>
+            
             <a href="skills.html" class="facility-btn" style="background:linear-gradient(135deg, #8e44ad, #5b2c6f); border-color:#9b59b6;">⚡ 技能升級</a>
             
             <div class="sidebar-divider"></div>
@@ -1221,6 +1225,19 @@
             <div class="notice-title">📢 Ver 6.1 更新公告</div>
 <button class="close-notice-btn" onclick="closeNotice()">我知道了，立即體驗！</button>
             <div class="notice-content">
+
+<b style="color:#e67e22;">神話 III 代裝備：宇宙系列</b>
+- 利用轉蛋城獲得的材料，將神話 II 代裝備提升至全新的維度。
+
+<b style="color:#3498db;">終極挑戰：宇宙終焉者．阿卡西</b>
+- 位於宇宙頂點的終極 BOSS 降臨，只有最強的冒險者才能一窺其真面目。
+
+<b style="color:#16a085;">新增【轉蛋城】</b>
+- 挑戰實力與運氣的 100 層迷宮正式開啟。
+-       入場條件： 每次入場需支付 100,000 技能碎片。
+-       專屬材料： 城內出產「轉蛋之焰」、「轉蛋冰晶」、「轉蛋暗核」、「轉蛋神輝」及「轉蛋混沌石」（皆為不可交易物品）。
+-       難度提示： 高層怪物具有強大的 AI 補血與防禦技能，並設有「技能傷害上限」防止秒殺。建議穿著 神話 II 代強化 +15 以上 裝備挑戰。
+- 終極獎勵： 擊敗 100 層 BOSS 有機率獲得 「神話 III 代鍛造圖紙」。
 
 <b style="color:#16a085;">新增【寵物功能】</b>
 - <b>購買</b>：花費 10,000 技能碎片 購買寵物。
@@ -1395,7 +1412,13 @@
                     <div class="logout-btn" onclick="logout()">登出</div>
                 </div>
                 <h1> 公會大廳</h1>
-                <div id="conn-status" style="color:#e74c3c"> 連線中</div>
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:3px;">
+                    <div id="server-stats">
+                        <span class="stat-item">👥 線上: <span class="stat-num" id="stat-online">-</span></span>
+                        <span class="stat-item">🏃 任務中: <span class="stat-num" id="stat-expedition">-</span></span>
+                    </div>
+                    <div id="conn-status" style="color:#e74c3c"> 連線中</div>
+                </div>
             </div>
             
             <!-- 🎫 優惠碼展示區 -->
@@ -3386,6 +3409,13 @@
         socket.on('hubDataUpdate', (data) => {
             cityData = data.cityCounts;
             activeRooms = data.roomsList;
+            // 更新伺服器統計數據
+            if (data.onlineCount !== undefined) {
+                document.getElementById('stat-online').innerText = data.onlineCount;
+            }
+            if (data.expeditionCount !== undefined) {
+                document.getElementById('stat-expedition').innerText = data.expeditionCount;
+            }
             refreshUI(); 
         });
 
