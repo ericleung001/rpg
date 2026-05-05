@@ -62,6 +62,10 @@
     <hr>
 
     <h3 style="color: #2ecc71;">🟢 在線玩家管理 (Online Players)</h3>
+    <div style="display:flex; justify-content:center; gap:15px; margin-bottom:8px; font-size:13px;">
+        <span style="color:#f1c40f; font-weight:bold;">👥 線上人數: <span id="admin-online-count" style="color:#fff;">-</span></span>
+        <span style="color:#e67e22; font-weight:bold;">🏃 僱員任務中: <span id="admin-expedition-count" style="color:#fff;">-</span></span>
+    </div>
     
     <div style="display:flex; justify-content:center; gap:10px; margin-bottom:10px;">
         <button onclick="refreshOnline()" style="background:#27ae60; width:auto;">🔄 刷新列表</button>
@@ -744,6 +748,16 @@
             log("✅ 連線成功，請輸入密碼與玩家名稱。");
         });
 
+        // 自動接收伺服器廣播的統計數據（每10秒更新）
+        socket.on('hubDataUpdate', (data) => {
+            if (data.onlineCount !== undefined) {
+                document.getElementById('admin-online-count').innerText = data.onlineCount;
+            }
+            if (data.expeditionCount !== undefined) {
+                document.getElementById('admin-expedition-count').innerText = data.expeditionCount;
+            }
+        });
+
         // ============================
         // 🟢 核心工具函式
         // ============================
@@ -781,9 +795,19 @@
 
         socket.on('adminOnlineList', (list) => {
             onlinePlayersData = list;
-            onlinePage = 1; 
-            renderOnlineTable(); 
+            onlinePage = 1;
+            renderOnlineTable();
             log(`已更新 ${list.length} 位線上玩家`);
+        });
+
+        // 接收伺服器統計數據（線上人數 + 任務中人數）
+        socket.on('adminServerStats', (stats) => {
+            if (stats.onlineCount !== undefined) {
+                document.getElementById('admin-online-count').innerText = stats.onlineCount;
+            }
+            if (stats.expeditionCount !== undefined) {
+                document.getElementById('admin-expedition-count').innerText = stats.expeditionCount;
+            }
         });
 
         function searchOnline() {
