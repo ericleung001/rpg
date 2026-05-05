@@ -3404,7 +3404,7 @@
             const status = document.getElementById('conn-status');
             if (!socket.connected) return;
             let text = " 已連線";
-            if (serverTotalCount !== null) {
+            if (serverTotalCount !== null && !isNaN(serverTotalCount)) {
                 text += `  👥${serverTotalCount}人`;
             }
             status.innerHTML = text;
@@ -3413,7 +3413,14 @@
         socket.on('hubDataUpdate', (data) => {
             cityData = data.cityCounts;
             activeRooms = data.roomsList;
-            if (data.onlineCount !== undefined) serverTotalCount = data.onlineCount + data.expeditionCount;
+            // 優先使用 totalCount，若無則回退計算 onlineCount + expeditionCount
+            if (data.totalCount !== undefined) {
+                serverTotalCount = Number(data.totalCount) || 0;
+            } else {
+                const online = Number(data.onlineCount) || 0;
+                const expedition = Number(data.expeditionCount) || 0;
+                serverTotalCount = online + expedition;
+            }
             updateConnStatus();
             refreshUI(); 
         });
