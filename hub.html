@@ -61,14 +61,11 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: auto; min-height: 30px; padding: 2px 0;}
+        .top-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: 30px;}
         .logout-btn { font-size: 12px; color: #e74c3c; cursor: pointer; text-decoration: underline; white-space: nowrap; padding: 8px 10px; border-radius: 4px; transition: background 0.2s; }
         .logout-btn:active { background: rgba(231,76,60,0.2); }
         h1 { font-family: var(--font-display); font-size: 14px; margin: 0; white-space: nowrap; }
         #conn-status { font-size: 11px; padding: 6px 10px; background: #333; border: 1px solid #fff; border-radius: 6px; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
-        #server-stats { font-size: 9px; padding: 4px 8px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; white-space: nowrap; display: flex; align-items: center; gap: 6px; color: #bdc3c7; }
-        #server-stats .stat-item { display: inline-flex; align-items: center; gap: 2px; }
-        #server-stats .stat-num { color: #f1c40f; font-weight: bold; }
 
         .status-bar { 
             background: #34495e; border: 3px solid #fff; padding: 12px; 
@@ -1412,13 +1409,7 @@
                     <div class="logout-btn" onclick="logout()">登出</div>
                 </div>
                 <h1> 公會大廳</h1>
-                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:3px;">
-                    <div id="server-stats">
-                        <span class="stat-item">👥 線上: <span class="stat-num" id="stat-online">-</span></span>
-                        <span class="stat-item">🏃 任務中: <span class="stat-num" id="stat-expedition">-</span></span>
-                    </div>
-                    <div id="conn-status" style="color:#e74c3c"> 連線中</div>
-                </div>
+                <div id="conn-status" style="color:#e74c3c"> 連線中</div>
             </div>
             
             <!-- 🎫 優惠碼展示區 -->
@@ -3406,16 +3397,24 @@
         setTimeout(() => socket.emit('getHirelings'), 800);
         setInterval(() => { if (socket.connected) socket.emit('getHirelings'); }, 30000);
 
+        // 儲存伺服器統計數據
+        let serverTotalCount = null;
+
+        function updateConnStatus() {
+            const status = document.getElementById('conn-status');
+            if (!socket.connected) return;
+            let text = " 已連線";
+            if (serverTotalCount !== null) {
+                text += `  👥${serverTotalCount}人`;
+            }
+            status.innerHTML = text;
+        }
+
         socket.on('hubDataUpdate', (data) => {
             cityData = data.cityCounts;
             activeRooms = data.roomsList;
-            // 更新伺服器統計數據
-            if (data.onlineCount !== undefined) {
-                document.getElementById('stat-online').innerText = data.onlineCount;
-            }
-            if (data.expeditionCount !== undefined) {
-                document.getElementById('stat-expedition').innerText = data.expeditionCount;
-            }
+            if (data.onlineCount !== undefined) serverTotalCount = data.onlineCount + data.expeditionCount;
+            updateConnStatus();
             refreshUI(); 
         });
 
