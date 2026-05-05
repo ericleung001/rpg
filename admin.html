@@ -750,6 +750,16 @@
 
         // 自動接收伺服器廣播的統計數據（每10秒更新）
         socket.on('hubDataUpdate', (data) => {
+            if (data.onlineCount !== undefined) {
+                document.getElementById('admin-online-count').innerText = data.onlineCount;
+            }
+            if (data.expeditionCount !== undefined) {
+                document.getElementById('admin-expedition-count').innerText = data.expeditionCount;
+            }
+        });
+
+        // 自動接收伺服器廣播的統計數據（每10秒更新）
+        socket.on('hubDataUpdate', (data) => {
             const online = Number(data.onlineCount) || 0;
             let expedition = Number(data.expeditionCount);
             // 伺服器新版發送 totalCount，需要推算 expeditionCount
