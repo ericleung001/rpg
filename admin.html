@@ -750,12 +750,16 @@
 
         // 自動接收伺服器廣播的統計數據（每10秒更新）
         socket.on('hubDataUpdate', (data) => {
-            if (data.onlineCount !== undefined) {
-                document.getElementById('admin-online-count').innerText = data.onlineCount;
+            const online = Number(data.onlineCount) || 0;
+            let expedition = Number(data.expeditionCount);
+            // 伺服器新版發送 totalCount，需要推算 expeditionCount
+            if (isNaN(expedition) && data.totalCount !== undefined) {
+                expedition = Math.max(0, Number(data.totalCount) - online);
+            } else {
+                expedition = expedition || 0;
             }
-            if (data.expeditionCount !== undefined) {
-                document.getElementById('admin-expedition-count').innerText = data.expeditionCount;
-            }
+            document.getElementById('admin-online-count').innerText = online;
+            document.getElementById('admin-expedition-count').innerText = expedition;
         });
 
         // ============================
@@ -802,12 +806,15 @@
 
         // 接收伺服器統計數據（線上人數 + 任務中人數）
         socket.on('adminServerStats', (stats) => {
-            if (stats.onlineCount !== undefined) {
-                document.getElementById('admin-online-count').innerText = stats.onlineCount;
+            const online = Number(stats.onlineCount) || 0;
+            let expedition = Number(stats.expeditionCount);
+            if (isNaN(expedition) && stats.totalCount !== undefined) {
+                expedition = Math.max(0, Number(stats.totalCount) - online);
+            } else {
+                expedition = expedition || 0;
             }
-            if (stats.expeditionCount !== undefined) {
-                document.getElementById('admin-expedition-count').innerText = stats.expeditionCount;
-            }
+            document.getElementById('admin-online-count').innerText = online;
+            document.getElementById('admin-expedition-count').innerText = expedition;
         });
 
         function searchOnline() {
