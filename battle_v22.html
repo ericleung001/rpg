@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中_v7</title>
+    <title>戰鬥中_v8</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -297,11 +297,24 @@
         });
 
         // 🟢 [核心] 轉生稱號格式化工具 (新增)
-        function formatName(name, rebirth) {
-            if (rebirth && rebirth > 0) {
-                return `${escapeHtml(name)}<span style="color:#f1c40f; font-weight:bold; margin-left:2px;">+${rebirth}</span>`;
+        function formatName(name, rebirth, title) {
+            let html = '';
+            if (title) {
+                html += `<span style="color:#f1c40f; font-size:10px; font-weight:bold; display:block; line-height:1.2;">[${escapeHtml(title)}]</span>`;
             }
-            return escapeHtml(name);
+            if (rebirth && rebirth > 0) {
+                html += `${escapeHtml(name)}<span style="color:#f1c40f; font-weight:bold; margin-left:2px;">+${rebirth}</span>`;
+            } else {
+                html += escapeHtml(name);
+            }
+            return html;
+        }
+
+        // 🟢 [稱號] 組裝稱號 buff 文字
+        function getTitleBuffText(activeTitle) {
+            if (!activeTitle) return '';
+            const buffs = { '宇宙最強': 'ATK+5%', '千軍破陣': 'ATK+2% DEF+2%', '至高無上': 'ATK+3% DEF+3%', '永恆旅人': 'ATK+2%', '轉生之王': 'ATK+3% DEF+3%', '鍛造大師': 'DEF+2%', '神之鍛造': 'DEF+3%', '極致鍛造': 'ATK+3% DEF+3%', '轉蛋征服者': 'ATK+2%', '轉蛋傳說': 'ATK+2%' };
+            return buffs[activeTitle] || '';
         }
 
         function escapeHtml(text) {
@@ -857,7 +870,7 @@
                 }
                 
                 // 🟢 [修改] 顯示轉生稱號
-                const displayName = formatName(p.name, p.rebirth);
+                const displayName = formatName(p.name, p.rebirth, p.activeTitle);
                 
                 lobbyList.innerHTML += `
                     <div style="border-bottom:1px dashed #555; padding:8px 5px; line-height: 20px;">
@@ -895,7 +908,7 @@
             info.players.forEach(p => {
                 if (p.id !== socket.id) { 
                     const hpPct = (p.hp / p.maxHp) * 100;
-                    const displayName = formatName(p.name, p.rebirth);
+                    const displayName = formatName(p.name, p.rebirth, p.activeTitle);
                     
                     let kickHtml = '';
                     if (amIHost) {
@@ -945,7 +958,12 @@
                 timerEl.innerText = `⏱️ 戰鬥時間: ${mm}:${ss}`;
             }, 1000);
 
-            log("⚔️ 戰鬥開始！"); 
+            log("⚔️ 戰鬥開始！");
+            // 🟢 [稱號] 顯示目前佩戴嘅稱號 buff
+            if (myPlayer.activeTitle) {
+                const buffText = getTitleBuffText(myPlayer.activeTitle);
+                log(`🏅 稱號「${myPlayer.activeTitle}」${buffText ? ' — 加成: ' + buffText : '生效中'}`);
+            }
             
             if (isAuto && isMyTurn) {
                 setTimeout(autoPlayLogic, 1000); 
@@ -1089,8 +1107,13 @@
         socket.on('playerStatsUpdate', (p) => {
             myPlayer = p;
             
-            // 🟢 [修改] 顯示玩家自己的轉生稱號
-            document.getElementById('my-name-display').innerHTML = formatName(p.name, p.rebirth);
+            // 🟢 [修改] 顯示玩家自己的轉生稱號 + 稱號
+            document.getElementById('my-name-display').innerHTML = formatName(p.name, p.rebirth, p.activeTitle);
+            // 🟢 [稱號] 更新屬性顯示（加埋 buff 標記）
+            const buffText = getTitleBuffText(p.activeTitle);
+            const buffTag = buffText ? ` <span style="color:#f1c40f; font-size:10px;">(${buffText})</span>` : '';
+            if(document.getElementById('atk-val')) document.getElementById('atk-val').innerHTML = (p.atk||0).toLocaleString() + buffTag;
+            if(document.getElementById('def-val')) document.getElementById('def-val').innerHTML = (p.def||0).toLocaleString() + buffTag;
             
             document.getElementById('php').style.width = (p.hp / p.maxHp * 100) + '%';
             document.getElementById('pmp').style.width = (p.mp / p.maxMp * 100) + '%';
@@ -1723,6 +1746,13 @@
 
             // Render ultimate boss display
             renderUltimateBoss(data);
+            
+            // 🟢 [稱號] 終極Boss戰鬥開始時顯示稱號 buff
+            log("⚔️ 終極Boss 戰鬥開始！");
+            if (myPlayer.activeTitle) {
+                const buffText = getTitleBuffText(myPlayer.activeTitle);
+                log(`🏅 稱號「${myPlayer.activeTitle}」${buffText ? ' — 加成: ' + buffText : '生效中'}`);
+            }
             
             // Update player stats from server data
             if (data.players) {
