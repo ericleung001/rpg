@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -1136,6 +1136,66 @@
             color: #95a5a6; font-size: 10px; padding: 10px; font-style: italic;
         }
         /* =================================================== */
+
+        /* ==================== 稱號成就系統樣式 ==================== */
+        .ach-modal-box {
+            background: #2c3e50; color: #ecf0f1; width: 92%; max-width: 440px;
+            border: 3px solid #f1c40f; border-radius: 12px; padding: 15px;
+            max-height: 80vh; overflow-y: auto; text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .ach-modal-title {
+            font-family: var(--font-display); font-size: 14px; color: #f1c40f;
+            margin-bottom: 12px; font-weight: bold;
+        }
+        .ach-section-title {
+            font-size: 11px; color: #e67e22; font-weight: bold; margin: 10px 0 6px;
+            text-align: left; border-bottom: 1px dashed #555; padding-bottom: 4px;
+        }
+        .ach-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+        }
+        .ach-card {
+            background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px; text-align: center;
+            border: 1px solid rgba(255,255,255,0.1); cursor: default; transition: all 0.15s;
+        }
+        .ach-card.ach-done {
+            border-color: rgba(241,196,15,0.4); background: rgba(241,196,15,0.08);
+        }
+        .ach-card.ach-done:active { transform: scale(0.97); }
+        .ach-card .ach-icon { font-size: 20px; }
+        .ach-card .ach-name { font-size: 10px; font-weight: bold; color: #ecf0f1; margin-top: 3px; }
+        .ach-card .ach-desc { font-size: 8px; color: #95a5a6; margin-top: 2px; }
+        .ach-card.ach-done .ach-name { color: #f1c40f; }
+        .ach-card.ach-pending { opacity: 0.45; }
+
+        .ach-title-section {
+            background: rgba(0,0,0,0.25); border-radius: 8px; padding: 10px; margin: 10px 0;
+            text-align: left;
+        }
+        .ach-title-row {
+            display: flex; align-items: center; gap: 6px; padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 11px; cursor: pointer;
+            transition: background 0.15s; border-radius: 4px; padding: 5px 6px;
+        }
+        .ach-title-row:hover { background: rgba(255,255,255,0.05); }
+        .ach-title-row.ach-equipped { background: rgba(241,196,15,0.15); border: 1px solid rgba(241,196,15,0.3); }
+        .ach-title-row .ach-title-icon { font-size: 16px; }
+        .ach-title-row .ach-title-name { color: #f1c40f; font-weight: bold; flex: 1; }
+        .ach-title-row .ach-title-desc { font-size: 9px; color: #bdc3c7; }
+        .ach-title-row .ach-title-buff { font-size: 8px; color: #2ecc71; }
+        .ach-title-equip-btn {
+            font-size: 9px; padding: 2px 8px; border-radius: 4px; cursor: pointer;
+            background: #27ae60; color: #fff; border: none; font-weight: bold;
+        }
+        .ach-title-equip-btn.ach-unequip { background: #7f8c8d; }
+        .ach-title-equip-btn:active { transform: scale(0.95); }
+        .ach-no-titles { color: #95a5a6; font-size: 11px; padding: 15px; font-style: italic; }
+        .ach-active-label {
+            font-size: 9px; color: #95a5a6; text-align: left; margin-bottom: 6px;
+        }
+        .ach-count { font-size: 10px; color: #bdc3c7; text-align: right; margin-bottom: 8px; }
+        /* =================================================== */
     </style>
 </head>
 <body>
@@ -1206,6 +1266,13 @@
             
             <div class="sidebar-divider"></div>
             
+            <!-- 🏅 稱號成就 -->
+            <div class="sidebar-section-title">🏅 稱號成就</div>
+            <div class="facility-btn" style="background:linear-gradient(135deg, #f39c12, #f1c40f); border-color:#f1c40f; color:#2c3e50;" onclick="openAchievementModal(); toggleSidebar();">🏆 成就</div>
+            <div class="facility-btn" style="background:linear-gradient(135deg, #8e44ad, #9b59b6); border-color:#9b59b6;" onclick="openTitleModal(); toggleSidebar();">🏅 稱號</div>
+
+            <div class="sidebar-divider"></div>
+
             <!-- 🐾 寵物系統 -->
             <div class="sidebar-section-title">🐾 寵物系統</div>
             <div class="facility-btn" style="background:linear-gradient(135deg, #27ae60, #2ecc71); border-color:#2ecc71;" onclick="openPetModal(); toggleSidebar();">
@@ -1650,11 +1717,18 @@
             return regex.test(str);
         }
 
-        function formatName(name, rebirth) {
-            if (rebirth && rebirth > 0) {
-                return `${escapeHtml(name)}<span style="color:#f1c40f; font-weight:bold; margin-left:2px;">+${rebirth}</span>`;
+        let myActiveTitle = null; // 目前佩戴嘅稱號
+
+        function formatName(name, rebirth, title) {
+            let titleHtml = '';
+            if (title) {
+                titleHtml = `<span style="color:#f1c40f; font-size:10px; font-weight:bold; display:block; line-height:1.2;">[${escapeHtml(title)}]</span>`;
             }
-            return escapeHtml(name);
+            let nameHtml = escapeHtml(name);
+            if (rebirth && rebirth > 0) {
+                nameHtml += `<span style="color:#f1c40f; font-weight:bold; margin-left:2px;">+${rebirth}</span>`;
+            }
+            return titleHtml + nameHtml;
         }
 
        const socket = io('https://mmo.ttctv-105.cc', { 
@@ -1663,6 +1737,7 @@
         });
         
         let myLevel = 1;
+        let myRebirth = 0;
         let myName = ""; 
         let currentChatTarget = null;
         let myToken = localStorage.getItem('rpg_token');
@@ -2347,7 +2422,9 @@
             myLevel = p.level;
             myName = p.name;
             
-            document.getElementById('pid').innerHTML = formatName(p.name, p.rebirth);
+            document.getElementById('pid').innerHTML = formatName(p.name, p.rebirth, p.activeTitle);
+            myActiveTitle = p.activeTitle || null;
+            myRebirth = p.rebirth || 0;
             document.getElementById('lvl').innerText = p.level;
             
             // 使用縮寫顯示金幣
@@ -2932,6 +3009,183 @@
         updateBuffsCollapseSummary();
     }
 
+    // ==================== 稱號成就系統 ====================
+
+    // 打開成就面板
+    function openAchievementModal() {
+        socket.emit('getAchievements');
+
+        const modal = document.createElement('div');
+        modal.id = 'ach-modal';
+        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;';
+        modal.innerHTML = `
+            <div class="ach-modal-box">
+                <div class="ach-modal-title">🏆 成就</div>
+                <div id="ach-modal-content">
+                    <div style="color:#95a5a6; padding:20px;">載入中...</div>
+                </div>
+                <button class="pet-btn pet-btn-close" onclick="document.getElementById('ach-modal').remove()">關閉</button>
+            </div>
+        `;
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        document.body.appendChild(modal);
+    }
+
+    // 打開稱號面板
+    function openTitleModal() {
+        socket.emit('getAchievements');
+
+        const modal = document.createElement('div');
+        modal.id = 'ach-title-modal';
+        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:9999;';
+        modal.innerHTML = `
+            <div class="ach-modal-box" style="border-color:#9b59b6;">
+                <div class="ach-modal-title" style="color:#9b59b6;">🏅 稱號</div>
+                <div id="ach-title-modal-content">
+                    <div style="color:#95a5a6; padding:20px;">載入中...</div>
+                </div>
+                <button class="pet-btn pet-btn-close" onclick="document.getElementById('ach-title-modal').remove()">關閉</button>
+            </div>
+        `;
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        document.body.appendChild(modal);
+    }
+
+    // 監聽成就數據
+    socket.on('achievementsData', (data) => {
+        const { completed, pending, unlockedTitles, activeTitle, titleConfig } = data;
+
+        // 渲染成就面板
+        const achContent = document.getElementById('ach-modal-content');
+        if (achContent) {
+            const doneCount = Object.keys(completed).length;
+            const totalCount = doneCount + Object.keys(pending).length;
+            let html = `<div class="ach-count">已完成 ${doneCount} / ${totalCount}</div>`;
+
+            // 已完成
+            if (doneCount > 0) {
+                html += `<div class="ach-section-title">✅ 已完成</div><div class="ach-grid">`;
+                for (const [id, a] of Object.entries(completed)) {
+                    const titleInfo = a.title && titleConfig[a.title] ? titleConfig[a.title] : null;
+                    const icon = titleInfo ? titleInfo.icon : '🏆';
+                    html += `<div class="ach-card ach-done"><div class="ach-icon">${icon}</div><div class="ach-name">${escapeHtml(a.name)}</div><div class="ach-desc">${escapeHtml(a.desc)}</div></div>`;
+                }
+                html += `</div>`;
+            }
+
+            // 未完成
+            const pendingKeys = Object.keys(pending);
+            if (pendingKeys.length > 0) {
+                html += `<div class="ach-section-title">🔒 未完成</div><div class="ach-grid">`;
+                for (const id of pendingKeys) {
+                    const a = pending[id];
+                    const titleInfo = a.title && titleConfig[a.title] ? titleConfig[a.title] : null;
+                    const icon = titleInfo ? titleInfo.icon : '🔒';
+                    html += `<div class="ach-card ach-pending"><div class="ach-icon">${icon}</div><div class="ach-name">${escapeHtml(a.name)}</div><div class="ach-desc">${escapeHtml(a.desc)}</div></div>`;
+                }
+                html += `</div>`;
+            }
+
+            if (doneCount === 0 && pendingKeys.length === 0) {
+                html += `<div class="ach-no-titles">暫無成就</div>`;
+            }
+
+            achContent.innerHTML = html;
+        }
+
+        // 渲染稱號面板
+        const titleContent = document.getElementById('ach-title-modal-content');
+        if (titleContent) {
+            let html = '';
+
+            if (activeTitle) {
+                html += `<div class="ach-active-label">目前佩戴：${titleConfig[activeTitle] ? titleConfig[activeTitle].icon : '🏅'} <b style="color:#f1c40f;">${escapeHtml(activeTitle)}</b></div>`;
+            } else {
+                html += `<div class="ach-active-label">目前未佩戴稱號</div>`;
+            }
+
+            html += `<div class="ach-title-section">`;
+
+            // 卸下按鈕
+            if (activeTitle) {
+                html += `<div class="ach-title-row ach-equipped" onclick="equipTitle(null)">
+                    <span class="ach-title-icon">❌</span>
+                    <span class="ach-title-name" style="color:#95a5a6;">卸下稱號</span>
+                    <button class="ach-title-equip-btn ach-unequip">卸下</button>
+                </div>`;
+            }
+
+            if (unlockedTitles.length === 0) {
+                html += `<div class="ach-no-titles">尚無稱號，完成成就即可解鎖！</div>`;
+            } else {
+                for (const t of unlockedTitles) {
+                    const cfg = titleConfig[t] || {};
+                    const isEquipped = t === activeTitle;
+                    const buffText = cfg.buff ? Object.entries(cfg.buff).map(([k,v]) => `${k.toUpperCase()} +${Math.round(v*100)}%`).join(', ') : '無';
+                    html += `<div class="ach-title-row ${isEquipped ? 'ach-equipped' : ''}" onclick="equipTitle('${escapeHtml(t)}')">
+                        <span class="ach-title-icon">${cfg.icon || '🏅'}</span>
+                        <div style="flex:1;">
+                            <div class="ach-title-name">${escapeHtml(t)}</div>
+                            <div class="ach-title-desc">${escapeHtml(cfg.desc || '')}</div>
+                            ${buffText !== '無' ? `<div class="ach-title-buff">${buffText}</div>` : ''}
+                        </div>
+                        <button class="ach-title-equip-btn ${isEquipped ? 'ach-unequip' : ''}">${isEquipped ? '卸下' : '佩戴'}</button>
+                    </div>`;
+                }
+            }
+
+            html += `</div>`;
+            titleContent.innerHTML = html;
+        }
+    });
+
+    // 佩戴/卸下稱號
+    function equipTitle(titleName) {
+        socket.emit('equipTitle', { title: titleName });
+    }
+
+    // 監聽佩戴結果
+    socket.on('titleEquipped', (data) => {
+        if (data.success) {
+            myActiveTitle = data.activeTitle;
+            // 即時更新玩家名顯示
+            if (myName) {
+                document.getElementById('pid').innerHTML = formatName(myName, myRebirth, data.activeTitle);
+            }
+            // 刷新稱號面板
+            socket.emit('getAchievements');
+        }
+        // 顯示提示
+        const toast = document.getElementById('toast-notification');
+        toast.innerText = data.msg;
+        toast.style.display = 'block';
+        toast.style.opacity = '1';
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => { toast.style.display = 'none'; }, 300); }, 2000);
+    });
+
+    // 監聽成就解鎖通知
+    socket.on('achievementUnlocked', (data) => {
+        const toast = document.getElementById('toast-notification');
+        let msg = '🏆 成就解鎖！';
+        if (data.achievements && data.achievements.length > 0) {
+            msg = `🏆 ${data.achievements[0].name} — ${data.achievements[0].desc}`;
+        }
+        if (data.titles && data.titles.length > 0) {
+            msg += ` | 🏅 ${data.titles.join('、')}`;
+        }
+        toast.innerText = msg;
+        toast.style.display = 'block';
+        toast.style.opacity = '1';
+        toast.style.borderColor = '#f1c40f';
+        toast.style.color = '#f1c40f';
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.borderColor = '';
+            toast.style.color = '';
+            setTimeout(() => { toast.style.display = 'none'; }, 300);
+        }, 4000);
+    });
+
     // 打開寵物 Modal
     function openPetModal() {
         socket.emit('getPetInfo');
@@ -3397,31 +3651,9 @@
         setTimeout(() => socket.emit('getHirelings'), 800);
         setInterval(() => { if (socket.connected) socket.emit('getHirelings'); }, 30000);
 
-        // 儲存伺服器統計數據
-        let serverTotalCount = null;
-
-        function updateConnStatus() {
-            const status = document.getElementById('conn-status');
-            if (!socket.connected) return;
-            let text = " 已連線";
-            if (serverTotalCount !== null && !isNaN(serverTotalCount)) {
-                text += `  👥${serverTotalCount}人`;
-            }
-            status.innerHTML = text;
-        }
-
         socket.on('hubDataUpdate', (data) => {
             cityData = data.cityCounts;
             activeRooms = data.roomsList;
-            // 優先使用 totalCount，若無則回退計算 onlineCount + expeditionCount
-            if (data.totalCount !== undefined) {
-                serverTotalCount = Number(data.totalCount) || 0;
-            } else {
-                const online = Number(data.onlineCount) || 0;
-                const expedition = Number(data.expeditionCount) || 0;
-                serverTotalCount = online + expedition;
-            }
-            updateConnStatus();
             refreshUI(); 
         });
 
