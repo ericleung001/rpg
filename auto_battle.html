@@ -578,10 +578,19 @@
         }
 
         // 更新玩家信息
+        let myActiveTitle = null;
+        function getTitleBuffText(activeTitle) {
+            if (!activeTitle) return '';
+            const buffs = { '宇宙最強': 'ATK+5%', '千軍破陣': 'ATK+2% DEF+2%', '至高無上': 'ATK+3% DEF+3%', '永恆旅人': 'ATK+2%', '轉生之王': 'ATK+3% DEF+3%', '鍛造大師': 'DEF+2%', '神之鍛造': 'DEF+3%', '極致鍛造': 'ATK+3% DEF+3%', '轉蛋征服者': 'ATK+2%', '轉蛋傳說': 'ATK+2%' };
+            return buffs[activeTitle] || '';
+        }
         function updatePlayerInfo(p) {
             document.getElementById('player-hp').textContent = `${p.hp || 100}/${p.maxHp || 100}`;
             document.getElementById('player-lv').textContent = p.level || 1;
-            document.getElementById('player-atk').textContent = p.atk || 10;
+            myActiveTitle = p.activeTitle || null;
+            const buffText = getTitleBuffText(p.activeTitle);
+            const buffTag = buffText ? ` <span style="color:#f1c40f; font-size:10px;">(${buffText})</span>` : '';
+            document.getElementById('player-atk').innerHTML = (p.atk || 10).toLocaleString() + buffTag;
             // 同時刷新技能列表
             socket.emit('getPlayerSkills');
         }
@@ -726,6 +735,17 @@
             document.getElementById('battle-monster-name').textContent = data.monsterName;
             document.getElementById('battle-count').textContent = `0/${data.totalCount}`;
             document.getElementById('battle-log').innerHTML = '';
+
+            // 🟢 [稱號] 戰鬥開始時顯示稱號 buff
+            if (myActiveTitle) {
+                const buffText = getTitleBuffText(myActiveTitle);
+                const log = document.getElementById('battle-log');
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.style.color = '#f1c40f';
+                entry.textContent = `🏅 稱號「${myActiveTitle}」${buffText ? ' — 加成: ' + buffText : '生效中'}`;
+                log.appendChild(entry);
+            }
         });
 
         // 戰鬥進度
