@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -1906,7 +1906,7 @@
         function formatName(name, rebirth, title) {
             let titleHtml = '';
             if (title) {
-                titleHtml = `<span style="color:#f1c40f; font-size:10px; font-weight:bold; display:block; line-height:1.2;">[${escapeHtml(title)}]</span>`;
+                titleHtml = `<span style="color:#f1c40f; font-size:10px; font-weight:bold;">[${escapeHtml(title)}]</span>`;
             }
             let nameHtml = escapeHtml(name);
             if (rebirth && rebirth > 0) {
