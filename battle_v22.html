@@ -300,7 +300,7 @@
         function formatName(name, rebirth, title) {
             let html = '';
             if (title) {
-                html += `<span style="color:#f1c40f; font-size:10px; font-weight:bold; display:block; line-height:1.2;">[${escapeHtml(title)}]</span>`;
+                html += `<span style="color:#f1c40f; font-size:10px; font-weight:bold;">[${escapeHtml(title)}]</span>`;
             }
             if (rebirth && rebirth > 0) {
                 html += `${escapeHtml(name)}<span style="color:#f1c40f; font-weight:bold; margin-left:2px;">+${rebirth}</span>`;
