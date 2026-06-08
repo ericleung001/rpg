@@ -1137,6 +1137,149 @@
         }
         /* =================================================== */
 
+        /* ==================== 一番賞大抽獎樣式 ==================== */
+        .ichiban-modal-box {
+            background: linear-gradient(135deg, #1a0a2e, #2d1b4e);
+            border: 2px solid #9b59b6;
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 420px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            color: #ecf0f1;
+        }
+        .ichiban-modal-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #f1c40f;
+            margin-bottom: 15px;
+        }
+        .ichiban-ticket-count {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #ecf0f1;
+        }
+        .ichiban-ticket-count span {
+            color: #f1c40f;
+            font-weight: bold;
+            font-size: 22px;
+        }
+        .ichiban-btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        .ichiban-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ichiban-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .ichiban-btn-single {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+        .ichiban-btn-single:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2980b9, #1a5276);
+        }
+        .ichiban-btn-ten {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+            color: white;
+        }
+        .ichiban-btn-ten:hover:not(:disabled) {
+            background: linear-gradient(135deg, #d35400, #a04000);
+        }
+        .ichiban-results {
+            min-height: 80px;
+            margin-top: 10px;
+        }
+        .ichiban-result-card {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 6px 0;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            border-left: 4px solid #95a5a6;
+            animation: ichibanFadeIn 0.5s ease;
+        }
+        @keyframes ichibanFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ichiban-result-tier {
+            font-weight: bold;
+            font-size: 12px;
+            margin-right: 10px;
+            min-width: 50px;
+        }
+        .ichiban-result-name {
+            flex: 1;
+            font-size: 14px;
+        }
+        .ichiban-result-count {
+            color: #f1c40f;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        .ichiban-odds-toggle {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .ichiban-odds-toggle button {
+            background: none;
+            border: 1px solid #7f8c8d;
+            color: #95a5a6;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .ichiban-odds-toggle button:hover {
+            border-color: #bdc3c7;
+            color: #bdc3c7;
+        }
+        .ichiban-odds-panel {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            font-size: 11px;
+        }
+        .ichiban-odds-panel.visible {
+            display: block;
+        }
+        .ichiban-odds-tier {
+            margin: 8px 0;
+        }
+        .ichiban-odds-tier-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        .ichiban-odds-items {
+            color: #95a5a6;
+            line-height: 1.6;
+        }
+        .ichiban-ssr-animation {
+            animation: ichibanSSR 1s ease infinite;
+        }
+        @keyframes ichibanSSR {
+            0%, 100% { box-shadow: 0 0 10px rgba(255,69,0,0.3); }
+            50% { box-shadow: 0 0 25px rgba(255,69,0,0.6); }
+        }
+
         /* ==================== 稱號成就系統樣式 ==================== */
         .ach-modal-box {
             background: #2c3e50; color: #ecf0f1; width: 92%; max-width: 440px;
@@ -1270,6 +1413,9 @@
             <div class="sidebar-section-title">🏅 稱號成就</div>
             <div class="facility-btn" style="background:linear-gradient(135deg, #f39c12, #f1c40f); border-color:#f1c40f; color:#2c3e50;" onclick="openAchievementModal(); toggleSidebar();">🏆 成就</div>
             <div class="facility-btn" style="background:linear-gradient(135deg, #8e44ad, #9b59b6); border-color:#9b59b6;" onclick="openTitleModal(); toggleSidebar();">🏅 稱號</div>
+
+            <!-- 🎴 一番賞 -->
+            <div class="facility-btn" style="background:linear-gradient(135deg, #e74c3c, #c0392b); border-color:#e74c3c;" onclick="openIchibanModal(); toggleSidebar();">🎴 一番賞 <span id="ichiban-sidebar-count" style="display:none; background:#f1c40f; color:#000; border-radius:50%; padding:0 5px; font-size:10px; margin-left:4px;">0</span></div>
 
             <div class="sidebar-divider"></div>
 
@@ -2425,6 +2571,17 @@
             document.getElementById('pid').innerHTML = formatName(p.name, p.rebirth, p.activeTitle);
             myActiveTitle = p.activeTitle || null;
             myRebirth = p.rebirth || 0;
+
+            // 一番賞券數量更新
+            const newTickets = (p.inventory && p.inventory['ichiban_ticket']) || 0;
+            if (newTickets !== ichibanTicketCount) {
+                ichibanTicketCount = newTickets;
+                const badge = document.getElementById('ichiban-sidebar-count');
+                if (badge) {
+                    if (newTickets > 0) { badge.style.display = 'inline'; badge.textContent = newTickets; }
+                    else { badge.style.display = 'none'; }
+                }
+            }
             document.getElementById('lvl').innerText = p.level;
             
             // 使用縮寫顯示金幣
@@ -3136,6 +3293,152 @@
 
             html += `</div>`;
             titleContent.innerHTML = html;
+        }
+    });
+
+    // ==================== 一番賞大抽獎 ====================
+    let ichibanTicketCount = 0;
+
+    function openIchibanModal() {
+        socket.emit('getIchibanInfo');
+
+        const modal = document.createElement('div');
+        modal.id = 'ichiban-modal';
+        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;z-index:9999;';
+        modal.innerHTML = `
+            <div class="ichiban-modal-box">
+                <div class="ichiban-modal-title">🎴 一番賞大抽獎</div>
+                <div class="ichiban-ticket-count">持有賞券：<span id="ichiban-ticket-display">0</span> 張</div>
+                <div class="ichiban-btn-group">
+                    <button class="ichiban-btn ichiban-btn-single" id="ichiban-btn-1" onclick="drawIchiban(1)" disabled>抽出 x1</button>
+                    <button class="ichiban-btn ichiban-btn-ten" id="ichiban-btn-10" onclick="drawIchiban(10)" disabled>十連抽出 x10</button>
+                </div>
+                <div class="ichiban-results" id="ichiban-results"></div>
+                <div class="ichiban-odds-toggle">
+                    <button onclick="toggleIchibanOdds()">📊 查看獎品機率</button>
+                </div>
+                <div class="ichiban-odds-panel" id="ichiban-odds-panel"></div>
+                <button class="pet-btn pet-btn-close" style="margin-top:15px;" onclick="document.getElementById('ichiban-modal').remove()">關閉</button>
+            </div>
+        `;
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        document.body.appendChild(modal);
+    }
+
+    function toggleIchibanOdds() {
+        const panel = document.getElementById('ichiban-odds-panel');
+        if (panel.classList.contains('visible')) {
+            panel.classList.remove('visible');
+            return;
+        }
+        panel.classList.add('visible');
+    }
+
+    function drawIchiban(count) {
+        const evtName = count === 1 ? 'drawIchibanLottery' : 'drawIchibanLottery10';
+        const btn1 = document.getElementById('ichiban-btn-1');
+        const btn10 = document.getElementById('ichiban-btn-10');
+        if (btn1) btn1.disabled = true;
+        if (btn10) btn10.disabled = true;
+        socket.emit(evtName);
+    }
+
+    socket.on('ichibanInfo', (data) => {
+        ichibanTicketCount = data.ticketCount;
+        const display = document.getElementById('ichiban-ticket-display');
+        const btn1 = document.getElementById('ichiban-btn-1');
+        const btn10 = document.getElementById('ichiban-btn-10');
+        if (display) display.textContent = ichibanTicketCount;
+        if (btn1) btn1.disabled = ichibanTicketCount < 1;
+        if (btn10) btn10.disabled = ichibanTicketCount < 10;
+
+        // sidebar badge
+        const badge = document.getElementById('ichiban-sidebar-count');
+        if (badge) {
+            if (ichibanTicketCount > 0) {
+                badge.style.display = 'inline';
+                badge.textContent = ichibanTicketCount;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // odds panel
+        const oddsPanel = document.getElementById('ichiban-odds-panel');
+        if (oddsPanel) {
+            let html = '';
+            data.tiers.forEach(t => {
+                const pct = (t.rate * 100).toFixed(1);
+                html += `<div class="ichiban-odds-tier">
+                    <div class="ichiban-odds-tier-name" style="color:${t.color};">${t.label} — ${pct}%</div>
+                    <div class="ichiban-odds-items">${t.items.map(i => escapeHtml(i.name) + (i.count > 1 ? ` x${i.count}` : '')).join('、')}</div>
+                </div>`;
+            });
+            oddsPanel.innerHTML = html;
+        }
+    });
+
+    socket.on('ichibanDrawResult', (data) => {
+        if (!data.success) {
+            const toast = document.getElementById('toast-notification');
+            if (toast) { toast.innerText = data.msg; toast.style.display = 'block'; setTimeout(() => toast.style.display = 'none', 2000); }
+            return;
+        }
+        ichibanTicketCount = data.remainingTickets;
+        const display = document.getElementById('ichiban-ticket-display');
+        if (display) display.textContent = ichibanTicketCount;
+        const btn1 = document.getElementById('ichiban-btn-1');
+        const btn10 = document.getElementById('ichiban-btn-10');
+        if (btn1) btn1.disabled = ichibanTicketCount < 1;
+        if (btn10) btn10.disabled = ichibanTicketCount < 10;
+        const badge = document.getElementById('ichiban-sidebar-count');
+        if (badge) {
+            if (ichibanTicketCount > 0) { badge.style.display = 'inline'; badge.textContent = ichibanTicketCount; }
+            else { badge.style.display = 'none'; }
+        }
+
+        const results = document.getElementById('ichiban-results');
+        if (results) {
+            const isSSR = data.tier === 'SSS' || data.tier === 'SS';
+            results.innerHTML = `<div class="ichiban-result-card ${isSSR ? 'ichiban-ssr-animation' : ''}" style="border-left-color:${data.color};">
+                <div class="ichiban-result-tier" style="color:${data.color};">${data.label}</div>
+                <div class="ichiban-result-name">${escapeHtml(data.itemName)}</div>
+                <div class="ichiban-result-count">x${data.count}</div>
+            </div>` + results.innerHTML;
+        }
+    });
+
+    socket.on('ichibanDraw10Result', (data) => {
+        if (!data.success) {
+            const toast = document.getElementById('toast-notification');
+            if (toast) { toast.innerText = data.msg; toast.style.display = 'block'; setTimeout(() => toast.style.display = 'none', 2000); }
+            return;
+        }
+        ichibanTicketCount = data.remainingTickets;
+        const display = document.getElementById('ichiban-ticket-display');
+        if (display) display.textContent = ichibanTicketCount;
+        const btn1 = document.getElementById('ichiban-btn-1');
+        const btn10 = document.getElementById('ichiban-btn-10');
+        if (btn1) btn1.disabled = ichibanTicketCount < 1;
+        if (btn10) btn10.disabled = ichibanTicketCount < 10;
+        const badge = document.getElementById('ichiban-sidebar-count');
+        if (badge) {
+            if (ichibanTicketCount > 0) { badge.style.display = 'inline'; badge.textContent = ichibanTicketCount; }
+            else { badge.style.display = 'none'; }
+        }
+
+        const results = document.getElementById('ichiban-results');
+        if (results) {
+            let html = '';
+            data.results.forEach(r => {
+                const isSSR = r.tier === 'SSS' || r.tier === 'SS';
+                html = `<div class="ichiban-result-card ${isSSR ? 'ichiban-ssr-animation' : ''}" style="border-left-color:${r.color};">
+                    <div class="ichiban-result-tier" style="color:${r.color};">${r.label}</div>
+                    <div class="ichiban-result-name">${escapeHtml(r.itemName)}</div>
+                    <div class="ichiban-result-count">x${r.count}</div>
+                </div>` + html;
+            });
+            results.innerHTML = html + results.innerHTML;
         }
     });
 
