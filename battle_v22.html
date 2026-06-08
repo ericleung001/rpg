@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>戰鬥中_v8</title>
+    <title>戰鬥中_v7</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         body { 
@@ -1206,6 +1206,11 @@
             
             // 5. 自動停止掛機
             if(isAuto) toggleAuto();
+        });
+
+        // 🎴 一番賞券掉落通知
+        socket.on('ichibanTicketDropped', (data) => {
+            log(`<span style="color:#ff6b6b; font-weight:bold;">🎴 獲得一番賞券！前往大廳進行大抽獎！</span>`);
         });
 
         // 🟢 [新增] 顯示勝利後的按鈕群組 (離開 & 再戰)
