@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會</title>
+    <title>冒險者公會2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -3313,6 +3313,10 @@
                     <button class="ichiban-btn ichiban-btn-single" id="ichiban-btn-1" onclick="drawIchiban(1)" disabled>抽出 x1</button>
                     <button class="ichiban-btn ichiban-btn-ten" id="ichiban-btn-10" onclick="drawIchiban(10)" disabled>十連抽出 x10</button>
                 </div>
+                <div style="margin:8px 0; text-align:center;">
+                    <button onclick="toggleIchibanPrizeList()" style="background:none; border:1px solid #7f8c8d; color:#bdc3c7; padding:4px 12px; border-radius:4px; cursor:pointer; font-size:12px;">📋 查看全部獎品</button>
+                </div>
+                <div class="ichiban-odds-panel" id="ichiban-prize-panel" style="display:none;"></div>
                 <div class="ichiban-results" id="ichiban-results"></div>
                 <div class="ichiban-odds-toggle">
                     <button onclick="toggleIchibanOdds()">📊 查看獎品機率</button>
@@ -3332,6 +3336,11 @@
             return;
         }
         panel.classList.add('visible');
+    }
+
+    function toggleIchibanPrizeList() {
+        const panel = document.getElementById('ichiban-prize-panel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
     }
 
     function drawIchiban(count) {
@@ -3376,6 +3385,20 @@
             });
             oddsPanel.innerHTML = html;
         }
+
+        // prize list panel
+        const prizePanel = document.getElementById('ichiban-prize-panel');
+        if (prizePanel) {
+            let html = '';
+            data.tiers.forEach(t => {
+                const pct = (t.rate * 100).toFixed(t.rate < 0.01 ? 2 : 1);
+                html += `<div class="ichiban-odds-tier">
+                    <div class="ichiban-odds-tier-name" style="color:${t.color}; font-size:13px;">${t.label}（${pct}%）</div>
+                    <div class="ichiban-odds-items">${t.items.map(i => `· ${escapeHtml(i.name)}${i.count > 1 ? ' x' + i.count : ''}`).join('<br>')}</div>
+                </div>`;
+            });
+            prizePanel.innerHTML = html;
+        }
     });
 
     socket.on('ichibanDrawResult', (data) => {
@@ -3399,7 +3422,7 @@
 
         const results = document.getElementById('ichiban-results');
         if (results) {
-            const isSSR = data.tier === 'SSS' || data.tier === 'SS';
+            const isSSR = data.tier === 'SSSS' || data.tier === 'SSS' || data.tier === 'SS';
             results.innerHTML = `<div class="ichiban-result-card ${isSSR ? 'ichiban-ssr-animation' : ''}" style="border-left-color:${data.color};">
                 <div class="ichiban-result-tier" style="color:${data.color};">${data.label}</div>
                 <div class="ichiban-result-name">${escapeHtml(data.itemName)}</div>
@@ -3431,7 +3454,7 @@
         if (results) {
             let html = '';
             data.results.forEach(r => {
-                const isSSR = r.tier === 'SSS' || r.tier === 'SS';
+                const isSSR = r.tier === 'SSSS' || r.tier === 'SSS' || r.tier === 'SS';
                 html = `<div class="ichiban-result-card ${isSSR ? 'ichiban-ssr-animation' : ''}" style="border-left-color:${r.color};">
                     <div class="ichiban-result-tier" style="color:${r.color};">${r.label}</div>
                     <div class="ichiban-result-name">${escapeHtml(r.itemName)}</div>
