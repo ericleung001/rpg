@@ -3429,7 +3429,7 @@
         // prize list panel
         const prizePanel = document.getElementById('ichiban-prize-panel');
         if (prizePanel) {
-            let html = '<div style="text-align:center; color:#7f8c8d; font-size:10px; margin-bottom:8px;">※ 手動戰鬥勝利後 10% 機率獲得賞券（任何 LV 均可）</div>';
+            let html = '<div style="text-align:center; color:#7f8c8d; font-size:10px; margin-bottom:8px;">※ 手動戰鬥打 Lv.301+ 怪物勝利後，10% 機率獲得賞券</div>';
             data.tiers.forEach(t => {
                 const pct = (t.rate * 100).toFixed(t.rate < 0.01 ? 2 : 1);
                 const tierClass = t.tier === 'SSSS' ? 'ichiban-ssss-tier' : t.tier === 'SSS' ? 'ichiban-sss-tier' : t.tier === 'SS' ? 'ichiban-ss-tier' : '';
@@ -4143,7 +4143,7 @@
         socket.on('chatHistory', (history) => {
             const box = document.getElementById('chat-history');
             box.innerHTML = ''; 
-            history.forEach(data => appendChat(data.name, data.msg, data.rebirth));
+            history.forEach(data => appendChat(data.name, data.msg, data.rebirth, data.title));
         });
 
         socket.on('chatMessage', (data) => {
