@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會2</title>
+    <title>冒險者公會</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@400;700&display=swap');
         
@@ -1263,14 +1263,40 @@
         }
         .ichiban-odds-tier {
             margin: 8px 0;
+            padding: 6px 8px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.03);
         }
         .ichiban-odds-tier-name {
             font-weight: bold;
             margin-bottom: 3px;
+            font-size: 13px;
         }
         .ichiban-odds-items {
-            color: #95a5a6;
-            line-height: 1.6;
+            color: #bdc3c7;
+            line-height: 1.7;
+            padding-left: 10px;
+        }
+        .ichiban-ssss-tier {
+            background: linear-gradient(135deg, rgba(255,0,0,0.15), rgba(255,165,0,0.15), rgba(255,0,255,0.15));
+            border: 1px solid rgba(255,0,0,0.4);
+            animation: ichibanSSSS 2s linear infinite;
+            padding: 10px 12px;
+        }
+        @keyframes ichibanSSSS {
+            0%   { border-color: #ff0000; box-shadow: 0 0 8px rgba(255,0,0,0.3); }
+            25%  { border-color: #ff8c00; box-shadow: 0 0 8px rgba(255,140,0,0.3); }
+            50%  { border-color: #ff00ff; box-shadow: 0 0 8px rgba(255,0,255,0.3); }
+            75%  { border-color: #ffd700; box-shadow: 0 0 8px rgba(255,215,0,0.3); }
+            100% { border-color: #ff0000; box-shadow: 0 0 8px rgba(255,0,0,0.3); }
+        }
+        .ichiban-sss-tier {
+            background: rgba(255,69,0,0.08);
+            border: 1px solid rgba(255,69,0,0.3);
+        }
+        .ichiban-ss-tier {
+            background: rgba(241,196,15,0.06);
+            border: 1px solid rgba(241,196,15,0.2);
         }
         .ichiban-ssr-animation {
             animation: ichibanSSR 1s ease infinite;
@@ -1278,6 +1304,18 @@
         @keyframes ichibanSSR {
             0%, 100% { box-shadow: 0 0 10px rgba(255,69,0,0.3); }
             50% { box-shadow: 0 0 25px rgba(255,69,0,0.6); }
+        }
+        .ichiban-prize-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 4px;
+            font-size: 11px;
+        }
+        .ichiban-prize-item {
+            color: #ecf0f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.05);
         }
 
         /* ==================== 稱號成就系統樣式 ==================== */
@@ -3377,9 +3415,11 @@
         if (oddsPanel) {
             let html = '';
             data.tiers.forEach(t => {
-                const pct = (t.rate * 100).toFixed(1);
-                html += `<div class="ichiban-odds-tier">
-                    <div class="ichiban-odds-tier-name" style="color:${t.color};">${t.label} — ${pct}%</div>
+                const pct = (t.rate * 100).toFixed(t.rate < 0.01 ? 2 : 1);
+                const tierClass = t.tier === 'SSSS' ? 'ichiban-ssss-tier' : t.tier === 'SSS' ? 'ichiban-sss-tier' : t.tier === 'SS' ? 'ichiban-ss-tier' : '';
+                const icon = t.tier === 'SSSS' ? '👑' : t.tier === 'SSS' ? '💫' : t.tier === 'SS' ? '🌟' : t.tier === 'S' ? '✨' : t.tier === 'A' ? '💎' : t.tier === 'B' ? '🔷' : '⚪';
+                html += `<div class="ichiban-odds-tier ${tierClass}">
+                    <div class="ichiban-odds-tier-name" style="color:${t.color};">${icon} ${t.label} — ${pct}%</div>
                     <div class="ichiban-odds-items">${t.items.map(i => escapeHtml(i.name) + (i.count > 1 ? ` x${i.count}` : '')).join('、')}</div>
                 </div>`;
             });
@@ -3389,11 +3429,13 @@
         // prize list panel
         const prizePanel = document.getElementById('ichiban-prize-panel');
         if (prizePanel) {
-            let html = '';
+            let html = '<div style="text-align:center; color:#7f8c8d; font-size:10px; margin-bottom:8px;">※ 手動戰鬥勝利後 10% 機率獲得賞券（任何 LV 均可）</div>';
             data.tiers.forEach(t => {
                 const pct = (t.rate * 100).toFixed(t.rate < 0.01 ? 2 : 1);
-                html += `<div class="ichiban-odds-tier">
-                    <div class="ichiban-odds-tier-name" style="color:${t.color}; font-size:13px;">${t.label}（${pct}%）</div>
+                const tierClass = t.tier === 'SSSS' ? 'ichiban-ssss-tier' : t.tier === 'SSS' ? 'ichiban-sss-tier' : t.tier === 'SS' ? 'ichiban-ss-tier' : '';
+                const icon = t.tier === 'SSSS' ? '👑' : t.tier === 'SSS' ? '💫' : t.tier === 'SS' ? '🌟' : t.tier === 'S' ? '✨' : t.tier === 'A' ? '💎' : t.tier === 'B' ? '🔷' : '⚪';
+                html += `<div class="ichiban-odds-tier ${tierClass}">
+                    <div class="ichiban-odds-tier-name" style="color:${t.color};">${icon} ${t.label}（${pct}%）${t.tier === 'SSSS' ? ' — 神話武器1/2/3代全套' : ''}</div>
                     <div class="ichiban-odds-items">${t.items.map(i => `· ${escapeHtml(i.name)}${i.count > 1 ? ' x' + i.count : ''}`).join('<br>')}</div>
                 </div>`;
             });
