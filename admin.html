@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GM 超級後台</title>
+    <title>GM 超級後台2</title>
     <style>
         body { background: #222; color: #fff; font-family: monospace; padding: 20px; text-align: center; }
         input, select, button { padding: 10px; margin: 5px; width: 100%; max-width: 300px; box-sizing: border-box; }
@@ -167,13 +167,20 @@
 
     <h3 style="color: #2ecc71;">📢 系統訊息廣播</h3>
     <div style="display:flex; flex-direction:column; align-items:center;">
-        <textarea id="sys-msg-text" placeholder="輸入要廣播的系統訊息..." rows="3" maxlength="200"
+        <textarea id="sys-msg-text" placeholder="輸入要廣播的系統訊息...&#10;（可用換行分段顯示）" rows="5"
             style="width:100%; max-width:500px; padding:10px; background:#222; color:#fff; border:1px solid #555; border-radius:5px; font-size:12px; font-family:monospace; resize:vertical; box-sizing:border-box;"></textarea>
-        <div style="display:flex; gap:10px; margin-top:8px;">
+        <div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap; justify-content:center;">
             <button onclick="broadcastSysMsg()" style="background:#27ae60; width:auto; padding:10px 20px;">📢 發送廣播</button>
             <button onclick="clearSysMsgBar()" style="background:#e67e22; width:auto; padding:10px 20px;">🗑️ 清除玩家畫面訊息</button>
+            <button onclick="loadBroadcastHistory()" style="background:#3498db; width:auto; padding:10px 20px;">📜 讀取歷史訊息</button>
         </div>
-        <div style="font-size:10px; color:#aaa; margin-top:5px;">(最多200字，廣播後會在 hub.html 頂部顯示)</div>
+        <div style="font-size:10px; color:#aaa; margin-top:5px;">（可用換行分段，廣播後會在 hub.html 頂部分段顯示）</div>
+    </div>
+
+    <!-- 廣播歷史記錄 -->
+    <div id="broadcast-history" style="display:none; max-width:600px; margin:15px auto 0; background:#111; border:1px solid #3498db; border-radius:8px; padding:12px; max-height:300px; overflow-y:auto;">
+        <div style="color:#3498db; font-size:11px; margin-bottom:8px; font-weight:bold;">📜 廣播歷史記錄（最近 50 條）</div>
+        <div id="broadcast-history-list" style="font-size:10px; color:#ccc;"></div>
     </div>
 
     <hr>
@@ -629,6 +636,10 @@
             <option value="sushi_plate">壽司拼盤 (HP+500)</option>
         </optgroup>
 
+        <optgroup label="=== 🎴 一番賞 & 特殊道具 ===">
+            <option value="ichiban_ticket">🎴 一番賞券（手動戰鬥 Lv.301+ 勝利掉落）</option>
+        </optgroup>
+
         <optgroup label="=== 材料 ===">
             <option value="copper_ore">銅礦石</option>
             <option value="soft_fur">柔軟皮毛</option>
@@ -746,16 +757,6 @@
 
         socket.on('connect', () => {
             log("✅ 連線成功，請輸入密碼與玩家名稱。");
-        });
-
-        // 自動接收伺服器廣播的統計數據（每10秒更新）
-        socket.on('hubDataUpdate', (data) => {
-            if (data.onlineCount !== undefined) {
-                document.getElementById('admin-online-count').innerText = data.onlineCount;
-            }
-            if (data.expeditionCount !== undefined) {
-                document.getElementById('admin-expedition-count').innerText = data.expeditionCount;
-            }
         });
 
         // 自動接收伺服器廣播的統計數據（每10秒更新）
@@ -1176,6 +1177,42 @@
             if (confirm("確定要清除所有玩家畫面上的系統訊息嗎？")) {
                 socket.emit('adminBroadcastMessage', { adminPass: pass, message: '' });
                 log("[請求] 已發送清除廣播指令");
+            }
+        }
+
+        function loadBroadcastHistory() {
+            const pass = getPass();
+            if (!pass) return;
+            socket.emit('adminGetBroadcastHistory', { adminPass: pass });
+            log("[請求] 讀取廣播歷史記錄...");
+        }
+
+        socket.on('adminBroadcastHistory', (data) => {
+            const panel = document.getElementById('broadcast-history');
+            const list = document.getElementById('broadcast-history-list');
+            if (!data.history || data.history.length === 0) {
+                panel.style.display = 'block';
+                list.innerHTML = '<div style="color:#95a5a6;">尚無歷史記錄</div>';
+                return;
+            }
+            panel.style.display = 'block';
+            list.innerHTML = data.history.map((item, i) => {
+                const msgEscaped = item.message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+                return `<div style="padding:6px 0; border-bottom:1px solid #222;">
+                    <span style="color:#f1c40f;">[${item.timeStr}]</span>
+                    <button onclick="document.getElementById('sys-msg-text').value=decodeURIComponent('${encodeURIComponent(item.message)}')" style="background:#2ecc71; color:#fff; border:none; border-radius:3px; padding:2px 6px; font-size:9px; cursor:pointer; margin-left:5px;">📋 載入</button>
+                    <button onclick="resendBroadcast(decodeURIComponent('${encodeURIComponent(item.message)}'))" style="background:#e74c3c; color:#fff; border:none; border-radius:3px; padding:2px 6px; font-size:9px; cursor:pointer; margin-left:3px;">🔄 重發</button>
+                    <div style="margin-top:3px; color:#ecf0f1;">${msgEscaped}</div>
+                </div>`;
+            }).join('');
+        });
+
+        function resendBroadcast(msg) {
+            const pass = getPass();
+            if (!pass) return;
+            if (confirm(`確定要重新廣播以下訊息？\n\n${msg}`)) {
+                socket.emit('adminBroadcastMessage', { adminPass: pass, message: msg });
+                log("[請求] 重新廣播歷史訊息...");
             }
         }
 
