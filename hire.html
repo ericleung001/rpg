@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>冒險者公會 - 僱員探險v3</title>
+    <title>冒險者公會 - 僱員探險2</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -159,7 +159,10 @@ const ITEM_NAMES = {
     'void_shard':'虛空碎片','dark_matter':'暗物質','star_core':'恆星核心',
     'cosmic_steel':'宇宙鋼','time_sand':'時光之沙','dimension_gem':'維度寶石',
     'entropy_origin':'熱寂原點','divinity_core':'創世神格',
-    'quantum_residue':'量子殘渣','multiverse_shard':'多元宇宙碎片'
+    'quantum_residue':'量子殘渣','multiverse_shard':'多元宇宙碎片',
+    'myth_essence_fire':'烈焰精華','myth_essence_ice':'永恆冰精華','myth_essence_dark':'暗淵精華',
+    'myth_essence_light':'神聖精華','myth_essence_chaos':'混沌精華',
+    'myth_core':'神話核心','myth_dragon_soul':'龍魂結晶','myth_void_crystal':'虛空神晶'
 };
 
 socket.on('connect', () => {
@@ -235,7 +238,7 @@ function renderHirelings() {
         let statusHtml = '';
         if (isExploring) {
             const elapsed = now - h.startTime;
-            const total = 3 * 60 * 60 * 1000;
+            const total = 1 * 60 * 60 * 1000;
             const remaining = Math.max(0, total - elapsed);
             const pct = Math.min(100, (elapsed / total) * 100);
             const hrs = Math.floor(remaining / 3600000);
