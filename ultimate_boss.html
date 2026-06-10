@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>終極Boss 2</title>
+<title>終極Boss</title>
 <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Cinzel:wght@700;900&display=swap');
@@ -742,6 +742,127 @@
         </div>
     </div>
 
+    <!-- Battle Guide -->
+    <div class="card entrance-anim" style="border-color:rgba(224,92,32,0.3);">
+        <div class="card-label" style="color:var(--orange-light);">📖 Boss 機制與挑戰攻略</div>
+        <div style="font-size:11px; line-height:2; color:var(--text);">
+
+            <!-- Boss Stats -->
+            <div style="background:rgba(192,57,43,0.08); border:1px solid rgba(192,57,43,0.2); border-radius:8px; padding:12px; margin-bottom:12px;">
+                <div style="font-size:12px; font-weight:900; color:var(--orange-light); margin-bottom:8px; text-align:center;">☠️ Boss 數值</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; text-align:center;">
+                    <div><span style="color:var(--text-dim); font-size:10px;">❤️ HP</span><br><span style="color:var(--crimson); font-weight:700;">150 億</span></div>
+                    <div><span style="color:var(--text-dim); font-size:10px;">⚔️ ATK</span><br><span style="color:var(--ember); font-weight:700;">2 億</span></div>
+                    <div><span style="color:var(--text-dim); font-size:10px;">🛡️ DEF</span><br><span style="color:var(--orange); font-weight:700;">1.3 億</span></div>
+                    <div><span style="color:var(--text-dim); font-size:10px;">🎯 傷害上限</span><br><span style="color:#ccc; font-weight:700;">普攻 4.5億 / 技能 22.5億</span></div>
+                </div>
+            </div>
+
+            <!-- Key Mechanics -->
+            <div style="margin-bottom:12px;">
+                <div style="font-size:11px; font-weight:700; color:var(--orange-light); margin-bottom:6px;">⚠️ 關鍵戰鬥機制</div>
+                <div style="font-size:10px; color:#aaa; line-height:1.9;">
+                    <div>• Boss 每個玩家行動後都會攻擊一次，<span style="color:var(--crimson);">所有玩家都會受傷</span></div>
+                    <div>• 回復、增益、吸血、天神下凡等技能<span style="color:var(--crimson);">全部被封印</span></div>
+                    <div>• 只能使用攻擊類技能（火球術、隕石術、次元斬等）</div>
+                    <div>• Boss 會施放 ATK×2、DEF×2、技能封印、回復 HP</div>
+                </div>
+            </div>
+
+            <!-- Boss Action Breakdown -->
+            <div style="margin-bottom:12px;">
+                <div style="font-size:11px; font-weight:700; color:var(--orange-light); margin-bottom:6px;">👾 Boss 行動一覽</div>
+                <div style="font-size:10px; color:#aaa; line-height:1.9;">
+                    <div>⚔️ 普通攻擊（40%）：造成 ATK - 玩家DEF×0.3 傷害，15% 暴擊</div>
+                    <div>🔥 次元崩壞（26%）：魔法攻擊，傷害更高</div>
+                    <div>🔥 終焉之力（10%）：Boss ATK 翻倍 3 回合</div>
+                    <div>🛡️ 宇宙護盾（8%）：Boss DEF 翻倍 3 回合</div>
+                    <div>🌀 次元封印（8%）：玩家技能封印 2 回合</div>
+                    <div>💚 宇宙回復（8%）：回復 Boss 5-12% HP（HP&lt;70% 時）</div>
+                </div>
+            </div>
+
+            <div class="sep" style="margin:12px 0;"></div>
+
+            <!-- Recommended Teams -->
+            <div style="font-size:11px; font-weight:700; color:var(--gold-light); margin-bottom:8px; text-align:center;">📋 推薦隊伍配置</div>
+
+            <!-- Team 1: Myth II -->
+            <div style="background:rgba(201,168,76,0.06); border:1px solid rgba(201,168,76,0.15); border-radius:8px; padding:12px; margin-bottom:10px;">
+                <div style="font-size:11px; font-weight:700; color:var(--gold-light); margin-bottom:6px;">🛡️ 方案一：神話II代路線（5人）</div>
+                <div style="font-size:10px; color:#aaa; line-height:1.9;">
+                    <div>📦 裝備：神話II代全套（武器/鎧甲/飾品）強化 <span style="color:var(--gold-light);">+25 以上</span></div>
+                    <div>♻️ 轉生：<span style="color:var(--gold-light);">+20</span>（屬性 ×5.0 倍）</div>
+                    <div>👥 人數：<span style="color:var(--gold-light);">5 人</span>組隊</div>
+                    <div style="margin-top:6px; padding:8px; background:rgba(0,0,0,0.3); border-radius:6px;">
+                        <div style="color:#bbb;">每人預估屬性：</div>
+                        <div>ATK ≈ <span style="color:var(--orange-light);">2.65 億</span>　DEF ≈ <span style="color:var(--orange-light);">5.23 億</span>　HP ≈ <span style="color:var(--crimson);">23.3 億</span></div>
+                    </div>
+                    <div style="margin-top:6px;">
+                        <div style="color:#bbb;">預估傷害輸出：</div>
+                        <div>普攻 ≈ 2 億/人　次元斬 ≈ 12.6 億/人</div>
+                    </div>
+                    <div style="margin-top:6px; padding:6px 10px; background:rgba(224,92,32,0.1); border-radius:6px; color:var(--orange-light); font-weight:700;">
+                        ⚡ 難度：★★★★☆ 勉強可勝（約50-60%勝率）
+                    </div>
+                    <div style="margin-top:4px; font-size:9px; color:#888;">
+                        💡 必須使用次元斬等高倍率攻擊技能，純普攻必敗
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team 2: Myth III -->
+            <div style="background:rgba(46,204,113,0.06); border:1px solid rgba(46,204,113,0.15); border-radius:8px; padding:12px; margin-bottom:10px;">
+                <div style="font-size:11px; font-weight:700; color:#2ecc71; margin-bottom:6px;">⚔️ 方案二：神話III代路線（3人）</div>
+                <div style="font-size:10px; color:#aaa; line-height:1.9;">
+                    <div>📦 裝備：神話III代全套（武器/鎧甲/飾品）強化 <span style="color:#2ecc71;">+20 以上</span></div>
+                    <div>♻️ 轉生：<span style="color:#2ecc71;">+20</span>（屬性 ×5.0 倍）</div>
+                    <div>👥 人數：<span style="color:#2ecc71;">3 人</span>組隊</div>
+                    <div style="margin-top:6px; padding:8px; background:rgba(0,0,0,0.3); border-radius:6px;">
+                        <div style="color:#bbb;">每人預估屬性：</div>
+                        <div>ATK ≈ <span style="color:#2ecc71;">3.7 億</span>　DEF ≈ <span style="color:#2ecc71;">6.56 億</span>　HP ≈ <span style="color:#2ecc71;">25.2 億</span></div>
+                    </div>
+                    <div style="margin-top:6px;">
+                        <div style="color:#bbb;">預估傷害輸出：</div>
+                        <div>普攻 ≈ 3.05 億/人　次元斬 ≈ 17.85 億/人</div>
+                    </div>
+                    <div style="margin-top:6px; padding:6px 10px; background:rgba(46,204,113,0.1); border-radius:6px; color:#2ecc71; font-weight:700;">
+                        ⚡ 難度：★★★☆☆ 輕鬆可勝（剩餘約60% HP）
+                    </div>
+                    <div style="margin-top:4px; font-size:9px; color:#888;">
+                        💡 推薦方案，屬性優勢明顯，容錯率較高
+                    </div>
+                </div>
+            </div>
+
+            <!-- Minimum Requirements -->
+            <div style="background:rgba(255,255,255,0.03); border:1px dashed var(--border); border-radius:8px; padding:12px; margin-bottom:10px;">
+                <div style="font-size:11px; font-weight:700; color:var(--text); margin-bottom:6px;">📊 最低門檻参考</div>
+                <div style="font-size:10px; color:#888; line-height:1.9;">
+                    <div>• 神話II代 +22~25 + 轉生+20 + 5人 = 門檻級可勝</div>
+                    <div>• 神話II代 +20 以下 = 極難勝利，不推薦</div>
+                    <div>• 神話III代 +18 + 轉生+20 + 3人 = 門檻級可勝</div>
+                    <div>• 神話III代 +15 以下 = 極難勝利，不推薦</div>
+                    <div style="margin-top:4px; color:var(--crimson);">• 轉生不足 +20 = DEF/HP 不夠，Boss 會快速秒殺</div>
+                </div>
+            </div>
+
+            <div class="sep" style="margin:12px 0;"></div>
+
+            <!-- Battle Tips -->
+            <div style="font-size:11px; font-weight:700; color:var(--orange-light); margin-bottom:6px;">🎯 作戰要點</div>
+            <div style="font-size:10px; color:#aaa; line-height:1.9;">
+                <div>1. <span style="color:var(--gold-light);">優先使用攻擊技能</span>：次元斬（5倍）、隕石術（3.5倍）、劇毒之觸（2.5倍）</div>
+                <div>2. <span style="color:var(--gold-light);">節省 MP</span>：每場戰鬥約5-8回合，合理分配技能使用次數</div>
+                <div>3. <span style="color:var(--gold-light);">協調行動</span>：DEF 最高的玩家先行動，可降低 Boss 對全隊的傷害</div>
+                <div>4. <span style="color:var(--gold-light);">注意 Boss 狀態</span>：ATK 翻倍時傷害暴增，盡快結束戰鬥</div>
+                <div>5. <span style="color:var(--gold-light);">帶備消耗品</span>：虛空湯/萬能藥可全回 HP/MP（但數量有限）</div>
+                <div>6. <span style="color:var(--crimson);">絕對不要用</span>：回復、增益、吸血、聖光守護、狂暴、天神下凡（全被封印且浪費回合）</div>
+            </div>
+
+        </div>
+    </div>
+
     <!-- Reward info -->
     <div class="card entrance-anim">
         <div class="card-label">🏆 擊敗獎勵</div>
@@ -749,7 +870,7 @@
             <div class="reward-title-preview">「宇宙最強」</div>
             <div class="sep" style="margin:10px 0;"></div>
             <div class="reward-items-preview">
-                <div class="reward-item-row"><span class="reward-item-icon">🏅</span><span class="reward-item-text">專屬稱號：<strong>宇宙最強</strong></span></div>
+                <div class="reward-item-row"><span class="reward-item-icon">🏅</span><span class="reward-item-text">專屬稱號：<strong>宇宙最強</strong>（ATK +5%）</span></div>
                 <div class="reward-item-row"><span class="reward-item-icon">💎</span><span class="reward-item-text">碎片 ×<strong>1,000,000</strong></span></div>
                 <div class="reward-item-row"><span class="reward-item-icon">🔮</span><span class="reward-item-text">轉蛋城材料（大量）</span></div>
             </div>
